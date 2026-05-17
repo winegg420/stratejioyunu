@@ -34,5 +34,5 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@54.1.0
 
-      - name: Deploy production (prebuilt)
-        run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy production
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
