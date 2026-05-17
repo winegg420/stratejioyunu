@@ -1,16 +1,32 @@
-# React + Vite
+# [OYUN ADI] — Strateji Oyunu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dünya haritası üzerinde çok oyunculu web stratejisi. OGame tarzı panel arayüzü + Türkiye haritası (Leaflet, lazy loading).
 
-Currently, two official plugins are available:
+## Canlı site
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**https://stratejioyunu.vercel.app**
 
-## React Compiler
+## Geliştirme
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Tarayıcı: http://localhost:5173
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Deploy
+
+```bash
+npm run build
+npx vercel deploy --prod --yes
+```
+
+## Repo
+
+https://github.com/winegg420/stratejioyunu
+
+## Durum
+
+- UI / placeholder veriler (auth, Supabase, backend henüz yok)
+- Harita: 81 il + ile tıklanınca ilçe lazy load
