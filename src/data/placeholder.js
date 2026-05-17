@@ -58,41 +58,21 @@ export const seaUnits = [
   { id: 'sub', name: 'Denizaltı', attack: 60, defense: 25, cost: '1.600 metal · 800 yakıt', time: '01:15:00', count: 4, image: '🔱', desc: 'Firkateyn ve uçak gemisine karşı etkili.' },
 ];
 
-export const activeExpeditions = [
-  { id: 1, target: 'Ankara', player: 'SteelWolf', type: 'Sefer Saldırısı', units: 850, eta: '03:42:18', distance: '520 km', cancellable: false },
-  { id: 2, target: 'Bursa', player: 'KaraKurt', type: 'Sefer Saldırısı', units: 420, eta: '01:15:42', distance: '180 km', cancellable: true },
-  { id: 3, target: 'Antalya', player: 'Bot_Korsan_07', type: 'Keşif', units: 50, eta: '00:28:05', distance: '95 km', cancellable: true },
-];
+export const activeExpeditions = [];
 
-export const pastExpeditions = [
-  { id: 101, target: 'Manisa', result: 'Zafer', loot: '2.400 altın · 1.200 metal', date: '16 Mayıs 19:15' },
-  { id: 102, target: 'Aydın', result: 'Yenilgi', loot: '—', date: '15 Mayıs 14:30' },
-];
+export const pastExpeditions = [];
 
-export const intelOps = [
-  { id: 1, type: 'Keşif Ajanı', target: 'SteelWolf — Ankara', status: 'Yolda', eta: '02:10:00' },
-  { id: 2, type: 'Sabotaj', target: 'BlackSea — Trabzon', status: 'Tamamlandı', result: 'Başarılı — Fabrika hasar gördü' },
-];
+export const intelOps = [];
 
-export const tradeOffers = [
-  { id: 1, seller: 'DeltaForce', sell: '5.000 Metal', want: '3.000 Yakıt', ratio: '1:0.6', distance: '340 km' },
-  { id: 2, seller: 'EgeTicaret', sell: '2.000 Yemek', want: '1.500 Para', ratio: '1:0.75', distance: '45 km' },
-];
+export const tradeOffers = [];
 
 export const diplomacy = {
   alliance: { name: 'Ege Komutanlığı', members: 24, mode: 'Liderli', leader: 'Komutan_Alpha' },
-  treaties: [
-    { type: 'Savunma Paktı', partner: 'Karadeniz Birliği', status: 'Aktif' },
-    { type: 'Ateşkes', partner: 'SteelWolf', status: '48 saat kaldı' },
-  ],
-  votes: [{ title: 'Yeni üye: Falcon99', votes: '18/24', ends: '06:00:00' }],
+  treaties: [],
+  votes: [],
 };
 
-export const reports = [
-  { id: 1, type: 'Savaş', title: 'Sefer: Manisa — Zafer', date: '16 Mayıs 19:15', preview: 'Kayıp: %22 · Ganimet: 2.400 altın' },
-  { id: 2, type: 'Keşif', title: 'Deniz Keşfi — Başarılı', date: '16 Mayıs 12:00', preview: 'Petrol deposu bulundu' },
-  { id: 3, type: 'Casusluk', title: 'Keşif Ajanı — Yakalandı', date: '15 Mayıs 08:45', preview: 'SteelWolf sizi tespit etti' },
-];
+export const reports = [];
 
 export const newsFeed = [
   { type: 'fetih', text: '[KaraKurt] İstanbul\'u fethetti!', time: '20:32' },
@@ -102,11 +82,7 @@ export const newsFeed = [
   { type: 'meydan', text: '[KaraKurt] Meydan Savaşı ilan etti — Hedef: Bursa', time: '16:00' },
 ];
 
-export const messages = [
-  { id: 1, from: 'SteelWolf', subject: 'Ateşkes teklifi', preview: '48 saatlik ateşkes öneriyorum...', unread: true, time: '14:22' },
-  { id: 2, from: 'Ege Komutanlığı', subject: 'İttifak: Oylama', preview: 'Falcon99 üyelik oylaması başladı', unread: true, time: '12:05' },
-  { id: 3, from: 'Sistem', subject: 'Bina tamamlandı', preview: 'Fabrika Seviye 8 yükseltmesi bitti', unread: false, time: '09:30' },
-];
+export const messages = [];
 
 export const profile = {
   username: 'Komutan_Alpha',

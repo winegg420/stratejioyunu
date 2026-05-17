@@ -1,4 +1,5 @@
 import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
 import { intelOps } from '../data/placeholder';
 
 const OPS = [
@@ -29,17 +30,27 @@ export default function Intelligence() {
         </section>
         <section className="panel">
           <h3 className="panel-title">Aktif / Tamamlanan Operasyonlar</h3>
-          <ul className="intel-list">
-            {intelOps.map((op) => (
-              <li key={op.id}>
-                <strong>{op.type}</strong>
-                <span>{op.target}</span>
-                <span className="badge">{op.status}</span>
-                {op.eta && <span className="timer">{op.eta}</span>}
-                {op.result && <p>{op.result}</p>}
-              </li>
-            ))}
-          </ul>
+          {intelOps.length > 0 ? (
+            <ul className="intel-list">
+              {intelOps.map((op) => (
+                <li key={op.id}>
+                  <strong>{op.type}</strong>
+                  <span>{op.target}</span>
+                  <span className="badge">{op.status}</span>
+                  {op.eta && <span className="timer">{op.eta}</span>}
+                  {op.result && <p>{op.result}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon="🕵️"
+              title="Casus operasyonu yok"
+              description="Haritadan bir düşman şehrine casus göndererek asker ve bina bilgisi toplayabilirsiniz."
+              actionLabel="Haritayı Aç"
+              actionTo="/harita"
+            />
+          )}
         </section>
       </div>
     </div>

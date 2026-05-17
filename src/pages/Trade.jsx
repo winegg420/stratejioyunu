@@ -1,4 +1,5 @@
 import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
 import { tradeOffers } from '../data/placeholder';
 
 export default function Trade() {
@@ -11,34 +12,46 @@ export default function Trade() {
       />
       <section className="panel">
         <h3 className="panel-title">Açık Pazar</h3>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Satıcı</th>
-              <th>Satıyor</th>
-              <th>İstiyor</th>
-              <th>Oran</th>
-              <th>Mesafe</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {tradeOffers.map((o) => (
-              <tr key={o.id}>
-                <td>{o.seller}</td>
-                <td>{o.sell}</td>
-                <td>{o.want}</td>
-                <td>{o.ratio}</td>
-                <td>{o.distance}</td>
-                <td><button type="button" className="btn btn-primary btn-sm">Kabul Et</button></td>
+        {tradeOffers.length > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Satıcı</th>
+                <th>Satıyor</th>
+                <th>İstiyor</th>
+                <th>Oran</th>
+                <th>Mesafe</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tradeOffers.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.seller}</td>
+                  <td>{o.sell}</td>
+                  <td>{o.want}</td>
+                  <td>{o.ratio}</td>
+                  <td>{o.distance}</td>
+                  <td><button type="button" className="btn btn-primary btn-sm">Kabul Et</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState
+            icon="💰"
+            title="Pazarda ilan yok"
+            description="Diğer oyuncuların ilanlarını kabul edebilir veya kendi kaynaklarınız için ilan açabilirsiniz."
+          />
+        )}
       </section>
       <section className="panel">
         <h3 className="panel-title">Aktif Kervanlar</h3>
-        <p className="muted">Örnek: Manisa → İzmir · 2.000 Metal · Varış: 01:22:00</p>
+        <EmptyState
+          icon="🐪"
+          title="Yolda kervan yok"
+          description="Onaylanan ticaretler tamamlandığında kervan rotası burada görünür."
+        />
       </section>
     </div>
   );

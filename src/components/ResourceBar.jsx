@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { resources, GAME_NAME, CITY_NAME, PROTECTION_DAYS } from '../data/placeholder';
+import { useResourceStore } from '../stores/resourceStore';
+import { GAME_NAME, CITY_NAME, PROTECTION_DAYS } from '../data/placeholder';
+import NotificationBell from './NotificationBell';
 
 function formatShort(n) {
   if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
@@ -7,19 +10,27 @@ function formatShort(n) {
   return n.toLocaleString('tr-TR');
 }
 
-function ResourceItem({ r, pct }) {
+function ResourceItem({ resource, pct, flash }) {
   return (
-    <div className="resource-item" title={`${r.label}: ${r.current.toLocaleString('tr-TR')}`}>
-      <span className="res-icon" aria-hidden="true">{r.icon}</span>
+    <div
+      className={`resource-item${flash ? ' resource-flash' : ''}`}
+      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}`}
+    >
+      <span className="res-icon" aria-hidden="true">
+        {resource.icon}
+      </span>
       <div className="res-body">
-        <span className="res-label">{r.label}</span>
+        <span className="res-label">{resource.label}</span>
         <span className="res-value">
-          {formatShort(r.current)}
-          {r.max && <span className="res-max"> / {formatShort(r.max)}</span>}
+          {formatShort(resource.current)}
+          {resource.max && <span className="res-max"> / {formatShort(resource.max)}</span>}
         </span>
-        {r.max && (
+        {resource.max && (
           <div className="res-bar">
-            <div className={`res-fill ${pct > 85 ? 'warn' : ''}`} style={{ width: `${pct}%` }} />
+            <div
+              className={`res-fill ${pct > 85 ? 'warn' : ''}`}
+              style={{ width: `${pct}%` }}
+            />
           </div>
         )}
       </div>
@@ -29,6 +40,11 @@ function ResourceItem({ r, pct }) {
 
 export default function ResourceBar() {
   const { playerName } = useAuth();
+  const resources = useResourceStore((s) => s.resources);
+  const flashes = useResourceStore((s) => s.flashes);
+  const startTicker = useResourceStore((s) => s.startTicker);
+
+  useEffect(() => startTicker(), [startTicker]);
 
   return (
     <header className="resource-bar">
@@ -40,12 +56,22 @@ export default function ResourceBar() {
         <div className="resources-row">
           {resources.map((r) => {
             const pct = r.max ? Math.min(100, (r.current / r.max) * 100) : 100;
-            return <ResourceItem key={r.id} r={r} pct={pct} />;
+            return (
+              <ResourceItem
+                key={r.id}
+                resource={r}
+                pct={pct}
+                flash={Boolean(flashes[r.id])}
+              />
+            );
           })}
         </div>
-        <div className="player-block player-desktop">
-          <span className="player-name">👤 {playerName}</span>
-          <span className="protection-badge">🛡️ {PROTECTION_DAYS}g</span>
+        <div className="resource-bar-actions">
+          <NotificationBell />
+          <div className="player-block player-desktop">
+            <span className="player-name">👤 {playerName}</span>
+            <span className="protection-badge">🛡️ {PROTECTION_DAYS}g</span>
+          </div>
         </div>
       </div>
     </header>

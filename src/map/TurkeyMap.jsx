@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import CityPopup from './CityPopup';
+import CityDetailPanel from './CityDetailPanel';
 import {
   CITY_STATUS_COLORS,
   getProvinceStyle,
@@ -237,7 +237,7 @@ export default function TurkeyMap() {
             />
           ))}
         </MapContainer>
-        <CityPopup city={selectedCity} onClose={() => setSelectedCity(null)} />
+        <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
       </div>
     </div>
   );
