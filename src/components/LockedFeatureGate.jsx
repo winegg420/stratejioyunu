@@ -19,10 +19,15 @@ export default function LockedFeatureGate({ buildingId, children, featureName })
       <div className="locked-feature-gate__content" aria-hidden="true">
         {children}
       </div>
+      <Link
+        to={`/binalar#${buildingId}`}
+        className="locked-feature-gate__overlay"
+        aria-label={`${label} inşa et`}
+      />
       <p className="locked-feature-gate__hint">
         <span className="locked-feature-gate__lock" aria-hidden="true">🔒</span>
         <strong>{featureName}</strong> için önce{' '}
-        <Link to="/binalar" className="locked-feature-gate__link">
+        <Link to={`/binalar#${buildingId}`} className="locked-feature-gate__link">
           {label}
         </Link>{' '}
         inşa edilmeli (Binalar → İnşa Et).

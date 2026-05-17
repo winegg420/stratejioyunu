@@ -19,6 +19,7 @@ export default function Reports() {
       all: reports.length,
       battle: reports.filter((r) => r.filterType === 'battle').length,
       spy: reports.filter((r) => r.filterType === 'spy').length,
+      trade: reports.filter((r) => r.filterType === 'trade').length,
     }),
     [reports],
   );

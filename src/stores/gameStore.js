@@ -1,9 +1,9 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import { createFoundCityState, createInitialGameState } from '../data/gameInit';
 import {
   BUILDING_RESOURCE_MAP,
   createQueueTiming,
-  formatRate,
   formatSeconds,
   genId,
   nowReportDate,
@@ -16,10 +16,25 @@ import { landUnits } from '../data/placeholder';
 import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
 import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
 import {
+  applyTradeDelivery,
+  canAffordTrade,
+  deductTradeResources,
+  formatTradeCargoSummary,
+  sumTradeAmounts,
+} from '../lib/tradeUtils';
+import {
+  canAffordPopulation,
+  deductPopulation,
+  getAgentPopulationCost,
+  getUnitPopulationCost,
+  restorePopulation,
+} from '../lib/populationUtils';
+import {
   FOUND_CITY_COLONIST_ID,
   FOUND_CITY_COST,
   FOUND_CITY_MIN_COLONISTS,
   FOUND_CITY_MIN_TROOPS,
+  resolveFoundCityName,
 } from '../lib/foundCityConfig';
 import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
 import { applyLootWithDepotCap, refundCostWithDepotCap } from '../lib/lootUtils';
@@ -27,6 +42,9 @@ import { buildLossRows } from '../lib/reportLosses';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
+
+/** Stable fallbacks — React 19 getSnapshot must return cached references when store is unchanged. */
+export const STORE_EMPTY_ARRAY = [];
 
 function getActiveCity(state) {
   return state.cities[state.activeCityId];
@@ -40,10 +58,6 @@ function patchCity(set, get, cityId, patch) {
       [cityId]: { ...cities[cityId], ...patch },
     },
   });
-}
-
-function patchActiveCity(set, get, patch) {
-  patchCity(set, get, get().activeCityId, patch);
 }
 
 function slugCityId(name) {
@@ -123,7 +137,38 @@ function generateBattleReport(expedition, won = true) {
   };
 }
 
+function buildSpyIntelFields(success) {
+  const factoryLevel = 5 + Math.floor(Math.random() * 4);
+  const infantry = 800 + Math.floor(Math.random() * 1600);
+  const tank = 20 + Math.floor(Math.random() * 80);
+  const armor = 50 + Math.floor(Math.random() * 150);
+  const foodStock = 4000 + Math.floor(Math.random() * 8000);
+  const metalStock = 2000 + Math.floor(Math.random() * 5000);
+
+  if (!success) {
+    return [
+      { key: 'factory', label: 'Fabrika Seviyesi', hidden: true },
+      { key: 'food', label: 'Yemek Deposu', hidden: true },
+      { key: 'metal', label: 'Metal Deposu', hidden: true },
+      { key: 'infantry', label: 'Piyade', hidden: true },
+      { key: 'tank', label: 'Tank', hidden: true },
+      { key: 'armor', label: 'Zırhlı', hidden: true },
+    ];
+  }
+
+  const maybeHide = () => Math.random() > 0.55;
+  return [
+    { key: 'factory', label: 'Fabrika Seviyesi', value: `Sv.${factoryLevel}`, hidden: maybeHide() },
+    { key: 'food', label: 'Yemek Deposu', value: foodStock.toLocaleString('tr-TR'), hidden: maybeHide() },
+    { key: 'metal', label: 'Metal Deposu', value: metalStock.toLocaleString('tr-TR'), hidden: maybeHide() },
+    { key: 'infantry', label: 'Piyade', value: infantry.toLocaleString('tr-TR'), hidden: maybeHide() },
+    { key: 'tank', label: 'Tank', value: String(tank), hidden: maybeHide() },
+    { key: 'armor', label: 'Zırhlı Araç', value: String(armor), hidden: maybeHide() },
+  ];
+}
+
 function generateSpyReport(expedition, success = true) {
+  const intelFields = buildSpyIntelFields(success);
   const enemyTroops = success
     ? {
         infantry: 800 + Math.floor(Math.random() * 1600),
@@ -131,6 +176,7 @@ function generateSpyReport(expedition, success = true) {
         armor: 50 + Math.floor(Math.random() * 150),
       }
     : {};
+  const visible = intelFields.filter((f) => !f.hidden && f.value);
   return {
     id: genId('r'),
     filterType: 'spy',
@@ -141,13 +187,55 @@ function generateSpyReport(expedition, success = true) {
     winner: null,
     targetCity: expedition.target,
     intelSuccess: success,
+    intelFields,
     findings: success
-      ? `Fabrika Sv.${5 + Math.floor(Math.random() * 4)} · ${enemyTroops.infantry?.toLocaleString('tr-TR') ?? 0} Piyade · ${enemyTroops.tank ?? 0} Tank`
+      ? (visible.length
+        ? visible.map((f) => `${f.label}: ${f.value}`).join(' · ')
+        : 'Şifreli alanlar — kısmi veri')
       : 'Tüm casuslar kayıp',
     enemyTroops: success ? enemyTroops : {},
     isNew: true,
   };
 }
+
+function generateTradeReport(expedition, delivered, overflow = []) {
+  const cargo = formatTradeCargoSummary(expedition.tradePayload?.resources ?? {});
+  return {
+    id: genId('r'),
+    filterType: 'trade',
+    type: 'Ticaret',
+    title: `${expedition.originCityName} → ${expedition.target} — Lojistik Raporu`,
+    date: nowReportDate(),
+    preview: delivered
+      ? (overflow.length ? 'Teslimat yapıldı — depo taşması var.' : 'Kargo hedef şehre ulaştı.')
+      : 'Kervan geri döndü.',
+    cargo,
+    overflow,
+    originCityId: expedition.originCityId,
+    targetCity: expedition.target,
+    isNew: true,
+  };
+}
+
+function generateAgentReport(op, success, agentsLost) {
+  const intelFields = buildSpyIntelFields(success);
+  return {
+    id: genId('r'),
+    filterType: 'spy',
+    type: 'Ajan Operasyonu',
+    title: `${op.target} — ${op.opType}`,
+    date: nowReportDate(),
+    preview: success ? 'Ajan operasyonu başarılı.' : `${agentsLost} ajan imha edildi.`,
+    targetCity: op.target,
+    intelSuccess: success,
+    intelFields,
+    agentsLost,
+    findings: success ? 'Hedef verileri sızdırıldı.' : 'Operasyon başarısız — ajanlar kayıp',
+    isNew: true,
+  };
+}
+
+let globalTickerId = null;
 
 function restoreTroopsToCity(city, troopPayload) {
   if (!troopPayload) return city;
@@ -225,13 +313,11 @@ export const useGameStore = create((set, get) => ({
 
     const { cities, completed } = tickAllCities(get(), now);
 
-    let expeditions = state.expeditions.map((e) => ({ ...e }));
     const completedExpeditionIds = [];
-    expeditions = expeditions.map((e) => {
-      if (e.endsAt == null || e.endsAt > now) return e;
-      completedExpeditionIds.push(e.id);
-      return e;
-    });
+    for (const e of state.expeditions) {
+      if (e.endsAt != null && e.endsAt <= now) completedExpeditionIds.push(e.id);
+    }
+    const expeditions = state.expeditions;
 
     const researchList = state.researches ?? [];
     let researches = researchList.map((r) => ({ ...r }));
@@ -250,7 +336,15 @@ export const useGameStore = create((set, get) => ({
       };
     });
 
-    set({ now, cities, flashes, expeditions, researches });
+    let intelOperations = (state.intelOperations ?? []).map((o) => ({ ...o }));
+    const completedIntelIds = [];
+    intelOperations = intelOperations.map((o) => {
+      if (o.endsAt == null || o.endsAt > now) return o;
+      completedIntelIds.push(o.id);
+      return o;
+    });
+
+    set({ now, cities, flashes, expeditions, researches, intelOperations });
 
     completedResearchIds.forEach((id) => {
       const r = researches.find((x) => x.id === id);
@@ -271,6 +365,7 @@ export const useGameStore = create((set, get) => ({
     completed.construction.forEach(({ cityId, itemId }) => get()._completeConstruction(cityId, itemId));
     completed.production.forEach(({ cityId, itemId }) => get()._completeProduction(cityId, itemId));
     completedExpeditionIds.forEach((id) => get()._completeExpedition(id));
+    completedIntelIds.forEach((id) => get()._completeIntelOperation(id));
 
     const incomingAttacks = state.incomingAttacks.map((a) => ({ ...a }));
     const completedIncomingIds = [];
@@ -366,6 +461,24 @@ export const useGameStore = create((set, get) => ({
       const cityId = exp.originCityId || state.activeCityId;
       const city = state.cities[cityId];
       const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+
+      if (city && exp.mode === 'trade' && exp.tradePayload?.resources) {
+        const { resources, overflow } = applyTradeDelivery(
+          city.resources,
+          exp.tradePayload.resources,
+        );
+        patchCity(set, get, cityId, { resources });
+        set({
+          expeditions,
+          navBadges: { ...state.navBadges, expeditions: expeditions.length > 0 },
+        });
+        useNotificationStore.getState().addToast(
+          `Ticaret kargosu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'üse'} iade edildi`,
+          overflow.length ? 'warn' : 'success',
+        );
+        return;
+      }
+
       if (city && exp.troopPayload) {
         const restored = restoreTroopsToCity(city, exp.troopPayload);
         set({
@@ -393,8 +506,42 @@ export const useGameStore = create((set, get) => ({
         });
       }
       useNotificationStore.getState().addToast(
-        `Ordu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'şehre'} döndü`,
+        exp.mode === 'trade'
+          ? 'Ticaret konvoyu üsse döndü'
+          : `Ordu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'şehre'} döndü`,
         'success',
+      );
+      return;
+    }
+
+    if (exp.mode === 'trade' && exp.direction === 'outgoing') {
+      const targetPc = state.playerCities.find(
+        (c) => c.id === exp.targetCityId || c.name === exp.target,
+      );
+      const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+      let overflow = [];
+
+      if (targetPc && exp.tradePayload?.resources) {
+        const targetCity = state.cities[targetPc.id];
+        if (targetCity) {
+          const delivered = applyTradeDelivery(targetCity.resources, exp.tradePayload.resources);
+          overflow = delivered.overflow;
+          patchCity(set, get, targetPc.id, { resources: delivered.resources });
+        }
+      }
+
+      const report = generateTradeReport(exp, true, overflow);
+      set({
+        expeditions,
+        reports: [report, ...state.reports],
+        navBadges: {
+          expeditions: expeditions.length > 0,
+          reports: true,
+        },
+      });
+      useNotificationStore.getState().addToast(
+        overflow.length ? 'Kargo teslim — depo taşması oluştu' : 'Ticaret kargosu teslim edildi',
+        overflow.length ? 'warn' : 'success',
       );
       return;
     }
@@ -452,7 +599,11 @@ export const useGameStore = create((set, get) => ({
     const exp = state.expeditions.find((e) => e.id === expeditionId);
     if (!exp) return;
 
-    const mapEntry = state.mapCities.find((c) => c.name === exp.target);
+    const mapPlotMatch = (c) =>
+      (exp.targetLat != null && c.lat === exp.targetLat && c.lng === exp.targetLng)
+      || (exp.sourceMapCityName && c.name === exp.sourceMapCityName);
+
+    const mapEntry = state.mapCities.find(mapPlotMatch);
     let cityId = slugCityId(exp.target);
     if (state.cities[cityId] || state.playerCities.some((c) => c.id === cityId)) {
       cityId = genId('city');
@@ -478,8 +629,14 @@ export const useGameStore = create((set, get) => ({
         [cityId]: createFoundCityState(troopPayload),
       },
       mapCities: state.mapCities.map((c) =>
-        c.name === exp.target
-          ? { ...c, status: 'own', owner: 'Komutan_Alpha', population: c.population || 1200 }
+        mapPlotMatch(c)
+          ? {
+              ...c,
+              name: exp.target,
+              status: 'own',
+              owner: 'Komutan_Alpha',
+              population: c.population || 1200,
+            }
           : c,
       ),
       expeditions,
@@ -556,11 +713,12 @@ export const useGameStore = create((set, get) => ({
     const idSet = ids === 'all' ? null : new Set(ids);
     set((s) => {
       const reports = idSet ? s.reports.filter((r) => !idSet.has(r.id)) : [];
+      const hasUnread = reports.some((r) => r.isNew);
       return {
         reports,
         navBadges: {
           ...s.navBadges,
-          reports: reports.some((r) => r.isNew),
+          reports: hasUnread,
         },
       };
     });
@@ -635,6 +793,9 @@ export const useGameStore = create((set, get) => ({
 
     if (!canAffordCost(costStr, count, city.resources)) return false;
 
+    const popCost = getUnitPopulationCost(unitId, count);
+    if (!canAffordPopulation(city, popCost)) return false;
+
     const hasActive = city.productionQueue.some((q) => !q.queued);
     const queued = addToQueue || hasActive;
     const duration = parseTimeToSeconds(unitMeta.time) || 30;
@@ -649,13 +810,16 @@ export const useGameStore = create((set, get) => ({
       count,
       costPaid: costStr,
       costQty: count,
+      popCost,
       queued,
       ...timing,
     };
 
     const resources = deductCost(costStr, count, city.resources);
+    const withPop = deductPopulation({ ...city, resources }, popCost);
     patchCity(set, get, cityId, {
-      resources,
+      resources: withPop.resources,
+      idlePopulation: withPop.idlePopulation,
       productionQueue: [...city.productionQueue, item],
     });
 
@@ -666,13 +830,16 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
-  startExpedition: ({ targetCity, troopQty, mode = 'attack' }) => {
+  startExpedition: ({ targetCity, troopQty, mode = 'attack', newCityName }) => {
     const state = get();
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
     const isSpy = mode === 'spy';
     const isFound = mode === 'found';
     const spyCount = troopQty?.spies ?? 0;
+
+    const isOwnPlayerCity = state.playerCities.some((pc) => pc.name === targetCity.name);
+    if (!isFound && isOwnPlayerCity && (isSpy || mode === 'attack')) return false;
 
     if (isFound) {
       if (targetCity.status !== 'empty') return false;
@@ -713,11 +880,16 @@ export const useGameStore = create((set, get) => ({
         : EXPEDITION_DURATIONS.attack;
     const timing = createQueueTiming(duration);
     const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
+    const foundTargetName = isFound
+      ? resolveFoundCityName(newCityName, state.playerCities.map((c) => c.name))
+      : targetCity.name;
+
     const expedition = {
       id: genId('exp'),
       originCityId: cityId,
       originCityName,
-      target: targetCity.name,
+      target: foundTargetName,
+      sourceMapCityName: isFound ? targetCity.name : undefined,
       targetLat: targetCity.lat,
       targetLng: targetCity.lng,
       mode: isFound ? 'found' : isSpy ? 'spy' : 'attack',
@@ -742,7 +914,7 @@ export const useGameStore = create((set, get) => ({
 
     useNotificationStore.getState().addToast(
       isFound
-        ? `Şehir kurma seferi: ${targetCity.name}`
+        ? `Şehir kurma seferi: ${foundTargetName}`
         : isSpy
           ? `Casuslar ${targetCity.name} yolunda`
           : `Sefer başlatıldı: ${targetCity.name}`,
@@ -751,6 +923,162 @@ export const useGameStore = create((set, get) => ({
 
     return true;
   },
+
+  startTradeExpedition: ({ targetCityName, sendAmounts }) => {
+    const total = sumTradeAmounts(sendAmounts);
+    if (total <= 0) {
+      useNotificationStore.getState().addToast('Gönderilecek kaynak seçin', 'warn');
+      return false;
+    }
+
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const targetPc = state.playerCities.find((c) => c.name === targetCityName);
+    if (!targetPc || targetPc.id === cityId) {
+      useNotificationStore.getState().addToast('Geçerli bir hedef şehir seçin', 'warn');
+      return false;
+    }
+    if (!canAffordTrade(city.resources, sendAmounts)) {
+      useNotificationStore.getState().addToast('Yetersiz kaynak', 'warn');
+      return false;
+    }
+
+    const market = city.buildings?.find((b) => b.id === 'market');
+    if (!market || market.level < 1) {
+      useNotificationStore.getState().addToast(
+        'Ticaret için önce Pazar Yeri inşa edilmeli (Binalar)',
+        'warn',
+      );
+      return false;
+    }
+
+    const resources = deductTradeResources(city.resources, sendAmounts);
+    const duration = EXPEDITION_DURATIONS.trade;
+    const timing = createQueueTiming(duration);
+    const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
+    const mapTarget = state.mapCities.find((c) => c.name === targetCityName);
+
+    const expedition = {
+      id: genId('exp'),
+      originCityId: cityId,
+      originCityName,
+      targetCityId: targetPc.id,
+      target: targetCityName,
+      targetLat: mapTarget?.lat ?? targetPc.lat,
+      targetLng: mapTarget?.lng ?? targetPc.lng,
+      mode: 'trade',
+      type: 'Ticaret Konvoyu',
+      direction: 'outgoing',
+      troops: formatTradeCargoSummary(sendAmounts),
+      tradePayload: { resources: { ...sendAmounts } },
+      troopPayload: null,
+      player: 'Komutan_Alpha',
+      units: 1,
+      distance: '—',
+      ...timing,
+    };
+
+    set((s) => ({
+      cities: { ...s.cities, [cityId]: { ...city, resources } },
+      expeditions: [...s.expeditions, expedition],
+      navBadges: { ...s.navBadges, expeditions: true },
+    }));
+
+    useNotificationStore.getState().addToast(
+      `Ticaret konvoyu ${targetCityName} yolunda`,
+      'info',
+    );
+    return true;
+  },
+
+  sendIntelOperation: ({ target, opType, agentCount = 1 }) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const intel = city.buildings?.find((b) => b.id === 'intel');
+    if (!intel || intel.level < 1) return false;
+    if ((city.idleAgents ?? 0) < agentCount) return false;
+
+    const popCost = getAgentPopulationCost(agentCount);
+    if (!canAffordPopulation(city, popCost)) return false;
+
+    const duration = 40 + Math.floor(Math.random() * 25);
+    const timing = createQueueTiming(duration);
+    const op = {
+      id: genId('iop'),
+      originCityId: cityId,
+      target,
+      opType,
+      agentCount,
+      ...timing,
+    };
+
+    const withPop = deductPopulation(
+      { ...city, idleAgents: (city.idleAgents ?? 0) - agentCount },
+      popCost,
+    );
+
+    patchCity(set, get, cityId, {
+      idleAgents: withPop.idleAgents,
+      idlePopulation: withPop.idlePopulation,
+    });
+
+    set({
+      intelOperations: [...(state.intelOperations ?? []), op],
+    });
+
+    useNotificationStore.getState().addToast(
+      `${agentCount} ajan — ${opType} (${target})`,
+      'intel',
+    );
+    return true;
+  },
+
+  _completeIntelOperation: (opId) => {
+    const state = get();
+    const op = (state.intelOperations ?? []).find((o) => o.id === opId);
+    if (!op) return;
+
+    const success = Math.random() > 0.38;
+    const agentsLost = success ? 0 : op.agentCount;
+    const report = generateAgentReport(op, success, agentsLost);
+    const intelOperations = (state.intelOperations ?? []).filter((o) => o.id !== opId);
+
+    set({
+      intelOperations,
+      reports: [report, ...state.reports],
+      navBadges: { ...state.navBadges, reports: true },
+    });
+
+    if (agentsLost > 0) {
+      useNotificationStore.getState().addToast(
+        `SİBER ALARM: ${agentsLost} ajan imha edildi — ${op.target}`,
+        'danger',
+      );
+    } else {
+      useNotificationStore.getState().addToast(
+        success ? 'Ajan operasyonu raporu geldi' : 'Operasyon başarısız',
+        success ? 'intel' : 'warn',
+      );
+    }
+  },
+
+  requestMapTradeFocus: (expeditionId) => {
+    const state = get();
+    const exp = state.expeditions.find((e) => e.id === expeditionId);
+    if (!exp || exp.mode !== 'trade') return;
+    set({
+      mapFocusRequest: {
+        expeditionId,
+        originCityId: exp.originCityId,
+        targetName: exp.target,
+        at: Date.now(),
+      },
+    });
+  },
+
+  clearMapFocusRequest: () => set({ mapFocusRequest: null }),
 
   speedUpConstruction: (queueId) => {
     const cityId = get().activeCityId;
@@ -866,8 +1194,12 @@ export const useGameStore = create((set, get) => ({
       }
     }
 
+    const popRefund = item.popCost ?? getUnitPopulationCost(item.unitId, item.count ?? 1);
+    const withPop = restorePopulation({ ...city, resources }, popRefund);
+
     patchCity(set, get, cityId, {
-      resources,
+      resources: withPop.resources,
+      idlePopulation: withPop.idlePopulation,
       productionQueue: city.productionQueue.filter((q) => q.id !== queueId),
     });
     useNotificationStore.getState().addToast('Üretim iptal edildi', 'info');
@@ -949,8 +1281,17 @@ export const useGameStore = create((set, get) => ({
   },
 
   startTicker: () => {
-    const id = setInterval(() => get().tick(), 1000);
-    return () => clearInterval(id);
+    if (globalTickerId != null) {
+      return () => {
+        clearInterval(globalTickerId);
+        globalTickerId = null;
+      };
+    }
+    globalTickerId = setInterval(() => get().tick(), 1000);
+    return () => {
+      clearInterval(globalTickerId);
+      globalTickerId = null;
+    };
   },
 }));
 
@@ -959,14 +1300,24 @@ export function useActiveCity() {
 }
 
 export function useActiveCityResources() {
-  return useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  return useGameStore(
+    (s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY,
+  );
+}
+
+export function useActiveCityIdleTroops() {
+  return useGameStore(
+    (s) => s.cities[s.activeCityId]?.idleTroops ?? STORE_EMPTY_ARRAY,
+  );
 }
 
 export function useExpeditionSummary() {
-  return useGameStore((s) => ({
-    incoming: s.expeditions.filter((e) => e.direction === 'returning').length,
-    outgoing: s.expeditions.filter((e) => e.direction === 'outgoing').length,
-  }));
+  return useGameStore(
+    useShallow((s) => ({
+      incoming: s.expeditions.filter((e) => e.direction === 'returning').length,
+      outgoing: s.expeditions.filter((e) => e.direction === 'outgoing').length,
+    })),
+  );
 }
 
 export function useUnderAttack() {
@@ -998,7 +1349,9 @@ export function useConstructionQueueFull() {
 }
 
 export function useTroopsAwayMap(cityId) {
-  return useGameStore((s) => getTroopsAwayFromCity(s.expeditions, cityId ?? s.activeCityId));
+  return useGameStore(
+    useShallow((s) => getTroopsAwayFromCity(s.expeditions, cityId ?? s.activeCityId)),
+  );
 }
 
 export function formatCityOptionLabel(city) {

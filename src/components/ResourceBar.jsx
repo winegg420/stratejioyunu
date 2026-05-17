@@ -1,7 +1,8 @@
 ﻿import { useAuth } from '../context/AuthContext';
-import { useGameStore, formatCityOptionLabel } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
+import ServerTimeClock from './ServerTimeClock';
 
 const DEPOT_WARN_PCT = 90;
 
@@ -50,7 +51,7 @@ export default function ResourceBar() {
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const setActiveCity = useGameStore((s) => s.setActiveCity);
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const flashes = useGameStore((s) => s.flashes);
 
   return (
@@ -89,6 +90,7 @@ export default function ResourceBar() {
           })}
         </div>
         <div className="resource-bar-actions">
+          <ServerTimeClock />
           <NotificationBell />
           <div className="player-block player-desktop">
             <span className="player-name">{playerName}</span>

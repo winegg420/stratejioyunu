@@ -718,6 +718,16 @@ a {
   min-height: 400px;
 }
 
+.map-loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
 .map-page.map-interaction-locked {
   height: calc(100dvh - var(--resource-bar-h) - var(--bottom-nav-h));
   gap: 0;
@@ -3156,4 +3166,300 @@ body.map-scroll-locked {
 
 .building-card--unbuilt .card-visual {
   filter: grayscale(0.5) brightness(0.85);
+}
+
+.building-card--focus {
+  outline: 2px solid #22d3ee;
+  outline-offset: 3px;
+  box-shadow: 0 0 22px rgba(34, 211, 238, 0.35);
+}
+
+/* Sunucu saati */
+.server-time-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 6px;
+  background: rgba(8, 16, 28, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.server-time-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.server-time-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #22d3ee;
+}
+
+/* Ticaret */
+.trade-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.trade-resource-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.trade-resource-row {
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.trade-resource-row--overflow {
+  border-color: rgba(250, 204, 21, 0.65);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.15);
+}
+
+.trade-res-inputs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.trade-half-btn {
+  min-width: 2.5rem;
+}
+
+.trade-overflow-warn,
+.trade-empty-warn {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #facc15;
+}
+
+.trade-caravan-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.trade-caravan-list li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.trade-caravan-card {
+  flex: 1;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 6px;
+  background: rgba(8, 20, 32, 0.75);
+  cursor: pointer;
+  color: inherit;
+}
+
+.trade-caravan-card:hover {
+  border-color: #22d3ee;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.2);
+}
+
+.trade-caravan-card strong {
+  display: block;
+}
+
+.trade-caravan-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.cyber-route--trade {
+  animation: trade-route-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes trade-route-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px #22d3ee);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px #22d3ee);
+  }
+}
+
+.trade-cargo-marker {
+  animation: cargo-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes cargo-blink {
+  50% {
+    opacity: 0.65;
+    transform: scale(1.08);
+  }
+}
+
+/* Siber sis — casus raporu */
+.report-intel-fields {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.report-intel-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.report-intel-field--fog .report-intel-fog {
+  position: relative;
+  display: inline-block;
+  min-width: 4rem;
+  color: transparent;
+  user-select: none;
+  overflow: hidden;
+  border-radius: 3px;
+  letter-spacing: 2px;
+}
+
+.cyber-fog-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(34, 211, 238, 0.05),
+    rgba(34, 211, 238, 0.35),
+    rgba(34, 211, 238, 0.05)
+  );
+  animation: fog-shimmer 1.8s linear infinite;
+}
+
+@keyframes fog-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Toast alarm */
+.toast-danger {
+  border-color: rgba(239, 68, 68, 0.75);
+  background: rgba(40, 8, 12, 0.98);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.35);
+  animation: toast-in 0.25s ease-out, toast-danger-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes toast-danger-pulse {
+  50% {
+    box-shadow: 0 0 22px rgba(239, 68, 68, 0.55);
+  }
+}
+
+/* Nav lojistik */
+.nav-icon {
+  position: relative;
+}
+
+.nav-logistics-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.barracks-agent-counter,
+.intel-agent-counter {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.barracks-agent-counter strong,
+.intel-agent-counter strong {
+  color: #a78bfa;
+}
+
+.locked-feature-gate__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.locked-feature-gate {
+  position: relative;
+}
+
+.expedition-row-trade {
+  cursor: pointer;
+}
+
+.expedition-row-trade:hover {
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.expedition-map-hint {
+  font-size: 0.75rem;
+  color: #22d3ee;
+}
+
+.city-panel-own-warn {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+
+.map-collapse-toggle {
+  position: absolute;
+  z-index: 500;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.72rem;
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+  background: rgba(8, 16, 28, 0.92);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.map-collapse-toggle--hud {
+  right: 0.65rem;
+  top: 4.5rem;
+}
+
+.map-collapse-toggle--minimap {
+  right: 0.65rem;
+  bottom: 5.5rem;
+}
+
+.map-minimap-wrap--collapsed {
+  display: none;
+}
+
+.city-status-card--intel .city-status-value {
+  color: #a78bfa;
+}
+
+.report-type--trade {
+  background: rgba(34, 211, 238, 0.2);
+  color: #22d3ee;
 }

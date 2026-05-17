@@ -2,14 +2,14 @@ import PageHeader from '../components/PageHeader';
 import CostBreakdown from '../components/CostBreakdown';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { RESEARCH_BUILDING_ID } from '../lib/buildingUtils';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { canAffordCost } from '../utils/resourceCosts';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 
 function ResearchCard({ item }) {
   const now = useGameStore((s) => s.now);
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
-  const researches = useGameStore((s) => s.researches ?? []);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const enqueueResearch = useGameStore((s) => s.enqueueResearch);
   const startQueuedResearch = useGameStore((s) => s.startQueuedResearch);
   const cancelResearch = useGameStore((s) => s.cancelResearch);
@@ -71,7 +71,7 @@ function ResearchCard({ item }) {
 }
 
 export default function Research() {
-  const researches = useGameStore((s) => s.researches ?? []);
+  const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
 
   return (
     <div className="page">

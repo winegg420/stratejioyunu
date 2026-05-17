@@ -9,6 +9,7 @@ export const ROUTE_STYLES = {
   spy: { color: '#facc15', dashArray: '6, 10', className: 'cyber-route cyber-route--spy' },
   return: { color: '#22ff88', dashArray: '12, 8', className: 'cyber-route cyber-route--return' },
   found: { color: '#38bdf8', dashArray: '8, 12', className: 'cyber-route cyber-route--found' },
+  trade: { color: '#22d3ee', dashArray: '4, 8', className: 'cyber-route cyber-route--trade' },
 };
 
 export const FOG_FILL = { fillColor: '#030712', fillOpacity: 0.72, stroke: false };

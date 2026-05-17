@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import CityDetailPanel from './CityDetailPanel';
 import CyberCityMarkers from './CyberCityMarkers';
 import ExpeditionRoutesLayer from './ExpeditionRoutesLayer';
+import TradeRouteCargoLayer from './TradeRouteCargoLayer';
 import FogOfWarLayer from './FogOfWarLayer';
 import MapHudControls from './MapHudControls';
 import MapBoundsReporter from './MapBoundsReporter';
@@ -68,8 +69,12 @@ function HudBridge({ activeCity, onFocusCity }) {
 }
 
 export default function TurkeyMap() {
+  const [mapReady, setMapReady] = useState(false);
   const mapCities = useGameStore((s) => s.mapCities);
   const expeditions = useGameStore((s) => s.expeditions);
+  const now = useGameStore((s) => s.now);
+  const mapFocusRequest = useGameStore((s) => s.mapFocusRequest);
+  const clearMapFocusRequest = useGameStore((s) => s.clearMapFocusRequest);
   const reports = useGameStore((s) => s.reports);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -90,6 +95,29 @@ export default function TurkeyMap() {
   const [flyTarget, setFlyTarget] = useState(null);
   const [cityPick, setCityPick] = useState('');
   const [viewport, setViewport] = useState(null);
+  const setViewportStable = useCallback((next) => {
+    setViewport((prev) => {
+      if (!prev || !next) return next;
+      const pb = prev.bounds;
+      const nb = next.bounds;
+      const pc = prev.center;
+      const nc = next.center;
+      if (
+        prev.zoom === next.zoom
+        && pc.lat === nc.lat
+        && pc.lng === nc.lng
+        && pb.getNorth() === nb.getNorth()
+        && pb.getSouth() === nb.getSouth()
+        && pb.getEast() === nb.getEast()
+        && pb.getWest() === nb.getWest()
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
+  const [hudCollapsed, setHudCollapsed] = useState(false);
+  const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
 
   const interactionLocked = isMobile ? mapLocked : true;
 
@@ -100,6 +128,11 @@ export default function TurkeyMap() {
   }, [activeCityId, playerCities, mapCities]);
 
   useEffect(() => {
+    setMapReady(true);
+    return () => setMapReady(false);
+  }, []);
+
+  useEffect(() => {
     if (!isMobile) return undefined;
     if (mapLocked) {
       document.body.classList.add('map-scroll-locked');
@@ -108,6 +141,22 @@ export default function TurkeyMap() {
     }
     return () => document.body.classList.remove('map-scroll-locked');
   }, [isMobile, mapLocked]);
+
+  useEffect(() => {
+    if (!mapFocusRequest) return;
+    const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
+    const home = mapCities.find((c) => c.name === originPc?.name);
+    const target = mapCities.find((c) => c.name === mapFocusRequest.targetName);
+    if (home && target) {
+      const bounds = L.latLngBounds(
+        [home.lat, home.lng],
+        [target.lat, target.lng],
+      );
+      setFitBounds(bounds);
+      setFlyTarget(null);
+    }
+    clearMapFocusRequest();
+  }, [mapFocusRequest, playerCities, mapCities, clearMapFocusRequest]);
 
   useEffect(() => {
     fetch('/geo/provinces.json')
@@ -267,7 +316,14 @@ export default function TurkeyMap() {
       />
 
       <div className="map-container-wrap map-container-wrap--cyber">
+        {!mapReady && (
+          <div className="map-loading-placeholder" aria-live="polite">
+            Harita yükleniyor…
+          </div>
+        )}
+        {mapReady && (
         <MapContainer
+          key="turkey-main-map"
           center={TURKEY_CENTER}
           zoom={TURKEY_ZOOM}
           minZoom={5}
@@ -302,7 +358,7 @@ export default function TurkeyMap() {
             />
           )}
           <RangeCircleLayer center={activeMapCity} />
-          <MapBoundsReporter onViewportChange={setViewport} />
+          <MapBoundsReporter onViewportChange={setViewportStable} />
           <FogOfWarLayer
             playerCities={playerCities}
             mapCities={mapCities}
@@ -313,6 +369,12 @@ export default function TurkeyMap() {
             expeditions={expeditions}
             mapCities={mapCities}
             playerCities={playerCities}
+          />
+          <TradeRouteCargoLayer
+            expeditions={expeditions}
+            mapCities={mapCities}
+            playerCities={playerCities}
+            now={now}
           />
           <CyberCityMarkers
             cities={filteredCities}
@@ -326,9 +388,34 @@ export default function TurkeyMap() {
           {flyTarget && (
             <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
           )}
-          <HudBridge activeCity={activeMapCity} onFocusCity={focusActiveCity} />
+          {(!isMobile || !hudCollapsed) && (
+            <HudBridge activeCity={activeMapCity} onFocusCity={focusActiveCity} />
+          )}
         </MapContainer>
-        <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
+        )}
+        {isMobile && (
+          <button
+            type="button"
+            className="map-collapse-toggle map-collapse-toggle--hud"
+            onClick={() => setHudCollapsed((v) => !v)}
+            aria-expanded={!hudCollapsed}
+          >
+            {hudCollapsed ? 'HUD Aç' : 'HUD Kapat'}
+          </button>
+        )}
+        {isMobile && (
+          <button
+            type="button"
+            className="map-collapse-toggle map-collapse-toggle--minimap"
+            onClick={() => setMiniMapCollapsed((v) => !v)}
+            aria-expanded={!miniMapCollapsed}
+          >
+            {miniMapCollapsed ? 'Mini Harita' : 'Mini Harita Kapat'}
+          </button>
+        )}
+        <div className={`map-minimap-wrap${miniMapCollapsed && isMobile ? ' map-minimap-wrap--collapsed' : ''}`}>
+          <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
+        </div>
         <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
       </div>
     </div>

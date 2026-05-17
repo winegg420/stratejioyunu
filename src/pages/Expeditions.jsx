@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
@@ -10,6 +10,13 @@ export default function Expeditions() {
   const playerCities = useGameStore((s) => s.playerCities);
   const pastExpeditions = useGameStore((s) => s.pastExpeditions);
   const recallExpedition = useGameStore((s) => s.recallExpedition);
+  const requestMapTradeFocus = useGameStore((s) => s.requestMapTradeFocus);
+  const navigate = useNavigate();
+
+  const focusTradeOnMap = (expeditionId) => {
+    requestMapTradeFocus(expeditionId);
+    navigate('/harita');
+  };
   const hasActive = expeditions.length > 0;
   const hasPast = pastExpeditions.length > 0;
 
@@ -44,7 +51,28 @@ export default function Expeditions() {
                 const origin = getExpeditionOriginLabel(e, playerCities);
                 const isReturn = e.direction === 'returning' || e.recalled;
                 return (
-                <tr key={e.id} className={isReturn ? 'expedition-row-return' : ''}>
+                <tr
+                  key={e.id}
+                  className={[
+                    isReturn ? 'expedition-row-return' : '',
+                    e.mode === 'trade' ? 'expedition-row-trade' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={e.mode === 'trade' ? () => focusTradeOnMap(e.id) : undefined}
+                  role={e.mode === 'trade' ? 'button' : undefined}
+                  tabIndex={e.mode === 'trade' ? 0 : undefined}
+                  onKeyDown={
+                    e.mode === 'trade'
+                      ? (ev) => {
+                          if (ev.key === 'Enter' || ev.key === ' ') {
+                            ev.preventDefault();
+                            focusTradeOnMap(e.id);
+                          }
+                        }
+                      : undefined
+                  }
+                >
                   <td>{origin}</td>
                   <td>
                     {isReturn ? (
@@ -52,7 +80,12 @@ export default function Expeditions() {
                         <strong className="expedition-return-tag">[GERİ DÖNÜŞ]</strong> {origin}
                       </span>
                     ) : (
-                      e.target
+                      <>
+                        {e.target}
+                        {e.mode === 'trade' && (
+                          <span className="expedition-map-hint"> · haritada göster</span>
+                        )}
+                      </>
                     )}
                   </td>
                   <td>{isReturn ? 'Geri Dönüş' : e.type}</td>
@@ -63,7 +96,10 @@ export default function Expeditions() {
                       <button
                         type="button"
                         className="btn btn-secondary btn-sm"
-                        onClick={() => recallExpedition(e.id)}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          recallExpedition(e.id);
+                        }}
                       >
                         Geri Çağır
                       </button>

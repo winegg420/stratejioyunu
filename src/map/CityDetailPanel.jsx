@@ -11,7 +11,12 @@ import {
   getFoundCityReadiness,
 } from '../lib/foundCityConfig';
 import { isCityInOperationRange } from '../lib/mapRange';
-import { useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import {
+  useActiveCityIdleTroops,
+  useActiveCityResources,
+  useGameStore,
+  useTroopsAwayMap,
+} from '../stores/gameStore';
 
 const STATUS_LABELS = {
   own: 'Kendi şehriniz',
@@ -54,16 +59,22 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
 }
 
 export default function CityDetailPanel({ city, onClose }) {
+  if (!city) return null;
+  return <CityDetailPanelContent city={city} onClose={onClose} />;
+}
+
+function CityDetailPanelContent({ city, onClose }) {
   const [panelMode, setPanelMode] = useState(null);
   const [troopQty, setTroopQty] = useState({});
   const [spyQty, setSpyQty] = useState(0);
+  const [foundCityName, setFoundCityName] = useState('');
 
   const activeCityId = useGameStore((s) => s.activeCityId);
   const activeCityName = useGameStore(
     (s) => s.playerCities.find((c) => c.id === s.activeCityId)?.name ?? '',
   );
-  const idleTroops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops ?? []);
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  const idleTroops = useActiveCityIdleTroops();
+  const resources = useActiveCityResources();
   const idleSpies = useGameStore((s) => s.cities[s.activeCityId]?.idleSpies ?? 0);
   const awayMap = useTroopsAwayMap(activeCityId);
   const startExpedition = useGameStore((s) => s.startExpedition);
@@ -72,13 +83,14 @@ export default function CityDetailPanel({ city, onClose }) {
   useEffect(() => {
     setTroopQty({});
     setSpyQty(0);
+    setFoundCityName('');
   }, [activeCityId]);
 
   useEffect(() => {
-    if (!city) return undefined;
     setPanelMode(null);
     setTroopQty({});
     setSpyQty(0);
+    setFoundCityName('');
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
@@ -86,16 +98,16 @@ export default function CityDetailPanel({ city, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [city, onClose]);
 
-  if (!city) return null;
-
   const color = CITY_STATUS_COLORS[city.status] || '#9ca3af';
   const owner = city.owner || 'Boş';
   const cityType = city.type || '—';
   const inRadarRange = isCityInOperationRange(city, activeCityId, playerCities, mapCities);
   const canFound = city.status === 'empty' && inRadarRange
     && !playerCities.some((c) => c.name === city.name);
-  const canAttack = city.status !== 'own' && city.status !== 'empty' && inRadarRange;
-  const canSpy = (city.status === 'enemy' || city.status === 'bot') && inRadarRange;
+  const isActiveOwnCity = city.status === 'own' && city.name === activeCityName;
+  const isAnyOwnCity = city.status === 'own';
+  const canAttack = !isAnyOwnCity && city.status !== 'empty' && inRadarRange;
+  const canSpy = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot') && inRadarRange;
   const outOfRange = city.status !== 'own' && !inRadarRange;
 
   const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
@@ -122,7 +134,12 @@ export default function CityDetailPanel({ city, onClose }) {
 
   const confirmFound = () => {
     if (!foundReadiness.canStartExpedition) return;
-    const ok = startExpedition({ targetCity: city, troopQty, mode: 'found' });
+    const ok = startExpedition({
+      targetCity: city,
+      troopQty,
+      mode: 'found',
+      newCityName: foundCityName,
+    });
     if (ok) onClose();
   };
 
@@ -197,6 +214,17 @@ export default function CityDetailPanel({ city, onClose }) {
               <strong>{FOUND_CITY_MIN_COLONISTS} Kolonist</strong>) ve{' '}
               <strong>{FOUND_CITY_COST}</strong> gerekir.
             </p>
+            <label className="city-panel-form-field">
+              <span>Yeni şehir adı</span>
+              <input
+                type="text"
+                className="input-text"
+                value={foundCityName}
+                onChange={(e) => setFoundCityName(e.target.value)}
+                placeholder="Boş bırakılırsa: Yeni Koloni / Siber Üs"
+                maxLength={32}
+              />
+            </label>
             <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.found} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
@@ -282,7 +310,12 @@ export default function CityDetailPanel({ city, onClose }) {
                 Bu şehir radar menziliniz dışında. Operasyonlar kullanılamaz.
               </p>
             )}
-            {city.status !== 'own' && inRadarRange && (
+            {isActiveOwnCity && (
+              <p className="city-panel-own-warn">
+                Aktif şehrinize saldırı veya casusluk emri verilemez.
+              </p>
+            )}
+            {canAttack && (
               <button type="button" className="btn btn-danger" onClick={() => setPanelMode('attack')}>
                 ⚔️ Asker Gönder
               </button>

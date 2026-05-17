@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+import PageSafe from './components/PageSafe';
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
@@ -34,20 +35,20 @@ export default function App() {
               </RequireAuth>
             )}
           >
-            <Route index element={<Home />} />
-            <Route path="binalar" element={<Buildings />} />
-            <Route path="arastirma" element={<Research />} />
-            <Route path="kisla" element={<Barracks />} />
-            <Route path="hava" element={<Airbase />} />
-            <Route path="tersane" element={<Shipyard />} />
-            <Route path="seferler" element={<Expeditions />} />
-            <Route path="istihbarat" element={<Intelligence />} />
-            <Route path="ticaret" element={<Trade />} />
-            <Route path="diplomasi" element={<Diplomacy />} />
-            <Route path="raporlar" element={<Reports />} />
-            <Route path="harita" element={<MapPage />} />
-            <Route path="profil" element={<Profile />} />
-            <Route path="mesajlar" element={<Messages />} />
+            <Route index element={<PageSafe><Home /></PageSafe>} />
+            <Route path="binalar" element={<PageSafe><Buildings /></PageSafe>} />
+            <Route path="arastirma" element={<PageSafe><Research /></PageSafe>} />
+            <Route path="kisla" element={<PageSafe><Barracks /></PageSafe>} />
+            <Route path="hava" element={<PageSafe><Airbase /></PageSafe>} />
+            <Route path="tersane" element={<PageSafe><Shipyard /></PageSafe>} />
+            <Route path="seferler" element={<PageSafe><Expeditions /></PageSafe>} />
+            <Route path="istihbarat" element={<PageSafe><Intelligence /></PageSafe>} />
+            <Route path="ticaret" element={<PageSafe><Trade /></PageSafe>} />
+            <Route path="diplomasi" element={<PageSafe><Diplomacy /></PageSafe>} />
+            <Route path="raporlar" element={<PageSafe><Reports /></PageSafe>} />
+            <Route path="harita" element={<PageSafe><MapPage /></PageSafe>} />
+            <Route path="profil" element={<PageSafe><Profile /></PageSafe>} />
+            <Route path="mesajlar" element={<PageSafe><Messages /></PageSafe>} />
           </Route>
           <Route path="*" element={<Navigate to="/giris" replace />} />
         </Routes>

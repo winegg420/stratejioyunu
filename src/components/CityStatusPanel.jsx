@@ -1,4 +1,5 @@
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { getCounterIntelProtectionPct } from '../lib/counterIntel';
 import { useGameStore } from '../stores/gameStore';
 
 export default function CityStatusPanel() {
@@ -14,6 +15,7 @@ export default function CityStatusPanel() {
   const outgoing = expeditions.filter((e) => e.direction === 'outgoing').length;
   const incoming = expeditions.filter((e) => e.direction === 'returning').length;
   const buildRemaining = activeBuild ? remainingFromEndsAt(activeBuild.endsAt, now) : 0;
+  const counterIntelPct = getCounterIntelProtectionPct(city);
 
   return (
     <section className="city-status-panel" aria-label="Genel durum">
@@ -60,6 +62,15 @@ export default function CityStatusPanel() {
           <div>
             <span className="city-status-label">Gelen Seferler</span>
             <strong className="city-status-value">{incoming}</strong>
+          </div>
+        </div>
+        <div className="city-status-card city-status-card--intel">
+          <span className="city-status-icon" aria-hidden="true">
+            🛡️
+          </span>
+          <div>
+            <span className="city-status-label">Karşı Casusluk Koruma</span>
+            <strong className="city-status-value">%{counterIntelPct}</strong>
           </div>
         </div>
       </div>

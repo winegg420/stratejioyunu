@@ -125,6 +125,29 @@ export default function ReportDetail({ report }) {
             <span>{report.findings}</span>
           </div>
         </div>
+        {report.intelFields?.length > 0 && (
+          <div className="report-spy-intel-grid">
+            <h4>Keşif Verileri — {cityName}</h4>
+            <ul className="report-intel-fields">
+              {report.intelFields.map((field) => (
+                <li
+                  key={field.key}
+                  className={field.hidden ? 'report-intel-field report-intel-field--fog' : 'report-intel-field'}
+                >
+                  <span className="report-intel-label">{field.label}</span>
+                  {field.hidden ? (
+                    <span className="report-intel-fog" aria-label="Şifreli veri">
+                      <span className="cyber-fog-shimmer" />
+                      ████
+                    </span>
+                  ) : (
+                    <strong>{field.value}</strong>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {ok && enemyTroops && (
           <div className="report-spy-troops">
             <h4>Tespit Edilen Garnizon — {cityName}</h4>
@@ -141,6 +164,31 @@ export default function ReportDetail({ report }) {
               Savaş simülatöründe hedef şehir olarak &quot;{cityName}&quot; yazıp &quot;Rapora Göre Simüle Et&quot; kullanabilirsiniz.
             </p>
           </div>
+        )}
+      </div>
+    );
+  }
+
+  if (report.filterType === 'trade') {
+    return (
+      <div className="report-detail">
+        <div className="report-winner-banner report-winner-banner--intel-ok">
+          <span className="report-winner-icon" aria-hidden="true">
+            📦
+          </span>
+          <div>
+            <strong>Lojistik Teslimat</strong>
+            <span>{report.preview}</span>
+          </div>
+        </div>
+        <p className="report-trade-cargo">
+          <strong>Kargo:</strong> {report.cargo}
+        </p>
+        {report.overflow?.length > 0 && (
+          <p className="trade-overflow-warn" role="alert">
+            Depo taşması:{' '}
+            {report.overflow.map((o) => `${o.amount} ${o.label}`).join(', ')}
+          </p>
         )}
       </div>
     );

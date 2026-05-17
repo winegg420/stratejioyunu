@@ -2,14 +2,14 @@
 import { canAffordCost } from '../utils/resourceCosts';
 import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
-import { useGameStore, useConstructionQueueFull } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
 import { arePrerequisitesMet } from '../lib/buildingUtils';
 
 export default function BuildingCard({ building }) {
   const now = useGameStore((s) => s.now);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
-  const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? []);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
   const queueFull = useConstructionQueueFull();
 
@@ -39,7 +39,10 @@ export default function BuildingCard({ building }) {
   const handleQueue = () => enqueueConstruction(building.id, { addToQueue: true });
 
   const card = (
-    <article className={`card building-card ${upgrading ? 'upgrading' : ''} ${isUnbuilt ? 'building-card--unbuilt' : ''}`}>
+    <article
+      id={`building-card-${building.id}`}
+      className={`card building-card ${upgrading ? 'upgrading' : ''} ${isUnbuilt ? 'building-card--unbuilt' : ''}`}
+    >
       {queueBadge && (
         <span
           className={`building-queue-badge${queueEntry.queued ? ' building-queue-badge--queued' : ' building-queue-badge--active'}`}

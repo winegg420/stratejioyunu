@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { landUnits } from '../data/placeholder';
 import { simulateBattle } from '../lib/battleSimulator';
 import { extractCityFromReportTitle, findSpyReportForCity, getEnemyTroopsFromReport } from '../lib/spyIntel';
-import { useGameStore } from '../stores/gameStore';
+import { useActiveCityIdleTroops, useGameStore } from '../stores/gameStore';
 
 function emptyCounts() {
   return Object.fromEntries(landUnits.map((u) => [u.id, '']));
@@ -33,7 +33,7 @@ function TroopInputGrid({ title, counts, onChange, readOnly = false }) {
 
 export default function BattleSimulator({ defaultTargetCity = '' }) {
   const reports = useGameStore((s) => s.reports);
-  const idleTroops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops ?? []);
+  const idleTroops = useActiveCityIdleTroops();
 
   const [targetCity, setTargetCity] = useState(defaultTargetCity);
   const [attacker, setAttacker] = useState(emptyCounts);

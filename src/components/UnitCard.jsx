@@ -1,18 +1,22 @@
 import { useState } from 'react';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
+import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
 import CostBreakdown from './CostBreakdown';
 import TroopStockLabel from './TroopStockLabel';
 
 export default function UnitCard({ unit, awayMap }) {
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const resources = city?.resources ?? STORE_EMPTY_ARRAY;
   const enqueueProduction = useGameStore((s) => s.enqueueProduction);
   const [qtyInput, setQtyInput] = useState('10');
 
   const qty = Number(qtyInput);
   const validQty = Number.isFinite(qty) && qty > 0;
+  const popCost = validQty ? getUnitPopulationCost(unit.id, qty) : 0;
   const canAfford = validQty && canAffordCost(unit.cost, qty, resources);
-  const canProduce = canAfford;
+  const hasPopulation = validQty && canAffordPopulation(city, popCost);
+  const canProduce = canAfford && hasPopulation;
 
   const handleMax = () => {
     const max = calcMaxAffordable(unit.cost, resources);

@@ -1,57 +1,210 @@
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
-import { tradeOffers } from '../data/placeholder';
+import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import {
+  calcTradeDepotOverflow,
+  sumTradeAmounts,
+} from '../lib/tradeUtils';
+import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
+import { BUILDING_LABELS } from '../lib/buildingUtils';
+
+const SENDABLE_IDS = ['food', 'fuel', 'metal', 'money'];
+
+const EMPTY_AMOUNTS = { food: 0, fuel: 0, metal: 0, money: 0 };
 
 export default function Trade() {
+  const now = useGameStore((s) => s.now);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const market = useGameStore((s) =>
+    s.cities[s.activeCityId]?.buildings?.find((b) => b.id === 'market'),
+  );
+  const marketReady = (market?.level ?? 0) >= 1;
+  const expeditions = useGameStore((s) => s.expeditions);
+  const startTradeExpedition = useGameStore((s) => s.startTradeExpedition);
+  const requestMapTradeFocus = useGameStore((s) => s.requestMapTradeFocus);
+  const recallExpedition = useGameStore((s) => s.recallExpedition);
+
+  const [targetName, setTargetName] = useState('');
+  const [amounts, setAmounts] = useState({ ...EMPTY_AMOUNTS });
+
+  const tradeTargets = useMemo(
+    () => playerCities.filter((c) => c.id !== activeCityId),
+    [playerCities, activeCityId],
+  );
+
+  const tradeExpeditions = useMemo(
+    () => expeditions.filter((e) => e.mode === 'trade'),
+    [expeditions],
+  );
+
+  const targetCity = useGameStore((s) =>
+    targetName ? s.cities[s.playerCities.find((c) => c.name === targetName)?.id] : null,
+  );
+
+  const overflow = useMemo(() => {
+    if (!targetCity || sumTradeAmounts(amounts) <= 0) return [];
+    return calcTradeDepotOverflow(targetCity.resources, amounts);
+  }, [targetCity, amounts]);
+
+  const totalSend = sumTradeAmounts(amounts);
+  const canSubmit = marketReady && totalSend > 0 && targetName && overflow.length === 0;
+
+  const setAmount = (id, val) => {
+    setAmounts((prev) => ({ ...prev, [id]: Math.max(0, Math.floor(Number(val) || 0)) }));
+  };
+
+  const halveResource = (id) => {
+    const res = resources.find((r) => r.id === id);
+    if (!res) return;
+    setAmount(id, Math.floor(res.current / 2));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    const ok = startTradeExpedition({ targetCityName: targetName, sendAmounts: amounts });
+    if (ok) {
+      setAmounts({ ...EMPTY_AMOUNTS });
+    }
+  };
+
   return (
     <div className="page">
       <PageHeader
         title="Ticaret"
-        subtitle="Açık pazar ilanları ve ikili ticaret teklifleri."
-        action={<button type="button" className="btn btn-primary">İlan Ver</button>}
-      />
-      <section className="panel">
-        <h3 className="panel-title">Açık Pazar</h3>
-        {tradeOffers.length > 0 ? (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Satıcı</th>
-                <th>Satıyor</th>
-                <th>İstiyor</th>
-                <th>Oran</th>
-                <th>Mesafe</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tradeOffers.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.seller}</td>
-                  <td>{o.sell}</td>
-                  <td>{o.want}</td>
-                  <td>{o.ratio}</td>
-                  <td>{o.distance}</td>
-                  <td><button type="button" className="btn btn-primary btn-sm">Kabul Et</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <EmptyState
-            icon="💰"
-            title="Pazarda ilan yok"
-            description="Diğer oyuncuların ilanlarını kabul edebilir veya kendi kaynaklarınız için ilan açabilirsiniz."
-          />
+        subtitle="Şehirler arası kaynak konvoyları — neon rotalar haritada görünür."
+        action={(
+          <Link to="/harita" className="btn btn-primary">
+            Haritayı Aç
+          </Link>
         )}
+      />
+
+      <section className="panel">
+        <h3 className="panel-title">Yeni Ticaret Seferi</h3>
+        {!marketReady && (
+          <p className="alert alert-warn" role="status">
+            Ticaret için önce <strong>{BUILDING_LABELS.market}</strong> inşa edin (Binalar sekmesi).
+          </p>
+        )}
+        <form className="trade-form" onSubmit={handleSubmit}>
+          <label className="trade-form-field">
+            <span>Hedef şehir</span>
+            <select
+              value={targetName}
+              onChange={(e) => setTargetName(e.target.value)}
+              className="city-switcher-select"
+              required
+            >
+              <option value="">Seçin…</option>
+              {tradeTargets.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="trade-resource-grid">
+            {SENDABLE_IDS.map((id) => {
+              const res = resources.find((r) => r.id === id);
+              if (!res) return null;
+              const over = overflow.find((o) => o.id === id);
+              return (
+                <div
+                  key={id}
+                  className={`trade-resource-row${over ? ' trade-resource-row--overflow' : ''}`}
+                >
+                  <span className="trade-res-label">
+                    {res.icon} {res.label}
+                  </span>
+                  <span className="trade-res-stock">
+                    Depo: {res.current.toLocaleString('tr-TR')}
+                    {res.max != null && ` / ${res.max.toLocaleString('tr-TR')}`}
+                  </span>
+                  <div className="trade-res-inputs">
+                    <input
+                      type="number"
+                      className="input-qty"
+                      min={0}
+                      max={res.current}
+                      value={amounts[id] || 0}
+                      onChange={(e) => setAmount(id, e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm trade-half-btn"
+                      onClick={() => halveResource(id)}
+                      title="Mevcut stoğun yarısını yaz"
+                    >
+                      1/2
+                    </button>
+                  </div>
+                  {over && (
+                    <p className="trade-overflow-warn" role="alert">
+                      Hedef depo sınırını aşar (+{over.excess.toLocaleString('tr-TR')} taşma)
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {totalSend <= 0 && targetName && (
+            <p className="trade-empty-warn">Gönderilecek kaynak miktarı 0 — sefer başlatılamaz.</p>
+          )}
+
+          <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
+            Konvoy Gönder
+          </button>
+        </form>
       </section>
+
       <section className="panel">
         <h3 className="panel-title">Aktif Kervanlar</h3>
-        <EmptyState
-          icon="🐪"
-          title="Yolda kervan yok"
-          description="Onaylanan ticaretler tamamlandığında kervan rotası burada görünür."
-        />
+        {tradeExpeditions.length > 0 ? (
+          <ul className="trade-caravan-list">
+            {tradeExpeditions.map((e) => {
+              const origin = getExpeditionOriginLabel(e, playerCities);
+              const remaining = formatSeconds(remainingFromEndsAt(e.endsAt, now));
+              return (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    className="trade-caravan-card"
+                    onClick={() => requestMapTradeFocus(e.id)}
+                  >
+                    <strong>
+                      {origin} → {e.target}
+                    </strong>
+                    <span>{e.troops}</span>
+                    <span className="timer">{remaining}</span>
+                    <span className="trade-caravan-hint">Haritada rotayı göster</span>
+                  </button>
+                  {e.direction === 'outgoing' && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => recallExpedition(e.id)}
+                    >
+                      Geri Çağır
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EmptyState
+            icon="🐪"
+            title="Yolda kervan yok"
+            description="Kaynak gönderdiğinizde neon ticaret hattı ve hareketli kargo haritada görünür."
+          />
+        )}
       </section>
     </div>
   );

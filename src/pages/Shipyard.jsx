@@ -1,10 +1,14 @@
 import PageHeader from '../components/PageHeader';
 import UnitCard from '../components/UnitCard';
 import LockedFeatureGate from '../components/LockedFeatureGate';
-import { seaUnits, CITY_TYPE } from '../data/placeholder';
+import { seaUnits } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
 
 export default function Shipyard() {
-  const isCoastal = CITY_TYPE.includes('Kıyı');
+  const activeCity = useGameStore((s) =>
+    s.playerCities.find((c) => c.id === s.activeCityId),
+  );
+  const isCoastal = (activeCity?.type ?? '').includes('Kıyı');
 
   return (
     <div className="page">

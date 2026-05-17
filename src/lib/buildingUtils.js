@@ -97,6 +97,7 @@ export function getStarterIdleTroops() {
     { id: 'armor', name: 'Zırhlı Araç', icon: '🚛', available: 0 },
     { id: 'tank', name: 'Tank', icon: '🛡️', available: 0 },
     { id: 'sniper', name: 'Keskin Nişancı', icon: '🎯', available: 0 },
+    { id: 'special', name: 'Özel Tim', icon: '⚔️', available: 0 },
     { id: 'colonist', name: 'Kolonist', icon: '🏙️', available: 0 },
   ];
 }

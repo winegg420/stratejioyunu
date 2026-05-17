@@ -5,14 +5,14 @@ import ActiveQueue from '../components/ActiveQueue';
 import BattleSimulator from '../components/BattleSimulator';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { landUnits as landUnitDefs } from '../data/placeholder';
-import { useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 
 export default function Barracks() {
   const activeCityId = useGameStore((s) => s.activeCityId);
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === activeCityId)?.name);
   const awayMap = useTroopsAwayMap(activeCityId);
-  const troops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops ?? []);
-  useGameStore((s) => s.expeditions);
+  const troops = useActiveCityIdleTroops();
+  const idleAgents = useGameStore((s) => s.cities[s.activeCityId]?.idleAgents ?? 0);
   const landUnits = useMemo(
     () =>
       landUnitDefs.map((u) => {
@@ -26,7 +26,15 @@ export default function Barracks() {
 
   return (
     <div className="page">
-      <PageHeader title="Kışla" subtitle="Kara birlikleri — Kışla inşa edildikten sonra üretilir." />
+      <PageHeader
+        title="Kışla"
+        subtitle="Kara birlikleri — Kışla inşa edildikten sonra üretilir."
+        action={(
+          <span className="barracks-agent-counter" title="İstihbarat ajanları">
+            Mevcut / Boşta Ajan: <strong>{idleAgents}</strong>
+          </span>
+        )}
+      />
       <ActiveQueue
         title={`Aktif Kuyruk — ${cityName}`}
         queueType="production"

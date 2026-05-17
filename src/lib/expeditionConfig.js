@@ -2,6 +2,7 @@ export const EXPEDITION_DURATIONS = {
   attack: 75,
   spy: 35,
   found: 90,
+  trade: 55,
 };
 
 export function formatArrivalClock(durationSeconds, now = Date.now()) {

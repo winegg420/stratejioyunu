@@ -6,17 +6,23 @@ import {
   getStarterIdleTroops,
   getStarterResources,
 } from '../lib/buildingUtils';
+import { getDefaultIdlePopulation } from '../lib/populationUtils';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
   const res = recalculateResourceRates(bld, (overrides.resources ?? getStarterResources()).map((r) => ({ ...r })));
-  return {
+  const base = {
     resources: res,
     buildings: bld.map((b) => ({ ...b })),
     idleTroops: (overrides.idleTroops ?? getStarterIdleTroops()).map((t) => ({ ...t })),
     idleSpies: overrides.idleSpies ?? 0,
+    idleAgents: overrides.idleAgents ?? 0,
     constructionQueue: overrides.constructionQueue ?? [],
     productionQueue: overrides.productionQueue ?? [],
+  };
+  return {
+    ...base,
+    idlePopulation: overrides.idlePopulation ?? getDefaultIdlePopulation(base),
   };
 }
 
@@ -40,6 +46,8 @@ export function createInitialGameState() {
     ],
     cities: {
       izmir: createCityState({
+        idleAgents: 6,
+        idlePopulation: 2400,
         idleTroops: getStarterIdleTroops().map((t) =>
           t.id === 'colonist' ? { ...t, available: 3 } : { ...t, available: 40 },
         ),
@@ -52,9 +60,11 @@ export function createInitialGameState() {
     },
     mapCities: mapCities.map((c) => ({ ...c })),
     expeditions: [],
+    intelOperations: [],
     reports: reports.map((r) => ({ ...r })),
     pastExpeditions: [],
     navBadges: { expeditions: false, reports: false },
+    mapFocusRequest: null,
     flashes: {},
   };
 }

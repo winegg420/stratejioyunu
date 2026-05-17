@@ -2,6 +2,7 @@ const FILTERS = [
   { id: 'all', label: 'Hepsi' },
   { id: 'battle', label: 'Savaş' },
   { id: 'spy', label: 'Casusluk' },
+  { id: 'trade', label: 'Ticaret/Lojistik' },
 ];
 
 export default function ReportFilters({ active, onChange, counts }) {

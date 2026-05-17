@@ -5,6 +5,7 @@ const TYPE_ICONS = {
   success: '✅',
   warn: '⚠️',
   intel: '🕵️',
+  danger: '🚨',
 };
 
 export default function ToastContainer() {

@@ -29,7 +29,14 @@ export default function Sidebar() {
               end={item.path === '/'}
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-icon">
+                {item.icon}
+                {item.path === '/seferler' && (
+                  <span className="nav-logistics-badge" aria-hidden="true" title="Lojistik">
+                    📦
+                  </span>
+                )}
+              </span>
               <span className="nav-label">{item.label}</span>
               {item.path === '/seferler' && (
                 <>

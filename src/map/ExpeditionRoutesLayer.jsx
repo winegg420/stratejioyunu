@@ -17,6 +17,11 @@ function resolveCoords(name, mapCities, playerCities, originCityId) {
 }
 
 function getRouteStyle(exp) {
+  if (exp.mode === 'trade') {
+    return exp.direction === 'returning' || exp.recalled
+      ? ROUTE_STYLES.return
+      : ROUTE_STYLES.trade;
+  }
   if (exp.direction === 'returning' || exp.recalled || exp.type === 'Geri Dönüş') {
     return ROUTE_STYLES.return;
   }

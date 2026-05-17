@@ -5,6 +5,23 @@ export const FOUND_CITY_MIN_COLONISTS = 1;
 export const FOUND_CITY_MIN_TROOPS = 10;
 export const FOUND_CITY_COST = '2.000 metal · 1.500 yemek · 500 para';
 
+export const FOUND_CITY_DEFAULT_NAMES = ['Yeni Koloni', 'Siber Üs'];
+
+/** Boş veya kısa isimde varsayılan koloni adı seçer (dropdown’da boş kalmaması için). */
+export function resolveFoundCityName(input, existingNames = []) {
+  const trimmed = String(input || '').trim();
+  if (trimmed.length >= 2) return trimmed;
+
+  const taken = new Set(existingNames.map((n) => n.toLowerCase()));
+  for (const base of FOUND_CITY_DEFAULT_NAMES) {
+    if (!taken.has(base.toLowerCase())) return base;
+  }
+
+  let suffix = 2;
+  while (taken.has(`yeni koloni ${suffix}`)) suffix += 1;
+  return `Yeni Koloni ${suffix}`;
+}
+
 export function getColonistTroop(idleTroops) {
   return idleTroops.find((t) => t.id === FOUND_CITY_COLONIST_ID);
 }

@@ -1,4 +1,4 @@
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 
 function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onStart }) {
@@ -39,10 +39,10 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   const now = useGameStore((s) => s.now);
   const queue = useGameStore((s) => {
     const city = s.cities[s.activeCityId];
-    if (!city) return [];
+    if (!city) return STORE_EMPTY_ARRAY;
     return queueType === 'construction'
-      ? (city.constructionQueue ?? [])
-      : (city.productionQueue ?? []);
+      ? (city.constructionQueue ?? STORE_EMPTY_ARRAY)
+      : (city.productionQueue ?? STORE_EMPTY_ARRAY);
   });
 
   const speedUpConstruction = useGameStore((s) => s.speedUpConstruction);
