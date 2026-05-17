@@ -1,10 +1,28 @@
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
+import { useAuth } from '../context/AuthContext';
 import { profile } from '../data/placeholder';
 
 export default function Profile() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/giris', { replace: true });
+  };
+
   return (
     <div className="page">
-      <PageHeader title="Profil" subtitle="Rütbe, rozetler ve sezon geçmişi." />
+      <PageHeader
+        title="Profil"
+        subtitle="Rütbe, rozetler ve sezon geçmişi."
+        action={(
+          <button type="button" className="btn btn-secondary" onClick={handleLogout}>
+            Çıkış Yap
+          </button>
+        )}
+      />
       <div className="profile-header card">
         <div className="avatar">🎖️</div>
         <div>

@@ -3,7 +3,7 @@ import { NAV_ITEMS, SERVER_NAME, CITY_TYPE } from '../data/placeholder';
 
 export default function Sidebar() {
   return (
-    <nav className="sidebar">
+    <nav className="sidebar sidebar-desktop" aria-label="Tam menü">
       <div className="sidebar-server">
         <span className="server-label">Sunucu</span>
         <span className="server-name">{SERVER_NAME}</span>

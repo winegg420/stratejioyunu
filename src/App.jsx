@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
+import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
 import Buildings from './pages/Buildings';
 import Research from './pages/Research';
@@ -17,26 +20,36 @@ import Messages from './pages/Messages';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="binalar" element={<Buildings />} />
-          <Route path="arastirma" element={<Research />} />
-          <Route path="kisla" element={<Barracks />} />
-          <Route path="hava" element={<Airbase />} />
-          <Route path="tersane" element={<Shipyard />} />
-          <Route path="seferler" element={<Expeditions />} />
-          <Route path="istihbarat" element={<Intelligence />} />
-          <Route path="ticaret" element={<Trade />} />
-          <Route path="diplomasi" element={<Diplomacy />} />
-          <Route path="raporlar" element={<Reports />} />
-          <Route path="harita" element={<MapPage />} />
-          <Route path="profil" element={<Profile />} />
-          <Route path="mesajlar" element={<Messages />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/giris" element={<AuthPage />} />
+          <Route
+            path="/"
+            element={(
+              <RequireAuth>
+                <Layout />
+              </RequireAuth>
+            )}
+          >
+            <Route index element={<Home />} />
+            <Route path="binalar" element={<Buildings />} />
+            <Route path="arastirma" element={<Research />} />
+            <Route path="kisla" element={<Barracks />} />
+            <Route path="hava" element={<Airbase />} />
+            <Route path="tersane" element={<Shipyard />} />
+            <Route path="seferler" element={<Expeditions />} />
+            <Route path="istihbarat" element={<Intelligence />} />
+            <Route path="ticaret" element={<Trade />} />
+            <Route path="diplomasi" element={<Diplomacy />} />
+            <Route path="raporlar" element={<Reports />} />
+            <Route path="harita" element={<MapPage />} />
+            <Route path="profil" element={<Profile />} />
+            <Route path="mesajlar" element={<Messages />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/giris" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

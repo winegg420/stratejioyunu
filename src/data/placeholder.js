@@ -140,6 +140,14 @@ export const productionQueue = [
   { unit: 'Tank', count: 5, remaining: '02:15:00', queued: true },
 ];
 
+export const MOBILE_NAV_ITEMS = [
+  { path: '/harita', icon: '🗺️', label: 'Harita' },
+  { path: '/', icon: '🏙️', label: 'Şehir' },
+  { path: '/binalar', icon: '🏗️', label: 'Binalar' },
+  { path: '/seferler', icon: '⚔️', label: 'Seferler' },
+  { path: '/profil', icon: '👤', label: 'Profil' },
+];
+
 export const NAV_ITEMS = [
   { path: '/', icon: '🏠', label: 'Ana Merkez' },
   { path: '/binalar', icon: '🏗️', label: 'Binalar' },

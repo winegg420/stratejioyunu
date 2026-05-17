@@ -10,9 +10,11 @@ import {
   getHoverStyle,
 } from './mapUtils';
 import { mapCities } from '../data/placeholder';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const TURKEY_CENTER = [39.0, 35.0];
 const TURKEY_ZOOM = 6;
+
 function FitBounds({ bounds }) {
   const map = useMap();
   useEffect(() => {
@@ -21,7 +23,29 @@ function FitBounds({ bounds }) {
   return null;
 }
 
+function MapInteractionController({ interactionLocked }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (interactionLocked) {
+      map.dragging.enable();
+      map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.scrollWheelZoom.disable();
+    } else {
+      map.dragging.disable();
+      map.touchZoom.disable();
+      map.doubleClickZoom.disable();
+      map.scrollWheelZoom.disable();
+    }
+  }, [map, interactionLocked]);
+
+  return null;
+}
+
 export default function TurkeyMap() {
+  const isMobile = useIsMobile();
+  const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
   const [districts, setDistricts] = useState(null);
   const [selectedProvince, setSelectedProvince] = useState(null);
@@ -32,6 +56,18 @@ export default function TurkeyMap() {
   const provinceLayerRef = useRef(null);
   const districtLayerRef = useRef(null);
   const [fitBounds, setFitBounds] = useState(null);
+
+  const interactionLocked = isMobile ? mapLocked : true;
+
+  useEffect(() => {
+    if (!isMobile) return undefined;
+    if (mapLocked) {
+      document.body.classList.add('map-scroll-locked');
+    } else {
+      document.body.classList.remove('map-scroll-locked');
+    }
+    return () => document.body.classList.remove('map-scroll-locked');
+  }, [isMobile, mapLocked]);
 
   useEffect(() => {
     fetch('/geo/provinces.json')
@@ -119,54 +155,50 @@ export default function TurkeyMap() {
     : mapCities;
 
   return (
-    <div className="map-page">
-      <div className="map-toolbar">
-        <form className="map-search" onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Şehir veya oyuncu ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Koordinat: 38.42, 27.14"
-            value={searchCoord}
-            onChange={(e) => setSearchCoord(e.target.value)}
-          />
-          <button type="submit" className="btn btn-primary">
-            Ara
+    <div className={`map-page ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}>
+      {isMobile && (
+        <div className="map-mobile-controls">
+          <button
+            type="button"
+            className={`btn map-lock-btn ${mapLocked ? 'active' : ''}`}
+            onClick={() => setMapLocked((v) => !v)}
+            aria-pressed={mapLocked}
+          >
+            {mapLocked ? '🔒 Harita Kilidi (Açık)' : '🔓 Sayfa Kaydırma'}
           </button>
-        </form>
-        <div className="map-legend">
-          <span><i style={{ background: CITY_STATUS_COLORS.empty }} /> Boş</span>
-          <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
-          <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman</span>
-          <span><i style={{ background: CITY_STATUS_COLORS.bot }} /> Bot</span>
-          <span><i style={{ background: CITY_STATUS_COLORS.siege }} /> Kuşatma</span>
+          <span className="map-lock-hint">
+            {mapLocked
+              ? 'İki parmakla yakınlaştırın · haritayı sürükleyin'
+              : 'Aşağı kaydırarak arama ve lejantı görün'}
+          </span>
         </div>
-        {selectedProvince && (
-          <div className="map-province-bar">
-            <span>
-              {loadingDistricts ? 'İlçeler yükleniyor...' : `${selectedProvince.name} ilçeleri`}
-            </span>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={clearDistricts}>
-              İl görünümüne dön
-            </button>
-          </div>
-        )}
-        <p className="map-hint">
-          Lazy loading: Genel görünümde 81 il. İle tıklayınca yalnızca o ilin ilçeleri yüklenir.
-        </p>
-      </div>
+      )}
+
+      <MapToolbar
+        search={search}
+        setSearch={setSearch}
+        searchCoord={searchCoord}
+        setSearchCoord={setSearchCoord}
+        handleSearch={handleSearch}
+        selectedProvince={selectedProvince}
+        loadingDistricts={loadingDistricts}
+        clearDistricts={clearDistricts}
+        isMobile={isMobile}
+        mapLocked={mapLocked}
+      />
 
       <div className="map-container-wrap">
         <MapContainer
           center={TURKEY_CENTER}
           zoom={TURKEY_ZOOM}
           className="turkey-map"
-          scrollWheelZoom
+          scrollWheelZoom={!isMobile}
+          touchZoom
+          dragging
+          doubleClickZoom
+          zoomControl={!isMobile || mapLocked}
         >
+          {isMobile && <MapInteractionController interactionLocked={interactionLocked} />}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -207,6 +239,65 @@ export default function TurkeyMap() {
         </MapContainer>
         <CityPopup city={selectedCity} onClose={() => setSelectedCity(null)} />
       </div>
+    </div>
+  );
+}
+
+function MapToolbar({
+  search,
+  setSearch,
+  searchCoord,
+  setSearchCoord,
+  handleSearch,
+  selectedProvince,
+  loadingDistricts,
+  clearDistricts,
+  isMobile,
+  mapLocked,
+}) {
+  if (isMobile && mapLocked) return null;
+
+  return (
+    <div className="map-toolbar">
+      <form className="map-search" onSubmit={handleSearch}>
+        <input
+          type="text"
+          placeholder="Şehir veya oyuncu ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Koordinat: 38.42, 27.14"
+          value={searchCoord}
+          onChange={(e) => setSearchCoord(e.target.value)}
+        />
+        <button type="submit" className="btn btn-primary">
+          Ara
+        </button>
+      </form>
+      <div className="map-legend">
+        <span><i style={{ background: CITY_STATUS_COLORS.empty }} /> Boş</span>
+        <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
+        <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman</span>
+        <span><i style={{ background: CITY_STATUS_COLORS.bot }} /> Bot</span>
+        <span><i style={{ background: CITY_STATUS_COLORS.siege }} /> Kuşatma</span>
+      </div>
+      {selectedProvince && (
+        <div className="map-province-bar">
+          <span>
+            {loadingDistricts ? 'İlçeler yükleniyor...' : `${selectedProvince.name} ilçeleri`}
+          </span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={clearDistricts}>
+            İl görünümüne dön
+          </button>
+        </div>
+      )}
+      {!isMobile && (
+        <p className="map-hint">
+          Lazy loading: Genel görünümde 81 il. İle tıklayınca yalnızca o ilin ilçeleri yüklenir.
+        </p>
+      )}
     </div>
   );
 }
