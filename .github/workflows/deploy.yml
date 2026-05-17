@@ -4,6 +4,8 @@ name: Deploy to Vercel
 # Bu workflow yalnızca VERCEL_TOKEN geçerliyse CLI ile deploy eder.
 
 on:
+  push:
+    branches: [master, main]
   workflow_dispatch:
 
 env:
