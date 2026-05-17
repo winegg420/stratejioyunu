@@ -1,5 +1,6 @@
 import PageHeader from '../components/PageHeader';
 import NewsFeed from '../components/NewsFeed';
+import CityStatusPanel from '../components/CityStatusPanel';
 import {
   newsFeed,
   constructionQueue,
@@ -14,7 +15,9 @@ function QueueItem({ name, level, remaining, queued }) {
   const timer = useCountdown(remaining);
   return (
     <li className={queued ? 'queued' : ''}>
-      <span>{name} {level && `→ Sv.${level}`}</span>
+      <span>
+        {name} {level && `→ Sv.${level}`}
+      </span>
       <span className="timer">{queued ? 'Sırada' : timer}</span>
     </li>
   );
@@ -23,6 +26,7 @@ function QueueItem({ name, level, remaining, queued }) {
 export default function Home() {
   return (
     <div className="page home-page">
+      <CityStatusPanel />
       <PageHeader
         title="Ana Merkez"
         subtitle={`${CITY_NAME} · ${CITY_TYPE} · Tüm sunucu olayları ve şehir özeti`}
@@ -32,7 +36,13 @@ export default function Home() {
           <h3 className="panel-title">Aktif İnşaatlar</h3>
           <ul className="queue-list">
             {constructionQueue.map((q) => (
-              <QueueItem key={q.name} name={q.name} level={q.level} remaining={q.remaining} queued={q.queued} />
+              <QueueItem
+                key={q.name}
+                name={q.name}
+                level={q.level}
+                remaining={q.remaining}
+                queued={q.queued}
+              />
             ))}
           </ul>
         </section>
@@ -40,7 +50,13 @@ export default function Home() {
           <h3 className="panel-title">Asker Üretim Kuyruğu</h3>
           <ul className="queue-list">
             {productionQueue.map((q) => (
-              <QueueItem key={q.unit} name={q.unit} level={`×${q.count}`} remaining={q.remaining} queued={q.queued} />
+              <QueueItem
+                key={q.unit}
+                name={q.unit}
+                level={`×${q.count}`}
+                remaining={q.remaining}
+                queued={q.queued}
+              />
             ))}
           </ul>
         </section>

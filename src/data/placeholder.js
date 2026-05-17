@@ -10,7 +10,7 @@ export const PROTECTION_DAYS = 5;
 export const resources = [
   { id: 'food', label: 'Yemek', icon: '🌾', current: 12450, max: 20000, rate: '+42/sa' },
   { id: 'fuel', label: 'Yakıt', icon: '⛽', current: 8320, max: 15000, rate: '+28/sa' },
-  { id: 'metal', label: 'Metal', icon: '⚙️', current: 15680, max: 18000, rate: '+35/sa' },
+  { id: 'metal', label: 'Metal', icon: '⚙️', current: 16400, max: 18000, rate: '+35/sa' },
   { id: 'energy', label: 'Enerji', icon: '⚡', current: 4200, max: null, rate: '+18/sa' },
   { id: 'money', label: 'Para', icon: '💰', current: 28900, max: 50000, rate: '+55/sa' },
 ];
@@ -105,6 +105,8 @@ export const mapCities = [
   { name: 'Trabzon', owner: 'Falcon99', rank: 'Çavuş', population: 8500, type: 'Kıyı', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
   { name: 'Bot_Kale_03', owner: 'Bot_Kale_03', rank: 'Er', population: 3200, type: 'Dağlık', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
 ];
+
+export const expeditionSummary = { incoming: 1, outgoing: 2 };
 
 export const constructionQueue = [
   { name: 'Fabrika', level: 8, remaining: '01:45:00' },

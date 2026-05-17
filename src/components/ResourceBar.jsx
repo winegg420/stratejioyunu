@@ -4,17 +4,28 @@ import { useResourceStore } from '../stores/resourceStore';
 import { GAME_NAME, CITY_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
 
+const DEPOT_WARN_PCT = 90;
+
 function formatShort(n) {
   if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return n.toLocaleString('tr-TR');
 }
 
-function ResourceItem({ resource, pct, flash }) {
+function ResourceItem({ resource, pct, flash, depotWarn }) {
+  const hasDepot = resource.max != null;
+
   return (
     <div
-      className={`resource-item${flash ? ' resource-flash' : ''}`}
-      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}`}
+      className={[
+        'resource-item',
+        hasDepot && 'has-depot',
+        flash && 'resource-flash',
+        depotWarn && 'depot-warn',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}`}
     >
       <span className="res-icon" aria-hidden="true">
         {resource.icon}
@@ -23,14 +34,11 @@ function ResourceItem({ resource, pct, flash }) {
         <span className="res-label">{resource.label}</span>
         <span className="res-value">
           {formatShort(resource.current)}
-          {resource.max && <span className="res-max"> / {formatShort(resource.max)}</span>}
+          {hasDepot && <span className="res-max"> / {formatShort(resource.max)}</span>}
         </span>
-        {resource.max && (
-          <div className="res-bar">
-            <div
-              className={`res-fill ${pct > 85 ? 'warn' : ''}`}
-              style={{ width: `${pct}%` }}
-            />
+        {hasDepot && (
+          <div className="res-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+            <div className="res-fill" style={{ width: `${pct}%` }} />
           </div>
         )}
       </div>
@@ -56,12 +64,14 @@ export default function ResourceBar() {
         <div className="resources-row">
           {resources.map((r) => {
             const pct = r.max ? Math.min(100, (r.current / r.max) * 100) : 100;
+            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT;
             return (
               <ResourceItem
                 key={r.id}
                 resource={r}
                 pct={pct}
                 flash={Boolean(flashes[r.id])}
+                depotWarn={depotWarn}
               />
             );
           })}

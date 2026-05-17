@@ -184,8 +184,8 @@ a {
   font-size: 0.7em;
 }
 
-.resource-item .res-bar {
-  display: none;
+.resource-item.has-depot .res-bar {
+  display: block;
 }
 
 .resource-item .res-label {
@@ -1287,6 +1287,250 @@ body.map-scroll-locked {
 
 .resource-item.resource-flash {
   animation: resource-flash 0.65s ease-out;
+}
+
+@keyframes depot-warn-blink {
+  0%,
+  100% {
+    color: #fca5a5;
+  }
+  50% {
+    color: #ef4444;
+  }
+}
+
+@keyframes depot-bar-blink {
+  0%,
+  100% {
+    background: #ef4444;
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    background: #f87171;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.65);
+  }
+}
+
+.resource-item.depot-warn {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.resource-item.depot-warn .res-value {
+  animation: depot-warn-blink 1.2s ease-in-out infinite;
+}
+
+.resource-item.depot-warn .res-fill {
+  animation: depot-bar-blink 1.2s ease-in-out infinite;
+}
+
+/* Genel durum paneli — şehir sekmesi */
+.city-status-panel {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 10px;
+}
+
+.city-status-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.city-status-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.city-status-sub {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.city-status-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(45, 212, 191, 0.15);
+  color: #5eead4;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+}
+
+.city-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.city-status-card {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.city-status-icon {
+  font-size: 1.35rem;
+}
+
+.city-status-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.city-status-value {
+  display: block;
+  font-size: 0.95rem;
+  margin-top: 0.15rem;
+}
+
+.city-status-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.city-status-meta.timer {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+@media (max-width: 700px) {
+  .city-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Aktif kuyruk kartı */
+.active-queue-panel {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.active-queue-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+
+.active-queue-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.active-queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.active-queue-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.25rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.active-queue-row.is-queued {
+  opacity: 0.7;
+}
+
+.active-queue-row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.active-queue-label {
+  font-weight: 600;
+}
+
+.active-queue-detail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.active-queue-timer {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--accent);
+  align-self: center;
+}
+
+.active-queue-progress {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: #0a0e14;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.active-queue-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #5eead4);
+  transition: width 1s linear;
+}
+
+/* MAX butonu — asker üretimi */
+.unit-card-actions {
+  flex-wrap: wrap;
+}
+
+.qty-input-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.qty-input-wrap .input-qty {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  min-width: 4.5rem;
+}
+
+.btn-max {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(45, 212, 191, 0.15);
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  color: #5eead4;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.btn-max:hover {
+  background: rgba(45, 212, 191, 0.28);
+}
+
+/* Harita — kendi şehir vurgusu */
+.leaflet-interactive.map-marker-own {
+  filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.85));
 }
 
 .resource-bar-actions {

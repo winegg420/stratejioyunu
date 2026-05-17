@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CityDetailPanel from './CityDetailPanel';
 import {
   CITY_STATUS_COLORS,
+  getCityMarkerStyle,
   getProvinceStyle,
   getDistrictStyle,
   getHoverStyle,
@@ -222,20 +223,38 @@ export default function TurkeyMap() {
               onEachFeature={onEachDistrict}
             />
           )}
-          {filteredCities.map((city) => (
-            <CircleMarker
-              key={city.name}
-              center={[city.lat, city.lng]}
-              radius={city.status === 'empty' ? 6 : 8}
-              pathOptions={{
-                color: '#fff',
-                weight: 1,
-                fillColor: CITY_STATUS_COLORS[city.status],
-                fillOpacity: 0.9,
-              }}
-              eventHandlers={{ click: () => setSelectedCity(city) }}
-            />
-          ))}
+          {filteredCities.map((city) => {
+            const style = getCityMarkerStyle(city.status);
+            return (
+              <Fragment key={city.name}>
+                {city.status === 'own' && (
+                  <CircleMarker
+                    center={[city.lat, city.lng]}
+                    radius={16}
+                    pathOptions={{
+                      color: 'transparent',
+                      weight: 0,
+                      fillColor: '#2dd4bf',
+                      fillOpacity: 0.22,
+                    }}
+                    interactive={false}
+                  />
+                )}
+                <CircleMarker
+                  center={[city.lat, city.lng]}
+                  radius={style.radius}
+                  pathOptions={{
+                    color: style.color,
+                    weight: style.weight,
+                    fillColor: style.fillColor,
+                    fillOpacity: style.fillOpacity,
+                  }}
+                  className={city.status === 'own' ? 'map-marker-own' : undefined}
+                  eventHandlers={{ click: () => setSelectedCity(city) }}
+                />
+              </Fragment>
+            );
+          })}
         </MapContainer>
         <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
       </div>

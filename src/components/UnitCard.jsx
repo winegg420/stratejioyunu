@@ -1,7 +1,15 @@
-import { useCountdown } from '../hooks/useCountdown';
+import { useState } from 'react';
+import { useResourceStore } from '../stores/resourceStore';
+import { calcMaxAffordable } from '../utils/resourceCosts';
 
-export default function UnitCard({ unit, showQueue }) {
-  const timer = useCountdown(showQueue ? '00:42:00' : '—');
+export default function UnitCard({ unit }) {
+  const resources = useResourceStore((s) => s.resources);
+  const [qty, setQty] = useState(10);
+
+  const handleMax = () => {
+    const max = calcMaxAffordable(unit.cost, resources);
+    setQty(max > 0 ? max : 1);
+  };
 
   return (
     <article className="card unit-card">
@@ -29,12 +37,26 @@ export default function UnitCard({ unit, showQueue }) {
           </tr>
         </tbody>
       </table>
-      <div className="card-actions">
-        <input type="number" className="input-qty" defaultValue={10} min={1} />
-        <button type="button" className="btn btn-primary">Üret</button>
-        <button type="button" className="btn btn-secondary">Kuyruğa Ekle</button>
+      <div className="card-actions unit-card-actions">
+        <div className="qty-input-wrap">
+          <input
+            type="number"
+            className="input-qty"
+            value={qty}
+            min={1}
+            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+          />
+          <button type="button" className="btn btn-max" onClick={handleMax} title="Mevcut kaynakla üretilebilecek en fazla">
+            MAX
+          </button>
+        </div>
+        <button type="button" className="btn btn-primary">
+          Üret
+        </button>
+        <button type="button" className="btn btn-secondary">
+          Kuyruğa Ekle
+        </button>
       </div>
-      {showQueue && <p className="queue-hint">Kuyruk: {timer} kaldı (örnek)</p>}
     </article>
   );
 }
