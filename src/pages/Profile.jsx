@@ -95,13 +95,17 @@ export default function Profile() {
           <li>Profilde görünen VIP askeri madalya rozeti</li>
         </ul>
 
-        {canVipAscend ? (
-          <div className="profile-vip-actions">
-            {!confirmOpen ? (
-              <button type="button" className="btn btn-danger" onClick={() => setConfirmOpen(true)}>
-                VIP At
-              </button>
-            ) : (
+        <div className="profile-vip-actions">
+          {!canVipAscend || !confirmOpen ? (
+            <button
+              type="button"
+              className="btn btn-danger profile-vip-btn"
+              disabled={!canVipAscend}
+              onClick={() => canVipAscend && setConfirmOpen(true)}
+            >
+              VIP At
+            </button>
+          ) : (
               <div className="profile-vip-confirm">
                 <p className="profile-vip-warn">
                   Tüm şehirler, binalar ve ordular silinecek. Bu işlem geri alınamaz. Onaylıyor musunuz?
@@ -116,8 +120,8 @@ export default function Profile() {
                 </div>
               </div>
             )}
-          </div>
-        ) : (
+        </div>
+        {!canVipAscend && (
           <p className="profile-vip-locked">
             VIP At için{' '}
             <span className="font-hud-data">

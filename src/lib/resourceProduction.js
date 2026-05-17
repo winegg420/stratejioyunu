@@ -40,6 +40,23 @@ function applyWorkforcePenalty(resources) {
   });
 }
 
+/** VIP katman bonusu — nüfus cezasından sonra net maden üretimine uygulanır. */
+function applyVipProductionBonus(resources, multiplier) {
+  const mult = multiplier > 0 ? multiplier : 1;
+  if (mult <= 1) return resources;
+
+  return resources.map((r) => {
+    if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return { ...r, vipProductionBonus: false };
+    const hourly = parseHourlyRate(r.rate);
+    if (hourly <= 0) return { ...r, vipProductionBonus: false };
+    return {
+      ...r,
+      rate: formatRate(Math.max(0, Math.floor(hourly * mult))),
+      vipProductionBonus: true,
+    };
+  });
+}
+
 function applyDepotFreeze(resources) {
   return resources.map((r) => {
     const frozen = isDepotOverflow(r);
@@ -50,16 +67,22 @@ function applyDepotFreeze(resources) {
   });
 }
 
-/** Bina oranları + işçi cezası + depo taşması dondurması. */
+/** Bina oranları → işçi cezası → VIP çarpanı → depo dondurması. */
 export function applyProductionFreeze(resources, buildings, cityOrIdlePop, productionMultiplier = 1) {
   const idlePop = typeof cityOrIdlePop === 'object'
     ? getIdlePopulation(cityOrIdlePop)
     : (cityOrIdlePop ?? 1);
 
   const city = typeof cityOrIdlePop === 'object' ? cityOrIdlePop : null;
-  let withRates = recalculateResourceRates(buildings, resources, productionMultiplier);
+  let withRates = recalculateResourceRates(buildings, resources);
+
   if (idlePop <= 0 && !isNewPlayerWorkforceProtected(city)) {
     withRates = applyWorkforcePenalty(withRates);
   }
+
+  if (productionMultiplier > 1) {
+    withRates = applyVipProductionBonus(withRates, productionMultiplier);
+  }
+
   return applyDepotFreeze(withRates);
 }

@@ -311,10 +311,31 @@ body::before {
   height: 52px;
   font-size: 1.65rem;
   line-height: 1;
-  color: var(--hud-lock-cyan);
-  background: rgba(12, 24, 48, 0.65);
-  border: 1px solid rgba(34, 211, 238, 0.45);
+  color: rgba(148, 163, 184, 0.9);
+  background: rgba(12, 24, 48, 0.55);
+  border: 1px solid rgba(100, 116, 139, 0.45);
   border-radius: 50%;
+  box-shadow: inset 0 0 8px rgba(15, 23, 42, 0.35);
+  text-shadow: none;
+  animation: none;
+}
+
+@media (hover: hover) {
+  .building-card--unbuilt:hover .building-lock-icon {
+    color: var(--hud-lock-cyan);
+    border-color: rgba(34, 211, 238, 0.45);
+    box-shadow:
+      0 0 24px var(--hud-lock-glow),
+      0 0 48px rgba(34, 211, 238, 0.2),
+      inset 0 0 16px rgba(34, 211, 238, 0.12);
+    text-shadow: 0 0 16px var(--hud-lock-glow);
+    animation: hud-lock-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+.building-card--unbuilt:focus-within .building-lock-icon {
+  color: var(--hud-lock-cyan);
+  border-color: rgba(34, 211, 238, 0.45);
   box-shadow:
     0 0 24px var(--hud-lock-glow),
     0 0 48px rgba(34, 211, 238, 0.2),
@@ -365,6 +386,10 @@ body::before {
   --btn-edge-glow: rgba(94, 184, 255, 0.45);
   position: relative;
   isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   overflow: hidden;
   clip-path: var(--hud-clip);
   border: none;
@@ -379,6 +404,27 @@ body::before {
   filter:
     drop-shadow(0 0 0.5px var(--btn-edge))
     drop-shadow(0 0 6px var(--btn-edge-glow));
+}
+
+/* Fütüristik köşe çerçevesi — SVG katmanı buton kutusuna tam oturur */
+.btn-stroke-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  clip-path: var(--hud-clip);
+}
+
+.btn-stroke-path {
+  vector-effect: non-scaling-stroke;
+}
+
+.btn > :not(.btn-stroke-layer) {
+  position: relative;
+  z-index: 3;
 }
 
 .btn::before {
@@ -403,19 +449,16 @@ body::before {
   opacity: 1;
 }
 
-/* Köşe çerçevesi SVG — arka plan katmanı, metin üstte kalır */
-.btn:not(.btn-hud-loading) {
-  background-repeat: no-repeat, no-repeat;
-  background-size: 100% 100%, auto;
-  background-position: center, center;
+.btn:disabled {
+  filter: none;
+  cursor: not-allowed;
 }
 
 .btn-primary {
   --btn-edge: rgba(120, 200, 255, 0.9);
   --btn-edge-glow: rgba(94, 184, 255, 0.55);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath d='M10 0 H110 L120 10 V34 L110 44 H10 L0 34 V10 Z' fill='none' stroke='rgba(120%2C200%2C255%2C0.95)' stroke-width='1.35' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, rgba(74, 158, 255, 0.95) 0%, rgba(45, 108, 181, 0.95) 100%);
+  background-image: linear-gradient(180deg, rgba(74, 158, 255, 0.95) 0%, rgba(45, 108, 181, 0.95) 100%);
+  background-size: 100% 100%;
   box-shadow:
     0 0 16px var(--hud-accent-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -434,9 +477,8 @@ body::before {
 .btn-secondary {
   --btn-edge: rgba(100, 140, 200, 0.65);
   --btn-edge-glow: rgba(74, 158, 255, 0.3);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath d='M10 0 H110 L120 10 V34 L110 44 H10 L0 34 V10 Z' fill='none' stroke='rgba(100%2C140%2C200%2C0.75)' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, rgba(35, 48, 78, 0.9) 0%, rgba(24, 32, 56, 0.95) 100%);
+  background-image: linear-gradient(180deg, rgba(35, 48, 78, 0.9) 0%, rgba(24, 32, 56, 0.95) 100%);
+  background-size: 100% 100%;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
 }
 
@@ -450,9 +492,8 @@ body::before {
 .btn-danger {
   --btn-edge: rgba(255, 130, 110, 0.85);
   --btn-edge-glow: rgba(255, 90, 70, 0.45);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath d='M10 0 H110 L120 10 V34 L110 44 H10 L0 34 V10 Z' fill='none' stroke='rgba(255%2C130%2C110%2C0.9)' stroke-width='1.25' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, rgba(220, 60, 50, 0.35) 0%, rgba(140, 30, 30, 0.45) 100%);
+  background-image: linear-gradient(180deg, rgba(220, 60, 50, 0.35) 0%, rgba(140, 30, 30, 0.45) 100%);
+  background-size: 100% 100%;
   box-shadow: 0 0 14px var(--hud-alert-glow-red);
 }
 
@@ -467,10 +508,8 @@ body::before {
   --btn-edge: rgba(94, 184, 255, 0.55);
   --btn-edge-glow: rgba(74, 158, 255, 0.25);
   clip-path: var(--hud-clip);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 36' preserveAspectRatio='none'%3E%3Cpath d='M8 0 H72 L80 8 V28 L72 36 H8 L0 28 V8 Z' fill='none' stroke='rgba(94%2C184%2C255%2C0.7)' stroke-width='1.1' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
-    rgba(40, 60, 100, 0.6);
-  background-size: 100% 100%, auto;
+  background-image: linear-gradient(180deg, rgba(40, 60, 100, 0.75) 0%, rgba(28, 44, 72, 0.85) 100%);
+  background-size: 100% 100%;
   box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
 }
 
@@ -517,6 +556,10 @@ body::before {
 }
 
 /* ── Dijital input hizalama (Share Tech Mono) ── */
+.hud-shell .input-qty,
+.hud-shell .battle-sim-grid .input-qty,
+.hud-shell .city-panel-troop-input .input-qty,
+.hud-shell .qty-input-wrap .input-qty,
 .input-qty,
 .battle-sim-grid .input-qty,
 .city-panel-troop-input .input-qty,
@@ -524,13 +567,18 @@ body::before {
   display: block;
   height: 2.35rem;
   min-height: 2.35rem;
-  padding: 0 0.5rem;
+  min-width: 4.75rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-align: right;
   line-height: 2.35rem;
   box-sizing: border-box;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   vertical-align: middle;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .qty-input-wrap,
@@ -635,6 +683,41 @@ input[type='number'].input-qty::-webkit-inner-spin-button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.profile-vip-actions {
+  margin-bottom: 0.5rem;
+}
+
+.profile-vip-btn:disabled,
+.btn-danger.profile-vip-btn:disabled {
+  --btn-edge: rgba(120, 132, 148, 0.55);
+  --btn-edge-glow: transparent;
+  color: rgba(148, 163, 184, 0.88);
+  opacity: 0.78;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: none !important;
+  -webkit-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none;
+  background-image: linear-gradient(180deg, rgba(38, 44, 56, 0.72) 0%, rgba(24, 28, 36, 0.82) 100%) !important;
+  background-size: 100% 100% !important;
+}
+
+.profile-vip-btn:disabled::before,
+.btn-danger.profile-vip-btn:disabled::before {
+  opacity: 0 !important;
+}
+
+.profile-vip-btn:disabled:hover,
+.btn-danger.profile-vip-btn:disabled:hover,
+.profile-vip-btn:disabled:focus,
+.btn-danger.profile-vip-btn:disabled:focus {
+  filter: none !important;
+  -webkit-filter: none !important;
+  box-shadow: none !important;
+  transform: none;
 }
 
 .profile-vip-locked {

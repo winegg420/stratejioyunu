@@ -495,12 +495,16 @@ a {
 
 .input-qty {
   width: 70px;
-  padding: 0.4rem;
+  min-width: 4.75rem;
+  padding: 0.4rem 0.5rem;
+  text-align: right;
   background: var(--bg-deep);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-family: var(--font-mono);
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 /* Tables */

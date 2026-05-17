@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { CircleMarker } from 'react-leaflet';
 import { progressFromTiming } from '../lib/gameUtils';
+import { shouldDrawExpeditionRoute } from './mapRouteUtils';
 
 function resolveCoords(name, mapCities, playerCities, originCityId) {
   if (!name) return null;
@@ -26,8 +27,11 @@ export default function TradeRouteCargoLayer({ expeditions, mapCities, playerCit
         const originPc = playerCities.find((p) => p.id === exp.originCityId);
         const isReturn = exp.direction === 'returning' || exp.recalled;
         const home = resolveCoords(originPc?.name, mapCities, playerCities, exp.originCityId);
+        const enemyName = isReturn ? (exp.originalTarget ?? exp.target) : exp.target;
+        if (!shouldDrawExpeditionRoute(exp, mapCities, enemyName)) return null;
+
         const enemy = resolveCoords(
-          isReturn ? (exp.originalTarget ?? exp.target) : exp.target,
+          enemyName,
           mapCities,
           playerCities,
           exp.originCityId,

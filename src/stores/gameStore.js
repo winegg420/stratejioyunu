@@ -37,7 +37,8 @@ import {
   loadPlayerMeta,
   savePlayerMeta,
 } from '../lib/playerMetaStorage';
-import { runServerCleansing, formatInactivityDays } from '../lib/serverCleansing';
+import { runServerCleansing, formatInactivityDays, WAKE_CLEANSING_THROTTLE_MS } from '../lib/serverCleansing';
+import { purgeExpeditionsOnVipAscension } from '../lib/expeditionLifecycle';
 import { applyProductionFreeze } from '../lib/resourceProduction';
 import {
   canOfferVipAscension,
@@ -336,13 +337,30 @@ export const useGameStore = create((set, get) => ({
     get().touchPlayerActivity();
   },
 
-  _runServerCleansing: (notify = true) => {
-    const state = get();
-    const result = runServerCleansing(state.mapCities);
-    if (result.liberatedCount === 0) return;
+  _runServerCleansing: (notify = true, source = 'tick') => {
+    if (source === 'wake') {
+      const last = get()._lastWakeCleansingAt ?? 0;
+      if (Date.now() - last < WAKE_CLEANSING_THROTTLE_MS) return;
+      set({ _lastWakeCleansingAt: Date.now() });
+    }
 
-    set({ mapCities: result.mapCities });
-    if (notify) {
+    const state = get();
+    const result = runServerCleansing(state.mapCities, state.expeditions);
+    const expeditionsChanged = result.expeditions.length !== state.expeditions.length
+      || result.expeditions.some((exp, i) => exp !== state.expeditions[i]);
+    if (result.liberatedCount === 0 && !expeditionsChanged) return;
+
+    set({
+      mapCities: result.mapCities,
+      expeditions: result.expeditions,
+      mapRouteSyncRev: (state.mapRouteSyncRev ?? 0) + 1,
+      navBadges: {
+        ...state.navBadges,
+        expeditions: result.expeditions.length > 0,
+      },
+    });
+
+    if (notify && result.liberatedCount > 0) {
       useNotificationStore.getState().addToast(
         `Sunucu temizliği: ${result.liberatedCount} hayalet şehir boş araziye dönüştürüldü (${formatInactivityDays()}+ gün inaktif).`,
         'info',
@@ -358,14 +376,24 @@ export const useGameStore = create((set, get) => ({
     const nextMeta = applyVipAscensionToMeta(state.playerMeta ?? loadPlayerMeta());
     savePlayerMeta(nextMeta);
 
+    const now = Date.now();
+    const expeditionPatch = purgeExpeditionsOnVipAscension(state, playerName, now);
     const patch = buildPostAscensionGamePatch(state, nextMeta, playerName);
 
     set({
       ...patch,
+      expeditions: expeditionPatch.expeditions,
+      intelOperations: expeditionPatch.intelOperations,
+      incomingAttacks: expeditionPatch.incomingAttacks,
+      meydanBattle: expeditionPatch.meydanBattle,
+      navBadges: {
+        ...patch.navBadges,
+        expeditions: expeditionPatch.expeditions.length > 0,
+      },
       playerMeta: nextMeta,
       reports: [],
       researches: state.researches.map((r) => ({ ...r, level: 0, active: false, queued: false })),
-      now: Date.now(),
+      now,
     });
 
     touchPlayerActivity(playerName);
@@ -519,7 +547,7 @@ export const useGameStore = create((set, get) => ({
 
     const vipMult = getVipMultiplierFromState(get());
     const resources = applyProductionFreeze(
-      recalculateResourceRates(buildings, city.resources, vipMult),
+      recalculateResourceRates(buildings, city.resources),
       buildings,
       city,
       vipMult,
@@ -1588,7 +1616,7 @@ export const useGameStore = create((set, get) => ({
   syncTimersOnWake: () => {
     set({ now: Date.now() });
     get().touchPlayerActivity();
-    get()._runServerCleansing(false);
+    get()._runServerCleansing(false, 'wake');
     get().tick();
   },
 

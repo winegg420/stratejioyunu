@@ -1,5 +1,4 @@
 import { mapCities, reports } from './placeholder';
-import { recalculateResourceRates } from '../lib/gameUtils';
 import { applyProductionFreeze } from '../lib/resourceProduction';
 import {
   createStarterBuildings,
@@ -27,9 +26,9 @@ export function createCityState(overrides = {}) {
   };
   const idlePopulation = overrides.idlePopulation ?? getDefaultIdlePopulation(base);
   const resources = applyProductionFreeze(
-    recalculateResourceRates(bld, baseResources, vipMult),
+    baseResources,
     bld,
-    idlePopulation,
+    { ...base, idlePopulation },
     vipMult,
   );
   return {
@@ -53,6 +52,7 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     now: Date.now(),
     playerMeta,
     _cleansingTick: 0,
+    mapRouteSyncRev: 0,
     incomingAttacks: [],
     researches: createStarterResearches().map((r) => ({ ...r })),
     playerCities: [

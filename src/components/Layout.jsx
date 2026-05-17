@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import ToastContainer from './ToastContainer';
 import { useGameStore } from '../stores/gameStore';
+import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -15,6 +16,8 @@ export default function Layout() {
   const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
   const initWorldSystems = useGameStore((s) => s.initWorldSystems);
   const touchPlayerActivity = useGameStore((s) => s.touchPlayerActivity);
+
+  useHudButtonStrokes();
 
   useEffect(() => {
     initWorldSystems();
