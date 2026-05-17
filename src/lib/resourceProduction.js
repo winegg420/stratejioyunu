@@ -51,13 +51,13 @@ function applyDepotFreeze(resources) {
 }
 
 /** Bina oranları + işçi cezası + depo taşması dondurması. */
-export function applyProductionFreeze(resources, buildings, cityOrIdlePop) {
+export function applyProductionFreeze(resources, buildings, cityOrIdlePop, productionMultiplier = 1) {
   const idlePop = typeof cityOrIdlePop === 'object'
     ? getIdlePopulation(cityOrIdlePop)
     : (cityOrIdlePop ?? 1);
 
   const city = typeof cityOrIdlePop === 'object' ? cityOrIdlePop : null;
-  let withRates = recalculateResourceRates(buildings, resources);
+  let withRates = recalculateResourceRates(buildings, resources, productionMultiplier);
   if (idlePop <= 0 && !isNewPlayerWorkforceProtected(city)) {
     withRates = applyWorkforcePenalty(withRates);
   }

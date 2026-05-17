@@ -471,3 +471,60 @@ body::before {
 .building-req-tooltip-summary {
   color: rgba(248, 113, 113, 0.7) !important;
 }
+
+/* Profil — VIP & sunucu temizliği */
+.profile-vip-panel {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 0 28px rgba(168, 85, 247, 0.12);
+}
+
+.profile-cleansing-panel {
+  border-color: rgba(100, 116, 139, 0.35);
+}
+
+.profile-vip-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.profile-vip-perks {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.profile-vip-perks li {
+  margin-bottom: 0.35rem;
+}
+
+.profile-vip-warn {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.35);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+}
+
+.profile-vip-confirm-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile-vip-locked {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #fcd34d;
+}
+
+.achievement-badge--vip {
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #e9d5ff;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+}

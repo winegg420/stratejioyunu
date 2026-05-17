@@ -58,7 +58,8 @@ export function computeBuildingHourly(buildingId, level) {
   return base + level * per;
 }
 
-export function recalculateResourceRates(buildings, resources) {
+export function recalculateResourceRates(buildings, resources, productionMultiplier = 1) {
+  const mult = productionMultiplier > 0 ? productionMultiplier : 1;
   const hourlyByResource = {};
   for (const b of buildings) {
     if ((b.level ?? 0) < 1) continue;
@@ -70,7 +71,8 @@ export function recalculateResourceRates(buildings, resources) {
   return resources.map((r) => {
     const hourly = hourlyByResource[r.id];
     if (hourly == null) return r;
-    return { ...r, rate: formatRate(hourly) };
+    const scaled = Math.max(0, Math.floor(hourly * mult));
+    return { ...r, rate: formatRate(scaled), vipProductionBonus: mult > 1 };
   });
 }
 

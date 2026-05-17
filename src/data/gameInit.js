@@ -8,9 +8,13 @@ import {
   getStarterResources,
 } from '../lib/buildingUtils';
 import { getDefaultIdlePopulation } from '../lib/populationUtils';
+import { loadPlayerMeta } from '../lib/playerMetaStorage';
+import { getVipProductionMultiplier } from '../lib/vipPrestige';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
+  const vipMult = overrides.vipProductionMultiplier
+    ?? getVipProductionMultiplier(loadPlayerMeta().vipTier ?? 0);
   const baseResources = (overrides.resources ?? getStarterResources()).map((r) => ({ ...r }));
   const base = {
     resources: baseResources,
@@ -23,9 +27,10 @@ export function createCityState(overrides = {}) {
   };
   const idlePopulation = overrides.idlePopulation ?? getDefaultIdlePopulation(base);
   const resources = applyProductionFreeze(
-    recalculateResourceRates(bld, baseResources),
+    recalculateResourceRates(bld, baseResources, vipMult),
     bld,
     idlePopulation,
+    vipMult,
   );
   return {
     ...base,
@@ -42,10 +47,12 @@ export function createFoundCityState(troopPayload = {}) {
   return createCityState({ idleTroops, idleSpies: 0 });
 }
 
-export function createInitialGameState() {
+export function createInitialGameState(playerMeta = loadPlayerMeta()) {
   return {
     activeCityId: 'izmir',
     now: Date.now(),
+    playerMeta,
+    _cleansingTick: 0,
     incomingAttacks: [],
     researches: createStarterResearches().map((r) => ({ ...r })),
     playerCities: [

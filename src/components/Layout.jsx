@@ -13,12 +13,19 @@ export default function Layout() {
   const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
   const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
+  const initWorldSystems = useGameStore((s) => s.initWorldSystems);
+  const touchPlayerActivity = useGameStore((s) => s.touchPlayerActivity);
+
+  useEffect(() => {
+    initWorldSystems();
+  }, [initWorldSystems]);
 
   useEffect(() => startTicker(), [startTicker]);
 
   useEffect(() => {
     const onWake = () => {
       if (document.visibilityState === 'visible') {
+        touchPlayerActivity();
         syncTimersOnWake();
       }
     };
@@ -28,7 +35,7 @@ export default function Layout() {
       document.removeEventListener('visibilitychange', onWake);
       window.removeEventListener('focus', onWake);
     };
-  }, [syncTimersOnWake]);
+  }, [syncTimersOnWake, touchPlayerActivity]);
 
   useEffect(() => {
     if (pathname === '/seferler') clearNavBadge('expeditions');

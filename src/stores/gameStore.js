@@ -27,7 +27,25 @@ import {
   getMeydanBattleAt,
   MEYDAN_PREP_SECONDS,
 } from '../lib/meydanBattleConfig';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import {
+  syncRegistryFromMap,
+  touchPlayerActivity,
+} from '../lib/playerActivityRegistry';
+import {
+  applyVipAscensionToMeta,
+  loadPlayerMeta,
+  savePlayerMeta,
+} from '../lib/playerMetaStorage';
+import { runServerCleansing, formatInactivityDays } from '../lib/serverCleansing';
 import { applyProductionFreeze } from '../lib/resourceProduction';
+import {
+  canOfferVipAscension,
+  computeDevelopmentScore,
+  formatVipBonusPercent,
+  getVipProductionMultiplier,
+} from '../lib/vipPrestige';
+import { buildPostAscensionGamePatch } from '../lib/vipAscension';
 import {
   applyTradeDelivery,
   canAffordTrade,
@@ -249,6 +267,12 @@ function generateAgentReport(op, success, agentsLost) {
 
 let globalTickerId = null;
 
+const CLEANSING_INTERVAL_TICKS = 120;
+
+function getVipMultiplierFromState(state) {
+  return getVipProductionMultiplier(state.playerMeta?.vipTier ?? 0);
+}
+
 function restoreTroopsToCity(city, troopPayload) {
   if (!troopPayload) return city;
   if (troopPayload.spies != null) {
@@ -289,9 +313,69 @@ function tickAllCities(state, now) {
 }
 
 export const useGameStore = create((set, get) => ({
-  ...createInitialGameState(),
+  ...createInitialGameState(loadPlayerMeta()),
 
   getActiveCity: () => getActiveCity(get()),
+
+  getDevelopmentScore: () => computeDevelopmentScore(get()),
+
+  canVipAscend: () => canOfferVipAscension(get()),
+
+  touchPlayerActivity: () => {
+    const now = Date.now();
+    touchPlayerActivity(getCurrentPlayerName(), now);
+    const playerMeta = { ...get().playerMeta, lastActiveAt: now };
+    savePlayerMeta(playerMeta);
+    set({ playerMeta });
+  },
+
+  initWorldSystems: () => {
+    const state = get();
+    syncRegistryFromMap(state.mapCities);
+    get()._runServerCleansing(false);
+    get().touchPlayerActivity();
+  },
+
+  _runServerCleansing: (notify = true) => {
+    const state = get();
+    const result = runServerCleansing(state.mapCities);
+    if (result.liberatedCount === 0) return;
+
+    set({ mapCities: result.mapCities });
+    if (notify) {
+      useNotificationStore.getState().addToast(
+        `Sunucu temizliği: ${result.liberatedCount} hayalet şehir boş araziye dönüştürüldü (${formatInactivityDays()}+ gün inaktif).`,
+        'info',
+      );
+    }
+  },
+
+  performVipAscension: () => {
+    const state = get();
+    if (!canOfferVipAscension(state)) return false;
+
+    const playerName = getCurrentPlayerName();
+    const nextMeta = applyVipAscensionToMeta(state.playerMeta ?? loadPlayerMeta());
+    savePlayerMeta(nextMeta);
+
+    const patch = buildPostAscensionGamePatch(state, nextMeta, playerName);
+
+    set({
+      ...patch,
+      playerMeta: nextMeta,
+      reports: [],
+      researches: state.researches.map((r) => ({ ...r, level: 0, active: false, queued: false })),
+      now: Date.now(),
+    });
+
+    touchPlayerActivity(playerName);
+
+    useNotificationStore.getState().addToast(
+      `VIP Atma tamamlandı — ${formatVipBonusPercent(nextMeta.vipTier)} kalıcı maden bonusu aktif.`,
+      'success',
+    );
+    return true;
+  },
 
   setActiveCity: (cityId) => {
     if (!get().cities[cityId]) return;
@@ -323,8 +407,17 @@ export const useGameStore = create((set, get) => ({
       return { ...r, current: rounded };
     });
 
-    const frozenResources = applyProductionFreeze(resources, activeCity.buildings, activeCity);
+    const vipMult = getVipMultiplierFromState(state);
+    const frozenResources = applyProductionFreeze(resources, activeCity.buildings, activeCity, vipMult);
     patchCity(set, get, activeCityId, { resources: frozenResources });
+
+    const cleanseTick = (state._cleansingTick ?? 0) + 1;
+    if (cleanseTick >= CLEANSING_INTERVAL_TICKS) {
+      get()._runServerCleansing(true);
+      set({ _cleansingTick: 0 });
+    } else {
+      set({ _cleansingTick: cleanseTick });
+    }
 
     const { cities, completed } = tickAllCities(get(), now);
 
@@ -424,10 +517,12 @@ export const useGameStore = create((set, get) => ({
       };
     });
 
+    const vipMult = getVipMultiplierFromState(get());
     const resources = applyProductionFreeze(
-      recalculateResourceRates(buildings, city.resources),
+      recalculateResourceRates(buildings, city.resources, vipMult),
       buildings,
       city,
+      vipMult,
     );
     queue.splice(activeIdx, 1);
 
@@ -579,7 +674,8 @@ export const useGameStore = create((set, get) => ({
     const city = state.cities[cityId];
     if (city && report.loot?.length && report.winner === 'player') {
       const { resources, overflow } = applyExpeditionLoot(city.resources, report.loot);
-      const frozenResources = applyProductionFreeze(resources, city.buildings, city);
+      const vipMult = getVipMultiplierFromState(get());
+      const frozenResources = applyProductionFreeze(resources, city.buildings, city, vipMult);
       patchCity(set, get, cityId, { resources: frozenResources });
       if (overflow.length > 0) {
         useNotificationStore.getState().addToast(
@@ -659,7 +755,7 @@ export const useGameStore = create((set, get) => ({
               ...c,
               name: exp.target,
               status: 'own',
-              owner: 'Komutan_Alpha',
+              owner: getCurrentPlayerName(),
               population: c.population || 1200,
             }
           : c,
@@ -1491,6 +1587,8 @@ export const useGameStore = create((set, get) => ({
   /** Sekme / pencere odağına dönünce sayaçları gerçek zamana senkronize et. */
   syncTimersOnWake: () => {
     set({ now: Date.now() });
+    get().touchPlayerActivity();
+    get()._runServerCleansing(false);
     get().tick();
   },
 
