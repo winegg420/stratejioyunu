@@ -5,23 +5,42 @@ import { useAuth } from '../context/AuthContext';
 import { GAME_NAME } from '../data/placeholder';
 
 export default function AuthPage() {
-  const { isAuthed, login } = useAuth();
+  const { isAuthed, authReady, signIn, loginDemo, isSupabaseConfigured } = useAuth();
   const navigate = useNavigate();
   const [playerId, setPlayerId] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  if (isAuthed) {
+  if (authReady && isAuthed) {
     return <Navigate to="/" replace />;
   }
 
-  const enterGame = () => {
-    login(playerId.trim() || 'Oyuncu');
-    navigate('/', { replace: true });
+  const goHome = () => navigate('/', { replace: true });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signIn(playerId, password);
+      goHome();
+    } catch (err) {
+      setError(err.message || 'Giriş yapılamadı.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    enterGame();
+  const handleQuickLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      loginDemo(playerId.trim() || 'Oyuncu');
+      goHome();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,10 +59,11 @@ export default function AuthPage() {
             <span>Oyuncu ID</span>
             <input
               type="text"
-              placeholder="istediğiniz bir ad"
+              placeholder="istediğiniz bir ad veya e-posta"
               value={playerId}
               onChange={(e) => setPlayerId(e.target.value)}
               autoComplete="username"
+              disabled={loading}
             />
           </label>
           <label>
@@ -54,15 +74,28 @@ export default function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              disabled={loading}
             />
           </label>
           <p className="auth-hint">
-            Kayıt gerekmez. Rastgele ID ve şifre yazıp doğrudan oyuna girebilirsiniz.
+            {isSupabaseConfigured
+              ? 'Şifre boş bırakılırsa veya Hızlı Giriş ile demo modda girersiniz. Şifre girerseniz Supabase hesabınızla giriş yapılır. Kayıt şu an kapalıdır.'
+              : 'Kayıt gerekmez. Rastgele ID yazıp Hızlı Giriş ile doğrudan oyuna girebilirsiniz. Supabase anahtarları .env dosyasına eklendiğinde gerçek giriş açılır.'}
           </p>
-          <button type="submit" className="btn btn-primary auth-submit">
-            Oyuna Gir
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+            {loading ? 'Giriş yapılıyor…' : 'Oyuna Gir'}
           </button>
-          <button type="button" className="btn btn-secondary auth-quick" onClick={enterGame}>
+          <button
+            type="button"
+            className="btn btn-secondary auth-quick"
+            onClick={handleQuickLogin}
+            disabled={loading}
+          >
             Hızlı Giriş (boş bırak)
           </button>
         </form>

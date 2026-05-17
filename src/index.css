@@ -1177,6 +1177,25 @@ a {
   color: var(--text-muted);
 }
 
+.auth-error {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+}
+
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 .auth-submit {
   width: 100%;
   margin-top: 0.25rem;

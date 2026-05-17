@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { profile } from '../data/placeholder';
 
 export default function Profile() {
-  const { logout } = useAuth();
+  const { logout, playerName } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -26,7 +26,7 @@ export default function Profile() {
       <div className="profile-header card">
         <div className="avatar">🎖️</div>
         <div>
-          <h2>{profile.username}</h2>
+          <h2>{playerName}</h2>
           <p>{profile.rank} · {profile.points.toLocaleString('tr-TR')} puan</p>
           <p>Şehir: {profile.cities} · İttifak: {profile.alliance}</p>
         </div>
