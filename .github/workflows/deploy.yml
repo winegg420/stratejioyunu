@@ -1,8 +1,9 @@
 name: Deploy to Vercel
 
+# Vercel Git entegrasyonu push'ta zaten build alır.
+# Bu workflow yalnızca VERCEL_TOKEN geçerliyse CLI ile deploy eder.
+
 on:
-  push:
-    branches: [master, main]
   workflow_dispatch:
 
 env:
