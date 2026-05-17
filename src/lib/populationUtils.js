@@ -2,6 +2,7 @@ const POP_PER_UNIT = {
   infantry: 1,
   armor: 2,
   tank: 3,
+  airdefense: 2,
   sniper: 1,
   special: 2,
   colonist: 5,

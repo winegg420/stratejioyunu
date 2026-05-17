@@ -1,8 +1,10 @@
 import { landUnits } from '../data/placeholder';
+import { LEGACY_UNIT_NAME_TO_ID } from '../data/unitCatalog';
 
-const NAME_TO_ID = Object.fromEntries(
-  landUnits.map((u) => [u.name.toLowerCase(), u.id]),
-);
+const NAME_TO_ID = {
+  ...LEGACY_UNIT_NAME_TO_ID,
+  ...Object.fromEntries(landUnits.map((u) => [u.name.toLowerCase(), u.id])),
+};
 
 export function extractCityFromReportTitle(title) {
   if (!title) return '';

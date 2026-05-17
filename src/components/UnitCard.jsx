@@ -49,8 +49,13 @@ export default function UnitCard({ unit, awayMap }) {
   return (
     <article className="card unit-card">
       <div className="card-visual">{unit.image}</div>
-      <div className="card-header">
-        <h3>{unit.name}</h3>
+      <div className="card-header unit-card-header">
+        <div className="unit-card-titles">
+          <h3>{unit.name}</h3>
+          {unit.designation ? (
+            <p className="unit-designation">{unit.designation}</p>
+          ) : null}
+        </div>
         <span className="badge badge-troop-stock">
           <TroopStockLabel
             troop={{ id: unit.id, available: unit.idle ?? unit.count }}

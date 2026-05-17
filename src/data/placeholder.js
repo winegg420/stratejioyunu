@@ -1,3 +1,5 @@
+import { applyUnitDisplayList, getUnitDisplayName } from './unitCatalog';
+
 export const GAME_NAME = '[OYUN ADI]';
 export const SERVER_NAME = 'Türkiye-1 Sezon';
 export const CITY_NAME = 'İzmir';
@@ -38,32 +40,40 @@ export const researches = [
   { id: 'r4', name: 'Hava Savunma', level: 2, max: 15, desc: 'Hava saldırılarına karşı savunma', active: false, time: '—', cost: '5.200 metal' },
 ];
 
-export const landUnits = [
+const landUnitsBase = [
   { id: 'infantry', name: 'Piyade', attack: 10, defense: 8, cost: '120 metal · 80 yemek', time: '00:08:00', count: 2400, image: '🪖', desc: 'Temel kara birliği. Özel tim ve şehir savunmasında etkili.' },
-  { id: 'armor', name: 'Zırhlı Araç', attack: 25, defense: 20, cost: '450 metal · 200 yemek', time: '00:22:00', count: 380, image: '🚛', desc: 'Piyadeye karşı güçlü. Tank ve savaş uçağına zayıf.' },
-  { id: 'tank', name: 'Tank', attack: 45, defense: 35, cost: '900 metal · 400 yemek · 200 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Zırhlı ve piyadeye karşı güçlü.' },
+  { id: 'armor', name: 'Zırhlı Araç', attack: 25, defense: 20, cost: '450 metal · 200 yemek', time: '00:22:00', count: 380, image: '🚛', desc: 'Hafif zırhlı taşıyıcı. Piyadeye karşı güçlü; ana muharebe tankına zayıf.' },
+  { id: 'tank', name: 'Tank', attack: 45, defense: 35, cost: '900 metal · 400 yemek · 200 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Ana muharebe tankı. Zırhlı ve piyadeye karşı güçlü.' },
+  { id: 'airdefense', name: 'Hava Savunma', attack: 15, defense: 55, cost: '750 metal · 350 yemek · 250 enerji', time: '00:38:00', count: 40, image: '📡', desc: 'Hava saldırılarına karşı sabit ve mobil savunma platformu.' },
   { id: 'sniper', name: 'Keskin Nişancı', attack: 30, defense: 12, cost: '350 metal · 150 yemek', time: '00:18:00', count: 85, image: '🎯', desc: 'Piyade ve özel timlere karşı etkili.' },
   { id: 'special', name: 'Özel Tim', attack: 40, defense: 25, cost: '700 metal · 300 yemek · 150 para', time: '00:35:00', count: 45, image: '⚔️', desc: 'Casusluk ve sabotaj operasyonlarında kullanılır.' },
   { id: 'colonist', name: 'Göçmen / İnşaat Aracı', attack: 5, defense: 10, cost: '800 metal · 600 yemek · 200 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Yeni şehir kurmak için zorunlu koloni birliği.' },
 ];
 
-export const airUnits = [
+export const landUnits = applyUnitDisplayList(landUnitsBase);
+
+const airUnitsBase = [
   { id: 'scout', name: 'Keşif Uçağı', attack: 0, defense: 5, cost: '200 metal · 100 yakıt', time: '00:12:00', count: 12, image: '🔭', desc: 'Keşif yapar, savaşmaz.' },
   { id: 'fighter', name: 'Savaş Uçağı', attack: 55, defense: 30, cost: '1.200 metal · 600 yakıt', time: '00:55:00', count: 28, image: '✈️', desc: 'Kara birlikleri ve gemilere karşı güçlü.' },
   { id: 'bomber', name: 'Bombardıman', attack: 70, defense: 15, cost: '1.800 metal · 900 yakıt', time: '01:10:00', count: 8, image: '💣', desc: 'Binalara ve kara birliklerine karşı etkili.' },
   { id: 'drone', name: 'Drone', attack: 20, defense: 18, cost: '400 metal · 200 yakıt', time: '00:15:00', count: 35, image: '🛸', desc: 'Piyade ve keşif uçaklarına karşı etkili.' },
 ];
 
-export const seaUnits = [
+export const airUnits = applyUnitDisplayList(airUnitsBase);
+
+const seaUnitsBase = [
   { id: 'patrol', name: 'Hücumbot', attack: 25, defense: 22, cost: '500 metal · 300 yakıt', time: '00:25:00', count: 18, image: '🚤', desc: 'Hızlı saldırı, küçük gemilere karşı.' },
-  { id: 'frigate', name: 'Firkateyn', attack: 50, defense: 45, cost: '1.400 metal · 700 yakıt', time: '01:00:00', count: 6, image: '🚢', desc: 'Hücumbota ve denizaltıya karşı güçlü.' },
-  { id: 'sub', name: 'Denizaltı', attack: 60, defense: 25, cost: '1.600 metal · 800 yakıt', time: '01:15:00', count: 4, image: '🔱', desc: 'Firkateyn ve uçak gemisine karşı etkili.' },
+  { id: 'frigate', name: 'Fırkateyn', attack: 50, defense: 45, cost: '1.400 metal · 700 yakıt', time: '01:00:00', count: 6, image: '🚢', desc: 'Hücumbota ve denizaltıya karşı güçlü.' },
+  { id: 'sub', name: 'Denizaltı', attack: 60, defense: 25, cost: '1.600 metal · 800 yakıt', time: '01:15:00', count: 4, image: '🔱', desc: 'Fırkateyn ve uçak gemisine karşı etkili.' },
 ];
 
+export const seaUnits = applyUnitDisplayList(seaUnitsBase);
+
 export const idleTroops = [
-  { id: 'infantry', name: 'Piyade', icon: '🪖', available: 1840 },
-  { id: 'armor', name: 'Zırhlı Araç', icon: '🚛', available: 320 },
-  { id: 'tank', name: 'Tank', icon: '🛡️', available: 95 },
+  { id: 'infantry', name: getUnitDisplayName('infantry', 'Piyade'), icon: '🪖', available: 1840 },
+  { id: 'armor', name: getUnitDisplayName('armor', 'Zırhlı Araç'), icon: '🚛', available: 320 },
+  { id: 'tank', name: getUnitDisplayName('tank', 'Tank'), icon: '🛡️', available: 95 },
+  { id: 'airdefense', name: getUnitDisplayName('airdefense', 'Hava Savunma'), icon: '📡', available: 24 },
   { id: 'sniper', name: 'Keskin Nişancı', icon: '🎯', available: 62 },
 ];
 

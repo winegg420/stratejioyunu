@@ -6,7 +6,16 @@ import './styles/hud-shell.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      registration?.update();
+      window.setInterval(() => registration?.update(), 60 * 60 * 1000);
+    },
+    onNeedRefresh() {
+      window.location.reload();
+    },
+  });
 }
 
 createRoot(document.getElementById('root')).render(

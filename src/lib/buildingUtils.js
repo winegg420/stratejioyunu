@@ -1,4 +1,5 @@
 import { buildings as buildingDefs } from '../data/placeholder';
+import { getUnitDisplayName } from '../data/unitCatalog';
 
 export const HQ_BUILDING_ID = 'hq';
 
@@ -101,9 +102,10 @@ export function getStarterResources() {
 
 export function getStarterIdleTroops() {
   return [
-    { id: 'infantry', name: 'Piyade', icon: '🪖', available: 0 },
-    { id: 'armor', name: 'Zırhlı Araç', icon: '🚛', available: 0 },
-    { id: 'tank', name: 'Tank', icon: '🛡️', available: 0 },
+    { id: 'infantry', name: getUnitDisplayName('infantry', 'Piyade'), icon: '🪖', available: 0 },
+    { id: 'armor', name: getUnitDisplayName('armor', 'Zırhlı Araç'), icon: '🚛', available: 0 },
+    { id: 'tank', name: getUnitDisplayName('tank', 'Tank'), icon: '🛡️', available: 0 },
+    { id: 'airdefense', name: getUnitDisplayName('airdefense', 'Hava Savunma'), icon: '📡', available: 0 },
     { id: 'sniper', name: 'Keskin Nişancı', icon: '🎯', available: 0 },
     { id: 'special', name: 'Özel Tim', icon: '⚔️', available: 0 },
     { id: 'colonist', name: 'Göçmen / İnşaat Aracı', icon: '🏙️', available: 0 },

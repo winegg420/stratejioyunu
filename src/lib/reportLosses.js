@@ -1,6 +1,15 @@
 import { landUnits } from '../data/placeholder';
+import { LEGACY_UNIT_NAME_TO_ID } from '../data/unitCatalog';
 
-const NAME_TO_UNIT = Object.fromEntries(landUnits.map((u) => [u.name.toLowerCase(), u]));
+const NAME_TO_UNIT = {};
+for (const unit of landUnits) {
+  NAME_TO_UNIT[unit.id] = unit;
+  NAME_TO_UNIT[unit.name.toLowerCase()] = unit;
+}
+for (const [legacy, id] of Object.entries(LEGACY_UNIT_NAME_TO_ID)) {
+  const unit = landUnits.find((u) => u.id === id);
+  if (unit) NAME_TO_UNIT[legacy] = unit;
+}
 
 function parseLossString(lossStr) {
   const map = {};
