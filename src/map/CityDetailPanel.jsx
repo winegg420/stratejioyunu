@@ -1,4 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import { useActionLock } from '../hooks/useActionLock';
+import { getTroopStock } from '../lib/troopStock';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import TroopStockLabel from '../components/TroopStockLabel';
 import ExpeditionEtaStrip from '../components/ExpeditionEtaStrip';
@@ -32,7 +34,10 @@ const STATUS_LABELS = {
 };
 
 function TroopDispatchRow({ troop, value, onChange, awayMap }) {
-  const handleMax = () => onChange(troop.available);
+  const stock = getTroopStock(troop, awayMap);
+  const idleCap = stock.idle;
+
+  const handleMax = () => onChange(idleCap);
 
   return (
     <div className="city-panel-troop-row">
@@ -50,9 +55,9 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
           type="number"
           className="input-qty"
           min={0}
-          max={troop.available}
+          max={idleCap}
           value={value}
-          onChange={(e) => onChange(Math.min(troop.available, Math.max(0, Number(e.target.value) || 0)))}
+          onChange={(e) => onChange(Math.min(idleCap, Math.max(0, Number(e.target.value) || 0)))}
         />
         <button type="button" className="btn btn-max" onClick={handleMax}>
           MAX
@@ -84,6 +89,7 @@ function CityDetailPanelContent({ city, onClose }) {
   const startExpedition = useGameStore((s) => s.startExpedition);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
+  const { locked: actionLocked, runLocked } = useActionLock();
   useEffect(() => {
     setTroopQty({});
     setSpyQty(0);
@@ -165,15 +171,19 @@ function CityDetailPanelContent({ city, onClose }) {
   const showSpyBtn = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot');
 
   const confirmAttack = () => {
-    if (!canStartAttack) return;
-    const ok = startExpedition({ targetCity: city, troopQty, mode: 'attack' });
-    if (ok) onClose();
+    if (!canStartAttack || actionLocked) return;
+    runLocked(() => {
+      const ok = startExpedition({ targetCity: city, troopQty, mode: 'attack' });
+      if (ok) onClose();
+    });
   };
 
   const confirmSpy = () => {
-    if (!canStartSpy) return;
-    const ok = startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
-    if (ok) onClose();
+    if (!canStartSpy || actionLocked) return;
+    runLocked(() => {
+      const ok = startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
+      if (ok) onClose();
+    });
   };
 
   const foundReadiness = getFoundCityReadiness({ idleTroops, resources, troopQty });
@@ -181,14 +191,16 @@ function CityDetailPanelContent({ city, onClose }) {
   const canOpenFound = canFound && foundReadiness.canOpenPanel;
 
   const confirmFound = () => {
-    if (!foundReadiness.canStartExpedition) return;
-    const ok = startExpedition({
-      targetCity: city,
-      troopQty,
-      mode: 'found',
-      newCityName: foundCityName,
+    if (!foundReadiness.canStartExpedition || actionLocked) return;
+    runLocked(() => {
+      const ok = startExpedition({
+        targetCity: city,
+        troopQty,
+        mode: 'found',
+        newCityName: foundCityName,
+      });
+      if (ok) onClose();
     });
-    if (ok) onClose();
   };
 
   return (
@@ -242,8 +254,8 @@ function CityDetailPanelContent({ city, onClose }) {
                 onChange={(v) => setTroop(t.id, v)}
               />
             ))}
-            <button type="button" className="btn btn-danger" disabled={!canStartAttack} onClick={confirmAttack}>
-              Seferi Başlat
+            <button type="button" className="btn btn-danger" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
+              {actionLocked ? 'Yükleniyor…' : 'Seferi Başlat'}
             </button>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
               İptal
@@ -286,10 +298,10 @@ function CityDetailPanelContent({ city, onClose }) {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={!foundReadiness.canStartExpedition}
+              disabled={!foundReadiness.canStartExpedition || actionLocked}
               onClick={confirmFound}
             >
-              Şehir Kur Seferini Başlat
+              {actionLocked ? 'Yükleniyor…' : 'Şehir Kur Seferini Başlat'}
             </button>
             {!foundReadiness.canStartExpedition && (
               <p className="city-panel-form-hint city-panel-found-warn">
@@ -342,8 +354,8 @@ function CityDetailPanelContent({ city, onClose }) {
                 </button>
               </div>
             </div>
-            <button type="button" className="btn btn-primary" disabled={!canStartSpy} onClick={confirmSpy}>
-              Casus Gönder
+            <button type="button" className="btn btn-primary" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
+              {actionLocked ? 'Yükleniyor…' : 'Casus Gönder'}
             </button>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
               İptal

@@ -12,7 +12,23 @@ export default function Layout() {
   const startTicker = useGameStore((s) => s.startTicker);
   const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
+  const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
+
   useEffect(() => startTicker(), [startTicker]);
+
+  useEffect(() => {
+    const onWake = () => {
+      if (document.visibilityState === 'visible') {
+        syncTimersOnWake();
+      }
+    };
+    document.addEventListener('visibilitychange', onWake);
+    window.addEventListener('focus', onWake);
+    return () => {
+      document.removeEventListener('visibilitychange', onWake);
+      window.removeEventListener('focus', onWake);
+    };
+  }, [syncTimersOnWake]);
 
   useEffect(() => {
     if (pathname === '/seferler') clearNavBadge('expeditions');

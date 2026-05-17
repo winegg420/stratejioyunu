@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useActionLock } from '../hooks/useActionLock';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
@@ -9,6 +10,7 @@ export default function UnitCard({ unit, awayMap }) {
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const resources = city?.resources ?? STORE_EMPTY_ARRAY;
   const enqueueProduction = useGameStore((s) => s.enqueueProduction);
+  const { locked: actionLocked, runLocked } = useActionLock();
   const [qtyInput, setQtyInput] = useState('10');
 
   const qty = Number(qtyInput);
@@ -34,13 +36,13 @@ export default function UnitCard({ unit, awayMap }) {
   };
 
   const handleProduce = () => {
-    if (!canProduce) return;
-    enqueueProduction(unit.id, qty);
+    if (!canProduce || actionLocked) return;
+    runLocked(() => enqueueProduction(unit.id, qty));
   };
 
   const handleQueue = () => {
-    if (!canProduce) return;
-    enqueueProduction(unit.id, qty, { addToQueue: true });
+    if (!canProduce || actionLocked) return;
+    runLocked(() => enqueueProduction(unit.id, qty, { addToQueue: true }));
   };
 
   return (
@@ -88,11 +90,11 @@ export default function UnitCard({ unit, awayMap }) {
             MAX
           </button>
         </div>
-        <button type="button" className="btn btn-primary" disabled={!canProduce} onClick={handleProduce}>
-          Üret
+        <button type="button" className="btn btn-primary" disabled={!canProduce || actionLocked} onClick={handleProduce}>
+          {actionLocked ? 'Yükleniyor…' : 'Üret'}
         </button>
-        <button type="button" className="btn btn-secondary" disabled={!canProduce} onClick={handleQueue}>
-          Kuyruğa Ekle
+        <button type="button" className="btn btn-secondary" disabled={!canProduce || actionLocked} onClick={handleQueue}>
+          {actionLocked ? 'Yükleniyor…' : 'Kuyruğa Ekle'}
         </button>
       </div>
     </article>

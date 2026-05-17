@@ -1,4 +1,5 @@
-﻿import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+﻿import { useActionLock } from '../hooks/useActionLock';
+import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { canAffordCost } from '../utils/resourceCosts';
 import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
@@ -12,6 +13,7 @@ export default function BuildingCard({ building }) {
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
   const queueFull = useConstructionQueueFull();
+  const { locked: actionLocked, runLocked } = useActionLock();
 
   const queueEntry = queue.find(
     (q) => q.buildingId === building.id || q.name === building.name,
@@ -35,8 +37,13 @@ export default function BuildingCard({ building }) {
           ? 'İnşa Et'
           : 'Yükselt';
 
-  const handleUpgrade = () => enqueueConstruction(building.id);
-  const handleQueue = () => enqueueConstruction(building.id, { addToQueue: true });
+  const handleUpgrade = () => {
+    runLocked(() => enqueueConstruction(building.id));
+  };
+  const handleQueue = () => {
+    runLocked(() => enqueueConstruction(building.id, { addToQueue: true }));
+  };
+  const buildBusy = actionLocked || upgrading;
 
   const card = (
     <article
@@ -75,13 +82,13 @@ export default function BuildingCard({ building }) {
         </>
       )}
       <div className="card-actions">
-        <button type="button" className="btn btn-primary" disabled={!canBuild} onClick={handleUpgrade}>
-          {upgradeLabel}
+        <button type="button" className="btn btn-primary" disabled={!canBuild || buildBusy} onClick={handleUpgrade}>
+          {actionLocked ? 'Yükleniyor…' : upgradeLabel}
         </button>
         <button
           type="button"
           className="btn btn-secondary"
-          disabled={!canAfford || !prereqsMet || queueFull}
+          disabled={!canAfford || !prereqsMet || queueFull || actionLocked}
           onClick={handleQueue}
         >
           Kuyruğa Ekle

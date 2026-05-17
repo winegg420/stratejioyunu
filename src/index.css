@@ -1389,6 +1389,29 @@ body.map-scroll-locked {
   background: linear-gradient(90deg, #ff6b2b, #ff9a3c);
 }
 
+.resource-bar--workforce-warn {
+  border-bottom-color: rgba(234, 179, 8, 0.55);
+}
+
+.resource-bar-workforce-warn {
+  margin: 0;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: #fbbf24;
+  background: rgba(234, 179, 8, 0.12);
+  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.resource-item--workforce {
+  border-color: rgba(234, 179, 8, 0.45);
+}
+
+.resource-item--workforce .res-rate {
+  color: #fbbf24;
+}
+
 .res-rate--stopped {
   color: #ef4444 !important;
   font-weight: 700;

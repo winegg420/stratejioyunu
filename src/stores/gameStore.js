@@ -324,7 +324,7 @@ export const useGameStore = create((set, get) => ({
       return { ...r, current: rounded };
     });
 
-    const frozenResources = applyProductionFreeze(resources, activeCity.buildings);
+    const frozenResources = applyProductionFreeze(resources, activeCity.buildings, activeCity);
     patchCity(set, get, activeCityId, { resources: frozenResources });
 
     const { cities, completed } = tickAllCities(get(), now);
@@ -428,6 +428,7 @@ export const useGameStore = create((set, get) => ({
     const resources = applyProductionFreeze(
       recalculateResourceRates(buildings, city.resources),
       buildings,
+      city,
     );
     queue.splice(activeIdx, 1);
 
@@ -579,7 +580,7 @@ export const useGameStore = create((set, get) => ({
     const city = state.cities[cityId];
     if (city && report.loot?.length && report.winner === 'player') {
       const { resources, overflow } = applyExpeditionLoot(city.resources, report.loot);
-      const frozenResources = applyProductionFreeze(resources, city.buildings);
+      const frozenResources = applyProductionFreeze(resources, city.buildings, city);
       patchCity(set, get, cityId, { resources: frozenResources });
       if (overflow.length > 0) {
         useNotificationStore.getState().addToast(
@@ -1480,6 +1481,12 @@ export const useGameStore = create((set, get) => ({
       ),
     });
     useNotificationStore.getState().addToast('Araştırma iptal edildi', 'info');
+  },
+
+  /** Sekme / pencere odağına dönünce sayaçları gerçek zamana senkronize et. */
+  syncTimersOnWake: () => {
+    set({ now: Date.now() });
+    get().tick();
   },
 
   startTicker: () => {

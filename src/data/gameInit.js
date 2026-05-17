@@ -11,12 +11,9 @@ import { getDefaultIdlePopulation } from '../lib/populationUtils';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
-  const res = applyProductionFreeze(
-    recalculateResourceRates(bld, (overrides.resources ?? getStarterResources()).map((r) => ({ ...r }))),
-    bld,
-  );
+  const baseResources = (overrides.resources ?? getStarterResources()).map((r) => ({ ...r }));
   const base = {
-    resources: res,
+    resources: baseResources,
     buildings: bld.map((b) => ({ ...b })),
     idleTroops: (overrides.idleTroops ?? getStarterIdleTroops()).map((t) => ({ ...t })),
     idleSpies: overrides.idleSpies ?? 0,
@@ -24,9 +21,16 @@ export function createCityState(overrides = {}) {
     constructionQueue: overrides.constructionQueue ?? [],
     productionQueue: overrides.productionQueue ?? [],
   };
+  const idlePopulation = overrides.idlePopulation ?? getDefaultIdlePopulation(base);
+  const resources = applyProductionFreeze(
+    recalculateResourceRates(bld, baseResources),
+    bld,
+    idlePopulation,
+  );
   return {
     ...base,
-    idlePopulation: overrides.idlePopulation ?? getDefaultIdlePopulation(base),
+    resources,
+    idlePopulation,
   };
 }
 
