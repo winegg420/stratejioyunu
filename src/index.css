@@ -1184,6 +1184,10 @@ a {
   font-size: 1rem !important;
 }
 
+.auth-quick {
+  width: 100%;
+}
+
 /* Harita mobil */
 body.map-scroll-locked {
   overflow: hidden;

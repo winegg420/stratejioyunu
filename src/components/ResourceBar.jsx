@@ -1,4 +1,5 @@
-import { resources, GAME_NAME, CITY_NAME, PLAYER_NAME, PROTECTION_DAYS } from '../data/placeholder';
+import { useAuth } from '../context/AuthContext';
+import { resources, GAME_NAME, CITY_NAME, PROTECTION_DAYS } from '../data/placeholder';
 
 function formatShort(n) {
   if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
@@ -27,6 +28,8 @@ function ResourceItem({ r, pct }) {
 }
 
 export default function ResourceBar() {
+  const { playerName } = useAuth();
+
   return (
     <header className="resource-bar">
       <div className="resource-bar-inner">
@@ -41,7 +44,7 @@ export default function ResourceBar() {
           })}
         </div>
         <div className="player-block player-desktop">
-          <span className="player-name">👤 {PLAYER_NAME}</span>
+          <span className="player-name">👤 {playerName}</span>
           <span className="protection-badge">🛡️ {PROTECTION_DAYS}g</span>
         </div>
       </div>

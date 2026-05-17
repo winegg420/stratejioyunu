@@ -7,19 +7,21 @@ import { GAME_NAME } from '../data/placeholder';
 export default function AuthPage() {
   const { isAuthed, login } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState('login');
-  const [email, setEmail] = useState('');
+  const [playerId, setPlayerId] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
 
   if (isAuthed) {
     return <Navigate to="/" replace />;
   }
 
+  const enterGame = () => {
+    login(playerId.trim() || 'Oyuncu');
+    navigate('/', { replace: true });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    login();
-    navigate('/', { replace: true });
+    enterGame();
   };
 
   return (
@@ -33,63 +35,35 @@ export default function AuthPage() {
           <p className="auth-subtitle">Türkiye haritasında fetih, diplomasi ve strateji</p>
         </header>
 
-        <div className="auth-tabs">
-          <button
-            type="button"
-            className={tab === 'login' ? 'active' : ''}
-            onClick={() => setTab('login')}
-          >
-            Giriş Yap
-          </button>
-          <button
-            type="button"
-            className={tab === 'register' ? 'active' : ''}
-            onClick={() => setTab('register')}
-          >
-            Kayıt Ol
-          </button>
-        </div>
-
         <form className="auth-form" onSubmit={handleSubmit}>
-          {tab === 'register' && (
-            <label>
-              <span>Kullanıcı adı</span>
-              <input
-                type="text"
-                placeholder="Komutan_Alpha"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
-            </label>
-          )}
           <label>
-            <span>E-posta</span>
+            <span>Oyuncu ID</span>
             <input
-              type="email"
-              placeholder="ornek@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
+              type="text"
+              placeholder="istediğiniz bir ad"
+              value={playerId}
+              onChange={(e) => setPlayerId(e.target.value)}
+              autoComplete="username"
             />
           </label>
           <label>
             <span>Şifre</span>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="istediğiniz bir şifre"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
-              required
+              autoComplete="current-password"
             />
           </label>
-          {tab === 'login' && (
-            <p className="auth-hint">Demo: Herhangi bir e-posta ile giriş yapabilirsiniz.</p>
-          )}
+          <p className="auth-hint">
+            Kayıt gerekmez. Rastgele ID ve şifre yazıp doğrudan oyuna girebilirsiniz.
+          </p>
           <button type="submit" className="btn btn-primary auth-submit">
-            {tab === 'login' ? 'Oyuna Gir' : 'Hesap Oluştur'}
+            Oyuna Gir
+          </button>
+          <button type="button" className="btn btn-secondary auth-quick" onClick={enterGame}>
+            Hızlı Giriş (boş bırak)
           </button>
         </form>
       </div>
