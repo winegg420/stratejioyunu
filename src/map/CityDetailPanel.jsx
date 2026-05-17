@@ -10,9 +10,11 @@ import {
   resolveCityCoords,
 } from '../lib/expeditionTravel';
 import {
+  FOUND_CITY_COLONIST_ID,
   FOUND_CITY_COST,
   FOUND_CITY_MIN_COLONISTS,
-  FOUND_CITY_MIN_TROOPS,
+  FOUND_CITY_UNIT_LABEL,
+  getColonistTroop,
   getFoundCityButtonTitle,
   getFoundCityReadiness,
 } from '../lib/foundCityConfig';
@@ -186,7 +188,8 @@ function CityDetailPanelContent({ city, onClose }) {
     });
   };
 
-  const foundReadiness = getFoundCityReadiness({ idleTroops, resources, troopQty });
+  const colonistTroop = getColonistTroop(idleTroops);
+  const foundReadiness = getFoundCityReadiness({ idleTroops, resources, troopQty, awayMap });
   const foundButtonTitle = getFoundCityButtonTitle(foundReadiness);
   const canOpenFound = canFound && foundReadiness.canOpenPanel;
 
@@ -195,7 +198,7 @@ function CityDetailPanelContent({ city, onClose }) {
     runLocked(() => {
       const ok = startExpedition({
         targetCity: city,
-        troopQty,
+        troopQty: { [FOUND_CITY_COLONIST_ID]: troopQty[FOUND_CITY_COLONIST_ID] || 0 },
         mode: 'found',
         newCityName: foundCityName,
       });
@@ -270,8 +273,7 @@ function CityDetailPanelContent({ city, onClose }) {
               Çıkış şehri: <strong>{activeCityName}</strong> — kolonistler bu şehirden ayrılır
             </p>
             <p className="city-panel-form-hint">
-              En az <strong>{FOUND_CITY_MIN_TROOPS} birlik</strong> (en az{' '}
-              <strong>{FOUND_CITY_MIN_COLONISTS} Kolonist</strong>) ve{' '}
+              En az <strong>{FOUND_CITY_MIN_COLONISTS} {FOUND_CITY_UNIT_LABEL}</strong> (boşta) ve{' '}
               <strong>{FOUND_CITY_COST}</strong> gerekir.
             </p>
             <label className="city-panel-form-field">
@@ -286,15 +288,18 @@ function CityDetailPanelContent({ city, onClose }) {
               />
             </label>
             <ExpeditionEtaStrip durationSeconds={foundDuration} />
-            {idleTroops.map((t) => (
+            {colonistTroop ? (
               <TroopDispatchRow
-                key={t.id}
-                troop={t}
+                troop={colonistTroop}
                 awayMap={awayMap}
-                value={troopQty[t.id] ?? 0}
-                onChange={(v) => setTroop(t.id, v)}
+                value={troopQty[FOUND_CITY_COLONIST_ID] ?? 0}
+                onChange={(v) => setTroop(FOUND_CITY_COLONIST_ID, v)}
               />
-            ))}
+            ) : (
+              <p className="city-panel-form-hint city-panel-found-warn">
+                {FOUND_CITY_UNIT_LABEL} birliği mevcut değil — önce kışlada üretin.
+              </p>
+            )}
             <button
               type="button"
               className="btn btn-primary"
@@ -305,9 +310,9 @@ function CityDetailPanelContent({ city, onClose }) {
             </button>
             {!foundReadiness.canStartExpedition && (
               <p className="city-panel-form-hint city-panel-found-warn">
-                {foundReadiness.colonistAvailable < FOUND_CITY_MIN_COLONISTS
-                  ? `En az ${FOUND_CITY_MIN_COLONISTS} Kolonist seçin (boşta: ${foundReadiness.colonistAvailable}).`
-                  : 'Toplam birlik ve kolonist şartlarını sağlayın.'}
+                {foundReadiness.colonistIdle < FOUND_CITY_MIN_COLONISTS
+                  ? `En az ${FOUND_CITY_MIN_COLONISTS} ${FOUND_CITY_UNIT_LABEL} seçin (boşta: ${foundReadiness.colonistIdle}).`
+                  : `${FOUND_CITY_UNIT_LABEL} miktarını boşta stokla sınırlayın (max: ${foundReadiness.colonistIdle}).`}
               </p>
             )}
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>

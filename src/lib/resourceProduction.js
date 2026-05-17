@@ -1,3 +1,4 @@
+import { getHqLevel } from './buildingUtils';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -15,7 +16,14 @@ export function isDepotOverflow(resource) {
   return resource.max != null && resource.current > resource.max;
 }
 
+/** HQ Sv.1 ve altı — yeni oyuncu maden cezasından muaf. */
+export function isNewPlayerWorkforceProtected(city) {
+  if (!city || typeof city !== 'object') return true;
+  return getHqLevel(city) <= 1;
+}
+
 export function hasWorkforceShortage(city) {
+  if (isNewPlayerWorkforceProtected(city)) return false;
   return getIdlePopulation(city) <= 0;
 }
 
@@ -48,8 +56,9 @@ export function applyProductionFreeze(resources, buildings, cityOrIdlePop) {
     ? getIdlePopulation(cityOrIdlePop)
     : (cityOrIdlePop ?? 1);
 
+  const city = typeof cityOrIdlePop === 'object' ? cityOrIdlePop : null;
   let withRates = recalculateResourceRates(buildings, resources);
-  if (idlePop <= 0) {
+  if (idlePop <= 0 && !isNewPlayerWorkforceProtected(city)) {
     withRates = applyWorkforcePenalty(withRates);
   }
   return applyDepotFreeze(withRates);

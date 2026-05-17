@@ -4,8 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CityDetailPanel from './CityDetailPanel';
 import CyberCityMarkers from './CyberCityMarkers';
-import ExpeditionRoutesLayer from './ExpeditionRoutesLayer';
-import TradeRouteCargoLayer from './TradeRouteCargoLayer';
+import MapAnimatedLayers from './MapAnimatedLayers';
 import FogOfWarLayer from './FogOfWarLayer';
 import MapHudControls from './MapHudControls';
 import MapBoundsReporter from './MapBoundsReporter';
@@ -72,7 +71,6 @@ export default function TurkeyMap() {
   const [mapReady, setMapReady] = useState(false);
   const mapCities = useGameStore((s) => s.mapCities);
   const expeditions = useGameStore((s) => s.expeditions);
-  const now = useGameStore((s) => s.now);
   const mapFocusRequest = useGameStore((s) => s.mapFocusRequest);
   const clearMapFocusRequest = useGameStore((s) => s.clearMapFocusRequest);
   const reports = useGameStore((s) => s.reports);
@@ -333,7 +331,7 @@ export default function TurkeyMap() {
           zoom={TURKEY_ZOOM}
           minZoom={5}
           maxBounds={TURKEY_MAX_BOUNDS}
-          maxBoundsViscosity={1}
+          maxBoundsViscosity={1.0}
           className="turkey-map turkey-map--cyber"
           scrollWheelZoom={!isMobile}
           touchZoom
@@ -370,16 +368,10 @@ export default function TurkeyMap() {
             expeditions={expeditions}
             reports={reports}
           />
-          <ExpeditionRoutesLayer
+          <MapAnimatedLayers
             expeditions={expeditions}
             mapCities={mapCities}
             playerCities={playerCities}
-          />
-          <TradeRouteCargoLayer
-            expeditions={expeditions}
-            mapCities={mapCities}
-            playerCities={playerCities}
-            now={now}
           />
           <CyberCityMarkers
             cities={filteredCities}

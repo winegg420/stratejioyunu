@@ -16,6 +16,7 @@ export const resources = [
 ];
 
 export const buildings = [
+  { id: 'hq', name: 'Merkez Bina', category: 'Temel', level: 1, maxLevel: null, desc: 'Şehrin komuta merkezi. Radar menzili ve yeni oyuncu koruması.', image: '🏛️', cost: '—', time: '—', producing: false },
   { id: 'farm', name: 'Çiftlik', category: 'Üretim', level: 8, maxLevel: null, desc: 'Yemek üretir. Asker besleme ve nüfus büyümesi için kritik.', image: '🌾', cost: '2.400 metal · 1.800 yemek', time: '02:14:30', producing: true },
   { id: 'refinery', name: 'Rafineri', category: 'Üretim', level: 6, maxLevel: null, desc: 'Yakıt üretir. Seferler ve araç hareketi için gerekli.', image: '⛽', cost: '3.100 metal · 2.200 para', time: '—', producing: false },
   { id: 'factory', name: 'Fabrika', category: 'Üretim', level: 7, maxLevel: null, desc: 'Metal üretir. Bina inşaatı ve araç üretimi için.', image: '🏭', cost: '4.500 metal · 1.200 para', time: '01:45:00', producing: false, upgrading: true },
@@ -43,7 +44,7 @@ export const landUnits = [
   { id: 'tank', name: 'Tank', attack: 45, defense: 35, cost: '900 metal · 400 yemek · 200 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Zırhlı ve piyadeye karşı güçlü.' },
   { id: 'sniper', name: 'Keskin Nişancı', attack: 30, defense: 12, cost: '350 metal · 150 yemek', time: '00:18:00', count: 85, image: '🎯', desc: 'Piyade ve özel timlere karşı etkili.' },
   { id: 'special', name: 'Özel Tim', attack: 40, defense: 25, cost: '700 metal · 300 yemek · 150 para', time: '00:35:00', count: 45, image: '⚔️', desc: 'Casusluk ve sabotaj operasyonlarında kullanılır.' },
-  { id: 'colonist', name: 'Kolonist', attack: 5, defense: 10, cost: '800 metal · 600 yemek · 200 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Yeni şehir kurmak için zorunlu koloni birliği.' },
+  { id: 'colonist', name: 'Göçmen / İnşaat Aracı', attack: 5, defense: 10, cost: '800 metal · 600 yemek · 200 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Yeni şehir kurmak için zorunlu koloni birliği.' },
 ];
 
 export const airUnits = [

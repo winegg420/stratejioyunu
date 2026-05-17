@@ -1,8 +1,9 @@
 import { canAffordCost } from '../utils/resourceCosts';
+import { EMPTY_AWAY_MAP, getTroopStock } from './troopStock';
 
 export const FOUND_CITY_COLONIST_ID = 'colonist';
+export const FOUND_CITY_UNIT_LABEL = 'Göçmen / İnşaat Aracı';
 export const FOUND_CITY_MIN_COLONISTS = 1;
-export const FOUND_CITY_MIN_TROOPS = 10;
 export const FOUND_CITY_COST = '2.000 metal · 1.500 yemek · 500 para';
 
 export const FOUND_CITY_DEFAULT_NAMES = ['Yeni Koloni', 'Siber Üs'];
@@ -26,34 +27,38 @@ export function getColonistTroop(idleTroops) {
   return idleTroops.find((t) => t.id === FOUND_CITY_COLONIST_ID);
 }
 
-export function getFoundCityReadiness({ idleTroops, resources, troopQty = {} }) {
+export function getColonistIdleCount(idleTroops, awayMap = EMPTY_AWAY_MAP) {
   const colonist = getColonistTroop(idleTroops);
-  const colonistAvailable = colonist?.available ?? 0;
+  if (!colonist) return 0;
+  return getTroopStock(colonist, awayMap).idle;
+}
+
+export function getFoundCityReadiness({ idleTroops, resources, troopQty = {}, awayMap = EMPTY_AWAY_MAP }) {
+  const colonistIdle = getColonistIdleCount(idleTroops, awayMap);
   const colonistInPayload = troopQty[FOUND_CITY_COLONIST_ID] || 0;
-  const totalTroops = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
   const hasResources = canAffordCost(FOUND_CITY_COST, 1, resources);
-  const hasColonistStock = colonistAvailable >= FOUND_CITY_MIN_COLONISTS;
+  const hasColonistStock = colonistIdle >= FOUND_CITY_MIN_COLONISTS;
   const canOpenPanel = hasColonistStock && hasResources;
 
   const reasons = [];
   if (!hasColonistStock) {
-    reasons.push(`En az ${FOUND_CITY_MIN_COLONISTS} Kolonist (boşta)`);
+    reasons.push(`En az ${FOUND_CITY_MIN_COLONISTS} ${FOUND_CITY_UNIT_LABEL} (boşta)`);
   }
   if (!hasResources) {
     reasons.push(`Kaynak: ${FOUND_CITY_COST}`);
   }
 
   return {
-    colonistAvailable,
+    colonistIdle,
+    colonistAvailable: colonistIdle,
     hasColonistStock,
     hasResources,
     canOpenPanel,
     reasons,
     canStartExpedition:
       canOpenPanel
-      && totalTroops >= FOUND_CITY_MIN_TROOPS
       && colonistInPayload >= FOUND_CITY_MIN_COLONISTS
-      && idleTroops.every((t) => (troopQty[t.id] || 0) <= t.available),
+      && colonistInPayload <= colonistIdle,
   };
 }
 

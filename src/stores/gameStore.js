@@ -46,7 +46,6 @@ import {
   FOUND_CITY_COLONIST_ID,
   FOUND_CITY_COST,
   FOUND_CITY_MIN_COLONISTS,
-  FOUND_CITY_MIN_TROOPS,
   resolveFoundCityName,
 } from '../lib/foundCityConfig';
 import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
@@ -886,12 +885,20 @@ export const useGameStore = create((set, get) => ({
     );
   },
 
-  markAllReportsRead: () => {
+  markReportsRead: (reportIds) => {
     const state = get();
+    const idSet = new Set(reportIds);
+    if (!idSet.size) return;
+    const reports = state.reports.map((r) => (idSet.has(r.id) ? { ...r, isNew: false } : r));
+    const hasUnread = reports.some((r) => r.isNew);
     set({
-      reports: state.reports.map((r) => ({ ...r, isNew: false })),
-      navBadges: { ...state.navBadges, reports: false },
+      reports,
+      navBadges: { ...state.navBadges, reports: hasUnread },
     });
+  },
+
+  markAllReportsRead: () => {
+    get().markReportsRead(get().reports.map((r) => r.id));
   },
 
   deleteReports: (ids) => {
@@ -1029,13 +1036,11 @@ export const useGameStore = create((set, get) => ({
     if (isFound) {
       if (targetCity.status !== 'empty') return false;
       if (state.playerCities.some((c) => c.name === targetCity.name)) return false;
-      const total = Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0);
       const colonists = troopQty[FOUND_CITY_COLONIST_ID] || 0;
-      if (total < FOUND_CITY_MIN_TROOPS || colonists < FOUND_CITY_MIN_COLONISTS) return false;
+      if (colonists < FOUND_CITY_MIN_COLONISTS) return false;
       if (!canAffordCost(FOUND_CITY_COST, 1, city.resources)) return false;
-      for (const t of city.idleTroops) {
-        if ((troopQty[t.id] || 0) > t.available) return false;
-      }
+      const colonistTroop = city.idleTroops.find((t) => t.id === FOUND_CITY_COLONIST_ID);
+      if (!colonistTroop || colonists > colonistTroop.available) return false;
     } else if (isSpy) {
       if (spyCount < 1 || spyCount > city.idleSpies) return false;
     } else {

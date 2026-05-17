@@ -8,7 +8,7 @@ import { useGameStore } from '../stores/gameStore';
 
 export default function Reports() {
   const reports = useGameStore((s) => s.reports);
-  const markAllReportsRead = useGameStore((s) => s.markAllReportsRead);
+  const markReportsRead = useGameStore((s) => s.markReportsRead);
   const deleteReports = useGameStore((s) => s.deleteReports);
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
@@ -67,6 +67,11 @@ export default function Reports() {
     setSelectedIds(new Set(filtered.map((r) => r.id)));
   };
 
+  const handleMarkFilteredRead = () => {
+    if (!filtered.length) return;
+    markReportsRead(filtered.map((r) => r.id));
+  };
+
   return (
     <div className="page">
       <PageHeader
@@ -74,7 +79,12 @@ export default function Reports() {
         subtitle="Savaş, keşif ve ticaret raporları."
         action={reports.length > 0 ? (
           <div className="report-toolbar-actions">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={markAllReportsRead}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={filtered.length < 1}
+              onClick={handleMarkFilteredRead}
+            >
               Tümünü Okundu Say
             </button>
             <button

@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { landUnits } from '../data/placeholder';
 import { simulateBattle } from '../lib/battleSimulator';
 import { extractCityFromReportTitle, findSpyReportForCity, getEnemyTroopsFromReport } from '../lib/spyIntel';
-import { useActiveCityIdleTroops, useGameStore } from '../stores/gameStore';
+import { toRawInputNumber } from '../lib/formatNumber';
+import { getTroopStock } from '../lib/troopStock';
+import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 
 function emptyCounts() {
   return Object.fromEntries(landUnits.map((u) => [u.id, '']));
@@ -10,7 +12,7 @@ function emptyCounts() {
 
 function sanitizeQtyInput(raw) {
   if (raw === '' || raw == null) return '';
-  const n = Math.floor(Number(raw));
+  const n = Math.floor(Number(toRawInputNumber(raw) || 0));
   if (!Number.isFinite(n) || n < 0) return '0';
   return String(n);
 }
@@ -44,7 +46,9 @@ function TroopInputGrid({ title, counts, onChange, readOnly = false }) {
 
 export default function BattleSimulator({ defaultTargetCity = '' }) {
   const reports = useGameStore((s) => s.reports);
+  const activeCityId = useGameStore((s) => s.activeCityId);
   const idleTroops = useActiveCityIdleTroops();
+  const awayMap = useTroopsAwayMap(activeCityId);
 
   const [targetCity, setTargetCity] = useState(defaultTargetCity);
   const [attacker, setAttacker] = useState(emptyCounts);
@@ -61,7 +65,8 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
   const fillFromGarrison = () => {
     const next = emptyCounts();
     idleTroops.forEach((t) => {
-      if (t.available > 0) next[t.id] = String(t.available);
+      const idle = getTroopStock(t, awayMap).idle;
+      if (idle > 0) next[t.id] = toRawInputNumber(idle);
     });
     setAttacker(next);
     setSimulated(false);
@@ -73,7 +78,7 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
     if (!troops) return;
     const next = emptyCounts();
     Object.entries(troops).forEach(([id, count]) => {
-      next[id] = String(count);
+      next[id] = toRawInputNumber(count);
     });
     setDefender(next);
     if (!targetCity && spyReport) {

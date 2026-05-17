@@ -1,10 +1,13 @@
 import { buildings as buildingDefs } from '../data/placeholder';
 
+export const HQ_BUILDING_ID = 'hq';
+
 export const MILITARY_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
 export const PANEL_LOCKED_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
 export const BUILDING_LABELS = {
+  hq: 'Merkez Bina',
   barracks: 'Kışla',
   airport: 'Hava Üssü',
   shipyard: 'Tersane',
@@ -14,8 +17,13 @@ export const BUILDING_LABELS = {
 export const RESEARCH_BUILDING_ID = 'research';
 
 /** Seviye 1 inşaatı için gerekli diğer bina seviyeleri */
+export function getHqLevel(city) {
+  const hq = city?.buildings?.find((b) => b.id === HQ_BUILDING_ID);
+  return hq?.level ?? 0;
+}
+
 export const BUILDING_PREREQUISITES = {
-  farm: [],
+  farm: [{ id: HQ_BUILDING_ID, level: 1 }],
   refinery: [{ id: 'farm', level: 1 }],
   factory: [{ id: 'farm', level: 2 }],
   plant: [{ id: 'factory', level: 1 }],
@@ -98,7 +106,7 @@ export function getStarterIdleTroops() {
     { id: 'tank', name: 'Tank', icon: '🛡️', available: 0 },
     { id: 'sniper', name: 'Keskin Nişancı', icon: '🎯', available: 0 },
     { id: 'special', name: 'Özel Tim', icon: '⚔️', available: 0 },
-    { id: 'colonist', name: 'Kolonist', icon: '🏙️', available: 0 },
+    { id: 'colonist', name: 'Göçmen / İnşaat Aracı', icon: '🏙️', available: 0 },
   ];
 }
 

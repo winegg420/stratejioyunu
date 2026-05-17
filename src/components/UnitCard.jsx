@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useActionLock } from '../hooks/useActionLock';
+import { toRawInputNumber } from '../lib/formatNumber';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
@@ -22,7 +23,7 @@ export default function UnitCard({ unit, awayMap }) {
 
   const handleMax = () => {
     const max = calcMaxAffordable(unit.cost, resources);
-    setQtyInput(max > 0 ? String(max) : '');
+    setQtyInput(toRawInputNumber(max));
   };
 
   const handleQtyChange = (e) => {
@@ -32,7 +33,7 @@ export default function UnitCard({ unit, awayMap }) {
       return;
     }
     const n = Math.max(0, Math.floor(Number(raw) || 0));
-    setQtyInput(String(n));
+    setQtyInput(toRawInputNumber(n));
   };
 
   const handleProduce = () => {
