@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 
 export default function Expeditions() {
@@ -24,13 +25,15 @@ export default function Expeditions() {
     <div className="page">
       <PageHeader
         title="Seferler"
-        subtitle="Seferler her an geri çağrılabilir. Geri dönüş süresi, geri çağırma anındaki kalan süreye eşittir."
+        subtitle="Mesafe bazlı sefer süreleri (max 5 saat kara). Saf hava birliği seferleri 3× hızlı. Meydan Savaşı: 24 saat hazırlık, son 5 dk kilit."
         action={(
           <Link to="/harita" className="btn btn-primary">
             Haritaya Git
           </Link>
         )}
       />
+
+      <MeydanBattlePanel />
 
       <section className="panel">
         <h3 className="panel-title">Aktif Seferler</h3>

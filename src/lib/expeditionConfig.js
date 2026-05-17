@@ -1,3 +1,4 @@
+/** Yedek sabit süreler — asıl hesap lib/expeditionTravel.js (max 5 saat kara, hava 3×). */
 export const EXPEDITION_DURATIONS = {
   attack: 75,
   spy: 35,

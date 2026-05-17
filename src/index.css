@@ -1363,6 +1363,100 @@ body.map-scroll-locked {
   animation: depot-bar-blink 1.2s ease-in-out infinite;
 }
 
+@keyframes depot-overflow-glow {
+  0%,
+  100% {
+    color: #ff9a3c;
+    text-shadow: 0 0 8px rgba(255, 120, 40, 0.85);
+  }
+  50% {
+    color: #ffb86b;
+    text-shadow: 0 0 14px rgba(255, 140, 60, 1);
+  }
+}
+
+.resource-item.depot-overflow {
+  border-color: rgba(255, 120, 40, 0.75);
+  box-shadow: 0 0 12px rgba(255, 120, 40, 0.35);
+}
+
+.resource-item.depot-overflow .res-value {
+  color: #ff9a3c;
+  animation: depot-overflow-glow 1s ease-in-out infinite;
+}
+
+.resource-item.depot-overflow .res-fill {
+  background: linear-gradient(90deg, #ff6b2b, #ff9a3c);
+}
+
+.res-rate--stopped {
+  color: #ef4444 !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.city-panel-eta-air {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.meydan-battle-panel {
+  margin-bottom: 1.25rem;
+}
+
+.meydan-battle-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.meydan-battle-declare,
+.meydan-battle-send {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.meydan-battle-field span {
+  display: block;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.meydan-battle-timer strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.meydan-battle-lock-hint.is-locked {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.meydan-contrib-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.meydan-contrib-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meydan-troop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
 /* Genel durum paneli — şehir sekmesi */
 .city-status-panel {
   margin-bottom: 1.25rem;

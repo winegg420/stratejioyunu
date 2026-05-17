@@ -185,7 +185,7 @@ export default function ReportDetail({ report }) {
           <strong>Kargo:</strong> {report.cargo}
         </p>
         {report.overflow?.length > 0 && (
-          <p className="trade-overflow-warn" role="alert">
+          <p className="trade-overflow-warn" role="status">
             Depo taşması:{' '}
             {report.overflow.map((o) => `${o.amount} ${o.label}`).join(', ')}
           </p>

@@ -1,5 +1,6 @@
 ﻿import { useAuth } from '../context/AuthContext';
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
+import { isDepotOverflow } from '../lib/resourceProduction';
 import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
 import ServerTimeClock from './ServerTimeClock';
@@ -12,8 +13,9 @@ function formatShort(n) {
   return n.toLocaleString('tr-TR');
 }
 
-function ResourceItem({ resource, pct, flash, depotWarn }) {
+function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow }) {
   const hasDepot = resource.max != null;
+  const frozen = resource.productionFrozen || depotOverflow;
 
   return (
     <div
@@ -21,11 +23,12 @@ function ResourceItem({ resource, pct, flash, depotWarn }) {
         'resource-item',
         hasDepot && 'has-depot',
         flash && 'resource-flash',
-        depotWarn && 'depot-warn',
+        depotWarn && !depotOverflow && 'depot-warn',
+        depotOverflow && 'depot-overflow',
       ]
         .filter(Boolean)
         .join(' ')}
-      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}`}
+      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${depotOverflow ? ' — depo taştı, üretim durdu' : ''}`}
     >
       <span className="res-icon" aria-hidden="true">
         {resource.icon}
@@ -37,10 +40,13 @@ function ResourceItem({ resource, pct, flash, depotWarn }) {
           {hasDepot && <span className="res-max"> / {formatShort(resource.max)}</span>}
         </span>
         {hasDepot && (
-          <div className="res-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-            <div className="res-fill" style={{ width: `${pct}%` }} />
+          <div className="res-bar" role="progressbar" aria-valuenow={Math.min(100, pct)} aria-valuemin={0} aria-valuemax={100}>
+            <div className="res-fill" style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
         )}
+        <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
+          {frozen ? 'DURDU' : resource.rate}
+        </span>
       </div>
     </div>
   );
@@ -76,8 +82,9 @@ export default function ResourceBar() {
         </div>
         <div className="resources-row">
           {resources.map((r) => {
-            const pct = r.max ? Math.min(100, (r.current / r.max) * 100) : 100;
-            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT;
+            const pct = r.max ? (r.current / r.max) * 100 : 100;
+            const depotOverflow = isDepotOverflow(r);
+            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotOverflow;
             return (
               <ResourceItem
                 key={r.id}
@@ -85,6 +92,7 @@ export default function ResourceBar() {
                 pct={pct}
                 flash={Boolean(flashes[r.id])}
                 depotWarn={depotWarn}
+                depotOverflow={depotOverflow}
               />
             );
           })}

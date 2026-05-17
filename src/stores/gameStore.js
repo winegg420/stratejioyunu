@@ -16,6 +16,19 @@ import { landUnits } from '../data/placeholder';
 import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
 import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
 import {
+  calcExpeditionTravelSeconds,
+  formatDistanceKm,
+  getExpeditionDistanceKm,
+  isAirOnlyExpedition,
+  resolveCityCoords,
+} from '../lib/expeditionTravel';
+import {
+  canRecallMeydanTroops,
+  getMeydanBattleAt,
+  MEYDAN_PREP_SECONDS,
+} from '../lib/meydanBattleConfig';
+import { applyProductionFreeze } from '../lib/resourceProduction';
+import {
   applyTradeDelivery,
   canAffordTrade,
   deductTradeResources,
@@ -37,7 +50,7 @@ import {
   resolveFoundCityName,
 } from '../lib/foundCityConfig';
 import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
-import { applyLootWithDepotCap, refundCostWithDepotCap } from '../lib/lootUtils';
+import { applyExpeditionLoot, refundCostWithDepotCap } from '../lib/lootUtils';
 import { buildLossRows } from '../lib/reportLosses';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost } from '../utils/resourceCosts';
@@ -301,6 +314,8 @@ export const useGameStore = create((set, get) => ({
 
     const flashes = {};
     const resources = activeCity.resources.map((r) => {
+      const frozen = r.max != null && r.current > r.max;
+      if (frozen) return r;
       const increment = ratePerSecond(r.rate);
       let next = r.current + increment;
       if (r.max != null) next = Math.min(r.max, next);
@@ -309,7 +324,8 @@ export const useGameStore = create((set, get) => ({
       return { ...r, current: rounded };
     });
 
-    patchCity(set, get, activeCityId, { resources });
+    const frozenResources = applyProductionFreeze(resources, activeCity.buildings);
+    patchCity(set, get, activeCityId, { resources: frozenResources });
 
     const { cities, completed } = tickAllCities(get(), now);
 
@@ -367,6 +383,11 @@ export const useGameStore = create((set, get) => ({
     completedExpeditionIds.forEach((id) => get()._completeExpedition(id));
     completedIntelIds.forEach((id) => get()._completeIntelOperation(id));
 
+    const meydan = get().meydanBattle;
+    if (meydan?.status === 'preparing' && meydan.battleAt <= now) {
+      get()._resolveMeydanBattle();
+    }
+
     const incomingAttacks = state.incomingAttacks.map((a) => ({ ...a }));
     const completedIncomingIds = [];
     const nextIncoming = incomingAttacks.filter((a) => {
@@ -404,7 +425,10 @@ export const useGameStore = create((set, get) => ({
       };
     });
 
-    const resources = recalculateResourceRates(buildings, city.resources);
+    const resources = applyProductionFreeze(
+      recalculateResourceRates(buildings, city.resources),
+      buildings,
+    );
     queue.splice(activeIdx, 1);
 
     patchCity(set, get, cityId, { buildings, resources, constructionQueue: queue });
@@ -554,11 +578,12 @@ export const useGameStore = create((set, get) => ({
     const cityId = exp.originCityId || state.activeCityId;
     const city = state.cities[cityId];
     if (city && report.loot?.length && report.winner === 'player') {
-      const { resources, overflow } = applyLootWithDepotCap(city.resources, report.loot);
-      patchCity(set, get, cityId, { resources });
+      const { resources, overflow } = applyExpeditionLoot(city.resources, report.loot);
+      const frozenResources = applyProductionFreeze(resources, city.buildings);
+      patchCity(set, get, cityId, { resources: frozenResources });
       if (overflow.length > 0) {
         useNotificationStore.getState().addToast(
-          `Depo dolu — ${overflow.map((o) => `${o.amount} ${o.label}`).join(', ')} kayıp`,
+          `Depo taştı — ${overflow.map((o) => `${o.amount} ${o.label}`).join(', ')} depoda (üretim durdu)`,
           'warn',
         );
       }
@@ -699,6 +724,165 @@ export const useGameStore = create((set, get) => ({
       'info',
     );
     return true;
+  },
+
+  declareMeydanBattle: (targetCityName) => {
+    const state = get();
+    if (state.meydanBattle?.status === 'preparing') {
+      useNotificationStore.getState().addToast('Zaten aktif bir Meydan Savaşı hazırlığı var', 'warn');
+      return false;
+    }
+    const target = state.mapCities.find(
+      (c) => c.name === targetCityName && c.status !== 'own',
+    );
+    if (!target) {
+      useNotificationStore.getState().addToast('Geçerli bir düşman veya boş hedef seçin', 'warn');
+      return false;
+    }
+    const now = Date.now();
+    set({
+      meydanBattle: {
+        id: genId('meydan'),
+        targetName: targetCityName,
+        targetLat: target.lat,
+        targetLng: target.lng,
+        declaredAt: now,
+        battleAt: getMeydanBattleAt(now),
+        status: 'preparing',
+        contributions: [],
+      },
+    });
+    useNotificationStore.getState().addToast(
+      `Meydan Savaşı ilan edildi: ${targetCityName} — ${formatSeconds(MEYDAN_PREP_SECONDS)} hazırlık`,
+      'info',
+    );
+    return true;
+  },
+
+  contributeMeydanTroops: (troopQty) => {
+    const state = get();
+    const battle = state.meydanBattle;
+    if (!battle || battle.status !== 'preparing') return false;
+    if (!canRecallMeydanTroops(battle)) {
+      useNotificationStore.getState().addToast('Son 5 dakika — birlik gönderilemez', 'warn');
+      return false;
+    }
+
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const total = Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0);
+    if (total < 1) return false;
+    for (const t of city.idleTroops) {
+      if ((troopQty[t.id] || 0) > t.available) return false;
+    }
+
+    const idleTroops = city.idleTroops.map((t) => ({
+      ...t,
+      available: Math.max(0, t.available - (troopQty[t.id] || 0)),
+    }));
+    const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
+    const existing = battle.contributions.find((c) => c.cityId === cityId);
+    const contributions = existing
+      ? battle.contributions.map((c) => {
+          if (c.cityId !== cityId) return c;
+          const merged = { ...c.troopQty };
+          for (const [id, qty] of Object.entries(troopQty)) {
+            merged[id] = (merged[id] || 0) + (qty || 0);
+          }
+          return {
+            ...c,
+            troopQty: merged,
+            troops: formatTroopsSummary(merged, city.idleTroops),
+          };
+        })
+      : [
+          ...battle.contributions,
+          {
+            id: genId('mc'),
+            cityId,
+            originCityName,
+            troopQty: { ...troopQty },
+            troops: formatTroopsSummary(troopQty, city.idleTroops),
+            committedAt: Date.now(),
+          },
+        ];
+
+    set({
+      meydanBattle: { ...battle, contributions },
+      cities: { ...state.cities, [cityId]: { ...city, idleTroops } },
+    });
+    useNotificationStore.getState().addToast(
+      `Meydan Savaşı — ${originCityName} birlikleri ${battle.targetName} seferine eklendi`,
+      'success',
+    );
+    return true;
+  },
+
+  recallMeydanContribution: (contributionId) => {
+    const state = get();
+    const battle = state.meydanBattle;
+    if (!battle || battle.status !== 'preparing') return false;
+    if (!canRecallMeydanTroops(battle)) {
+      useNotificationStore.getState().addToast(
+        'Son 5 dakika — ordular kilitlendi, geri çekilemez',
+        'warn',
+      );
+      return false;
+    }
+
+    const contribution = battle.contributions.find((c) => c.id === contributionId);
+    if (!contribution) return false;
+
+    const city = state.cities[contribution.cityId];
+    if (city) {
+      const idleTroops = city.idleTroops.map((t) => ({
+        ...t,
+        available: t.available + (contribution.troopQty[t.id] || 0),
+      }));
+      patchCity(set, get, contribution.cityId, { idleTroops });
+    }
+
+    set({
+      meydanBattle: {
+        ...battle,
+        contributions: battle.contributions.filter((c) => c.id !== contributionId),
+      },
+    });
+    useNotificationStore.getState().addToast('Meydan birlikleri geri çekildi', 'info');
+    return true;
+  },
+
+  _resolveMeydanBattle: () => {
+    const state = get();
+    const battle = state.meydanBattle;
+    if (!battle || battle.status !== 'preparing') return;
+
+    const totalUnits = battle.contributions.reduce(
+      (sum, c) => sum + Object.values(c.troopQty || {}).reduce((a, b) => a + (b || 0), 0),
+      0,
+    );
+    const report = {
+      id: genId('rep'),
+      type: 'battle',
+      title: `Meydan Savaşı — ${battle.targetName}`,
+      date: nowReportDate(),
+      isNew: true,
+      winner: totalUnits > 0 ? 'player' : 'enemy',
+      targetCity: battle.targetName,
+      summary: totalUnits > 0
+        ? `${totalUnits} birlik ile istila tamamlandı.`
+        : 'Hiçbir birlik gönderilmedi — savaş iptal edildi.',
+    };
+
+    set({
+      meydanBattle: null,
+      reports: [report, ...state.reports],
+      navBadges: { ...state.navBadges, reports: true },
+    });
+    useNotificationStore.getState().addToast(
+      `Meydan Savaşı sonuçlandı: ${battle.targetName}`,
+      'success',
+    );
   },
 
   markAllReportsRead: () => {
@@ -873,16 +1057,22 @@ export const useGameStore = create((set, get) => ({
       resources = deductCost(FOUND_CITY_COST, 1, city.resources);
     }
 
-    const duration = isSpy
-      ? EXPEDITION_DURATIONS.spy
-      : isFound
-        ? EXPEDITION_DURATIONS.found
-        : EXPEDITION_DURATIONS.attack;
-    const timing = createQueueTiming(duration);
     const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
     const foundTargetName = isFound
       ? resolveFoundCityName(newCityName, state.playerCities.map((c) => c.name))
       : targetCity.name;
+    const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
+    const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
+    const expeditionMode = isFound ? 'found' : isSpy ? 'spy' : 'attack';
+    const duration = calcExpeditionTravelSeconds({
+      origin,
+      target: targetCoords,
+      troopQty: isSpy ? { spies: spyCount } : troopQty,
+      mapCities: state.mapCities,
+      mode: expeditionMode,
+    });
+    const distKm = getExpeditionDistanceKm(origin, targetCoords);
+    const timing = createQueueTiming(duration);
 
     const expedition = {
       id: genId('exp'),
@@ -892,14 +1082,15 @@ export const useGameStore = create((set, get) => ({
       sourceMapCityName: isFound ? targetCity.name : undefined,
       targetLat: targetCity.lat,
       targetLng: targetCity.lng,
-      mode: isFound ? 'found' : isSpy ? 'spy' : 'attack',
+      mode: expeditionMode,
       type: isFound ? 'Şehir Kur' : isSpy ? 'Casus Keşfi' : 'Saldırı',
       direction: 'outgoing',
       troops: isSpy ? `${spyCount} Casus` : troops,
       troopPayload: isSpy ? { spies: spyCount } : { ...troopQty },
       player: 'Komutan_Alpha',
       units: isSpy ? spyCount : Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0),
-      distance: '—',
+      distance: formatDistanceKm(distKm),
+      airRush: !isSpy && isAirOnlyExpedition(troopQty),
       ...timing,
     };
 
@@ -954,10 +1145,21 @@ export const useGameStore = create((set, get) => ({
     }
 
     const resources = deductTradeResources(city.resources, sendAmounts);
-    const duration = EXPEDITION_DURATIONS.trade;
-    const timing = createQueueTiming(duration);
     const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
     const mapTarget = state.mapCities.find((c) => c.name === targetCityName);
+    const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
+    const targetCoords = mapTarget
+      ? { lat: mapTarget.lat, lng: mapTarget.lng }
+      : resolveCityCoords(targetCityName, state.playerCities, state.mapCities);
+    const duration = calcExpeditionTravelSeconds({
+      origin,
+      target: targetCoords,
+      troopQty: {},
+      mapCities: state.mapCities,
+      mode: 'trade',
+    });
+    const distKm = getExpeditionDistanceKm(origin, targetCoords);
+    const timing = createQueueTiming(duration);
 
     const expedition = {
       id: genId('exp'),
@@ -975,7 +1177,7 @@ export const useGameStore = create((set, get) => ({
       troopPayload: null,
       player: 'Komutan_Alpha',
       units: 1,
-      distance: '—',
+      distance: formatDistanceKm(distKm),
       ...timing,
     };
 

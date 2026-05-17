@@ -1,8 +1,12 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import TroopStockLabel from '../components/TroopStockLabel';
 import ExpeditionEtaStrip from '../components/ExpeditionEtaStrip';
-import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
+import {
+  calcExpeditionTravelSeconds,
+  isAirOnlyExpedition,
+  resolveCityCoords,
+} from '../lib/expeditionTravel';
 import {
   FOUND_CITY_COST,
   FOUND_CITY_MIN_COLONISTS,
@@ -110,6 +114,46 @@ function CityDetailPanelContent({ city, onClose }) {
   const canSpy = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot') && inRadarRange;
   const outOfRange = city.status !== 'own' && !inRadarRange;
 
+  const originCoords = useMemo(
+    () => resolveCityCoords(activeCityName, playerCities, mapCities),
+    [activeCityName, playerCities, mapCities],
+  );
+
+  const attackDuration = useMemo(
+    () => calcExpeditionTravelSeconds({
+      origin: originCoords,
+      target: { lat: city.lat, lng: city.lng },
+      troopQty,
+      mapCities,
+      mode: 'attack',
+    }),
+    [originCoords, city.lat, city.lng, troopQty, mapCities],
+  );
+
+  const foundDuration = useMemo(
+    () => calcExpeditionTravelSeconds({
+      origin: originCoords,
+      target: { lat: city.lat, lng: city.lng },
+      troopQty,
+      mapCities,
+      mode: 'found',
+    }),
+    [originCoords, city.lat, city.lng, troopQty, mapCities],
+  );
+
+  const spyDuration = useMemo(
+    () => calcExpeditionTravelSeconds({
+      origin: originCoords,
+      target: { lat: city.lat, lng: city.lng },
+      troopQty: { spies: spyQty },
+      mapCities,
+      mode: 'spy',
+    }),
+    [originCoords, city.lat, city.lng, spyQty, mapCities],
+  );
+
+  const airRushAttack = isAirOnlyExpedition(troopQty);
+
   const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
 
   const attackTotal = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
@@ -184,7 +228,7 @@ function CityDetailPanelContent({ city, onClose }) {
               Çıkış şehri: <strong>{activeCityName}</strong> — birlikler yalnızca bu şehirden düşer
             </p>
             <p className="city-panel-form-hint">Gönderilecek birlik miktarını seçin</p>
-            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.attack} />
+            <ExpeditionEtaStrip durationSeconds={attackDuration} airRush={airRushAttack} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
                 key={t.id}
@@ -225,7 +269,7 @@ function CityDetailPanelContent({ city, onClose }) {
                 maxLength={32}
               />
             </label>
-            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.found} />
+            <ExpeditionEtaStrip durationSeconds={foundDuration} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
                 key={t.id}
@@ -265,7 +309,7 @@ function CityDetailPanelContent({ city, onClose }) {
             <p className="city-panel-form-hint">
               Mevcut boşta casus: <strong>{idleSpies}</strong>
             </p>
-            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.spy} />
+            <ExpeditionEtaStrip durationSeconds={spyDuration} />
             <div className="city-panel-troop-row">
               <div className="city-panel-troop-meta">
                 <span className="city-panel-troop-icon" aria-hidden="true">

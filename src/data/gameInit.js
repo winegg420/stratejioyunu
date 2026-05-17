@@ -1,5 +1,6 @@
 import { mapCities, reports } from './placeholder';
 import { recalculateResourceRates } from '../lib/gameUtils';
+import { applyProductionFreeze } from '../lib/resourceProduction';
 import {
   createStarterBuildings,
   createStarterResearches,
@@ -10,7 +11,10 @@ import { getDefaultIdlePopulation } from '../lib/populationUtils';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
-  const res = recalculateResourceRates(bld, (overrides.resources ?? getStarterResources()).map((r) => ({ ...r })));
+  const res = applyProductionFreeze(
+    recalculateResourceRates(bld, (overrides.resources ?? getStarterResources()).map((r) => ({ ...r }))),
+    bld,
+  );
   const base = {
     resources: res,
     buildings: bld.map((b) => ({ ...b })),
@@ -66,5 +70,6 @@ export function createInitialGameState() {
     navBadges: { expeditions: false, reports: false },
     mapFocusRequest: null,
     flashes: {},
+    meydanBattle: null,
   };
 }

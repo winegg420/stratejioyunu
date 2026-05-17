@@ -6,6 +6,34 @@ const LOOT_LABEL_TO_ID = {
   enerji: 'energy',
 };
 
+/** Sefer ganimeti — depo aşımına izin verilir, hiçbir miktar silinmez. */
+export function applyExpeditionLoot(resources, lootItems = []) {
+  if (!lootItems?.length) return { resources, overflow: [] };
+
+  const overflow = [];
+  const updated = resources.map((r) => {
+    const loot = lootItems.find(
+      (l) => LOOT_LABEL_TO_ID[l.label?.toLowerCase()] === r.id
+        || l.label === r.label,
+    );
+    if (!loot?.amount) return r;
+
+    const before = r.current;
+    const next = before + loot.amount;
+    if (r.max != null && next > r.max) {
+      overflow.push({
+        id: r.id,
+        label: r.label,
+        amount: Math.floor(next - r.max),
+      });
+    }
+    return { ...r, current: Math.floor(next) };
+  });
+
+  return { resources: updated, overflow };
+}
+
+/** Ticaret / iade — depo tavanı uygulanır (taşan miktar kaybolur). */
 export function applyLootWithDepotCap(resources, lootItems = []) {
   if (!lootItems?.length) return { resources, overflow: [] };
 
