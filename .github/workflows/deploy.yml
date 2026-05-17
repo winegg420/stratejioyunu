@@ -31,10 +31,9 @@ jobs:
       - name: Pull Vercel env
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Vite env: Vercel Project Settings'teki değişkenler vercel pull ile gelir.
+      # GitHub Secrets kullanacaksanız VITE_SUPABASE_* ekleyin; boş secret build'i ezer.
       - name: Build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy production
