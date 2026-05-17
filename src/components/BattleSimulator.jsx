@@ -8,6 +8,13 @@ function emptyCounts() {
   return Object.fromEntries(landUnits.map((u) => [u.id, '']));
 }
 
+function sanitizeQtyInput(raw) {
+  if (raw === '' || raw == null) return '';
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n < 0) return '0';
+  return String(n);
+}
+
 function TroopInputGrid({ title, counts, onChange, readOnly = false }) {
   return (
     <fieldset className="battle-sim-fieldset">
@@ -19,10 +26,14 @@ function TroopInputGrid({ title, counts, onChange, readOnly = false }) {
             <input
               type="number"
               min={0}
+              step={1}
               className="input-qty"
               value={counts[u.id] ?? ''}
               readOnly={readOnly}
-              onChange={(e) => onChange(u.id, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
+              }}
+              onChange={(e) => onChange(u.id, sanitizeQtyInput(e.target.value))}
             />
           </label>
         ))}
@@ -120,13 +131,15 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
   };
 
   const setAttackerVal = (id, val) => {
-    setAttacker((prev) => ({ ...prev, [id]: val }));
+    setAttacker((prev) => ({ ...prev, [id]: sanitizeQtyInput(val) }));
     setSimulated(false);
+    setShowResults(false);
   };
 
   const setDefenderVal = (id, val) => {
-    setDefender((prev) => ({ ...prev, [id]: val }));
+    setDefender((prev) => ({ ...prev, [id]: sanitizeQtyInput(val) }));
     setSimulated(false);
+    setShowResults(false);
   };
 
   return (

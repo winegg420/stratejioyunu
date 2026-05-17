@@ -143,6 +143,11 @@ export default function TurkeyMap() {
   }, [isMobile, mapLocked]);
 
   useEffect(() => {
+    if (activeMapCity?.lat == null || activeMapCity?.lng == null) return;
+    setFlyTarget({ lat: activeMapCity.lat, lng: activeMapCity.lng });
+  }, [activeCityId, activeMapCity?.lat, activeMapCity?.lng]);
+
+  useEffect(() => {
     if (!mapFocusRequest) return;
     const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
     const home = mapCities.find((c) => c.name === originPc?.name);

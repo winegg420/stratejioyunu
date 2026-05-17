@@ -80,7 +80,8 @@ export default function Reports() {
             <button
               type="button"
               className="btn btn-danger btn-sm"
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size < 1}
+              aria-disabled={selectedIds.size < 1}
               onClick={handleDeleteSelected}
             >
               Seçilenleri Sil ({selectedIds.size})

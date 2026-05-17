@@ -156,9 +156,13 @@ function CityDetailPanelContent({ city, onClose }) {
 
   const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
 
-  const attackTotal = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
-  const canStartAttack = attackTotal >= 1 && idleTroops.every((t) => (troopQty[t.id] || 0) <= t.available);
+  const attackTotal = Object.values(troopQty).reduce((a, b) => a + (Number(b) || 0), 0);
+  const canStartAttack =
+    attackTotal >= 1
+    && idleTroops.every((t) => (Number(troopQty[t.id]) || 0) <= t.available);
   const canStartSpy = spyQty >= 1 && spyQty <= idleSpies;
+  const showAttackBtn = !isAnyOwnCity && city.status !== 'empty';
+  const showSpyBtn = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot');
 
   const confirmAttack = () => {
     if (!canStartAttack) return;
@@ -359,27 +363,27 @@ function CityDetailPanelContent({ city, onClose }) {
                 Aktif şehrinize saldırı veya casusluk emri verilemez.
               </p>
             )}
-            {canAttack && (
-              <button type="button" className="btn btn-danger" onClick={() => setPanelMode('attack')}>
+            {showAttackBtn && (
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={outOfRange}
+                title={outOfRange ? 'Radar menzili dışı' : undefined}
+                onClick={() => !outOfRange && setPanelMode('attack')}
+              >
                 ⚔️ Asker Gönder
               </button>
             )}
-            {canSpy && (
-              <button type="button" className="btn btn-secondary" onClick={() => setPanelMode('spy')}>
-                Casusluk
+            {showSpyBtn && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={outOfRange}
+                title={outOfRange ? 'Radar menzili dışı' : undefined}
+                onClick={() => !outOfRange && setPanelMode('spy')}
+              >
+                Casus Gönder
               </button>
-            )}
-            {city.status !== 'own' && !inRadarRange && (
-              <>
-                <button type="button" className="btn btn-danger" disabled title="Radar menzili dışı">
-                  ⚔️ Asker Gönder
-                </button>
-                {(city.status === 'enemy' || city.status === 'bot') && (
-                  <button type="button" className="btn btn-secondary" disabled title="Radar menzili dışı">
-                    Casusluk
-                  </button>
-                )}
-              </>
             )}
             {canFound && (
               <button
