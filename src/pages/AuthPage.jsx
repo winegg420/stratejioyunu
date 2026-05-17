@@ -52,6 +52,9 @@ export default function AuthPage() {
           <p className="auth-eyebrow">Dünya Haritası Stratejisi</p>
           <h1 className="auth-title">{GAME_NAME}</h1>
           <p className="auth-subtitle">Türkiye haritasında fetih, diplomasi ve strateji</p>
+          {isSupabaseConfigured && (
+            <span className="auth-supabase-badge">Supabase bağlı</span>
+          )}
         </header>
 
         <form className="auth-form" onSubmit={handleSubmit}>

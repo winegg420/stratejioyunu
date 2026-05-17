@@ -1,0 +1,1 @@
+-- Auth aşamasında veritabanı tablosu yok; ileride oyun verisi için kullanılacak.

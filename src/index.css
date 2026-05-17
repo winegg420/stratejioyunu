@@ -1177,6 +1177,17 @@ a {
   color: var(--text-muted);
 }
 
+.auth-supabase-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  background: rgba(45, 212, 191, 0.15);
+  color: #5eead4;
+  border: 1px solid rgba(45, 212, 191, 0.4);
+}
+
 .auth-error {
   margin: 0;
   padding: 0.5rem 0.65rem;
