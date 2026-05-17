@@ -1,0 +1,473 @@
+/* ═══ 2026 Premium Siber Askeri HUD — harita dışı arayüz ═══ */
+
+:root {
+  --hud-bg-deep: #0b0d1a;
+  --hud-bg-mid: #12152b;
+  --hud-bg-panel: rgba(18, 24, 48, 0.72);
+  --hud-bg-card: rgba(22, 32, 62, 0.55);
+  --hud-border: rgba(100, 140, 220, 0.22);
+  --hud-border-glow: rgba(74, 158, 255, 0.45);
+  --hud-accent: #5eb8ff;
+  --hud-accent-glow: rgba(94, 184, 255, 0.35);
+  --hud-alert-red: #ff6b5a;
+  --hud-alert-orange: #ff9f5a;
+  --hud-alert-glow-red: rgba(255, 90, 70, 0.45);
+  --hud-alert-glow-orange: rgba(255, 159, 90, 0.4);
+  --hud-lock-cyan: #22d3ee;
+  --hud-lock-glow: rgba(34, 211, 238, 0.55);
+  --hud-grid: rgba(120, 100, 200, 0.05);
+  --hud-clip: polygon(
+    0 10px,
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+
+/* ── Fütüristik arka plan + radar ızgarası ── */
+body {
+  background-color: var(--hud-bg-deep);
+  background-image:
+    linear-gradient(145deg, #0f0a1e 0%, #0b0d1a 35%, #0a1228 70%, #0d1020 100%),
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(88, 52, 180, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(40, 80, 180, 0.14) 0%, transparent 50%);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--hud-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, black 20%, transparent 75%);
+}
+
+.app-shell.hud-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell.hud-shell .content-area {
+  background: transparent;
+}
+
+.app-shell.hud-shell .sidebar {
+  background: linear-gradient(180deg, rgba(16, 22, 46, 0.92) 0%, rgba(12, 16, 36, 0.88) 100%);
+  border-right: 1px solid var(--hud-border);
+  backdrop-filter: blur(12px);
+}
+
+.app-shell.hud-shell .panel {
+  background: var(--hud-bg-panel);
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(94, 184, 255, 0.06) inset,
+    0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.app-shell.hud-shell .card:not(.building-card--unbuilt) {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-border);
+  backdrop-filter: blur(8px);
+}
+
+.app-shell.hud-shell .card:hover:not(.building-card--unbuilt) {
+  border-color: var(--hud-border-glow);
+  box-shadow: 0 0 20px var(--hud-accent-glow);
+}
+
+.hud-shell .resource-bar,
+.app-shell.hud-shell .resource-bar {
+  background: linear-gradient(180deg, rgba(20, 26, 52, 0.95) 0%, rgba(12, 16, 34, 0.98) 100%);
+  border-bottom: 1px solid var(--hud-border);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(74, 158, 255, 0.06);
+  backdrop-filter: blur(14px);
+}
+
+.hud-shell .resource-item,
+.app-shell.hud-shell .resource-item {
+  background: rgba(30, 40, 72, 0.45);
+  border-color: var(--hud-border);
+}
+
+.hud-shell .bottom-nav,
+.app-shell.hud-shell .bottom-nav {
+  background: linear-gradient(0deg, rgba(12, 16, 34, 0.98) 0%, rgba(18, 24, 48, 0.92) 100%);
+  border-top: 1px solid var(--hud-border);
+  backdrop-filter: blur(14px);
+}
+
+/* ── Dijital tipografi ── */
+.font-hud-data,
+.res-value,
+.res-rate,
+.timer,
+.timer-badge,
+.stat-value,
+.server-time-value,
+.input-qty,
+.battle-sim-grid .input-qty,
+.battle-sim-stats dd,
+.queue-list .timer,
+.expedition-mini-list .timer,
+.expedition-eta-strip strong,
+.city-panel-eta-duration,
+.city-panel-eta-arrival,
+.active-queue-item .timer,
+.city-status-panel .stat-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+/* ── Neon alarm şeritleri (kaynak barı) ── */
+.resource-bar--workforce-warn {
+  border-bottom-color: rgba(255, 159, 90, 0.35);
+  box-shadow: 0 4px 24px var(--hud-alert-glow-orange);
+}
+
+.resource-bar-workforce-warn {
+  margin: 0;
+  padding: 0.4rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ffd4a8;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 120, 60, 0.12) 15%,
+    rgba(255, 100, 50, 0.2) 50%,
+    rgba(255, 120, 60, 0.12) 85%,
+    transparent 100%
+  );
+  border-bottom: 1px solid rgba(255, 140, 80, 0.35);
+  box-shadow:
+    0 0 20px var(--hud-alert-glow-orange),
+    inset 0 1px 0 rgba(255, 200, 150, 0.08);
+  text-shadow: 0 0 12px rgba(255, 159, 90, 0.65);
+}
+
+.resource-item.depot-warn {
+  border-color: rgba(255, 100, 90, 0.5);
+  box-shadow: 0 0 14px var(--hud-alert-glow-red);
+}
+
+.resource-item.depot-warn .res-value {
+  color: #ffb4a8;
+  text-shadow: 0 0 10px var(--hud-alert-glow-red);
+  animation: hud-depot-warn-pulse 1.4s ease-in-out infinite;
+}
+
+.resource-item.depot-warn .res-fill {
+  background: linear-gradient(90deg, #e85a4a, #ff8a7a);
+  box-shadow: 0 0 8px var(--hud-alert-glow-red);
+  animation: hud-depot-bar-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hud-depot-warn-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+}
+
+@keyframes hud-depot-bar-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+.resource-item.depot-overflow {
+  border-color: rgba(255, 140, 70, 0.55);
+  box-shadow:
+    0 0 16px var(--hud-alert-glow-orange),
+    inset 0 0 12px rgba(255, 100, 40, 0.08);
+}
+
+.resource-item.depot-overflow .res-value {
+  color: #ffc9a0;
+  text-shadow: 0 0 14px var(--hud-alert-glow-orange);
+  animation: hud-depot-overflow-pulse 1.1s ease-in-out infinite;
+}
+
+.resource-item.depot-overflow .res-fill {
+  background: linear-gradient(90deg, #e86a2a, #ffb070);
+  box-shadow: 0 0 10px var(--hud-alert-glow-orange);
+}
+
+@keyframes hud-depot-overflow-pulse {
+  0%, 100% {
+    color: #ffc9a0;
+    text-shadow: 0 0 12px var(--hud-alert-glow-orange);
+  }
+  50% {
+    color: #ffe0c0;
+    text-shadow: 0 0 20px rgba(255, 180, 100, 0.85);
+  }
+}
+
+.resource-item--workforce {
+  border-color: rgba(255, 159, 90, 0.4);
+  box-shadow: 0 0 12px rgba(255, 159, 90, 0.2);
+}
+
+.resource-item--workforce .res-rate {
+  color: #ffd0a0;
+  text-shadow: 0 0 8px rgba(255, 159, 90, 0.5);
+}
+
+/* ── Premium kilitli bina kartı ── */
+.building-card--unbuilt {
+  background: linear-gradient(
+    160deg,
+    rgba(30, 55, 95, 0.35) 0%,
+    rgba(18, 32, 58, 0.42) 50%,
+    rgba(22, 40, 72, 0.38) 100%
+  ) !important;
+  border: 1px solid rgba(94, 184, 255, 0.28) !important;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08) inset,
+    0 8px 28px rgba(0, 0, 0, 0.25) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.building-card--unbuilt .card-visual {
+  filter: none !important;
+  opacity: 0.55;
+  background: rgba(40, 70, 120, 0.2);
+}
+
+.building-card--unbuilt .card-header h3,
+.building-card--unbuilt .card-desc,
+.building-card--unbuilt .card-cost,
+.building-card--unbuilt .stat-value {
+  opacity: 0.75;
+}
+
+.building-lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 6px;
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 42%,
+    rgba(34, 211, 238, 0.08) 0%,
+    transparent 70%
+  );
+}
+
+.building-lock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.65rem;
+  line-height: 1;
+  color: var(--hud-lock-cyan);
+  background: rgba(12, 24, 48, 0.65);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 50%;
+  box-shadow:
+    0 0 24px var(--hud-lock-glow),
+    0 0 48px rgba(34, 211, 238, 0.2),
+    inset 0 0 16px rgba(34, 211, 238, 0.12);
+  text-shadow: 0 0 16px var(--hud-lock-glow);
+  animation: hud-lock-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hud-lock-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px var(--hud-lock-glow),
+      0 0 40px rgba(34, 211, 238, 0.15),
+      inset 0 0 12px rgba(34, 211, 238, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 32px var(--hud-lock-glow),
+      0 0 56px rgba(34, 211, 238, 0.28),
+      inset 0 0 20px rgba(34, 211, 238, 0.18);
+  }
+}
+
+.building-lock-label {
+  margin: -0.25rem 0 0.65rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-align: center;
+  color: rgba(248, 113, 113, 0.75);
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.25);
+  border-top: 1px solid rgba(248, 113, 113, 0.15);
+}
+
+.building-card--unbuilt .card-actions {
+  position: relative;
+  z-index: 3;
+}
+
+/* ── Cyberpunk HUD butonları ── */
+.btn {
+  position: relative;
+  overflow: hidden;
+  clip-path: var(--hud-clip);
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition:
+    box-shadow 0.2s,
+    filter 0.2s,
+    transform 0.1s;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+.btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, rgba(74, 158, 255, 0.95) 0%, rgba(45, 108, 181, 0.95) 100%);
+  border-color: rgba(94, 184, 255, 0.6);
+  box-shadow:
+    0 0 16px var(--hud-accent-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow:
+    0 0 24px rgba(94, 184, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, rgba(35, 48, 78, 0.9) 0%, rgba(24, 32, 56, 0.95) 100%);
+  border-color: var(--hud-border);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--hud-border-glow);
+  box-shadow: 0 0 18px var(--hud-accent-glow);
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, rgba(220, 60, 50, 0.35) 0%, rgba(140, 30, 30, 0.45) 100%);
+  border-color: rgba(255, 100, 90, 0.5);
+  box-shadow: 0 0 14px var(--hud-alert-glow-red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  box-shadow: 0 0 22px var(--hud-alert-glow-red);
+}
+
+.btn-max {
+  clip-path: var(--hud-clip);
+  background: rgba(40, 60, 100, 0.6);
+  border: 1px solid var(--hud-border);
+  box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
+}
+
+/* Terminal tarama — Yükleniyor */
+.btn-hud-loading {
+  color: rgba(180, 220, 255, 0.9) !important;
+  cursor: wait !important;
+  overflow: hidden;
+}
+
+.btn-hud-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(94, 184, 255, 0.35),
+    rgba(34, 211, 238, 0.5),
+    rgba(94, 184, 255, 0.35),
+    transparent
+  );
+  animation: hud-terminal-scan 1.1s linear infinite;
+  pointer-events: none;
+}
+
+.btn-hud-loading::before {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  animation: hud-scanlines 0.15s linear infinite;
+}
+
+@keyframes hud-terminal-scan {
+  0% { left: -55%; }
+  100% { left: 115%; }
+}
+
+@keyframes hud-scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+/* Sekmeler & navigasyon */
+.hud-shell .nav-link.active {
+  background: linear-gradient(90deg, rgba(74, 158, 255, 0.18) 0%, transparent 100%);
+  box-shadow: inset 3px 0 0 var(--hud-accent);
+}
+
+.hud-shell .bottom-nav-link.active {
+  color: var(--hud-accent);
+  text-shadow: 0 0 12px var(--hud-accent-glow);
+}
+
+.hud-shell .page-title {
+  text-shadow: 0 0 24px rgba(94, 184, 255, 0.15);
+}
+
+.hud-shell .report-filters button.active,
+.hud-shell .report-type {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.building-req-tooltip-summary {
+  color: rgba(248, 113, 113, 0.7) !important;
+}

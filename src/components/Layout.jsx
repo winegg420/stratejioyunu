@@ -36,7 +36,7 @@ export default function Layout() {
   }, [pathname, clearNavBadge]);
 
   return (
-    <div className={`app-shell ${isMapPage ? 'route-map' : ''}`}>
+    <div className={`app-shell hud-shell${isMapPage ? ' route-map' : ''}`}>
       <ResourceBar />
       <ToastContainer />
       <div className="main-shell">

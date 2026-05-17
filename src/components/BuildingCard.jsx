@@ -4,7 +4,7 @@ import { canAffordCost } from '../utils/resourceCosts';
 import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
-import { arePrerequisitesMet } from '../lib/buildingUtils';
+import { arePrerequisitesMet, formatPrerequisiteList, getUnmetPrerequisites } from '../lib/buildingUtils';
 
 export default function BuildingCard({ building }) {
   const now = useGameStore((s) => s.now);
@@ -22,6 +22,7 @@ export default function BuildingCard({ building }) {
   const upgrading = Boolean(building.upgrading) || Boolean(active);
   const remaining = active ? remainingFromEndsAt(active.endsAt, now) : 0;
   const prereqsMet = arePrerequisitesMet(city, building.id);
+  const unmetPrereqs = getUnmetPrerequisites(city, building.id);
   const canAfford = building.cost !== '—' && canAffordCost(building.cost, 1, resources);
   const isUnbuilt = building.level < 1;
   const canBuild = !upgrading && canAfford && !queueFull && prereqsMet;
@@ -57,6 +58,11 @@ export default function BuildingCard({ building }) {
           {queueBadge}
         </span>
       )}
+      {isUnbuilt && (
+        <div className="building-lock-overlay" aria-hidden="true">
+          <span className="building-lock-icon">🔒</span>
+        </div>
+      )}
       <div className="card-visual">{building.image}</div>
       <div className="card-header">
         <h3>{building.name}</h3>
@@ -81,13 +87,21 @@ export default function BuildingCard({ building }) {
           <CostBreakdown costStr={building.cost} qty={1} resources={resources} />
         </>
       )}
+      {isUnbuilt && !prereqsMet && unmetPrereqs.length > 0 && (
+        <p className="building-lock-label">{formatPrerequisiteList(unmetPrereqs)}</p>
+      )}
       <div className="card-actions">
-        <button type="button" className="btn btn-primary" disabled={!canBuild || buildBusy} onClick={handleUpgrade}>
+        <button
+          type="button"
+          className={`btn btn-primary${actionLocked ? ' btn-hud-loading' : ''}`}
+          disabled={!canBuild || buildBusy}
+          onClick={handleUpgrade}
+        >
           {actionLocked ? 'Yükleniyor…' : upgradeLabel}
         </button>
         <button
           type="button"
-          className="btn btn-secondary"
+          className={`btn btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
           disabled={!canAfford || !prereqsMet || queueFull || actionLocked}
           onClick={handleQueue}
         >

@@ -91,10 +91,20 @@ export default function UnitCard({ unit, awayMap }) {
             MAX
           </button>
         </div>
-        <button type="button" className="btn btn-primary" disabled={!canProduce || actionLocked} onClick={handleProduce}>
+        <button
+          type="button"
+          className={`btn btn-primary${actionLocked ? ' btn-hud-loading' : ''}`}
+          disabled={!canProduce || actionLocked}
+          onClick={handleProduce}
+        >
           {actionLocked ? 'Yükleniyor…' : 'Üret'}
         </button>
-        <button type="button" className="btn btn-secondary" disabled={!canProduce || actionLocked} onClick={handleQueue}>
+        <button
+          type="button"
+          className={`btn btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
+          disabled={!canProduce || actionLocked}
+          onClick={handleQueue}
+        >
           {actionLocked ? 'Yükleniyor…' : 'Kuyruğa Ekle'}
         </button>
       </div>

@@ -7,9 +7,9 @@ export default function ExpeditionEtaStrip({ durationSeconds, airRush = false })
   const duration = Math.max(0, durationSeconds);
 
   return (
-    <p className="city-panel-eta" aria-live="polite">
+    <p className="city-panel-eta expedition-eta-strip" aria-live="polite">
       <span className="city-panel-eta-label">Sefer süresi:</span>
-      <span className="city-panel-eta-duration">{formatSeconds(duration)}</span>
+      <span className="city-panel-eta-duration font-hud-data">{formatSeconds(duration)}</span>
       {airRush && (
         <>
           <span className="city-panel-eta-sep" aria-hidden="true">·</span>
@@ -18,7 +18,7 @@ export default function ExpeditionEtaStrip({ durationSeconds, airRush = false })
       )}
       <span className="city-panel-eta-sep" aria-hidden="true">·</span>
       <span className="city-panel-eta-label">Varış:</span>
-      <strong className="city-panel-eta-arrival">{formatArrivalClock(duration, now)}</strong>
+      <strong className="city-panel-eta-arrival font-hud-data">{formatArrivalClock(duration, now)}</strong>
     </p>
   );
 }
