@@ -7,13 +7,10 @@ export function useActionLock(cooldownMs = 450) {
   const runLocked = useCallback(
     (fn) => {
       if (locked) return undefined;
+      const result = fn();
+      if (result === false) return false;
       setLocked(true);
-      let result;
-      try {
-        result = fn();
-      } finally {
-        window.setTimeout(() => setLocked(false), cooldownMs);
-      }
+      window.setTimeout(() => setLocked(false), cooldownMs);
       return result;
     },
     [locked, cooldownMs],

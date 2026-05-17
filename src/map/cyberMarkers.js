@@ -8,16 +8,22 @@ const TIER_RING = {
   capital: { r: 18, stroke: 2.5, inner: 6 },
 };
 
-function statusColor(status) {
+export const CYBER_OWN_GREEN = '#22ff88';
+
+function statusColor(status, underAttack) {
+  if (underAttack) return '#ef4444';
+  if (status === 'own') return CYBER_OWN_GREEN;
   return CITY_STATUS_COLORS[status] || CITY_STATUS_COLORS.enemy;
 }
 
-export function getCyberMarkerHtml(city, { underAttack = false } = {}) {
+export function getCyberMarkerHtml(city, { underAttack = false, isActive = false } = {}) {
   const tier = inferCityTier(city);
   const spec = TIER_RING[tier];
-  const color = underAttack ? '#ef4444' : statusColor(city.status);
-  const pulse = tier === 'capital' ? 'cyber-marker-ping' : '';
+  const color = statusColor(city.status, underAttack);
+  const pulse = tier === 'capital' && !isActive ? 'cyber-marker-ping' : '';
   const attack = underAttack ? 'cyber-marker--attack' : '';
+  const own = city.status === 'own' ? 'cyber-marker--own' : '';
+  const active = isActive ? 'cyber-marker--active' : '';
 
   const tierGlyph =
     tier === 'capital'
@@ -27,7 +33,7 @@ export function getCyberMarkerHtml(city, { underAttack = false } = {}) {
         : '<circle cx="20" cy="20" r="4" fill="currentColor" opacity="0.9"/>';
 
   return `
-    <div class="cyber-marker ${pulse} ${attack}" style="color:${color}">
+    <div class="cyber-marker ${pulse} ${attack} ${own} ${active}" style="color:${color}">
       <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
         <circle cx="20" cy="20" r="${spec.r}" fill="none" stroke="currentColor" stroke-width="${spec.stroke}" opacity="0.95"/>
         <circle cx="20" cy="20" r="${spec.r - 4}" fill="none" stroke="currentColor" stroke-width="1" opacity="0.35"/>

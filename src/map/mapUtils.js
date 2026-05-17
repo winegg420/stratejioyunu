@@ -1,5 +1,5 @@
 export const CITY_STATUS_COLORS = {
-  own: '#2dd4bf',
+  own: '#22ff88',
   enemy: '#ef4444',
   empty: '#64748b',
   vassal: '#eab308',

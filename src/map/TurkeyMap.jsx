@@ -3,14 +3,16 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CityDetailPanel from './CityDetailPanel';
-import CyberCityMarkers from './CyberCityMarkers';
+import CityMarkers from './CityMarkers';
 import MapAnimatedLayers from './MapAnimatedLayers';
 import FogOfWarLayer from './FogOfWarLayer';
 import MapHudControls from './MapHudControls';
+import MapFocusCrosshair from './MapFocusCrosshair';
+import ActiveCityMapFocus from './ActiveCityMapFocus';
+import ActiveCityRangeLayer from './ActiveCityRangeLayer';
 import MapBoundsReporter from './MapBoundsReporter';
 import MapMaxBounds from './MapMaxBounds';
 import MapMiniMap from './MapMiniMap';
-import RangeCircleLayer from './RangeCircleLayer';
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
 import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
 import {
@@ -63,8 +65,8 @@ function MapInteractionController({ interactionLocked }) {
   return null;
 }
 
-function HudBridge({ activeCity, onFocusCity }) {
-  return <MapHudControls activeCity={activeCity} onFocusCity={onFocusCity} />;
+function HudBridge() {
+  return <MapHudControls />;
 }
 
 export default function TurkeyMap() {
@@ -119,11 +121,26 @@ export default function TurkeyMap() {
 
   const interactionLocked = isMobile ? mapLocked : true;
 
+  const activePlayerCity = useMemo(
+    () => playerCities.find((c) => c.id === activeCityId) ?? playerCities[0],
+    [playerCities, activeCityId],
+  );
+
+  const activeLat = activePlayerCity?.lat;
+  const activeLng = activePlayerCity?.lng;
+
   const activeMapCity = useMemo(() => {
-    const pc = playerCities.find((c) => c.id === activeCityId);
-    return mapCities.find((c) => c.name === pc?.name && c.status === 'own')
-      || mapCities.find((c) => c.status === 'own');
-  }, [activeCityId, playerCities, mapCities]);
+    if (!activePlayerCity) return null;
+    return (
+      mapCities.find((c) => c.name === activePlayerCity.name)
+      ?? {
+        name: activePlayerCity.name,
+        lat: activePlayerCity.lat,
+        lng: activePlayerCity.lng,
+        status: 'own',
+      }
+    );
+  }, [activePlayerCity, mapCities]);
 
   useEffect(() => {
     setMapReady(true);
@@ -139,11 +156,6 @@ export default function TurkeyMap() {
     }
     return () => document.body.classList.remove('map-scroll-locked');
   }, [isMobile, mapLocked]);
-
-  useEffect(() => {
-    if (activeMapCity?.lat == null || activeMapCity?.lng == null) return;
-    setFlyTarget({ lat: activeMapCity.lat, lng: activeMapCity.lng });
-  }, [activeCityId, activeMapCity?.lat, activeMapCity?.lng]);
 
   useEffect(() => {
     if (!mapFocusRequest) return;
@@ -245,13 +257,6 @@ export default function TurkeyMap() {
   const filteredCities = search
     ? mapCities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : mapCities;
-
-  const focusActiveCity = () => {
-    if (activeMapCity) {
-      setFlyTarget({ lat: activeMapCity.lat, lng: activeMapCity.lng });
-      setSelectedCity(activeMapCity);
-    }
-  };
 
   return (
     <div className={`map-page map-page--cyber ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}>
@@ -360,7 +365,6 @@ export default function TurkeyMap() {
               onEachFeature={onEachDistrict}
             />
           )}
-          <RangeCircleLayer center={activeMapCity} />
           <MapBoundsReporter onViewportChange={setViewportStable} />
           <FogOfWarLayer
             playerCities={playerCities}
@@ -368,26 +372,27 @@ export default function TurkeyMap() {
             expeditions={expeditions}
             reports={reports}
           />
+          <ActiveCityRangeLayer lat={activeLat} lng={activeLng} />
           <MapAnimatedLayers
             expeditions={expeditions}
             mapCities={mapCities}
             playerCities={playerCities}
           />
-          <CyberCityMarkers
-            cities={filteredCities}
-            underAttack={underAttack}
-            incomingAttacks={incomingAttacks}
+          <CityMarkers
+            mapCities={filteredCities}
             playerCities={playerCities}
             activeCityId={activeCityId}
+            underAttack={underAttack}
+            incomingAttacks={incomingAttacks}
             onSelectCity={setSelectedCity}
           />
+          <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
           {fitBounds && <FitBounds bounds={fitBounds} />}
           {flyTarget && (
             <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
           )}
-          {(!isMobile || !hudCollapsed) && (
-            <HudBridge activeCity={activeMapCity} onFocusCity={focusActiveCity} />
-          )}
+          {(!isMobile || !hudCollapsed) && <HudBridge />}
+          <MapFocusCrosshair lat={activeLat} lng={activeLng} />
         </MapContainer>
         )}
         {isMobile && (

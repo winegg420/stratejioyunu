@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { createFoundCityState, createInitialGameState } from '../data/gameInit';
+import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   BUILDING_RESOURCE_MAP,
   createQueueTiming,
@@ -535,13 +536,16 @@ export const useGameStore = create((set, get) => ({
       if (b.id !== item.buildingId && b.name !== item.name) return b;
       const nextLevel = item.targetLevel ?? b.level + 1;
       const unlockPanel = PANEL_LOCKED_BUILDING_IDS.includes(b.id);
+      const upgraded = { ...b, level: nextLevel };
+      const nextSpec = resolveNextConstructionSpec(upgraded);
       return {
         ...b,
         level: nextLevel,
         built: true,
         upgrading: false,
         locked: unlockPanel ? false : b.locked,
-        time: '—',
+        cost: nextSpec?.cost ?? '—',
+        time: nextSpec?.time ?? '—',
       };
     });
 
@@ -1046,14 +1050,18 @@ export const useGameStore = create((set, get) => ({
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
     const building = city.buildings.find((b) => b.id === buildingId);
-    if (!building || building.cost === '—') return false;
+    if (!building) return false;
+
+    const spec = resolveNextConstructionSpec(building);
+    if (!spec?.cost) return false;
+
     if (city.constructionQueue.length >= CONSTRUCTION_QUEUE_LIMIT) return false;
-    if (!canAffordCost(building.cost, 1, city.resources)) return false;
+    if (!canAffordCost(spec.cost, 1, city.resources)) return false;
     if (!arePrerequisitesMet(city, buildingId)) return false;
 
     const hasActive = city.constructionQueue.some((q) => !q.queued);
     const queued = addToQueue || hasActive;
-    const duration = parseTimeToSeconds(building.time) || 120;
+    const duration = parseTimeToSeconds(spec.time) || 120;
     const timing = queued
       ? { durationSeconds: duration, startedAt: null, endsAt: null }
       : createQueueTiming(duration);
@@ -1062,14 +1070,14 @@ export const useGameStore = create((set, get) => ({
       id: genId('cq'),
       buildingId: building.id,
       name: building.name,
-      targetLevel: building.level + 1,
-      costPaid: building.cost,
+      targetLevel: spec.targetLevel,
+      costPaid: spec.cost,
       costQty: 1,
       queued,
       ...timing,
     };
 
-    const resources = deductCost(building.cost, 1, city.resources);
+    const resources = deductCost(spec.cost, 1, city.resources);
     const unlockOnStart = PANEL_LOCKED_BUILDING_IDS.includes(buildingId);
     const buildings = city.buildings.map((b) => {
       if (b.id !== buildingId) return b;

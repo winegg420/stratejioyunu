@@ -1,4 +1,5 @@
 import { buildings as buildingDefs } from '../data/placeholder';
+import { getLevelOneSpec } from '../data/buildingCatalog';
 import { getUnitDisplayName } from '../data/unitCatalog';
 
 export const HQ_BUILDING_ID = 'hq';
@@ -13,6 +14,8 @@ export const BUILDING_LABELS = {
   airport: 'Hava Üssü',
   shipyard: 'Tersane',
   research: 'Araştırma Merkezi',
+  factory: 'Maden',
+  depot: 'Depo',
 };
 
 export const RESEARCH_BUILDING_ID = 'research';
@@ -36,6 +39,7 @@ export const BUILDING_PREREQUISITES = {
   wall: [{ id: 'barracks', level: 1 }],
   market: [{ id: 'tax', level: 2 }],
   research: [{ id: 'factory', level: 3 }, { id: 'market', level: 1 }],
+  depot: [{ id: 'factory', level: 2 }],
 };
 
 export function getBuildingPrerequisites(buildingId) {
@@ -63,14 +67,19 @@ export function formatPrerequisiteList(unmet) {
 }
 
 export function createStarterBuildings() {
-  return buildingDefs.map((b) => ({
-    ...b,
-    level: 0,
-    upgrading: false,
-    producing: false,
-    locked: PANEL_LOCKED_BUILDING_IDS.includes(b.id),
-    built: false,
-  }));
+  return buildingDefs.map((b) => {
+    const levelOne = getLevelOneSpec(b.id);
+    return {
+      ...b,
+      level: 0,
+      cost: levelOne?.cost ?? b.cost,
+      time: levelOne?.time ?? b.time,
+      upgrading: false,
+      producing: false,
+      locked: PANEL_LOCKED_BUILDING_IDS.includes(b.id),
+      built: false,
+    };
+  });
 }
 
 export function isBuildingBuilt(building) {

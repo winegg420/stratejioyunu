@@ -2,12 +2,13 @@ import { Circle } from 'react-leaflet';
 import { rangeCircleRadiusMeters } from '../lib/mapRange';
 
 const RANGE_STYLE = {
-  color: '#22d3ee',
-  fillColor: '#06b6d4',
-  fillOpacity: 0.08,
-  weight: 2,
-  opacity: 0.55,
-  className: 'radar-range-circle',
+  color: '#22ff88',
+  fillColor: '#22ff88',
+  fillOpacity: 0.04,
+  weight: 1.75,
+  opacity: 0.7,
+  dashArray: '10 14',
+  className: 'radar-range-circle radar-range-circle--military',
 };
 
 export default function RangeCircleLayer({ center }) {

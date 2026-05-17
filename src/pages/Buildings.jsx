@@ -29,7 +29,7 @@ export default function Buildings() {
   }, [hash, buildings]);
 
   return (
-    <div className="page">
+    <div className="page page-wrapper buildings-page">
       <PageHeader
         title="Binalar"
         subtitle="Aynı anda 1 bina yükseltilebilir. Diğerleri kuyruğa eklenebilir."
@@ -39,7 +39,7 @@ export default function Buildings() {
         queueType="construction"
         emptyText="Şu an yükseltilen bina yok. Aşağıdan bir bina seçerek kuyruğa ekleyebilirsiniz."
       />
-      <div className="card-grid">
+      <div className="buildings-grid card-grid">
         {buildings.map((b) => (
           <BuildingCard key={b.id} building={b} />
         ))}

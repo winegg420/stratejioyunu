@@ -10,6 +10,7 @@ import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 export default function Layout() {
   const { pathname } = useLocation();
   const isMapPage = pathname === '/harita';
+  const isBuildingsPage = pathname === '/binalar';
   const startTicker = useGameStore((s) => s.startTicker);
   const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
@@ -45,8 +46,16 @@ export default function Layout() {
     if (pathname === '/raporlar') clearNavBadge('reports');
   }, [pathname, clearNavBadge]);
 
+  useEffect(() => {
+    if (!isMapPage) {
+      document.body.classList.remove('map-scroll-locked');
+    }
+  }, [isMapPage]);
+
   return (
-    <div className={`app-shell hud-shell${isMapPage ? ' route-map' : ''}`}>
+    <div
+      className={`app-shell hud-shell${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
+    >
       <ResourceBar />
       <ToastContainer />
       <div className="main-shell">

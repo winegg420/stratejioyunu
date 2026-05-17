@@ -34,5 +34,5 @@ export function isCityInOperationRange(targetCity, activeCityId, playerCities, m
 }
 
 export function rangeCircleRadiusMeters() {
-  return RANGE_DEG * 111000 * 0.85;
+  return RANGE_DEG * 111000;
 }

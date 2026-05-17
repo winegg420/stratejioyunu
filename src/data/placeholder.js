@@ -21,11 +21,12 @@ export const buildings = [
   { id: 'hq', name: 'Merkez Bina', category: 'Temel', level: 1, maxLevel: null, desc: 'Şehrin komuta merkezi. Radar menzili ve yeni oyuncu koruması.', image: '🏛️', cost: '—', time: '—', producing: false },
   { id: 'farm', name: 'Çiftlik', category: 'Üretim', level: 8, maxLevel: null, desc: 'Yemek üretir. Asker besleme ve nüfus büyümesi için kritik.', image: '🌾', cost: '2.400 metal · 1.800 yemek', time: '02:14:30', producing: true },
   { id: 'refinery', name: 'Rafineri', category: 'Üretim', level: 6, maxLevel: null, desc: 'Yakıt üretir. Seferler ve araç hareketi için gerekli.', image: '⛽', cost: '3.100 metal · 2.200 para', time: '—', producing: false },
-  { id: 'factory', name: 'Fabrika', category: 'Üretim', level: 7, maxLevel: null, desc: 'Metal üretir. Bina inşaatı ve araç üretimi için.', image: '🏭', cost: '4.500 metal · 1.200 para', time: '01:45:00', producing: false, upgrading: true },
+  { id: 'factory', name: 'Maden', category: 'Üretim', level: 7, maxLevel: null, desc: 'Metal ve mineral çıkarımı. Bina inşaatı ve araç üretimi için.', image: '🏭', cost: '4.500 metal · 1.200 para', time: '01:45:00', producing: false, upgrading: true },
+  { id: 'depot', name: 'Depo', category: 'Lojistik', level: 4, maxLevel: null, desc: 'Kaynak depolama kapasitesi ve lojistik terminal.', image: '📦', cost: '2.800 metal · 1.000 yemek', time: '01:10:00', producing: false },
   { id: 'plant', name: 'Santral', category: 'Üretim', level: 9, maxLevel: null, desc: 'Enerji üretir. Fabrika ve rafinerinin çalışması için zorunlu.', image: '⚡', cost: '—', time: '—', producing: true },
   { id: 'tax', name: 'Vergi Binası', category: 'Ekonomi', level: 5, maxLevel: null, desc: 'Para üretir. Vergi oranı ayarlanabilir.', image: '🏛️', cost: '1.800 metal', time: '00:52:10', producing: false },
   { id: 'barracks', name: 'Kışla', category: 'Askeri', level: 10, maxLevel: null, desc: 'Kara birliği üretimi.', image: '🪖', cost: '5.200 metal', time: '03:20:00', producing: false },
-  { id: 'airport', name: 'Havaalanı', category: 'Askeri', level: 4, maxLevel: null, desc: 'Hava birliği üretimi.', image: '✈️', cost: '8.000 metal', time: '—', producing: false },
+  { id: 'airport', name: 'Hava Üssü', category: 'Askeri', level: 4, maxLevel: null, desc: 'Hava birliği üretimi ve üs operasyonları.', image: '✈️', cost: '8.000 metal', time: '—', producing: false },
   { id: 'shipyard', name: 'Tersane', category: 'Askeri', level: 3, maxLevel: null, desc: 'Deniz birliği üretimi. Sadece kıyı şehirlerde.', image: '⚓', cost: '6.500 metal', time: '—', producing: false, coastalOnly: true },
   { id: 'intel', name: 'İstihbarat Merkezi', category: 'Teknoloji', level: 6, maxLevel: null, desc: 'Casusluk ve karşı istihbarat.', image: '🕵️', cost: '3.400 metal', time: '—', producing: false },
   { id: 'wall', name: 'Kale Duvarı', category: 'Savunma', level: 7, maxLevel: null, desc: 'Savunma bonusu sağlar.', image: '🏰', cost: '4.100 metal', time: '—', producing: false },
@@ -219,6 +220,7 @@ export const profile = {
 
 export const mapCities = [
   { name: 'İzmir', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 12500, type: 'Kıyı', tier: 'metropolis', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.42, lng: 27.14 },
+  { name: 'Çeşme', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 4200, type: 'Kıyı', tier: 'town', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.32, lng: 26.3 },
   { name: 'İstanbul', owner: 'KaraKurt', rank: 'Albay', population: 48000, type: 'Başkent', tier: 'capital', alliance: 'Boğaz İmparatorluğu', status: 'enemy', lat: 41.01, lng: 28.97 },
   { name: 'Ankara', owner: 'SteelWolf', rank: 'Yüzbaşı', population: 22000, type: 'Büyükşehir', tier: 'capital', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
   { name: 'Manisa', owner: null, rank: null, population: 0, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'empty', lat: 38.62, lng: 27.43 },

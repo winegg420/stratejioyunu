@@ -5,6 +5,8 @@ import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
 import { arePrerequisitesMet, formatPrerequisiteList, getUnmetPrerequisites } from '../lib/buildingUtils';
+import { getBuildingVisual } from '../data/buildingVisualCatalog';
+import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 
 export default function BuildingCard({ building }) {
   const now = useGameStore((s) => s.now);
@@ -23,9 +25,11 @@ export default function BuildingCard({ building }) {
   const remaining = active ? remainingFromEndsAt(active.endsAt, now) : 0;
   const prereqsMet = arePrerequisitesMet(city, building.id);
   const unmetPrereqs = getUnmetPrerequisites(city, building.id);
-  const canAfford = building.cost !== '—' && canAffordCost(building.cost, 1, resources);
+  const nextSpec = resolveNextConstructionSpec(building);
+  const displayCost = nextSpec?.cost ?? null;
+  const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
   const isUnbuilt = building.level < 1;
-  const canBuild = !upgrading && canAfford && !queueFull && prereqsMet;
+  const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet;
   const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
 
   const upgradeLabel = queueFull
@@ -45,6 +49,7 @@ export default function BuildingCard({ building }) {
     runLocked(() => enqueueConstruction(building.id, { addToQueue: true }));
   };
   const buildBusy = actionLocked || upgrading;
+  const visual = getBuildingVisual(building.id);
 
   const card = (
     <article
@@ -63,7 +68,26 @@ export default function BuildingCard({ building }) {
           <span className="building-lock-icon">🔒</span>
         </div>
       )}
-      <div className="card-visual">{building.image}</div>
+      <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
+        {visual ? (
+          <>
+            <div
+              className={`building-img-wrap${building.id === 'barracks' ? ' building-img-wrap--barracks' : ''}`}
+            >
+              <img
+                src={visual.image}
+                alt=""
+                className="building-card__img"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <p className="building-designation">{visual.designation}</p>
+          </>
+        ) : (
+          <span className="building-card__emoji">{building.image}</span>
+        )}
+      </div>
       <div className="card-header">
         <h3>{building.name}</h3>
         <span className="badge">{building.category}</span>
@@ -81,11 +105,17 @@ export default function BuildingCard({ building }) {
           </div>
         )}
       </div>
-      {building.cost !== '—' && (
+      {displayCost ? (
         <>
-          <p className="card-cost">Maliyet: {building.cost}</p>
-          <CostBreakdown costStr={building.cost} qty={1} resources={resources} />
+          <p className="card-cost">
+            Maliyet
+            {isUnbuilt ? ' (Sv.1 inşaat)' : ` (Sv.${nextSpec.targetLevel})`}
+            : {displayCost}
+          </p>
+          <CostBreakdown costStr={displayCost} qty={1} resources={resources} />
         </>
+      ) : (
+        <p className="card-cost card-cost--missing">Maliyet tanımlı değil</p>
       )}
       {isUnbuilt && !prereqsMet && unmetPrereqs.length > 0 && (
         <p className="building-lock-label">{formatPrerequisiteList(unmetPrereqs)}</p>
