@@ -2159,3 +2159,102 @@ body.map-scroll-locked {
 .city-panel-form .btn-sm {
   width: auto;
 }
+
+/* Nav rozet — sefer / rapor */
+.nav-link,
+.bottom-nav-link {
+  position: relative;
+}
+
+.nav-alert-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+}
+
+.bottom-nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.bottom-nav-icon-wrap .nav-alert-badge {
+  top: -2px;
+  right: -4px;
+}
+
+/* Şehir seçici */
+.city-switcher-select {
+  margin-top: 0.15rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  max-width: 120px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Harita şehir arama */
+.map-city-search {
+  margin-bottom: 0.65rem;
+}
+
+.map-city-search-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.map-city-select {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.45rem 0.6rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* Kuyruk hızlandır */
+.active-queue-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.btn-speedup {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  color: #fde047;
+}
+
+.btn-speedup:hover {
+  background: rgba(234, 179, 8, 0.28);
+}
+
+.report-item--new {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: inset 3px 0 0 #ef4444;
+}

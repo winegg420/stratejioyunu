@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useResourceStore } from '../stores/resourceStore';
-import { GAME_NAME, CITY_NAME, PROTECTION_DAYS } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
+import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
 
 const DEPOT_WARN_PCT = 90;
@@ -48,9 +48,12 @@ function ResourceItem({ resource, pct, flash, depotWarn }) {
 
 export default function ResourceBar() {
   const { playerName } = useAuth();
-  const resources = useResourceStore((s) => s.resources);
-  const flashes = useResourceStore((s) => s.flashes);
-  const startTicker = useResourceStore((s) => s.startTicker);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const setActiveCity = useGameStore((s) => s.setActiveCity);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  const flashes = useGameStore((s) => s.flashes);
+  const startTicker = useGameStore((s) => s.startTicker);
 
   useEffect(() => startTicker(), [startTicker]);
 
@@ -59,7 +62,20 @@ export default function ResourceBar() {
       <div className="resource-bar-inner">
         <div className="brand-block brand-desktop">
           <span className="game-title">{GAME_NAME}</span>
-          <span className="city-label">📍 {CITY_NAME}</span>
+          <label className="city-switcher">
+            <span className="sr-only">Aktif sehir</span>
+            <select
+              value={activeCityId}
+              onChange={(e) => setActiveCity(e.target.value)}
+              className="city-switcher-select"
+            >
+              {playerCities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className="resources-row">
           {resources.map((r) => {
@@ -79,8 +95,8 @@ export default function ResourceBar() {
         <div className="resource-bar-actions">
           <NotificationBell />
           <div className="player-block player-desktop">
-            <span className="player-name">👤 {playerName}</span>
-            <span className="protection-badge">🛡️ {PROTECTION_DAYS}g</span>
+            <span className="player-name">{playerName}</span>
+            <span className="protection-badge">{PROTECTION_DAYS}g koruma</span>
           </div>
         </div>
       </div>

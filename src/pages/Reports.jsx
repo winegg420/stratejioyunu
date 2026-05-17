@@ -3,9 +3,10 @@ import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import ReportFilters from '../components/ReportFilters';
 import ReportDetail from '../components/ReportDetail';
-import { reports } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
 
 export default function Reports() {
+  const reports = useGameStore((s) => s.reports);
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
 
@@ -15,13 +16,13 @@ export default function Reports() {
       battle: reports.filter((r) => r.filterType === 'battle').length,
       spy: reports.filter((r) => r.filterType === 'spy').length,
     }),
-    [],
+    [reports],
   );
 
   const filtered = useMemo(() => {
     if (filter === 'all') return reports;
     return reports.filter((r) => r.filterType === filter);
-  }, [filter]);
+  }, [filter, reports]);
 
   const toggleDetail = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -35,7 +36,10 @@ export default function Reports() {
           <ReportFilters active={filter} onChange={setFilter} counts={counts} />
           <ul className="report-list">
             {filtered.map((r) => (
-              <li key={r.id} className={`report-item${expandedId === r.id ? ' report-item--open' : ''}`}>
+              <li
+                key={r.id}
+                className={`report-item${expandedId === r.id ? ' report-item--open' : ''}${r.isNew ? ' report-item--new' : ''}`}
+              >
                 <span className={`report-type report-type--${r.filterType}`}>{r.type}</span>
                 <div className="report-main">
                   <strong>{r.title}</strong>

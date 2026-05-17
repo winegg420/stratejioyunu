@@ -1,16 +1,11 @@
 import PageHeader from '../components/PageHeader';
 import BuildingCard from '../components/BuildingCard';
 import ActiveQueue from '../components/ActiveQueue';
-import { buildings, constructionQueue } from '../data/placeholder';
-
-const queueItems = constructionQueue.map((q) => ({
-  label: q.name,
-  detail: `Seviye ${q.level}`,
-  remaining: q.remaining,
-  queued: q.queued,
-}));
+import { useGameStore } from '../stores/gameStore';
 
 export default function Buildings() {
+  const buildings = useGameStore((s) => s.cities[s.activeCityId]?.buildings ?? []);
+
   return (
     <div className="page">
       <PageHeader
@@ -19,7 +14,7 @@ export default function Buildings() {
       />
       <ActiveQueue
         title="Aktif Kuyruk"
-        items={queueItems}
+        queueType="construction"
         emptyText="Şu an yükseltilen bina yok. Aşağıdan bir bina seçerek kuyruğa ekleyebilirsiniz."
       />
       <div className="card-grid">
@@ -30,4 +25,3 @@ export default function Buildings() {
     </div>
   );
 }
-

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import { useEffect, useState } from 'react';
 import { CITY_STATUS_COLORS } from './mapUtils';
-import { idleTroops, idleSpies } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
 
 const STATUS_LABELS = {
   own: 'Kendi şehriniz',
@@ -46,10 +45,13 @@ function TroopDispatchRow({ troop, value, onChange }) {
 }
 
 export default function CityDetailPanel({ city, onClose }) {
-  const navigate = useNavigate();
   const [panelMode, setPanelMode] = useState(null);
   const [troopQty, setTroopQty] = useState({});
   const [spyQty, setSpyQty] = useState(0);
+
+  const idleTroops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops ?? []);
+  const idleSpies = useGameStore((s) => s.cities[s.activeCityId]?.idleSpies ?? 0);
+  const startExpedition = useGameStore((s) => s.startExpedition);
 
   useEffect(() => {
     if (!city) return undefined;
@@ -74,23 +76,21 @@ export default function CityDetailPanel({ city, onClose }) {
   const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
 
   const confirmAttack = () => {
+    const total = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
+    if (total < 1) return;
+    startExpedition({ targetCity: city, troopQty, mode: 'attack' });
     onClose();
-    navigate('/seferler');
   };
 
   const confirmSpy = () => {
+    if (spyQty < 1) return;
+    startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
     onClose();
-    navigate('/istihbarat');
   };
 
   return (
     <>
-      <button
-        type="button"
-        className="city-panel-backdrop"
-        onClick={onClose}
-        aria-label="Paneli kapat"
-      />
+      <button type="button" className="city-panel-backdrop" onClick={onClose} aria-label="Paneli kapat" />
       <aside className="city-panel" role="dialog" aria-labelledby="city-panel-title">
         <div className="city-panel-header">
           <h2 id="city-panel-title">{city.name}</h2>
@@ -145,7 +145,7 @@ export default function CityDetailPanel({ city, onClose }) {
 
         {panelMode === 'spy' && canSpy && (
           <div className="city-panel-form">
-            <h3 className="city-panel-form-title">🕵️ Casusluk</h3>
+            <h3 className="city-panel-form-title">Casusluk</h3>
             <p className="city-panel-form-hint">
               Mevcut boşta casus: <strong>{idleSpies}</strong>
             </p>
@@ -195,7 +195,7 @@ export default function CityDetailPanel({ city, onClose }) {
             )}
             {canSpy && (
               <button type="button" className="btn btn-secondary" onClick={() => setPanelMode('spy')}>
-                🕵️ Casusluk
+                Casusluk
               </button>
             )}
             {city.status === 'empty' && (

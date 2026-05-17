@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+﻿import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -10,7 +10,7 @@ import {
   getDistrictStyle,
   getHoverStyle,
 } from './mapUtils';
-import { mapCities } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 const TURKEY_CENTER = [39.0, 35.0];
@@ -21,6 +21,16 @@ function FitBounds({ bounds }) {
   useEffect(() => {
     if (bounds) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
   }, [map, bounds]);
+  return null;
+}
+
+function FlyToCity({ lat, lng, zoom = 9 }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat != null && lng != null) {
+      map.flyTo([lat, lng], zoom, { duration: 0.85 });
+    }
+  }, [map, lat, lng, zoom]);
   return null;
 }
 
@@ -45,6 +55,7 @@ function MapInteractionController({ interactionLocked }) {
 }
 
 export default function TurkeyMap() {
+  const mapCities = useGameStore((s) => s.mapCities);
   const isMobile = useIsMobile();
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
@@ -57,6 +68,8 @@ export default function TurkeyMap() {
   const provinceLayerRef = useRef(null);
   const districtLayerRef = useRef(null);
   const [fitBounds, setFitBounds] = useState(null);
+  const [flyTarget, setFlyTarget] = useState(null);
+  const [cityPick, setCityPick] = useState('');
 
   const interactionLocked = isMobile ? mapLocked : true;
 
@@ -167,15 +180,47 @@ export default function TurkeyMap() {
           >
             {mapLocked ? '🔒 Harita Kilidi (Açık)' : '🔓 Sayfa Kaydırma'}
           </button>
+          {!mapLocked && (
+            <select
+              className="map-city-select map-city-select--mobile"
+              value={cityPick}
+              onChange={(e) => {
+                const name = e.target.value;
+                setCityPick(name);
+                const city = mapCities.find((c) => c.name === name);
+                if (city) {
+                  setFlyTarget({ lat: city.lat, lng: city.lng });
+                  setSelectedCity(city);
+                  setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+                }
+              }}
+            >
+              <option value="">Şehir ara...</option>
+              {mapCities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
           <span className="map-lock-hint">
             {mapLocked
               ? 'İki parmakla yakınlaştırın · haritayı sürükleyin'
-              : 'Aşağı kaydırarak arama ve lejantı görün'}
+              : 'Şehir seçin veya aşağı kaydırın'}
           </span>
         </div>
       )}
 
       <MapToolbar
+        mapCities={mapCities}
+        cityPick={cityPick}
+        setCityPick={setCityPick}
+        onCitySelect={(city) => {
+          setCityPick(city.name);
+          setFlyTarget({ lat: city.lat, lng: city.lng });
+          setSelectedCity(city);
+          setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+        }}
         search={search}
         setSearch={setSearch}
         searchCoord={searchCoord}
@@ -205,6 +250,9 @@ export default function TurkeyMap() {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
           {fitBounds && <FitBounds bounds={fitBounds} />}
+          {flyTarget && (
+            <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
+          )}
           {provinces && !districts && (
             <GeoJSON
               key="provinces"
@@ -263,6 +311,10 @@ export default function TurkeyMap() {
 }
 
 function MapToolbar({
+  mapCities,
+  cityPick,
+  setCityPick,
+  onCitySelect,
   search,
   setSearch,
   searchCoord,
@@ -278,6 +330,29 @@ function MapToolbar({
 
   return (
     <div className="map-toolbar">
+      <div className="map-city-search">
+        <label className="map-city-search-label" htmlFor="map-city-select">
+          Şehir Ara
+        </label>
+        <select
+          id="map-city-select"
+          className="map-city-select"
+          value={cityPick}
+          onChange={(e) => {
+            const name = e.target.value;
+            setCityPick(name);
+            const city = mapCities.find((c) => c.name === name);
+            if (city) onCitySelect(city);
+          }}
+        >
+          <option value="">Şehir seçin...</option>
+          {mapCities.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <form className="map-search" onSubmit={handleSearch}>
         <input
           type="text"
@@ -320,3 +395,4 @@ function MapToolbar({
     </div>
   );
 }
+

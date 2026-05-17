@@ -2,46 +2,45 @@ import PageHeader from '../components/PageHeader';
 import NewsFeed from '../components/NewsFeed';
 import CityStatusPanel from '../components/CityStatusPanel';
 import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
-import {
-  newsFeed,
-  constructionQueue,
-  productionQueue,
-  CITY_NAME,
-  CITY_TYPE,
-} from '../data/placeholder';
-import { useCountdown } from '../hooks/useCountdown';
+import { newsFeed } from '../data/placeholder';
+import { formatSeconds } from '../lib/gameUtils';
+import { useGameStore } from '../stores/gameStore';
 
-function QueueItem({ name, level, remaining, queued }) {
-  const timer = useCountdown(remaining);
+function QueueItem({ name, detail, remainingSeconds, queued }) {
   return (
     <li className={queued ? 'queued' : ''}>
       <span>
-        {name} {level && `→ Sv.${level}`}
+        {name} {detail}
       </span>
-      <span className="timer">{queued ? 'Sırada' : timer}</span>
+      <span className="timer">{queued ? 'Sırada' : formatSeconds(remainingSeconds)}</span>
     </li>
   );
 }
 
 export default function Home() {
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const city = useGameStore((s) => s.cities[activeCityId]);
+  const activeCity = playerCities.find((c) => c.id === activeCityId);
+
   return (
     <div className="page home-page">
       <CityStatusPanel />
       <ExpeditionTrackerPanel />
       <PageHeader
         title="Ana Merkez"
-        subtitle={`${CITY_NAME} · ${CITY_TYPE} · Tüm sunucu olayları ve şehir özeti`}
+        subtitle={`${activeCity?.name} · ${activeCity?.type} · Tüm sunucu olayları ve şehir özeti`}
       />
       <div className="home-grid">
         <section className="panel">
           <h3 className="panel-title">Aktif İnşaatlar</h3>
           <ul className="queue-list">
-            {constructionQueue.map((q) => (
+            {city?.constructionQueue?.map((q) => (
               <QueueItem
-                key={q.name}
+                key={q.id}
                 name={q.name}
-                level={q.level}
-                remaining={q.remaining}
+                detail={`→ Sv.${q.targetLevel}`}
+                remainingSeconds={q.remainingSeconds}
                 queued={q.queued}
               />
             ))}
@@ -50,12 +49,12 @@ export default function Home() {
         <section className="panel">
           <h3 className="panel-title">Asker Üretim Kuyruğu</h3>
           <ul className="queue-list">
-            {productionQueue.map((q) => (
+            {city?.productionQueue?.map((q) => (
               <QueueItem
-                key={q.unit}
+                key={q.id}
                 name={q.unit}
-                level={`×${q.count}`}
-                remaining={q.remaining}
+                detail={`×${q.count}`}
+                remainingSeconds={q.remainingSeconds}
                 queued={q.queued}
               />
             ))}

@@ -1,22 +1,24 @@
-import { useCountdown } from '../hooks/useCountdown';
-import {
-  CITY_NAME,
-  CITY_TYPE,
-  constructionQueue,
-  expeditionSummary,
-} from '../data/placeholder';
+import { formatSeconds } from '../lib/gameUtils';
+import { useGameStore } from '../stores/gameStore';
 
 export default function CityStatusPanel() {
-  const activeBuild = constructionQueue.find((q) => !q.queued);
-  const buildTimer = useCountdown(activeBuild?.remaining ?? '—');
-  const queuedBuilds = constructionQueue.filter((q) => q.queued).length;
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const city = useGameStore((s) => s.cities[activeCityId]);
+  const expeditions = useGameStore((s) => s.expeditions);
+
+  const activeCity = playerCities.find((c) => c.id === activeCityId);
+  const activeBuild = city?.constructionQueue?.find((q) => !q.queued);
+  const queuedBuilds = city?.constructionQueue?.filter((q) => q.queued).length ?? 0;
+  const outgoing = expeditions.filter((e) => e.direction === 'outgoing').length;
+  const incoming = expeditions.filter((e) => e.direction === 'returning').length;
 
   return (
     <section className="city-status-panel" aria-label="Genel durum">
       <div className="city-status-header">
         <div>
-          <h2 className="city-status-title">{CITY_NAME}</h2>
-          <p className="city-status-sub">{CITY_TYPE}</p>
+          <h2 className="city-status-title">{activeCity?.name}</h2>
+          <p className="city-status-sub">{activeCity?.type}</p>
         </div>
         <span className="city-status-badge">Genel Durum</span>
       </div>
@@ -28,9 +30,13 @@ export default function CityStatusPanel() {
           <div>
             <span className="city-status-label">İnşaat Kuyruğu</span>
             <strong className="city-status-value">
-              {activeBuild ? `${activeBuild.name} → Sv.${activeBuild.level}` : 'Boş'}
+              {activeBuild ? `${activeBuild.name} → Sv.${activeBuild.targetLevel}` : 'Boş'}
             </strong>
-            {activeBuild && <span className="city-status-meta timer">{buildTimer}</span>}
+            {activeBuild && (
+              <span className="city-status-meta timer">
+                {formatSeconds(activeBuild.remainingSeconds)}
+              </span>
+            )}
             {queuedBuilds > 0 && (
               <span className="city-status-meta">+{queuedBuilds} sırada</span>
             )}
@@ -42,7 +48,7 @@ export default function CityStatusPanel() {
           </span>
           <div>
             <span className="city-status-label">Giden Seferler</span>
-            <strong className="city-status-value">{expeditionSummary.outgoing}</strong>
+            <strong className="city-status-value">{outgoing}</strong>
           </div>
         </div>
         <div className="city-status-card">
@@ -51,11 +57,10 @@ export default function CityStatusPanel() {
           </span>
           <div>
             <span className="city-status-label">Gelen Seferler</span>
-            <strong className="city-status-value">{expeditionSummary.incoming}</strong>
+            <strong className="city-status-value">{incoming}</strong>
           </div>
         </div>
       </div>
     </section>
   );
 }
-

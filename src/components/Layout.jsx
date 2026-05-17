@@ -4,14 +4,20 @@ import ResourceBar from './ResourceBar';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import ToastContainer from './ToastContainer';
-import { useNotificationStore } from '../stores/notificationStore';
+import { useGameStore } from '../stores/gameStore';
 
 export default function Layout() {
   const { pathname } = useLocation();
   const isMapPage = pathname === '/harita';
-  const startDemoEvents = useNotificationStore((s) => s.startDemoEvents);
+  const startTicker = useGameStore((s) => s.startTicker);
+  const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
-  useEffect(() => startDemoEvents(), [startDemoEvents]);
+  useEffect(() => startTicker(), [startTicker]);
+
+  useEffect(() => {
+    if (pathname === '/seferler') clearNavBadge('expeditions');
+    if (pathname === '/raporlar') clearNavBadge('reports');
+  }, [pathname, clearNavBadge]);
 
   return (
     <div className={`app-shell ${isMapPage ? 'route-map' : ''}`}>
@@ -27,4 +33,3 @@ export default function Layout() {
     </div>
   );
 }
-

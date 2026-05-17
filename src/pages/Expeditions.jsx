@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
-import { activeExpeditions, pastExpeditions } from '../data/placeholder';
+import { formatSeconds } from '../lib/gameUtils';
+import { useGameStore } from '../stores/gameStore';
 
 export default function Expeditions() {
-  const hasActive = activeExpeditions.length > 0;
+  const expeditions = useGameStore((s) => s.expeditions);
+  const pastExpeditions = useGameStore((s) => s.pastExpeditions);
+  const hasActive = expeditions.length > 0;
   const hasPast = pastExpeditions.length > 0;
 
   return (
@@ -26,26 +29,24 @@ export default function Expeditions() {
             <thead>
               <tr>
                 <th>Hedef</th>
-                <th>Oyuncu</th>
                 <th>Tür</th>
                 <th>Birim</th>
-                <th>Mesafe</th>
-                <th>Varış</th>
+                <th>Kalan</th>
                 <th>İşlem</th>
               </tr>
             </thead>
             <tbody>
-              {activeExpeditions.map((e) => (
+              {expeditions.map((e) => (
                 <tr key={e.id}>
                   <td>{e.target}</td>
-                  <td>{e.player}</td>
                   <td>{e.type}</td>
-                  <td>{e.units} birim</td>
-                  <td>{e.distance}</td>
-                  <td className="timer">{e.eta}</td>
+                  <td>{e.troops}</td>
+                  <td className="timer">{formatSeconds(e.remainingSeconds)}</td>
                   <td>
                     {e.cancellable ? (
-                      <button type="button" className="btn btn-danger btn-sm">İptal (5 dk)</button>
+                      <button type="button" className="btn btn-danger btn-sm">
+                        İptal (5 dk)
+                      </button>
                     ) : (
                       <span className="muted">—</span>
                     )}
@@ -58,7 +59,7 @@ export default function Expeditions() {
           <EmptyState
             icon="⚔️"
             title="Henüz aktif seferiniz yok"
-            description="Haritadan bir şehir seçip ordu gönderebilirsiniz. Sefer saldırıları ganimet ve zayıflatma sağlar."
+            description="Haritadan bir şehir seçip ordu gönderebilirsiniz."
             actionLabel="Haritayı Aç"
             actionTo="/harita"
           />
@@ -96,11 +97,10 @@ export default function Expeditions() {
           <EmptyState
             icon="📜"
             title="Geçmiş sefer kaydı yok"
-            description="Tamamlanan seferler ve savaş raporları burada listelenir."
+            description="Tamamlanan seferler burada listelenir."
           />
         )}
       </section>
-      <p className="hint">Minimum sefer birliği: 10 asker. Sefer spam önlemi için zorunludur.</p>
     </div>
   );
 }

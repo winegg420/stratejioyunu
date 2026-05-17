@@ -1,5 +1,5 @@
-import { useCountdownProgress } from '../hooks/useCountdownProgress';
-import { activeExpeditions } from '../data/placeholder';
+﻿import { useGameStore } from '../stores/gameStore';
+import { formatSeconds } from '../lib/gameUtils';
 
 const DIRECTION_META = {
   outgoing: { icon: '↗️', label: 'Gidiş' },
@@ -7,7 +7,9 @@ const DIRECTION_META = {
 };
 
 function ExpeditionRow({ expedition }) {
-  const { display, progress, active } = useCountdownProgress(expedition.remaining);
+  const remaining = expedition.remainingSeconds;
+  const total = expedition._initialSeconds || remaining || 1;
+  const progress = total > 0 ? ((total - remaining) / total) * 100 : 0;
   const dir = DIRECTION_META[expedition.direction] || DIRECTION_META.outgoing;
 
   return (
@@ -22,8 +24,8 @@ function ExpeditionRow({ expedition }) {
           <span className="expedition-track-troops">{expedition.troops}</span>
         </div>
       </div>
-      <span className="expedition-track-timer">{display}</span>
-      {active && (
+      <span className="expedition-track-timer">{formatSeconds(remaining)}</span>
+      {remaining > 0 && (
         <div className="expedition-track-progress" aria-hidden="true">
           <div className="expedition-track-progress-fill" style={{ width: `${progress}%` }} />
         </div>
@@ -33,11 +35,13 @@ function ExpeditionRow({ expedition }) {
 }
 
 export default function ExpeditionTrackerPanel() {
-  if (!activeExpeditions.length) {
+  const expeditions = useGameStore((s) => s.expeditions);
+
+  if (!expeditions.length) {
     return (
       <section className="expedition-tracker-panel expedition-tracker-panel--empty">
         <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
-        <p className="expedition-tracker-empty">Yolda aktif sefer yok.</p>
+        <p className="expedition-tracker-empty">Yolda aktif sefer yok. Haritadan sefer başlatın.</p>
       </section>
     );
   }
@@ -46,13 +50,14 @@ export default function ExpeditionTrackerPanel() {
     <section className="expedition-tracker-panel" aria-label="Sefer takip">
       <div className="expedition-tracker-header">
         <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
-        <span className="expedition-tracker-count">{activeExpeditions.length} aktif</span>
+        <span className="expedition-tracker-count">{expeditions.length} aktif</span>
       </div>
       <ul className="expedition-tracker-list">
-        {activeExpeditions.map((e) => (
+        {expeditions.map((e) => (
           <ExpeditionRow key={e.id} expedition={e} />
         ))}
       </ul>
     </section>
   );
 }
+
