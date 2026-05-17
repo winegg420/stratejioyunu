@@ -37,19 +37,19 @@ export function getCityMarkerStyle(status) {
 
 export function getProvinceStyle() {
   return {
-    fillColor: '#1e3a5f',
-    fillOpacity: 0.35,
-    color: '#4a7ab8',
-    weight: 1.5,
+    fillColor: '#0f172a',
+    fillOpacity: 0.55,
+    color: '#1e3a5f',
+    weight: 1,
   };
 }
 
 export function getDistrictStyle() {
   return {
-    fillColor: '#2d5a3d',
-    fillOpacity: 0.45,
-    color: '#6bcf8a',
-    weight: 1,
+    fillColor: '#111827',
+    fillOpacity: 0.65,
+    color: '#22d3ee',
+    weight: 0.8,
   };
 }
 

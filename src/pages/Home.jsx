@@ -3,21 +3,23 @@ import NewsFeed from '../components/NewsFeed';
 import CityStatusPanel from '../components/CityStatusPanel';
 import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
 import { newsFeed } from '../data/placeholder';
-import { formatSeconds } from '../lib/gameUtils';
+import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
 
-function QueueItem({ name, detail, remainingSeconds, queued }) {
+function QueueItem({ name, detail, endsAt, queued, now }) {
+  const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
   return (
     <li className={queued ? 'queued' : ''}>
       <span>
         {name} {detail}
       </span>
-      <span className="timer">{queued ? 'Sırada' : formatSeconds(remainingSeconds)}</span>
+      <span className="timer">{queued ? 'Sırada' : formatSeconds(remaining)}</span>
     </li>
   );
 }
 
 export default function Home() {
+  const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => s.cities[activeCityId]);
@@ -33,29 +35,31 @@ export default function Home() {
       />
       <div className="home-grid">
         <section className="panel">
-          <h3 className="panel-title">Aktif İnşaatlar</h3>
+          <h3 className="panel-title">Aktif İnşaatlar — {activeCity?.name}</h3>
           <ul className="queue-list">
             {city?.constructionQueue?.map((q) => (
               <QueueItem
                 key={q.id}
                 name={q.name}
                 detail={`→ Sv.${q.targetLevel}`}
-                remainingSeconds={q.remainingSeconds}
+                endsAt={q.endsAt}
                 queued={q.queued}
+                now={now}
               />
             ))}
           </ul>
         </section>
         <section className="panel">
-          <h3 className="panel-title">Asker Üretim Kuyruğu</h3>
+          <h3 className="panel-title">Asker Üretim Kuyruğu — {activeCity?.name}</h3>
           <ul className="queue-list">
             {city?.productionQueue?.map((q) => (
               <QueueItem
                 key={q.id}
                 name={q.unit}
                 detail={`×${q.count}`}
-                remainingSeconds={q.remainingSeconds}
+                endsAt={q.endsAt}
                 queued={q.queued}
+                now={now}
               />
             ))}
           </ul>

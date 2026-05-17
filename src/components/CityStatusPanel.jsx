@@ -1,7 +1,8 @@
-import { formatSeconds } from '../lib/gameUtils';
+import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
 
 export default function CityStatusPanel() {
+  const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => s.cities[activeCityId]);
@@ -12,6 +13,7 @@ export default function CityStatusPanel() {
   const queuedBuilds = city?.constructionQueue?.filter((q) => q.queued).length ?? 0;
   const outgoing = expeditions.filter((e) => e.direction === 'outgoing').length;
   const incoming = expeditions.filter((e) => e.direction === 'returning').length;
+  const buildRemaining = activeBuild ? remainingFromEndsAt(activeBuild.endsAt, now) : 0;
 
   return (
     <section className="city-status-panel" aria-label="Genel durum">
@@ -34,7 +36,7 @@ export default function CityStatusPanel() {
             </strong>
             {activeBuild && (
               <span className="city-status-meta timer">
-                {formatSeconds(activeBuild.remainingSeconds)}
+                {formatSeconds(buildRemaining)}
               </span>
             )}
             {queuedBuilds > 0 && (

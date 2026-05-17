@@ -1,28 +1,63 @@
 import { create } from 'zustand';
-import { createInitialGameState } from '../data/gameInit';
+import { createFoundCityState, createInitialGameState } from '../data/gameInit';
 import {
   BUILDING_RESOURCE_MAP,
+  createQueueTiming,
   formatRate,
   formatSeconds,
   genId,
   nowReportDate,
+  parseTimeToSeconds,
   ratePerSecond,
   recalculateResourceRates,
+  remainingFromEndsAt,
 } from '../lib/gameUtils';
+import { landUnits } from '../data/placeholder';
+import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
+import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
+import {
+  FOUND_CITY_COLONIST_ID,
+  FOUND_CITY_COST,
+  FOUND_CITY_MIN_COLONISTS,
+  FOUND_CITY_MIN_TROOPS,
+} from '../lib/foundCityConfig';
+import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
+import { applyLootWithDepotCap, refundCostWithDepotCap } from '../lib/lootUtils';
+import { buildLossRows } from '../lib/reportLosses';
+import { getTroopsAwayFromCity } from '../lib/troopStock';
+import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 
 function getActiveCity(state) {
   return state.cities[state.activeCityId];
 }
 
-function patchActiveCity(set, get, patch) {
-  const { activeCityId, cities } = get();
+function patchCity(set, get, cityId, patch) {
+  const { cities } = get();
   set({
     cities: {
       ...cities,
-      [activeCityId]: { ...cities[activeCityId], ...patch },
+      [cityId]: { ...cities[cityId], ...patch },
     },
   });
+}
+
+function patchActiveCity(set, get, patch) {
+  patchCity(set, get, get().activeCityId, patch);
+}
+
+function slugCityId(name) {
+  const base = String(name)
+    .toLowerCase()
+    .replace(/ı/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return base || genId('city');
 }
 
 function formatTroopsSummary(troopQty, idleTroops) {
@@ -34,6 +69,39 @@ function formatTroopsSummary(troopQty, idleTroops) {
 
 function generateBattleReport(expedition, won = true) {
   const target = expedition.target;
+  const payload = expedition.troopPayload && !expedition.troopPayload.spies
+    ? expedition.troopPayload
+    : null;
+
+  const attackerLossRows = payload
+    ? landUnits
+        .filter((u) => (payload[u.id] || 0) > 0)
+        .map((u) => {
+          const sent = payload[u.id] || 0;
+          const lost = won
+            ? Math.floor(sent * (0.02 + Math.random() * 0.12))
+            : Math.floor(sent * (0.4 + Math.random() * 0.45));
+          return { unitId: u.id, name: u.name, icon: u.image, sent, lost: Math.min(sent, lost) };
+        })
+    : [];
+
+  const attackerLosses = attackerLossRows
+    .filter((r) => r.lost > 0)
+    .map((r) => `${r.lost} ${r.name}`)
+    .join(', ') || 'Kayıp yok';
+
+  const defenderLossRows = won
+    ? [{ name: 'Garnizon', icon: '🏰', sent: 0, lost: 0, note: 'Garnizon imha' }]
+    : [{ name: 'Piyade', icon: '🪖', sent: 0, lost: 22 + Math.floor(Math.random() * 30) }];
+
+  const loot = won
+    ? [
+        { icon: '🌾', label: 'Yemek', amount: 1200 + Math.floor(Math.random() * 800) },
+        { icon: '⚙️', label: 'Metal', amount: 900 + Math.floor(Math.random() * 500) },
+        { icon: '💰', label: 'Para', amount: 400 + Math.floor(Math.random() * 300) },
+      ]
+    : [];
+
   return {
     id: genId('r'),
     filterType: 'battle',
@@ -44,20 +112,25 @@ function generateBattleReport(expedition, won = true) {
     winner: won ? 'player' : 'enemy',
     attacker: 'Komutan_Alpha',
     defender: target,
-    attackerLosses: won ? '8 Piyade' : '120 Piyade, 4 Tank',
-    defenderLosses: won ? 'Garnizon imha' : '22 Piyade',
-    loot: won
-      ? [
-          { icon: '🌾', label: 'Yemek', amount: 1200 + Math.floor(Math.random() * 800) },
-          { icon: '⚙️', label: 'Metal', amount: 900 + Math.floor(Math.random() * 500) },
-          { icon: '💰', label: 'Para', amount: 400 + Math.floor(Math.random() * 300) },
-        ]
-      : [],
+    attackerLosses,
+    defenderLosses: won ? 'Garnizon imha' : defenderLossRows.map((r) => `${r.lost} ${r.name}`).join(', '),
+    attackerLossRows,
+    defenderLossRows,
+    troopPayload: payload,
+    originCityId: expedition.originCityId,
+    loot,
     isNew: true,
   };
 }
 
 function generateSpyReport(expedition, success = true) {
+  const enemyTroops = success
+    ? {
+        infantry: 800 + Math.floor(Math.random() * 1600),
+        tank: 20 + Math.floor(Math.random() * 80),
+        armor: 50 + Math.floor(Math.random() * 150),
+      }
+    : {};
   return {
     id: genId('r'),
     filterType: 'spy',
@@ -66,10 +139,53 @@ function generateSpyReport(expedition, success = true) {
     date: nowReportDate(),
     preview: success ? 'Hedef şehir bilgileri alındı.' : 'Casuslar yakalandı.',
     winner: null,
+    targetCity: expedition.target,
     intelSuccess: success,
-    findings: success ? 'Depo ve birlik dağılımı kaydedildi' : 'Tüm casuslar kayıp',
+    findings: success
+      ? `Fabrika Sv.${5 + Math.floor(Math.random() * 4)} · ${enemyTroops.infantry?.toLocaleString('tr-TR') ?? 0} Piyade · ${enemyTroops.tank ?? 0} Tank`
+      : 'Tüm casuslar kayıp',
+    enemyTroops: success ? enemyTroops : {},
     isNew: true,
   };
+}
+
+function restoreTroopsToCity(city, troopPayload) {
+  if (!troopPayload) return city;
+  if (troopPayload.spies != null) {
+    return {
+      ...city,
+      idleSpies: city.idleSpies + troopPayload.spies,
+    };
+  }
+  const idleTroops = city.idleTroops.map((t) => ({
+    ...t,
+    available: t.available + (troopPayload[t.id] || 0),
+  }));
+  return { ...city, idleTroops };
+}
+
+function tickAllCities(state, now) {
+  const cities = { ...state.cities };
+  const completed = { construction: [], production: [] };
+
+  for (const [cityId, city] of Object.entries(cities)) {
+    let constructionQueue = city.constructionQueue.map((q) => ({ ...q }));
+    let productionQueue = city.productionQueue.map((q) => ({ ...q }));
+
+    const activeBuild = constructionQueue.find((q) => !q.queued && q.endsAt != null);
+    if (activeBuild && activeBuild.endsAt <= now) {
+      completed.construction.push({ cityId, itemId: activeBuild.id });
+    }
+
+    const activeProd = productionQueue.find((q) => !q.queued && q.endsAt != null);
+    if (activeProd && activeProd.endsAt <= now) {
+      completed.production.push({ cityId, itemId: activeProd.id });
+    }
+
+    cities[cityId] = { ...city, constructionQueue, productionQueue };
+  }
+
+  return { cities, completed };
 }
 
 export const useGameStore = create((set, get) => ({
@@ -79,7 +195,7 @@ export const useGameStore = create((set, get) => ({
 
   setActiveCity: (cityId) => {
     if (!get().cities[cityId]) return;
-    set({ activeCityId: cityId });
+    set({ activeCityId: cityId, now: Date.now() });
   },
 
   clearNavBadge: (key) => {
@@ -89,12 +205,14 @@ export const useGameStore = create((set, get) => ({
   },
 
   tick: () => {
+    const now = Date.now();
     const state = get();
-    const city = getActiveCity(state);
-    if (!city) return;
+    const activeCityId = state.activeCityId;
+    const activeCity = state.cities[activeCityId];
+    if (!activeCity) return;
 
     const flashes = {};
-    const resources = city.resources.map((r) => {
+    const resources = activeCity.resources.map((r) => {
       const increment = ratePerSecond(r.rate);
       let next = r.current + increment;
       if (r.max != null) next = Math.min(r.max, next);
@@ -103,45 +221,46 @@ export const useGameStore = create((set, get) => ({
       return { ...r, current: rounded };
     });
 
-    let constructionQueue = city.constructionQueue.map((q) => ({ ...q }));
-    let productionQueue = city.productionQueue.map((q) => ({ ...q }));
-    let buildings = city.buildings.map((b) => ({ ...b }));
-    let idleTroops = city.idleTroops.map((t) => ({ ...t }));
+    patchCity(set, get, activeCityId, { resources });
+
+    const { cities, completed } = tickAllCities(get(), now);
+
     let expeditions = state.expeditions.map((e) => ({ ...e }));
-    let reports = [...state.reports];
-    let pastExpeditions = [...state.pastExpeditions];
-    let navBadges = { ...state.navBadges };
-    let completedConstruction = false;
-    let completedProduction = false;
     const completedExpeditionIds = [];
-
-    const activeBuild = constructionQueue.find((q) => !q.queued);
-    if (activeBuild && activeBuild.remainingSeconds > 0) {
-      activeBuild.remainingSeconds -= 1;
-      if (activeBuild.remainingSeconds <= 0) completedConstruction = true;
-    }
-
-    const activeProd = productionQueue.find((q) => !q.queued);
-    if (activeProd && activeProd.remainingSeconds > 0) {
-      activeProd.remainingSeconds -= 1;
-      if (activeProd.remainingSeconds <= 0) completedProduction = true;
-    }
-
     expeditions = expeditions.map((e) => {
-      if (e.remainingSeconds <= 0) return e;
-      const next = e.remainingSeconds - 1;
-      if (next <= 0) completedExpeditionIds.push(e.id);
-      return { ...e, remainingSeconds: Math.max(0, next) };
+      if (e.endsAt == null || e.endsAt > now) return e;
+      completedExpeditionIds.push(e.id);
+      return e;
     });
 
-    patchActiveCity(set, get, {
-      resources,
-      constructionQueue,
-      productionQueue,
-      buildings,
-      idleTroops,
+    const researchList = state.researches ?? [];
+    let researches = researchList.map((r) => ({ ...r }));
+    const completedResearchIds = [];
+    researches = researches.map((r) => {
+      if (!r.active || r.endsAt == null || r.endsAt > now) return r;
+      completedResearchIds.push(r.id);
+      return {
+        ...r,
+        active: false,
+        queued: false,
+        level: (r.level ?? 0) + 1,
+        startedAt: null,
+        endsAt: null,
+        durationSeconds: null,
+      };
     });
-    set({ flashes, expeditions, reports, pastExpeditions, navBadges });
+
+    set({ now, cities, flashes, expeditions, researches });
+
+    completedResearchIds.forEach((id) => {
+      const r = researches.find((x) => x.id === id);
+      if (r) {
+        useNotificationStore.getState().addToast(
+          `Araştırma tamamlandı: ${r.name} Sv.${r.level}`,
+          'success',
+        );
+      }
+    });
 
     if (Object.keys(flashes).length > 0) {
       setTimeout(() => {
@@ -149,60 +268,78 @@ export const useGameStore = create((set, get) => ({
       }, 650);
     }
 
-    if (completedConstruction) get()._completeConstruction();
-    if (completedProduction) get()._completeProduction();
+    completed.construction.forEach(({ cityId, itemId }) => get()._completeConstruction(cityId, itemId));
+    completed.production.forEach(({ cityId, itemId }) => get()._completeProduction(cityId, itemId));
     completedExpeditionIds.forEach((id) => get()._completeExpedition(id));
+
+    const incomingAttacks = state.incomingAttacks.map((a) => ({ ...a }));
+    const completedIncomingIds = [];
+    const nextIncoming = incomingAttacks.filter((a) => {
+      if (a.endsAt == null || a.endsAt > now) return true;
+      completedIncomingIds.push(a.id);
+      return false;
+    });
+    if (nextIncoming.length !== state.incomingAttacks.length) {
+      set({ incomingAttacks: nextIncoming });
+    }
+    completedIncomingIds.forEach((id) => get()._completeIncomingAttack(id));
   },
 
-  _completeConstruction: () => {
+  _completeConstruction: (cityId, itemId) => {
     const state = get();
-    const city = getActiveCity(state);
+    const city = state.cities[cityId];
+    if (!city) return;
+
     const queue = [...city.constructionQueue];
-    const activeIdx = queue.findIndex((q) => !q.queued);
+    const activeIdx = queue.findIndex((q) => q.id === itemId);
     if (activeIdx === -1) return;
 
     const item = queue[activeIdx];
-    let buildings = city.buildings.map((b) => {
+    const buildings = city.buildings.map((b) => {
       if (b.id !== item.buildingId && b.name !== item.name) return b;
       const nextLevel = item.targetLevel ?? b.level + 1;
-      return { ...b, level: nextLevel, upgrading: false, time: '—' };
+      const unlockPanel = PANEL_LOCKED_BUILDING_IDS.includes(b.id);
+      return {
+        ...b,
+        level: nextLevel,
+        built: true,
+        upgrading: false,
+        locked: unlockPanel ? false : b.locked,
+        time: '—',
+      };
     });
 
-    const resId = BUILDING_RESOURCE_MAP[item.buildingId];
-    let resources = recalculateResourceRates(buildings, city.resources);
-
+    const resources = recalculateResourceRates(buildings, city.resources);
     queue.splice(activeIdx, 1);
-    if (queue[0]) queue[0] = { ...queue[0], queued: false };
 
-    patchActiveCity(set, get, { buildings, resources, constructionQueue: queue });
+    patchCity(set, get, cityId, { buildings, resources, constructionQueue: queue });
 
-    const bName = item.name;
-    const newRate = resId
-      ? resources.find((r) => r.id === resId)?.rate
-      : null;
+    const resId = BUILDING_RESOURCE_MAP[item.buildingId];
+    const newRate = resId ? resources.find((r) => r.id === resId)?.rate : null;
     useNotificationStore.getState().addToast(
-      `İnşaat Tamamlandı: ${bName}${newRate ? ` · Üretim ${newRate}` : ''}`,
+      `İnşaat Tamamlandı: ${item.name}${newRate ? ` · Üretim ${newRate}` : ''}`,
       'success',
     );
   },
 
-  _completeProduction: () => {
+  _completeProduction: (cityId, itemId) => {
     const state = get();
-    const city = getActiveCity(state);
+    const city = state.cities[cityId];
+    if (!city) return;
+
     const queue = [...city.productionQueue];
-    const activeIdx = queue.findIndex((q) => !q.queued);
+    const activeIdx = queue.findIndex((q) => q.id === itemId);
     if (activeIdx === -1) return;
 
     const item = queue[activeIdx];
-    let idleTroops = city.idleTroops.map((t) => {
+    const idleTroops = city.idleTroops.map((t) => {
       if (t.id !== item.unitId && t.name !== item.unit) return t;
       return { ...t, available: t.available + item.count };
     });
 
     queue.splice(activeIdx, 1);
-    if (queue[0]) queue[0] = { ...queue[0], queued: false };
 
-    patchActiveCity(set, get, { idleTroops, productionQueue: queue });
+    patchCity(set, get, cityId, { idleTroops, productionQueue: queue });
     useNotificationStore.getState().addToast(
       `Üretim Tamamlandı: ${item.count} ${item.unit}`,
       'success',
@@ -214,10 +351,71 @@ export const useGameStore = create((set, get) => ({
     const exp = state.expeditions.find((e) => e.id === expeditionId);
     if (!exp) return;
 
+    const isReturnLeg =
+      exp.direction === 'returning'
+      || exp.recalled
+      || exp.skipCombat
+      || exp.type === 'Geri Dönüş';
+
+    if (exp.mode === 'found' && exp.direction === 'outgoing') {
+      get()._completeFoundCity(expeditionId);
+      return;
+    }
+
+    if (isReturnLeg) {
+      const cityId = exp.originCityId || state.activeCityId;
+      const city = state.cities[cityId];
+      const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+      if (city && exp.troopPayload) {
+        const restored = restoreTroopsToCity(city, exp.troopPayload);
+        set({
+          cities: {
+            ...state.cities,
+            [cityId]: {
+              ...city,
+              idleTroops: restored.idleTroops,
+              idleSpies: restored.idleSpies ?? city.idleSpies,
+            },
+          },
+          expeditions,
+          navBadges: {
+            ...state.navBadges,
+            expeditions: expeditions.length > 0,
+          },
+        });
+      } else {
+        set({
+          expeditions,
+          navBadges: {
+            ...state.navBadges,
+            expeditions: expeditions.length > 0,
+          },
+        });
+      }
+      useNotificationStore.getState().addToast(
+        `Ordu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'şehre'} döndü`,
+        'success',
+      );
+      return;
+    }
+
     const isSpy = exp.type.toLowerCase().includes('casus');
     const report = isSpy
       ? generateSpyReport(exp, Math.random() > 0.25)
       : generateBattleReport(exp, Math.random() > 0.35);
+
+    const cityId = exp.originCityId || state.activeCityId;
+    const city = state.cities[cityId];
+    if (city && report.loot?.length && report.winner === 'player') {
+      const { resources, overflow } = applyLootWithDepotCap(city.resources, report.loot);
+      patchCity(set, get, cityId, { resources });
+      if (overflow.length > 0) {
+        useNotificationStore.getState().addToast(
+          `Depo dolu — ${overflow.map((o) => `${o.amount} ${o.label}`).join(', ')} kayıp`,
+          'warn',
+        );
+      }
+    }
 
     const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
     const pastExpeditions = [
@@ -238,7 +436,7 @@ export const useGameStore = create((set, get) => ({
       reports: [report, ...state.reports],
       pastExpeditions,
       navBadges: {
-        expeditions: expeditions.some((e) => e.direction === 'outgoing'),
+        expeditions: expeditions.length > 0,
         reports: true,
       },
     });
@@ -249,87 +447,505 @@ export const useGameStore = create((set, get) => ({
     );
   },
 
+  _completeFoundCity: (expeditionId) => {
+    const state = get();
+    const exp = state.expeditions.find((e) => e.id === expeditionId);
+    if (!exp) return;
+
+    const mapEntry = state.mapCities.find((c) => c.name === exp.target);
+    let cityId = slugCityId(exp.target);
+    if (state.cities[cityId] || state.playerCities.some((c) => c.id === cityId)) {
+      cityId = genId('city');
+    }
+
+    const troopPayload = exp.troopPayload && !exp.troopPayload.spies ? exp.troopPayload : {};
+    const newPlayerCity = {
+      id: cityId,
+      name: exp.target,
+      province: mapEntry?.province ?? '—',
+      provinceName: mapEntry?.provinceName,
+      type: mapEntry?.type ? `${mapEntry.type} Şehri` : 'Kıyı Şehri',
+      lat: exp.targetLat ?? mapEntry?.lat,
+      lng: exp.targetLng ?? mapEntry?.lng,
+    };
+
+    const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+
+    set({
+      playerCities: [...state.playerCities, newPlayerCity],
+      cities: {
+        ...state.cities,
+        [cityId]: createFoundCityState(troopPayload),
+      },
+      mapCities: state.mapCities.map((c) =>
+        c.name === exp.target
+          ? { ...c, status: 'own', owner: 'Komutan_Alpha', population: c.population || 1200 }
+          : c,
+      ),
+      expeditions,
+      navBadges: {
+        ...state.navBadges,
+        expeditions: expeditions.length > 0,
+      },
+    });
+
+    useNotificationStore.getState().addToast(
+      `${exp.target} kuruldu — şehir listenize eklendi`,
+      'success',
+    );
+  },
+
+  _completeIncomingAttack: (attackId) => {
+    const state = get();
+    const attack = state.incomingAttacks.find((a) => a.id === attackId);
+    if (!attack) return;
+    const cityName = state.playerCities.find((c) => c.id === attack.targetCityId)?.name ?? attack.targetCityId;
+    useNotificationStore.getState().addToast(
+      `${cityName} şehrinize saldırı ulaştı!`,
+      'danger',
+    );
+  },
+
+  recallExpedition: (expeditionId) => {
+    const now = Date.now();
+    const state = get();
+    const exp = state.expeditions.find((e) => e.id === expeditionId);
+    if (!exp || exp.direction !== 'outgoing') return false;
+
+    const remaining = remainingFromEndsAt(exp.endsAt, now);
+    if (remaining <= 0) return false;
+
+    const elapsedSeconds = exp.startedAt
+      ? Math.max(1, Math.ceil((now - exp.startedAt) / 1000))
+      : Math.max(1, (exp.durationSeconds || remaining) - remaining);
+    const returnTiming = createQueueTiming(elapsedSeconds);
+    const originName =
+      state.playerCities.find((c) => c.id === exp.originCityId)?.name ?? exp.originCityName;
+    const updated = {
+      ...exp,
+      direction: 'returning',
+      type: 'Geri Dönüş',
+      originalTarget: exp.originalTarget ?? exp.target,
+      target: originName ?? exp.originCityId ?? 'Şehir',
+      recalled: true,
+      skipCombat: true,
+      ...returnTiming,
+    };
+
+    set({
+      expeditions: state.expeditions.map((e) => (e.id === expeditionId ? updated : e)),
+      navBadges: { ...state.navBadges, expeditions: true },
+    });
+
+    useNotificationStore.getState().addToast(
+      `Ordu geri çağrıldı — ${formatSeconds(elapsedSeconds)} sonra şehre varır`,
+      'info',
+    );
+    return true;
+  },
+
+  markAllReportsRead: () => {
+    const state = get();
+    set({
+      reports: state.reports.map((r) => ({ ...r, isNew: false })),
+      navBadges: { ...state.navBadges, reports: false },
+    });
+  },
+
+  deleteReports: (ids) => {
+    const idSet = ids === 'all' ? null : new Set(ids);
+    set((s) => {
+      const reports = idSet ? s.reports.filter((r) => !idSet.has(r.id)) : [];
+      return {
+        reports,
+        navBadges: {
+          ...s.navBadges,
+          reports: reports.some((r) => r.isNew),
+        },
+      };
+    });
+    useNotificationStore.getState().addToast('Raporlar silindi', 'info');
+  },
+
+  enqueueConstruction: (buildingId, { addToQueue = false } = {}) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const building = city.buildings.find((b) => b.id === buildingId);
+    if (!building || building.cost === '—') return false;
+    if (city.constructionQueue.length >= CONSTRUCTION_QUEUE_LIMIT) return false;
+    if (!canAffordCost(building.cost, 1, city.resources)) return false;
+    if (!arePrerequisitesMet(city, buildingId)) return false;
+
+    const hasActive = city.constructionQueue.some((q) => !q.queued);
+    const queued = addToQueue || hasActive;
+    const duration = parseTimeToSeconds(building.time) || 120;
+    const timing = queued
+      ? { durationSeconds: duration, startedAt: null, endsAt: null }
+      : createQueueTiming(duration);
+
+    const item = {
+      id: genId('cq'),
+      buildingId: building.id,
+      name: building.name,
+      targetLevel: building.level + 1,
+      costPaid: building.cost,
+      costQty: 1,
+      queued,
+      ...timing,
+    };
+
+    const resources = deductCost(building.cost, 1, city.resources);
+    const unlockOnStart = PANEL_LOCKED_BUILDING_IDS.includes(buildingId);
+    const buildings = city.buildings.map((b) => {
+      if (b.id !== buildingId) return b;
+      return {
+        ...b,
+        upgrading: !queued,
+        locked: unlockOnStart ? false : b.locked,
+      };
+    });
+
+    patchCity(set, get, cityId, {
+      resources,
+      buildings,
+      constructionQueue: [...city.constructionQueue, item],
+    });
+
+    useNotificationStore.getState().addToast(
+      queued ? `${building.name} kuyruğa eklendi` : `${building.name} yükseltmesi başladı`,
+      'success',
+    );
+    return true;
+  },
+
+  enqueueProduction: (unitId, count, { addToQueue = false } = {}) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const unitDef = city.idleTroops.find((t) => t.id === unitId);
+    if (!unitDef || !count || count <= 0) return false;
+
+    const barracks = city.buildings.find((b) => b.id === 'barracks');
+    if (!barracks || barracks.level < 1) return false;
+
+    const unitMeta = landUnits.find((u) => u.id === unitId);
+    if (!unitMeta) return false;
+    const costStr = unitMeta.cost;
+
+    if (!canAffordCost(costStr, count, city.resources)) return false;
+
+    const hasActive = city.productionQueue.some((q) => !q.queued);
+    const queued = addToQueue || hasActive;
+    const duration = parseTimeToSeconds(unitMeta.time) || 30;
+    const timing = queued
+      ? { durationSeconds: duration, startedAt: null, endsAt: null }
+      : createQueueTiming(duration * count);
+
+    const item = {
+      id: genId('pq'),
+      unitId,
+      unit: unitDef.name,
+      count,
+      costPaid: costStr,
+      costQty: count,
+      queued,
+      ...timing,
+    };
+
+    const resources = deductCost(costStr, count, city.resources);
+    patchCity(set, get, cityId, {
+      resources,
+      productionQueue: [...city.productionQueue, item],
+    });
+
+    useNotificationStore.getState().addToast(
+      queued ? `${count} ${unitDef.name} kuyruğa eklendi` : `${count} ${unitDef.name} üretiliyor`,
+      'success',
+    );
+    return true;
+  },
+
   startExpedition: ({ targetCity, troopQty, mode = 'attack' }) => {
     const state = get();
-    const city = getActiveCity(state);
-    const troops = formatTroopsSummary(troopQty, city.idleTroops);
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
     const isSpy = mode === 'spy';
+    const isFound = mode === 'found';
     const spyCount = troopQty?.spies ?? 0;
 
-    let idleTroops = city.idleTroops.map((t) => ({
+    if (isFound) {
+      if (targetCity.status !== 'empty') return false;
+      if (state.playerCities.some((c) => c.name === targetCity.name)) return false;
+      const total = Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0);
+      const colonists = troopQty[FOUND_CITY_COLONIST_ID] || 0;
+      if (total < FOUND_CITY_MIN_TROOPS || colonists < FOUND_CITY_MIN_COLONISTS) return false;
+      if (!canAffordCost(FOUND_CITY_COST, 1, city.resources)) return false;
+      for (const t of city.idleTroops) {
+        if ((troopQty[t.id] || 0) > t.available) return false;
+      }
+    } else if (isSpy) {
+      if (spyCount < 1 || spyCount > city.idleSpies) return false;
+    } else {
+      const total = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
+      if (total < 1) return false;
+      for (const t of city.idleTroops) {
+        if ((troopQty[t.id] || 0) > t.available) return false;
+      }
+    }
+
+    const troops = formatTroopsSummary(troopQty, city.idleTroops);
+    const idleTroops = city.idleTroops.map((t) => ({
       ...t,
       available: Math.max(0, t.available - (troopQty[t.id] || 0)),
     }));
-    let idleSpies = city.idleSpies;
-    if (isSpy) idleSpies = Math.max(0, idleSpies - spyCount);
+    const idleSpies = isSpy ? Math.max(0, city.idleSpies - spyCount) : city.idleSpies;
 
-    const duration = isSpy ? 35 : 75;
+    let resources = city.resources;
+    if (isFound) {
+      resources = deductCost(FOUND_CITY_COST, 1, city.resources);
+    }
+
+    const duration = isSpy
+      ? EXPEDITION_DURATIONS.spy
+      : isFound
+        ? EXPEDITION_DURATIONS.found
+        : EXPEDITION_DURATIONS.attack;
+    const timing = createQueueTiming(duration);
+    const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
     const expedition = {
       id: genId('exp'),
+      originCityId: cityId,
+      originCityName,
       target: targetCity.name,
       targetLat: targetCity.lat,
       targetLng: targetCity.lng,
-      type: isSpy ? 'Casus Keşfi' : 'Saldırı',
+      mode: isFound ? 'found' : isSpy ? 'spy' : 'attack',
+      type: isFound ? 'Şehir Kur' : isSpy ? 'Casus Keşfi' : 'Saldırı',
       direction: 'outgoing',
-      remainingSeconds: duration,
-      _initialSeconds: duration,
       troops: isSpy ? `${spyCount} Casus` : troops,
-      cancellable: true,
+      troopPayload: isSpy ? { spies: spyCount } : { ...troopQty },
       player: 'Komutan_Alpha',
-      units: isSpy ? spyCount : Object.values(troopQty || {}).reduce((a, b) => a + b, 0),
+      units: isSpy ? spyCount : Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0),
       distance: '—',
+      ...timing,
     };
 
-    patchActiveCity(set, get, { idleTroops, idleSpies });
     set((s) => ({
+      cities: {
+        ...s.cities,
+        [cityId]: { ...s.cities[cityId], idleTroops, idleSpies, resources },
+      },
       expeditions: [...s.expeditions, expedition],
       navBadges: { ...s.navBadges, expeditions: true },
     }));
 
     useNotificationStore.getState().addToast(
-      `${targetCity.name} hedefine sefer yola çıktı`,
+      isFound
+        ? `Şehir kurma seferi: ${targetCity.name}`
+        : isSpy
+          ? `Casuslar ${targetCity.name} yolunda`
+          : `Sefer başlatıldı: ${targetCity.name}`,
       'info',
     );
 
-    return expedition.id;
+    return true;
   },
 
   speedUpConstruction: (queueId) => {
-    const city = getActiveCity(get());
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
     const item = city.constructionQueue.find((q) => q.id === queueId);
     if (!item || item.queued) return;
-    patchActiveCity(set, get, {
+    patchCity(set, get, cityId, {
       constructionQueue: city.constructionQueue.map((q) =>
-        q.id === queueId ? { ...q, remainingSeconds: 0 } : q,
+        q.id === queueId ? { ...q, endsAt: Date.now() } : q,
       ),
     });
-    get()._completeConstruction();
+    get().tick();
   },
 
   speedUpProduction: (queueId) => {
-    const city = getActiveCity(get());
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
     const item = city.productionQueue.find((q) => q.id === queueId);
     if (!item || item.queued) return;
-    patchActiveCity(set, get, {
+    patchCity(set, get, cityId, {
       productionQueue: city.productionQueue.map((q) =>
-        q.id === queueId ? { ...q, remainingSeconds: 0 } : q,
+        q.id === queueId ? { ...q, endsAt: Date.now() } : q,
       ),
     });
-    get()._completeProduction();
+    get().tick();
+  },
+
+  startQueuedConstruction: (queueId) => {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    if (city.constructionQueue.some((q) => !q.queued)) return false;
+    const item = city.constructionQueue.find((q) => q.id === queueId && q.queued);
+    if (!item) return false;
+    const duration = item.durationSeconds || parseTimeToSeconds('02:00') || 120;
+    const timing = createQueueTiming(duration);
+    const buildings = city.buildings.map((b) =>
+      (b.id === item.buildingId || b.name === item.name) ? { ...b, upgrading: true } : b,
+    );
+    patchCity(set, get, cityId, {
+      buildings,
+      constructionQueue: city.constructionQueue.map((q) =>
+        q.id === queueId ? { ...q, queued: false, ...timing } : q,
+      ),
+    });
+    useNotificationStore.getState().addToast(`${item.name} inşaatı başlatıldı`, 'success');
+    return true;
+  },
+
+  startQueuedProduction: (queueId) => {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    if (city.productionQueue.some((q) => !q.queued)) return false;
+    const item = city.productionQueue.find((q) => q.id === queueId && q.queued);
+    if (!item) return false;
+    const duration = (item.durationSeconds || 30) * (item.count || 1);
+    const timing = createQueueTiming(duration);
+    patchCity(set, get, cityId, {
+      productionQueue: city.productionQueue.map((q) =>
+        q.id === queueId ? { ...q, queued: false, ...timing } : q,
+      ),
+    });
+    useNotificationStore.getState().addToast(`${item.count} ${item.unit} üretimi başlatıldı`, 'success');
+    return true;
   },
 
   cancelConstruction: (queueId) => {
-    const city = getActiveCity(get());
-    patchActiveCity(set, get, {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    const item = city.constructionQueue.find((q) => q.id === queueId);
+    if (!item) return;
+
+    let resources = city.resources;
+    if (item.costPaid) {
+      const refunded = refundCostWithDepotCap(resources, item.costPaid, item.costQty ?? 1);
+      resources = refunded.resources;
+      if (refunded.overflow?.length) {
+        useNotificationStore.getState().addToast(
+          `Depo dolu — iade kaynağının bir kısmı silindi`,
+          'warn',
+        );
+      }
+    }
+
+    const wasActive = !item.queued;
+    const buildings = city.buildings.map((b) => {
+      if (!wasActive || (b.id !== item.buildingId && b.name !== item.name)) return b;
+      return { ...b, upgrading: false };
+    });
+
+    patchCity(set, get, cityId, {
+      resources,
+      buildings,
       constructionQueue: city.constructionQueue.filter((q) => q.id !== queueId),
     });
+    useNotificationStore.getState().addToast('İnşaat iptal edildi', 'info');
   },
 
   cancelProduction: (queueId) => {
-    const city = getActiveCity(get());
-    patchActiveCity(set, get, {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    const item = city.productionQueue.find((q) => q.id === queueId);
+    if (!item) return;
+
+    let resources = city.resources;
+    if (item.costPaid) {
+      const refunded = refundCostWithDepotCap(resources, item.costPaid, item.costQty ?? 1);
+      resources = refunded.resources;
+      if (refunded.overflow?.length) {
+        useNotificationStore.getState().addToast(
+          `Depo dolu — iade kaynağının bir kısmı silindi`,
+          'warn',
+        );
+      }
+    }
+
+    patchCity(set, get, cityId, {
+      resources,
       productionQueue: city.productionQueue.filter((q) => q.id !== queueId),
     });
+    useNotificationStore.getState().addToast('Üretim iptal edildi', 'info');
+  },
+
+  enqueueResearch: (researchId, { addToQueue = false } = {}) => {
+    const state = get();
+    const list = state.researches ?? [];
+    const research = list.find((r) => r.id === researchId);
+    if (!research || research.active || research.queued || research.cost === '—') return false;
+    if (!addToQueue && list.some((r) => r.active)) return false;
+    if (!canAffordCost(research.cost, 1, getActiveCity(state).resources)) return false;
+
+    const hasActive = list.some((r) => r.active);
+    const queued = addToQueue || hasActive;
+    const duration = parseTimeToSeconds(research.time) || 300;
+    const timing = queued
+      ? { durationSeconds: duration, startedAt: null, endsAt: null }
+      : createQueueTiming(duration);
+
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const resources = deductCost(research.cost, 1, city.resources);
+    patchCity(set, get, cityId, { resources });
+
+    set({
+      researches: list.map((r) =>
+        r.id === researchId
+          ? { ...r, active: !queued, queued, ...timing, queueId: genId('rq') }
+          : r,
+      ),
+    });
+
+    useNotificationStore.getState().addToast(
+      queued ? `${research.name} kuyruğa eklendi` : `${research.name} araştırması başladı`,
+      'success',
+    );
+    return true;
+  },
+
+  startQueuedResearch: (researchId) => {
+    const state = get();
+    const list = state.researches ?? [];
+    if (list.some((r) => r.active)) return false;
+    const research = list.find((r) => r.id === researchId && r.queued);
+    if (!research) return false;
+    const duration = research.durationSeconds || parseTimeToSeconds(research.time) || 300;
+    const timing = createQueueTiming(duration);
+    set({
+      researches: list.map((r) =>
+        r.id === researchId ? { ...r, active: true, queued: false, ...timing } : r,
+      ),
+    });
+    return true;
+  },
+
+  cancelResearch: (researchId) => {
+    const state = get();
+    const list = state.researches ?? [];
+    const research = list.find((r) => r.id === researchId);
+    if (!research || (!research.active && !research.queued)) return;
+
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const { resources, overflow } = refundCostWithDepotCap(city.resources, research.cost, 1);
+    patchCity(set, get, cityId, { resources });
+    if (overflow?.length) {
+      useNotificationStore.getState().addToast('Depo dolu — iade kaynağının bir kısmı silindi', 'warn');
+    }
+
+    set({
+      researches: list.map((r) =>
+        r.id === researchId
+          ? { ...r, active: false, queued: false, startedAt: null, endsAt: null, durationSeconds: null }
+          : r,
+      ),
+    });
+    useNotificationStore.getState().addToast('Araştırma iptal edildi', 'info');
   },
 
   startTicker: () => {
@@ -353,6 +969,46 @@ export function useExpeditionSummary() {
   }));
 }
 
-export function formatQueueRemaining(seconds) {
-  return formatSeconds(seconds);
+export function useUnderAttack() {
+  return useGameStore((s) =>
+    s.incomingAttacks.some((a) => a.targetCityId === s.activeCityId),
+  );
+}
+
+export function useReportsNavBadge() {
+  return useGameStore(
+    (s) => s.navBadges.reports || s.reports.some((r) => r.isNew),
+  );
+}
+
+export function getExpeditionOriginLabel(exp, playerCities) {
+  if (exp.originCityName) return exp.originCityName;
+  const city = playerCities.find((c) => c.id === exp.originCityId);
+  return city?.name ?? '—';
+}
+
+export function useActiveExpeditionCount() {
+  return useGameStore((s) => s.expeditions.length);
+}
+
+export function useConstructionQueueFull() {
+  return useGameStore(
+    (s) => (s.cities[s.activeCityId]?.constructionQueue?.length ?? 0) >= CONSTRUCTION_QUEUE_LIMIT,
+  );
+}
+
+export function useTroopsAwayMap(cityId) {
+  return useGameStore((s) => getTroopsAwayFromCity(s.expeditions, cityId ?? s.activeCityId));
+}
+
+export function formatCityOptionLabel(city) {
+  if (city.province) return `${city.name} (${city.province})`;
+  if (city.provinceName) return `${city.name} (${city.provinceName})`;
+  return city.name;
+}
+
+export { buildLossRows, CONSTRUCTION_QUEUE_LIMIT };
+
+export function formatQueueRemaining(endsAt, now) {
+  return formatSeconds(remainingFromEndsAt(endsAt, now));
 }

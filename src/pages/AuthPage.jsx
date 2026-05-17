@@ -12,7 +12,15 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (authReady && isAuthed) {
+  if (!authReady) {
+    return (
+      <div className="auth-loading-screen" aria-live="polite">
+        <p>Oturum kontrol ediliyor…</p>
+      </div>
+    );
+  }
+
+  if (isAuthed) {
     return <Navigate to="/" replace />;
   }
 

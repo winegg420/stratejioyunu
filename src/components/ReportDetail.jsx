@@ -1,6 +1,61 @@
+import { extractCityFromReportTitle, getEnemyTroopsFromReport } from '../lib/spyIntel';
+import { buildLossRows, formatLossCell } from '../lib/reportLosses';
+import { landUnits } from '../data/placeholder';
+
+function LossBreakdownTable({ title, rows, fallbackText }) {
+  const built = rows?.length
+    ? rows
+    : buildLossRows(null, fallbackText);
+
+  if (!built.length && fallbackText) {
+    return (
+      <div>
+        <h4>{title}</h4>
+        <p className="report-loss-fallback">{fallbackText}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="report-loss-block">
+      <h4>{title}</h4>
+      <table className="report-loss-table">
+        <thead>
+          <tr>
+            <th>Birlik</th>
+            <th>Gönderilen</th>
+            <th>Kayıp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {built.map((row) => {
+            const cell = formatLossCell(row.lost);
+            return (
+              <tr key={row.unitId || row.name}>
+                <td>
+                  {row.icon && <span aria-hidden="true">{row.icon} </span>}
+                  {row.name}
+                </td>
+                <td>{row.sent > 0 ? row.sent.toLocaleString('tr-TR') : '—'}</td>
+                <td className={cell.className}>
+                  {row.note && row.lost === 0 ? row.note : cell.text}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function ReportDetail({ report }) {
   if (report.filterType === 'battle') {
     const won = report.winner === 'player';
+    const attackerRows = report.attackerLossRows?.length
+      ? report.attackerLossRows
+      : buildLossRows(report.troopPayload, report.attackerLosses, null);
+
     return (
       <div className="report-detail">
         <div className={`report-winner-banner ${won ? 'report-winner-banner--win' : 'report-winner-banner--loss'}`}>
@@ -21,15 +76,17 @@ export default function ReportDetail({ report }) {
             <dt>Savunan</dt>
             <dd>{report.defender}</dd>
           </div>
-          <div>
-            <dt>Sizin kayıplar</dt>
-            <dd>{report.attackerLosses}</dd>
-          </div>
-          <div>
-            <dt>Düşman kayıpları</dt>
-            <dd>{report.defenderLosses}</dd>
-          </div>
         </dl>
+        <LossBreakdownTable
+          title="Sizin kayıplarınız"
+          rows={attackerRows}
+          fallbackText={report.attackerLosses}
+        />
+        <LossBreakdownTable
+          title="Düşman kayıpları"
+          rows={report.defenderLossRows}
+          fallbackText={report.defenderLosses}
+        />
         {report.loot?.length > 0 ? (
           <div className="report-loot">
             <h4>Çalınan Ganimet</h4>
@@ -54,6 +111,9 @@ export default function ReportDetail({ report }) {
 
   if (report.filterType === 'spy') {
     const ok = report.intelSuccess;
+    const enemyTroops = getEnemyTroopsFromReport(report);
+    const cityName = report.targetCity || extractCityFromReportTitle(report.title);
+
     return (
       <div className="report-detail">
         <div className={`report-winner-banner ${ok ? 'report-winner-banner--intel-ok' : 'report-winner-banner--intel-fail'}`}>
@@ -65,6 +125,23 @@ export default function ReportDetail({ report }) {
             <span>{report.findings}</span>
           </div>
         </div>
+        {ok && enemyTroops && (
+          <div className="report-spy-troops">
+            <h4>Tespit Edilen Garnizon — {cityName}</h4>
+            <ul>
+              {landUnits
+                .filter((u) => enemyTroops[u.id] > 0)
+                .map((u) => (
+                  <li key={u.id}>
+                    {u.image} {u.name}: <strong>{Number(enemyTroops[u.id]).toLocaleString('tr-TR')}</strong>
+                  </li>
+                ))}
+            </ul>
+            <p className="report-spy-sim-hint">
+              Savaş simülatöründe hedef şehir olarak &quot;{cityName}&quot; yazıp &quot;Rapora Göre Simüle Et&quot; kullanabilirsiniz.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

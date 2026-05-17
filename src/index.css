@@ -2258,3 +2258,902 @@ body.map-scroll-locked {
   border-color: rgba(239, 68, 68, 0.45);
   box-shadow: inset 3px 0 0 #ef4444;
 }
+
+/* Saldırı altında uyarı */
+.nav-attack-alert {
+  position: absolute;
+  top: 2px;
+  right: 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  animation: attack-alert-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+  z-index: 2;
+}
+
+.bottom-nav-icon-wrap .nav-attack-alert {
+  top: -6px;
+  right: -8px;
+}
+
+@keyframes attack-alert-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.15); }
+}
+
+.leaflet-interactive.map-marker-under-attack {
+  animation: map-attack-pulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.95));
+}
+
+.leaflet-interactive.map-marker-attack-ring {
+  animation: map-attack-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes map-attack-pulse {
+  0%, 100% { stroke-opacity: 1; fill-opacity: 0.2; }
+  50% { stroke-opacity: 0.5; fill-opacity: 0.35; }
+}
+
+/* Akıllı kaynak kartları */
+.cost-breakdown {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+}
+
+.cost-breakdown-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.cost-breakdown-deficit {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.cost-breakdown-eta {
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: help;
+}
+
+.cost-breakdown--deficit .cost-breakdown-needed {
+  opacity: 0.85;
+}
+
+/* Savaş simülatörü */
+.battle-simulator-panel {
+  margin-bottom: 1rem;
+}
+
+.battle-sim-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.battle-sim-target {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.battle-sim-target .input-text {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+}
+
+.battle-sim-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.battle-sim-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem;
+  margin: 0 0 0.75rem;
+}
+
+.battle-sim-fieldset legend {
+  padding: 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.battle-sim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.4rem;
+}
+
+.battle-sim-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+}
+
+.battle-sim-result {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.battle-sim-result--win {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.battle-sim-result--loss {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.battle-sim-result--uncertain {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
+.battle-sim-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.battle-sim-stats dt {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.battle-sim-disclaimer {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+}
+
+/* Rapor yönetimi */
+.report-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.report-select {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+.report-spy-troops {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.report-spy-troops ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.35rem 0;
+}
+
+.report-spy-sim-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.expedition-recall-btn {
+  margin-top: 0.35rem;
+  width: 100%;
+}
+
+.expedition-track-row {
+  flex-wrap: wrap;
+}
+
+.expedition-track-row--recall {
+  border-color: rgba(45, 212, 191, 0.35);
+}
+
+.expedition-track-title-return {
+  color: #2dd4bf;
+}
+
+.expedition-return-tag {
+  color: #2dd4bf;
+  font-size: 0.85em;
+}
+
+.report-loss-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 0.35rem;
+}
+
+.report-loss-table th,
+.report-loss-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-loss-none {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.report-loss-hit {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.report-loss-block {
+  margin: 0.75rem 0;
+}
+
+.report-loss-fallback {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.report-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.report-select-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.nav-expedition-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  z-index: 3;
+}
+
+.bottom-nav-icon-wrap .nav-expedition-count {
+  top: -6px;
+  right: -10px;
+}
+
+.troop-stock-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.city-panel-troop-stock {
+  font-size: 0.78rem;
+}
+
+.badge-troop-stock {
+  font-size: 0.72rem;
+  white-space: normal;
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.expedition-row-return {
+  background: rgba(45, 212, 191, 0.06);
+}
+
+.expedition-track-origin {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+.city-panel-origin-hint {
+  color: #2dd4bf;
+  font-weight: 500;
+}
+
+/* —— Siber harita HUD —— */
+.map-page--cyber {
+  background: #030712;
+}
+
+.map-container-wrap--cyber {
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  box-shadow:
+    0 0 40px rgba(34, 211, 238, 0.08),
+    inset 0 0 60px rgba(3, 7, 18, 0.85);
+}
+
+.turkey-map--cyber {
+  background: #0a0f1a !important;
+  filter: saturate(0.85) contrast(1.05);
+}
+
+.turkey-map--cyber .leaflet-control-zoom {
+  display: none !important;
+}
+
+.map-hud-panel {
+  position: absolute;
+  right: 12px;
+  bottom: 150px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: rgba(3, 10, 24, 0.92);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.map-hud-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: #22d3ee;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.map-hud-btn {
+  min-width: 44px;
+  padding: 8px 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(71, 85, 105, 0.8);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.map-hud-btn:hover {
+  border-color: #22d3ee;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.35);
+}
+
+.map-hud-btn--focus {
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  color: #22ff88;
+  border-color: rgba(34, 255, 136, 0.4);
+}
+
+.map-hud-compass {
+  font-size: 1rem;
+}
+
+.cyber-marker-leaflet {
+  background: transparent !important;
+  border: none !important;
+}
+
+.cyber-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.cyber-marker--attack {
+  filter: drop-shadow(0 0 10px #ef4444);
+  animation: map-attack-pulse 1s ease-in-out infinite;
+}
+
+.cyber-marker-ping::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: cyber-ping 2s ease-out infinite;
+}
+
+@keyframes cyber-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.cyber-route {
+  animation: cyber-route-flow 1.2s linear infinite;
+}
+
+.cyber-route--attack {
+  filter: drop-shadow(0 0 4px #ff3355);
+}
+
+.cyber-route--spy {
+  filter: drop-shadow(0 0 4px #facc15);
+}
+
+.cyber-route--return {
+  filter: drop-shadow(0 0 4px #22ff88);
+}
+
+@keyframes cyber-route-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.cyber-fog-layer {
+  pointer-events: none !important;
+}
+
+.map-tooltip--cyber {
+  background: rgba(3, 10, 24, 0.95) !important;
+  border: 1px solid rgba(34, 211, 238, 0.4) !important;
+  color: #e2e8f0 !important;
+  font-size: 0.75rem !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.2) !important;
+}
+
+.map-toolbar--cyber {
+  background: rgba(3, 10, 24, 0.75);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 8px;
+}
+
+.map-legend--cyber {
+  gap: 0.5rem 1rem;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.legend-dot--attack {
+  background: #ff3355;
+  box-shadow: 0 0 6px #ff3355;
+}
+
+.legend-dot--spy {
+  background: #facc15;
+  box-shadow: 0 0 6px #facc15;
+}
+
+.legend-dot--return {
+  background: #22ff88;
+  box-shadow: 0 0 6px #22ff88;
+}
+
+.map-search input {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+.map-city-select {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+/* Mini harita & radar */
+.map-minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  width: 168px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.2);
+  background: rgba(3, 10, 24, 0.95);
+}
+
+.map-minimap-label {
+  display: block;
+  padding: 4px 8px;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #22d3ee;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.25);
+}
+
+.map-minimap-canvas {
+  width: 100%;
+  height: 112px;
+  background: #0a0f1a;
+}
+
+.map-minimap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.map-minimap-land {
+  fill: rgba(30, 41, 59, 0.9);
+  stroke: rgba(34, 211, 238, 0.25);
+  stroke-width: 0.15;
+}
+
+.map-minimap-dot--own {
+  fill: #34d399;
+}
+
+.map-minimap-dot--enemy {
+  fill: #f87171;
+}
+
+.map-minimap-dot--active {
+  fill: #22d3ee;
+  stroke: #fff;
+  stroke-width: 0.3;
+}
+
+.map-minimap-viewport {
+  fill: rgba(34, 211, 238, 0.12);
+  stroke: #22d3ee;
+  stroke-width: 0.35;
+  stroke-dasharray: 1.2 0.8;
+}
+
+.app-error-fallback {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: #0a0e14;
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.auth-loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0e14;
+  color: #94a3b8;
+}
+
+.app-error-detail {
+  max-width: 520px;
+  padding: 12px;
+  font-size: 0.8rem;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.3);
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.radar-range-circle {
+  animation: radar-pulse 3s ease-in-out infinite;
+}
+
+@keyframes radar-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+
+/* Sefer varış saati (harita paneli) */
+.city-panel-eta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 6px;
+  color: #94a3b8;
+}
+
+.city-panel-eta-arrival {
+  color: #22d3ee;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.city-panel-eta-sep {
+  opacity: 0.5;
+}
+
+.city-panel-found-req,
+.city-panel-found-warn {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
+
+/* Bina ön koşul tooltip */
+.building-req-tooltip-wrap {
+  position: relative;
+}
+
+.building-card {
+  position: relative;
+}
+
+.building-queue-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1c1917;
+  background: #facc15;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.55);
+  animation: building-badge-pulse 1.4s ease-in-out infinite;
+}
+
+.building-queue-badge--queued {
+  background: #fbbf24;
+  animation: building-badge-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes building-badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.72; transform: scale(0.96); }
+}
+
+.building-req-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  z-index: 20;
+  width: min(260px, 88vw);
+  padding: 0.65rem 0.75rem;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+  background: rgba(10, 16, 28, 0.97);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.building-req-tooltip-wrap:hover .building-req-tooltip,
+.building-req-tooltip-wrap:focus-within .building-req-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.building-req-tooltip-title {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #22d3ee;
+}
+
+.building-req-tooltip-list {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  font-size: 0.8rem;
+}
+
+.building-req-tooltip-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0;
+}
+
+.building-req-tooltip-list .is-met {
+  color: #86efac;
+}
+
+.building-req-tooltip-list .is-unmet {
+  color: #fca5a5;
+}
+
+.building-req-tooltip-summary {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  border-top: 1px solid rgba(71, 85, 105, 0.5);
+  padding-top: 0.35rem;
+}
+
+/* Rapor detay — mobil kapat */
+.report-detail-wrap {
+  margin-top: 0.75rem;
+}
+
+.report-detail-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.report-detail-nav-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  justify-content: center;
+}
+
+.report-item-actions {
+  margin-top: 0.5rem;
+}
+
+.report-item-detail-btn {
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+}
+
+@media (min-width: 600px) {
+  .report-detail-footer {
+    flex-direction: row;
+  }
+
+  .report-detail-nav-btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+.city-panel-range-warn {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.35);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 6px;
+}
+
+/* Kilitli askeri paneller */
+.military-locked-wrap {
+  position: relative;
+}
+
+.military-locked-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 8px;
+}
+
+.military-locked-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.military-locked-banner p {
+  margin: 4px 0 10px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+.military-locked-link {
+  display: inline-block;
+}
+
+.military-locked-content {
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.35);
+}
+
+/* Sekme kilit sinerjisi — kart bazlı */
+.locked-feature-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.locked-feature-gate__content {
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.35);
+}
+
+.locked-feature-gate__hint {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 6px;
+}
+
+.locked-feature-gate__lock {
+  margin-right: 4px;
+}
+
+.locked-feature-gate__link {
+  color: #22d3ee;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.locked-feature-gate__link:hover {
+  text-decoration: underline;
+}
+
+.building-card--unbuilt .card-visual {
+  filter: grayscale(0.5) brightness(0.85);
+}

@@ -4,7 +4,7 @@ import TurkeyMap from '../map/TurkeyMap';
 export default function MapPage() {
   return (
     <div className="page map-page-wrapper">
-      <PageHeader title="Harita" subtitle="Türkiye haritası — 81 il lazy loading, ilçeler tıklanınca yüklenir." />
+      <PageHeader title="Harita" subtitle="Siber taktik harita — neon rotalar, savaş sisi ve HUD kontrol paneli." />
       <TurkeyMap />
     </div>
   );

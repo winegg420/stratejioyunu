@@ -46,20 +46,33 @@ export function AuthProvider({ children }) {
     let cancelled = false;
 
     async function init() {
-      if (isSupabaseConfigured) {
-        const existing = await getSession();
-        if (!cancelled && existing) {
-          setSession(existing);
-          setPlayerName(getDisplayName(existing.user));
-          setIsDemo(false);
-          clearDemoAuth();
+      try {
+        if (isSupabaseConfigured) {
+          const existing = await Promise.race([
+            getSession(),
+            new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Oturum zaman aşımı')), 8000);
+            }),
+          ]);
+          if (!cancelled && existing) {
+            setSession(existing);
+            setPlayerName(getDisplayName(existing.user));
+            setIsDemo(false);
+            clearDemoAuth();
+          }
+        } else if (!cancelled && isDemoAuthed()) {
+          setIsDemo(true);
+          setPlayerName(readDemoPlayerName());
         }
-      } else if (!cancelled && isDemoAuthed()) {
-        setIsDemo(true);
-        setPlayerName(readDemoPlayerName());
+      } catch (err) {
+        console.warn('Oturum başlatılamadı, demo moda geçiliyor:', err);
+        if (!cancelled && isDemoAuthed()) {
+          setIsDemo(true);
+          setPlayerName(readDemoPlayerName());
+        }
+      } finally {
+        if (!cancelled) setAuthReady(true);
       }
-
-      if (!cancelled) setAuthReady(true);
     }
 
     init();

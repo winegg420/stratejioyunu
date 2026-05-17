@@ -43,6 +43,7 @@ export const landUnits = [
   { id: 'tank', name: 'Tank', attack: 45, defense: 35, cost: '900 metal · 400 yemek · 200 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Zırhlı ve piyadeye karşı güçlü.' },
   { id: 'sniper', name: 'Keskin Nişancı', attack: 30, defense: 12, cost: '350 metal · 150 yemek', time: '00:18:00', count: 85, image: '🎯', desc: 'Piyade ve özel timlere karşı etkili.' },
   { id: 'special', name: 'Özel Tim', attack: 40, defense: 25, cost: '700 metal · 300 yemek · 150 para', time: '00:35:00', count: 45, image: '⚔️', desc: 'Casusluk ve sabotaj operasyonlarında kullanılır.' },
+  { id: 'colonist', name: 'Kolonist', attack: 5, defense: 10, cost: '800 metal · 600 yemek · 200 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Yeni şehir kurmak için zorunlu koloni birliği.' },
 ];
 
 export const airUnits = [
@@ -119,6 +120,12 @@ export const reports = [
     defender: 'Boş kale',
     attackerLosses: '12 Piyade, 1 Tank',
     defenderLosses: 'Tüm garnizon',
+    attackerLossRows: [
+      { unitId: 'infantry', name: 'Piyade', icon: '🪖', sent: 400, lost: 12 },
+      { unitId: 'tank', name: 'Tank', icon: '🛡️', sent: 20, lost: 1 },
+      { unitId: 'armor', name: 'Zırhlı Araç', icon: '🚛', sent: 50, lost: 0 },
+    ],
+    defenderLossRows: [{ name: 'Garnizon', icon: '🏰', sent: 0, lost: 0, note: 'Garnizon imha' }],
     loot: [
       { icon: '🌾', label: 'Yemek', amount: 2400 },
       { icon: '⚙️', label: 'Metal', amount: 1800 },
@@ -134,8 +141,10 @@ export const reports = [
     date: '17.05.2026 12:08',
     preview: 'Düşman depoları ve birlik dağılımı tespit edildi.',
     winner: null,
+    targetCity: 'Ankara',
     intelSuccess: true,
-    findings: 'Fabrika Sv.7 · 2.200 Piyade · Depo %78 dolu',
+    findings: 'Fabrika Sv.7 · 2.200 Piyade · 45 Tank · Depo %78 dolu',
+    enemyTroops: { infantry: 2200, tank: 45, armor: 120, sniper: 30 },
   },
   {
     id: 'r3',
@@ -149,6 +158,16 @@ export const reports = [
     defender: 'KaraKurt',
     attackerLosses: '180 Piyade, 8 Tank, 2 Zırhlı',
     defenderLosses: '45 Piyade, 1 Tank',
+    attackerLossRows: [
+      { unitId: 'infantry', name: 'Piyade', icon: '🪖', sent: 500, lost: 180 },
+      { unitId: 'tank', name: 'Tank', icon: '🛡️', sent: 40, lost: 8 },
+      { unitId: 'armor', name: 'Zırhlı Araç', icon: '🚛', sent: 30, lost: 2 },
+      { unitId: 'sniper', name: 'Keskin Nişancı', icon: '🎯', sent: 20, lost: 0 },
+    ],
+    defenderLossRows: [
+      { unitId: 'infantry', name: 'Piyade', icon: '🪖', sent: 0, lost: 45 },
+      { unitId: 'tank', name: 'Tank', icon: '🛡️', sent: 0, lost: 1 },
+    ],
     loot: [],
   },
   {
@@ -188,12 +207,12 @@ export const profile = {
 };
 
 export const mapCities = [
-  { name: 'İzmir', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 12500, type: 'Kıyı', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.42, lng: 27.14 },
-  { name: 'İstanbul', owner: 'KaraKurt', rank: 'Albay', population: 48000, type: 'Kıyı', alliance: 'Boğaz İmparatorluğu', status: 'enemy', lat: 41.01, lng: 28.97 },
-  { name: 'Ankara', owner: 'SteelWolf', rank: 'Yüzbaşı', population: 22000, type: 'Merkez', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
-  { name: 'Manisa', owner: null, rank: null, population: 0, type: 'Verimli Ova', alliance: null, status: 'empty', lat: 38.62, lng: 27.43 },
-  { name: 'Trabzon', owner: 'Falcon99', rank: 'Çavuş', population: 8500, type: 'Kıyı', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
-  { name: 'Bot_Kale_03', owner: 'Bot_Kale_03', rank: 'Er', population: 3200, type: 'Dağlık', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
+  { name: 'İzmir', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 12500, type: 'Kıyı', tier: 'metropolis', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.42, lng: 27.14 },
+  { name: 'İstanbul', owner: 'KaraKurt', rank: 'Albay', population: 48000, type: 'Başkent', tier: 'capital', alliance: 'Boğaz İmparatorluğu', status: 'enemy', lat: 41.01, lng: 28.97 },
+  { name: 'Ankara', owner: 'SteelWolf', rank: 'Yüzbaşı', population: 22000, type: 'Büyükşehir', tier: 'capital', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
+  { name: 'Manisa', owner: null, rank: null, population: 0, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'empty', lat: 38.62, lng: 27.43 },
+  { name: 'Trabzon', owner: 'Falcon99', rank: 'Çavuş', population: 8500, type: 'Kıyı', tier: 'town', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
+  { name: 'Bot_Kale_03', owner: 'Bot_Kale_03', rank: 'Er', population: 3200, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
 ];
 
 export const expeditionSummary = {

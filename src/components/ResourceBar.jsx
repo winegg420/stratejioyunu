@@ -1,6 +1,5 @@
-﻿import { useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useGameStore } from '../stores/gameStore';
+﻿import { useAuth } from '../context/AuthContext';
+import { useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
 
@@ -53,9 +52,6 @@ export default function ResourceBar() {
   const setActiveCity = useGameStore((s) => s.setActiveCity);
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
   const flashes = useGameStore((s) => s.flashes);
-  const startTicker = useGameStore((s) => s.startTicker);
-
-  useEffect(() => startTicker(), [startTicker]);
 
   return (
     <header className="resource-bar">
@@ -71,7 +67,7 @@ export default function ResourceBar() {
             >
               {playerCities.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {formatCityOptionLabel(c)}
                 </option>
               ))}
             </select>

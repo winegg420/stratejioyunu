@@ -1,16 +1,25 @@
-﻿import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CityDetailPanel from './CityDetailPanel';
+import CyberCityMarkers from './CyberCityMarkers';
+import ExpeditionRoutesLayer from './ExpeditionRoutesLayer';
+import FogOfWarLayer from './FogOfWarLayer';
+import MapHudControls from './MapHudControls';
+import MapBoundsReporter from './MapBoundsReporter';
+import MapMaxBounds from './MapMaxBounds';
+import MapMiniMap from './MapMiniMap';
+import RangeCircleLayer from './RangeCircleLayer';
+import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
+import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
 import {
   CITY_STATUS_COLORS,
-  getCityMarkerStyle,
   getProvinceStyle,
   getDistrictStyle,
   getHoverStyle,
 } from './mapUtils';
-import { useGameStore } from '../stores/gameStore';
+import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 const TURKEY_CENTER = [39.0, 35.0];
@@ -54,8 +63,18 @@ function MapInteractionController({ interactionLocked }) {
   return null;
 }
 
+function HudBridge({ activeCity, onFocusCity }) {
+  return <MapHudControls activeCity={activeCity} onFocusCity={onFocusCity} />;
+}
+
 export default function TurkeyMap() {
   const mapCities = useGameStore((s) => s.mapCities);
+  const expeditions = useGameStore((s) => s.expeditions);
+  const reports = useGameStore((s) => s.reports);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const incomingAttacks = useGameStore((s) => s.incomingAttacks);
+  const underAttack = useUnderAttack();
   const isMobile = useIsMobile();
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
@@ -70,8 +89,15 @@ export default function TurkeyMap() {
   const [fitBounds, setFitBounds] = useState(null);
   const [flyTarget, setFlyTarget] = useState(null);
   const [cityPick, setCityPick] = useState('');
+  const [viewport, setViewport] = useState(null);
 
   const interactionLocked = isMobile ? mapLocked : true;
+
+  const activeMapCity = useMemo(() => {
+    const pc = playerCities.find((c) => c.id === activeCityId);
+    return mapCities.find((c) => c.name === pc?.name && c.status === 'own')
+      || mapCities.find((c) => c.status === 'own');
+  }, [activeCityId, playerCities, mapCities]);
 
   useEffect(() => {
     if (!isMobile) return undefined;
@@ -121,7 +147,7 @@ export default function TurkeyMap() {
   const onEachProvince = useCallback(
     (feature, layer) => {
       const name = feature.properties.shapeName;
-      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip' });
+      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
       onProvinceClick(feature, layer);
       layer.on('mouseover', () => layer.setStyle(getHoverStyle(getProvinceStyle())));
       layer.on('mouseout', () => layer.setStyle(getProvinceStyle()));
@@ -131,7 +157,7 @@ export default function TurkeyMap() {
 
   const onEachDistrict = useCallback((feature, layer) => {
     const name = feature.properties.name;
-    layer.bindTooltip(name, { sticky: true, className: 'map-tooltip' });
+    layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
     layer.on('mouseover', () => layer.setStyle(getHoverStyle(getDistrictStyle())));
     layer.on('mouseout', () => layer.setStyle(getDistrictStyle()));
   }, []);
@@ -168,10 +194,17 @@ export default function TurkeyMap() {
     ? mapCities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : mapCities;
 
+  const focusActiveCity = () => {
+    if (activeMapCity) {
+      setFlyTarget({ lat: activeMapCity.lat, lng: activeMapCity.lng });
+      setSelectedCity(activeMapCity);
+    }
+  };
+
   return (
-    <div className={`map-page ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}>
+    <div className={`map-page map-page--cyber ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}>
       {isMobile && (
-        <div className="map-mobile-controls">
+        <div className="map-mobile-controls map-mobile-controls--cyber">
           <button
             type="button"
             className={`btn map-lock-btn ${mapLocked ? 'active' : ''}`}
@@ -233,26 +266,23 @@ export default function TurkeyMap() {
         mapLocked={mapLocked}
       />
 
-      <div className="map-container-wrap">
+      <div className="map-container-wrap map-container-wrap--cyber">
         <MapContainer
           center={TURKEY_CENTER}
           zoom={TURKEY_ZOOM}
-          className="turkey-map"
+          minZoom={5}
+          maxBounds={TURKEY_MAX_BOUNDS}
+          maxBoundsViscosity={1}
+          className="turkey-map turkey-map--cyber"
           scrollWheelZoom={!isMobile}
           touchZoom
           dragging
           doubleClickZoom
-          zoomControl={!isMobile || mapLocked}
+          zoomControl={false}
         >
+          <MapMaxBounds />
           {isMobile && <MapInteractionController interactionLocked={interactionLocked} />}
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          />
-          {fitBounds && <FitBounds bounds={fitBounds} />}
-          {flyTarget && (
-            <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
-          )}
+          <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
           {provinces && !districts && (
             <GeoJSON
               key="provinces"
@@ -271,39 +301,34 @@ export default function TurkeyMap() {
               onEachFeature={onEachDistrict}
             />
           )}
-          {filteredCities.map((city) => {
-            const style = getCityMarkerStyle(city.status);
-            return (
-              <Fragment key={city.name}>
-                {city.status === 'own' && (
-                  <CircleMarker
-                    center={[city.lat, city.lng]}
-                    radius={16}
-                    pathOptions={{
-                      color: 'transparent',
-                      weight: 0,
-                      fillColor: '#2dd4bf',
-                      fillOpacity: 0.22,
-                    }}
-                    interactive={false}
-                  />
-                )}
-                <CircleMarker
-                  center={[city.lat, city.lng]}
-                  radius={style.radius}
-                  pathOptions={{
-                    color: style.color,
-                    weight: style.weight,
-                    fillColor: style.fillColor,
-                    fillOpacity: style.fillOpacity,
-                  }}
-                  className={city.status === 'own' ? 'map-marker-own' : undefined}
-                  eventHandlers={{ click: () => setSelectedCity(city) }}
-                />
-              </Fragment>
-            );
-          })}
+          <RangeCircleLayer center={activeMapCity} />
+          <MapBoundsReporter onViewportChange={setViewport} />
+          <FogOfWarLayer
+            playerCities={playerCities}
+            mapCities={mapCities}
+            expeditions={expeditions}
+            reports={reports}
+          />
+          <ExpeditionRoutesLayer
+            expeditions={expeditions}
+            mapCities={mapCities}
+            playerCities={playerCities}
+          />
+          <CyberCityMarkers
+            cities={filteredCities}
+            underAttack={underAttack}
+            incomingAttacks={incomingAttacks}
+            playerCities={playerCities}
+            activeCityId={activeCityId}
+            onSelectCity={setSelectedCity}
+          />
+          {fitBounds && <FitBounds bounds={fitBounds} />}
+          {flyTarget && (
+            <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
+          )}
+          <HudBridge activeCity={activeMapCity} onFocusCity={focusActiveCity} />
         </MapContainer>
+        <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
         <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
       </div>
     </div>
@@ -329,7 +354,7 @@ function MapToolbar({
   if (isMobile && mapLocked) return null;
 
   return (
-    <div className="map-toolbar">
+    <div className="map-toolbar map-toolbar--cyber">
       <div className="map-city-search">
         <label className="map-city-search-label" htmlFor="map-city-select">
           Şehir Ara
@@ -370,12 +395,12 @@ function MapToolbar({
           Ara
         </button>
       </form>
-      <div className="map-legend">
-        <span><i style={{ background: CITY_STATUS_COLORS.empty }} /> Boş</span>
+      <div className="map-legend map-legend--cyber">
+        <span><i className="legend-dot legend-dot--attack" /> Saldırı rotası</span>
+        <span><i className="legend-dot legend-dot--spy" /> Casus rotası</span>
+        <span><i className="legend-dot legend-dot--return" /> Geri dönüş</span>
         <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
         <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman</span>
-        <span><i style={{ background: CITY_STATUS_COLORS.bot }} /> Bot</span>
-        <span><i style={{ background: CITY_STATUS_COLORS.siege }} /> Kuşatma</span>
       </div>
       {selectedProvince && (
         <div className="map-province-bar">
@@ -387,12 +412,6 @@ function MapToolbar({
           </button>
         </div>
       )}
-      {!isMobile && (
-        <p className="map-hint">
-          Lazy loading: Genel görünümde 81 il. İle tıklayınca yalnızca o ilin ilçeleri yüklenir.
-        </p>
-      )}
     </div>
   );
 }
-

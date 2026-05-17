@@ -1,14 +1,42 @@
 import { useState } from 'react';
-import { useResourceStore } from '../stores/resourceStore';
-import { calcMaxAffordable } from '../utils/resourceCosts';
+import { useGameStore } from '../stores/gameStore';
+import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
+import CostBreakdown from './CostBreakdown';
+import TroopStockLabel from './TroopStockLabel';
 
-export default function UnitCard({ unit }) {
-  const resources = useResourceStore((s) => s.resources);
-  const [qty, setQty] = useState(10);
+export default function UnitCard({ unit, awayMap }) {
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
+  const enqueueProduction = useGameStore((s) => s.enqueueProduction);
+  const [qtyInput, setQtyInput] = useState('10');
+
+  const qty = Number(qtyInput);
+  const validQty = Number.isFinite(qty) && qty > 0;
+  const canAfford = validQty && canAffordCost(unit.cost, qty, resources);
+  const canProduce = canAfford;
 
   const handleMax = () => {
     const max = calcMaxAffordable(unit.cost, resources);
-    setQty(max > 0 ? max : 1);
+    setQtyInput(max > 0 ? String(max) : '');
+  };
+
+  const handleQtyChange = (e) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      setQtyInput('');
+      return;
+    }
+    const n = Math.max(0, Math.floor(Number(raw) || 0));
+    setQtyInput(String(n));
+  };
+
+  const handleProduce = () => {
+    if (!canProduce) return;
+    enqueueProduction(unit.id, qty);
+  };
+
+  const handleQueue = () => {
+    if (!canProduce) return;
+    enqueueProduction(unit.id, qty, { addToQueue: true });
   };
 
   return (
@@ -16,7 +44,12 @@ export default function UnitCard({ unit }) {
       <div className="card-visual">{unit.image}</div>
       <div className="card-header">
         <h3>{unit.name}</h3>
-        <span className="badge">Mevcut: {unit.count.toLocaleString('tr-TR')}</span>
+        <span className="badge badge-troop-stock">
+          <TroopStockLabel
+            troop={{ id: unit.id, available: unit.idle ?? unit.count }}
+            awayMap={awayMap}
+          />
+        </span>
       </div>
       <p className="card-desc">{unit.desc}</p>
       <table className="stats-table">
@@ -37,23 +70,24 @@ export default function UnitCard({ unit }) {
           </tr>
         </tbody>
       </table>
+      <CostBreakdown costStr={unit.cost} qty={validQty ? qty : 0} resources={resources} />
       <div className="card-actions unit-card-actions">
         <div className="qty-input-wrap">
           <input
             type="number"
             className="input-qty"
-            value={qty}
-            min={1}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+            value={qtyInput}
+            min={0}
+            onChange={handleQtyChange}
           />
           <button type="button" className="btn btn-max" onClick={handleMax} title="Mevcut kaynakla üretilebilecek en fazla">
             MAX
           </button>
         </div>
-        <button type="button" className="btn btn-primary">
+        <button type="button" className="btn btn-primary" disabled={!canProduce} onClick={handleProduce}>
           Üret
         </button>
-        <button type="button" className="btn btn-secondary">
+        <button type="button" className="btn btn-secondary" disabled={!canProduce} onClick={handleQueue}>
           Kuyruğa Ekle
         </button>
       </div>

@@ -1,87 +1,54 @@
+import { mapCities, reports } from './placeholder';
+import { recalculateResourceRates } from '../lib/gameUtils';
 import {
-  resources,
-  buildings,
-  landUnits,
-  idleTroops,
-  idleSpies,
-  constructionQueue,
-  productionQueue,
-  mapCities,
-  reports,
-} from './placeholder';
-import { parseTimeToSeconds, recalculateResourceRates } from '../lib/gameUtils';
+  createStarterBuildings,
+  createStarterResearches,
+  getStarterIdleTroops,
+  getStarterResources,
+} from '../lib/buildingUtils';
 
-function cloneBuildings(list) {
-  return list.map((b) => ({ ...b }));
-}
-
-function cloneResources(list) {
-  return list.map((r) => ({ ...r }));
-}
-
-function mapQueueConstruction(items) {
-  return items.map((q, i) => {
-    const remainingSeconds = parseTimeToSeconds(q.remaining);
-    return {
-      id: `cq-${i}`,
-      buildingId: q.name === 'Fabrika' ? 'factory' : q.name === 'Ambar' ? 'farm' : 'tax',
-      name: q.name,
-      targetLevel: q.level,
-      remainingSeconds,
-      _initialSeconds: remainingSeconds,
-      queued: Boolean(q.queued),
-    };
-  });
-}
-
-function mapQueueProduction(items) {
-  return items.map((q, i) => {
-    const remainingSeconds = parseTimeToSeconds(q.remaining);
-    return {
-      id: `pq-${i}`,
-      unitId: q.unit === 'Piyade' ? 'infantry' : 'tank',
-      unit: q.unit,
-      count: q.count,
-      remainingSeconds,
-      _initialSeconds: remainingSeconds,
-      queued: Boolean(q.queued),
-    };
-  });
-}
-
-function createCityState(overrides = {}) {
-  const bld = cloneBuildings(overrides.buildings ?? buildings);
-  const res = recalculateResourceRates(bld, cloneResources(overrides.resources ?? resources));
+export function createCityState(overrides = {}) {
+  const bld = overrides.buildings ?? createStarterBuildings();
+  const res = recalculateResourceRates(bld, (overrides.resources ?? getStarterResources()).map((r) => ({ ...r })));
   return {
     resources: res,
-    buildings: bld,
-    idleTroops: (overrides.idleTroops ?? idleTroops).map((t) => ({ ...t })),
-    idleSpies: overrides.idleSpies ?? idleSpies,
-    constructionQueue: overrides.constructionQueue ?? mapQueueConstruction(constructionQueue),
-    productionQueue: overrides.productionQueue ?? mapQueueProduction(productionQueue),
+    buildings: bld.map((b) => ({ ...b })),
+    idleTroops: (overrides.idleTroops ?? getStarterIdleTroops()).map((t) => ({ ...t })),
+    idleSpies: overrides.idleSpies ?? 0,
+    constructionQueue: overrides.constructionQueue ?? [],
+    productionQueue: overrides.productionQueue ?? [],
   };
+}
+
+export function createFoundCityState(troopPayload = {}) {
+  const idleTroops = getStarterIdleTroops().map((t) => ({
+    ...t,
+    available: troopPayload[t.id] || 0,
+  }));
+  return createCityState({ idleTroops, idleSpies: 0 });
 }
 
 export function createInitialGameState() {
   return {
     activeCityId: 'izmir',
+    now: Date.now(),
+    incomingAttacks: [],
+    researches: createStarterResearches().map((r) => ({ ...r })),
     playerCities: [
-      { id: 'izmir', name: 'İzmir', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
-      { id: 'cesme', name: 'Çeşme', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
+      { id: 'izmir', name: 'İzmir', province: '35', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
+      { id: 'cesme', name: 'Çeşme', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
     ],
     cities: {
-      izmir: createCityState(),
-      cesme: createCityState({
-        resources: resources.map((r) => ({
+      izmir: createCityState({
+        idleTroops: getStarterIdleTroops().map((t) =>
+          t.id === 'colonist' ? { ...t, available: 3 } : { ...t, available: 40 },
+        ),
+        resources: getStarterResources().map((r) => ({
           ...r,
-          current: Math.floor(r.current * 0.6),
+          current: Math.min(r.max ?? r.current * 2, Math.floor((r.current || 0) * 1.5)),
         })),
-        buildings: buildings.map((b) => ({ ...b, level: Math.max(1, b.level - 2), upgrading: false })),
-        idleTroops: idleTroops.map((t) => ({ ...t, available: Math.floor(t.available * 0.4) })),
-        idleSpies: 4,
-        constructionQueue: [],
-        productionQueue: [],
       }),
+      cesme: createCityState(),
     },
     mapCities: mapCities.map((c) => ({ ...c })),
     expeditions: [],

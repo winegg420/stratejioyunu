@@ -61,6 +61,7 @@ export function computeBuildingHourly(buildingId, level) {
 export function recalculateResourceRates(buildings, resources) {
   const hourlyByResource = {};
   for (const b of buildings) {
+    if ((b.level ?? 0) < 1) continue;
     const resId = BUILDING_RESOURCE_MAP[b.id];
     if (!resId) continue;
     hourlyByResource[resId] = (hourlyByResource[resId] || 0) + computeBuildingHourly(b.id, b.level);
@@ -71,6 +72,29 @@ export function recalculateResourceRates(buildings, resources) {
     if (hourly == null) return r;
     return { ...r, rate: formatRate(hourly) };
   });
+}
+
+export function createQueueTiming(durationSeconds) {
+  const duration = Math.max(1, Math.floor(durationSeconds));
+  const startedAt = Date.now();
+  return {
+    durationSeconds: duration,
+    startedAt,
+    endsAt: startedAt + duration * 1000,
+  };
+}
+
+export function remainingFromEndsAt(endsAt, now = Date.now()) {
+  if (endsAt == null || Number.isNaN(endsAt)) return 0;
+  return Math.max(0, Math.ceil((endsAt - now) / 1000));
+}
+
+export function progressFromTiming(startedAt, endsAt, now = Date.now()) {
+  if (startedAt == null || endsAt == null) return 0;
+  const total = endsAt - startedAt;
+  if (!total || total <= 0) return 100;
+  const elapsed = now - startedAt;
+  return Math.min(100, Math.max(0, (elapsed / total) * 100));
 }
 
 export function nowReportDate() {

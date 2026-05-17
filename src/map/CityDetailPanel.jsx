@@ -1,6 +1,17 @@
 ﻿import { useEffect, useState } from 'react';
 import { CITY_STATUS_COLORS } from './mapUtils';
-import { useGameStore } from '../stores/gameStore';
+import TroopStockLabel from '../components/TroopStockLabel';
+import ExpeditionEtaStrip from '../components/ExpeditionEtaStrip';
+import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
+import {
+  FOUND_CITY_COST,
+  FOUND_CITY_MIN_COLONISTS,
+  FOUND_CITY_MIN_TROOPS,
+  getFoundCityButtonTitle,
+  getFoundCityReadiness,
+} from '../lib/foundCityConfig';
+import { isCityInOperationRange } from '../lib/mapRange';
+import { useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 
 const STATUS_LABELS = {
   own: 'Kendi şehriniz',
@@ -11,7 +22,7 @@ const STATUS_LABELS = {
   siege: 'Kuşatma altında',
 };
 
-function TroopDispatchRow({ troop, value, onChange }) {
+function TroopDispatchRow({ troop, value, onChange, awayMap }) {
   const handleMax = () => onChange(troop.available);
 
   return (
@@ -22,9 +33,7 @@ function TroopDispatchRow({ troop, value, onChange }) {
         </span>
         <div>
           <span className="city-panel-troop-name">{troop.name}</span>
-          <span className="city-panel-troop-available">
-            Mevcut boşta: <strong>{troop.available.toLocaleString('tr-TR')}</strong>
-          </span>
+          <TroopStockLabel troop={troop} awayMap={awayMap} className="city-panel-troop-stock" />
         </div>
       </div>
       <div className="city-panel-troop-input">
@@ -49,9 +58,21 @@ export default function CityDetailPanel({ city, onClose }) {
   const [troopQty, setTroopQty] = useState({});
   const [spyQty, setSpyQty] = useState(0);
 
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const activeCityName = useGameStore(
+    (s) => s.playerCities.find((c) => c.id === s.activeCityId)?.name ?? '',
+  );
   const idleTroops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops ?? []);
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? []);
   const idleSpies = useGameStore((s) => s.cities[s.activeCityId]?.idleSpies ?? 0);
+  const awayMap = useTroopsAwayMap(activeCityId);
   const startExpedition = useGameStore((s) => s.startExpedition);
+  const mapCities = useGameStore((s) => s.mapCities);
+  const playerCities = useGameStore((s) => s.playerCities);
+  useEffect(() => {
+    setTroopQty({});
+    setSpyQty(0);
+  }, [activeCityId]);
 
   useEffect(() => {
     if (!city) return undefined;
@@ -70,22 +91,39 @@ export default function CityDetailPanel({ city, onClose }) {
   const color = CITY_STATUS_COLORS[city.status] || '#9ca3af';
   const owner = city.owner || 'Boş';
   const cityType = city.type || '—';
-  const canAttack = city.status !== 'own';
-  const canSpy = city.status === 'enemy' || city.status === 'bot';
+  const inRadarRange = isCityInOperationRange(city, activeCityId, playerCities, mapCities);
+  const canFound = city.status === 'empty' && inRadarRange
+    && !playerCities.some((c) => c.name === city.name);
+  const canAttack = city.status !== 'own' && city.status !== 'empty' && inRadarRange;
+  const canSpy = (city.status === 'enemy' || city.status === 'bot') && inRadarRange;
+  const outOfRange = city.status !== 'own' && !inRadarRange;
 
   const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
 
+  const attackTotal = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
+  const canStartAttack = attackTotal >= 1 && idleTroops.every((t) => (troopQty[t.id] || 0) <= t.available);
+  const canStartSpy = spyQty >= 1 && spyQty <= idleSpies;
+
   const confirmAttack = () => {
-    const total = Object.values(troopQty).reduce((a, b) => a + (b || 0), 0);
-    if (total < 1) return;
-    startExpedition({ targetCity: city, troopQty, mode: 'attack' });
-    onClose();
+    if (!canStartAttack) return;
+    const ok = startExpedition({ targetCity: city, troopQty, mode: 'attack' });
+    if (ok) onClose();
   };
 
   const confirmSpy = () => {
-    if (spyQty < 1) return;
-    startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
-    onClose();
+    if (!canStartSpy) return;
+    const ok = startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
+    if (ok) onClose();
+  };
+
+  const foundReadiness = getFoundCityReadiness({ idleTroops, resources, troopQty });
+  const foundButtonTitle = getFoundCityButtonTitle(foundReadiness);
+  const canOpenFound = canFound && foundReadiness.canOpenPanel;
+
+  const confirmFound = () => {
+    if (!foundReadiness.canStartExpedition) return;
+    const ok = startExpedition({ targetCity: city, troopQty, mode: 'found' });
+    if (ok) onClose();
   };
 
   return (
@@ -125,18 +163,65 @@ export default function CityDetailPanel({ city, onClose }) {
         {panelMode === 'attack' && canAttack && (
           <div className="city-panel-form">
             <h3 className="city-panel-form-title">⚔️ Hızlı Saldırı</h3>
+            <p className="city-panel-form-hint city-panel-origin-hint">
+              Çıkış şehri: <strong>{activeCityName}</strong> — birlikler yalnızca bu şehirden düşer
+            </p>
             <p className="city-panel-form-hint">Gönderilecek birlik miktarını seçin</p>
+            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.attack} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
                 key={t.id}
                 troop={t}
+                awayMap={awayMap}
                 value={troopQty[t.id] ?? 0}
                 onChange={(v) => setTroop(t.id, v)}
               />
             ))}
-            <button type="button" className="btn btn-danger" onClick={confirmAttack}>
+            <button type="button" className="btn btn-danger" disabled={!canStartAttack} onClick={confirmAttack}>
               Seferi Başlat
             </button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
+              İptal
+            </button>
+          </div>
+        )}
+
+        {panelMode === 'found' && canOpenFound && (
+          <div className="city-panel-form">
+            <h3 className="city-panel-form-title">🏙️ Şehir Kur</h3>
+            <p className="city-panel-form-hint city-panel-origin-hint">
+              Çıkış şehri: <strong>{activeCityName}</strong> — kolonistler bu şehirden ayrılır
+            </p>
+            <p className="city-panel-form-hint">
+              En az <strong>{FOUND_CITY_MIN_TROOPS} birlik</strong> (en az{' '}
+              <strong>{FOUND_CITY_MIN_COLONISTS} Kolonist</strong>) ve{' '}
+              <strong>{FOUND_CITY_COST}</strong> gerekir.
+            </p>
+            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.found} />
+            {idleTroops.map((t) => (
+              <TroopDispatchRow
+                key={t.id}
+                troop={t}
+                awayMap={awayMap}
+                value={troopQty[t.id] ?? 0}
+                onChange={(v) => setTroop(t.id, v)}
+              />
+            ))}
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!foundReadiness.canStartExpedition}
+              onClick={confirmFound}
+            >
+              Şehir Kur Seferini Başlat
+            </button>
+            {!foundReadiness.canStartExpedition && (
+              <p className="city-panel-form-hint city-panel-found-warn">
+                {foundReadiness.colonistAvailable < FOUND_CITY_MIN_COLONISTS
+                  ? `En az ${FOUND_CITY_MIN_COLONISTS} Kolonist seçin (boşta: ${foundReadiness.colonistAvailable}).`
+                  : 'Toplam birlik ve kolonist şartlarını sağlayın.'}
+              </p>
+            )}
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
               İptal
             </button>
@@ -146,9 +231,13 @@ export default function CityDetailPanel({ city, onClose }) {
         {panelMode === 'spy' && canSpy && (
           <div className="city-panel-form">
             <h3 className="city-panel-form-title">Casusluk</h3>
+            <p className="city-panel-form-hint city-panel-origin-hint">
+              Çıkış şehri: <strong>{activeCityName}</strong> — casuslar bu şehirden düşer
+            </p>
             <p className="city-panel-form-hint">
               Mevcut boşta casus: <strong>{idleSpies}</strong>
             </p>
+            <ExpeditionEtaStrip durationSeconds={EXPEDITION_DURATIONS.spy} />
             <div className="city-panel-troop-row">
               <div className="city-panel-troop-meta">
                 <span className="city-panel-troop-icon" aria-hidden="true">
@@ -177,7 +266,7 @@ export default function CityDetailPanel({ city, onClose }) {
                 </button>
               </div>
             </div>
-            <button type="button" className="btn btn-primary" onClick={confirmSpy}>
+            <button type="button" className="btn btn-primary" disabled={!canStartSpy} onClick={confirmSpy}>
               Casus Gönder
             </button>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
@@ -188,7 +277,12 @@ export default function CityDetailPanel({ city, onClose }) {
 
         {!panelMode && (
           <div className="popup-actions city-panel-actions">
-            {canAttack && (
+            {outOfRange && (
+              <p className="city-panel-range-warn">
+                Bu şehir radar menziliniz dışında. Operasyonlar kullanılamaz.
+              </p>
+            )}
+            {city.status !== 'own' && inRadarRange && (
               <button type="button" className="btn btn-danger" onClick={() => setPanelMode('attack')}>
                 ⚔️ Asker Gönder
               </button>
@@ -198,9 +292,35 @@ export default function CityDetailPanel({ city, onClose }) {
                 Casusluk
               </button>
             )}
-            {city.status === 'empty' && (
-              <button type="button" className="btn btn-primary">
-                Şehri Seç
+            {city.status !== 'own' && !inRadarRange && (
+              <>
+                <button type="button" className="btn btn-danger" disabled title="Radar menzili dışı">
+                  ⚔️ Asker Gönder
+                </button>
+                {(city.status === 'enemy' || city.status === 'bot') && (
+                  <button type="button" className="btn btn-secondary" disabled title="Radar menzili dışı">
+                    Casusluk
+                  </button>
+                )}
+              </>
+            )}
+            {canFound && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!foundReadiness.canOpenPanel}
+                title={foundButtonTitle}
+                onClick={() => foundReadiness.canOpenPanel && setPanelMode('found')}
+              >
+                🏙️ Şehir Kur
+              </button>
+            )}
+            {canFound && !foundReadiness.canOpenPanel && (
+              <p className="city-panel-found-req">{foundButtonTitle}</p>
+            )}
+            {city.status === 'empty' && !canFound && outOfRange && (
+              <button type="button" className="btn btn-primary" disabled title="Radar menzili dışı">
+                🏙️ Şehir Kur
               </button>
             )}
             {city.status === 'own' && (

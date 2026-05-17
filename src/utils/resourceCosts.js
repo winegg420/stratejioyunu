@@ -18,6 +18,23 @@ export function parseUnitCost(costStr) {
   }).filter(Boolean);
 }
 
+export function canAffordCost(costStr, qty, resources) {
+  if (!qty || qty <= 0) return false;
+  return qty <= calcMaxAffordable(costStr, resources);
+}
+
+export function deductCost(costStr, qty, resources) {
+  const costs = parseUnitCost(costStr);
+  if (!costs.length || !qty || qty <= 0) return resources;
+
+  return resources.map((r) => {
+    const line = costs.find((c) => c.resourceId === r.id);
+    if (!line) return r;
+    const pay = line.amount * qty;
+    return { ...r, current: Math.max(0, Math.floor(r.current - pay)) };
+  });
+}
+
 export function calcMaxAffordable(costStr, resources) {
   const costs = parseUnitCost(costStr);
   if (!costs.length) return 0;

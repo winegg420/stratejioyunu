@@ -1,0 +1,1 @@
+export const CONSTRUCTION_QUEUE_LIMIT = 3;

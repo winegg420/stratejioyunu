@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
-import { formatSeconds } from '../lib/gameUtils';
-import { useGameStore } from '../stores/gameStore';
+import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 
 export default function Expeditions() {
+  const now = useGameStore((s) => s.now);
   const expeditions = useGameStore((s) => s.expeditions);
+  const playerCities = useGameStore((s) => s.playerCities);
   const pastExpeditions = useGameStore((s) => s.pastExpeditions);
+  const recallExpedition = useGameStore((s) => s.recallExpedition);
   const hasActive = expeditions.length > 0;
   const hasPast = pastExpeditions.length > 0;
 
@@ -14,7 +17,7 @@ export default function Expeditions() {
     <div className="page">
       <PageHeader
         title="Seferler"
-        subtitle="Sefer saldırısı ve meydan savaşı. İlk 5 dakika içinde iptal edilebilir."
+        subtitle="Seferler her an geri çağrılabilir. Geri dönüş süresi, geri çağırma anındaki kalan süreye eşittir."
         action={(
           <Link to="/harita" className="btn btn-primary">
             Haritaya Git
@@ -28,6 +31,7 @@ export default function Expeditions() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>Çıkış</th>
                 <th>Hedef</th>
                 <th>Tür</th>
                 <th>Birim</th>
@@ -36,23 +40,40 @@ export default function Expeditions() {
               </tr>
             </thead>
             <tbody>
-              {expeditions.map((e) => (
-                <tr key={e.id}>
-                  <td>{e.target}</td>
-                  <td>{e.type}</td>
-                  <td>{e.troops}</td>
-                  <td className="timer">{formatSeconds(e.remainingSeconds)}</td>
+              {expeditions.map((e) => {
+                const origin = getExpeditionOriginLabel(e, playerCities);
+                const isReturn = e.direction === 'returning' || e.recalled;
+                return (
+                <tr key={e.id} className={isReturn ? 'expedition-row-return' : ''}>
+                  <td>{origin}</td>
                   <td>
-                    {e.cancellable ? (
-                      <button type="button" className="btn btn-danger btn-sm">
-                        İptal (5 dk)
+                    {isReturn ? (
+                      <span>
+                        <strong className="expedition-return-tag">[GERİ DÖNÜŞ]</strong> {origin}
+                      </span>
+                    ) : (
+                      e.target
+                    )}
+                  </td>
+                  <td>{isReturn ? 'Geri Dönüş' : e.type}</td>
+                  <td>{e.troops}</td>
+                  <td className="timer">{formatSeconds(remainingFromEndsAt(e.endsAt, now))}</td>
+                  <td>
+                    {e.direction === 'outgoing' ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => recallExpedition(e.id)}
+                      >
+                        Geri Çağır
                       </button>
                     ) : (
-                      <span className="muted">—</span>
+                      <span className="muted">Dönüş yolunda</span>
                     )}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         ) : (
