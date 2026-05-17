@@ -7,11 +7,14 @@ export default function MapMaxBounds() {
 
   useEffect(() => {
     map.setMaxBounds(TURKEY_MAX_BOUNDS);
-    map.setMaxBoundsViscosity(1.0);
     map.setMinZoom(5);
     if (map.getZoom() < 5) map.setZoom(5);
-    if (!TURKEY_MAX_BOUNDS.contains(map.getCenter())) {
-      map.panInsideBounds(TURKEY_MAX_BOUNDS, { animate: false });
+    const center = map.getCenter();
+    if (TURKEY_MAX_BOUNDS && !TURKEY_MAX_BOUNDS.contains(center)) {
+      map.fitBounds(TURKEY_MAX_BOUNDS, {
+        animate: false,
+        maxZoom: Math.max(5, map.getZoom()),
+      });
     }
   }, [map]);
 
