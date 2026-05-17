@@ -14,7 +14,7 @@
       "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
     },
     {
-      "source": "/workbox-:hash.js",
+      "source": "/workbox-:path*.js",
       "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
     },
     {
