@@ -15,10 +15,13 @@ npm run dev
 
 Tarayıcı: http://localhost:5173
 
-## Deploy
+## Deploy (otomatik)
+
+`master` branch'e her push → GitHub Actions → Vercel production (`stratejioyunu.vercel.app`).
+
+Manuel deploy:
 
 ```bash
-npm run build
 npx vercel deploy --prod --yes
 ```
 
