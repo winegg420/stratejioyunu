@@ -1393,16 +1393,7 @@ body.map-scroll-locked {
   border-bottom-color: rgba(234, 179, 8, 0.55);
 }
 
-.resource-bar-workforce-warn {
-  margin: 0;
-  padding: 0.35rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-  color: #fbbf24;
-  background: rgba(234, 179, 8, 0.12);
-  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
-}
+/* workforce warn layering — hud-shell.css overrides with z-index */
 
 .resource-item--workforce {
   border-color: rgba(234, 179, 8, 0.45);
@@ -1659,7 +1650,7 @@ body.map-scroll-locked {
 
 .qty-input-wrap {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 0;
 }
 
