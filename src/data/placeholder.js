@@ -58,7 +58,41 @@ export const seaUnits = [
   { id: 'sub', name: 'Denizaltı', attack: 60, defense: 25, cost: '1.600 metal · 800 yakıt', time: '01:15:00', count: 4, image: '🔱', desc: 'Firkateyn ve uçak gemisine karşı etkili.' },
 ];
 
-export const activeExpeditions = [];
+export const idleTroops = [
+  { id: 'infantry', name: 'Piyade', icon: '🪖', available: 1840 },
+  { id: 'armor', name: 'Zırhlı Araç', icon: '🚛', available: 320 },
+  { id: 'tank', name: 'Tank', icon: '🛡️', available: 95 },
+  { id: 'sniper', name: 'Keskin Nişancı', icon: '🎯', available: 62 },
+];
+
+export const idleSpies = 12;
+
+export const activeExpeditions = [
+  {
+    id: 'e1',
+    target: 'Manisa',
+    type: 'Saldırı',
+    direction: 'outgoing',
+    remaining: '00:18:42',
+    troops: '400 Piyade, 20 Tank',
+  },
+  {
+    id: 'e2',
+    target: 'Bursa',
+    type: 'Ganimet Dönüşü',
+    direction: 'returning',
+    remaining: '00:42:10',
+    troops: 'Yük konvoyu',
+  },
+  {
+    id: 'e3',
+    target: 'Ankara',
+    type: 'Casus Keşfi',
+    direction: 'outgoing',
+    remaining: '00:05:22',
+    troops: '5 Casus',
+  },
+];
 
 export const pastExpeditions = [];
 
@@ -72,7 +106,63 @@ export const diplomacy = {
   votes: [],
 };
 
-export const reports = [];
+export const reports = [
+  {
+    id: 'r1',
+    filterType: 'battle',
+    type: 'Savaş',
+    title: 'Manisa — Saldırı Raporu',
+    date: '17.05.2026 14:22',
+    preview: 'Zafer! Garnizon imha edildi, ganimet toplandı.',
+    winner: 'player',
+    attacker: 'Komutan_Alpha',
+    defender: 'Boş kale',
+    attackerLosses: '12 Piyade, 1 Tank',
+    defenderLosses: 'Tüm garnizon',
+    loot: [
+      { icon: '🌾', label: 'Yemek', amount: 2400 },
+      { icon: '⚙️', label: 'Metal', amount: 1800 },
+      { icon: '💰', label: 'Para', amount: 920 },
+      { icon: '⛽', label: 'Yakıt', amount: 450 },
+    ],
+  },
+  {
+    id: 'r2',
+    filterType: 'spy',
+    type: 'Casusluk',
+    title: 'Ankara — Keşif Raporu',
+    date: '17.05.2026 12:08',
+    preview: 'Düşman depoları ve birlik dağılımı tespit edildi.',
+    winner: null,
+    intelSuccess: true,
+    findings: 'Fabrika Sv.7 · 2.200 Piyade · Depo %78 dolu',
+  },
+  {
+    id: 'r3',
+    filterType: 'battle',
+    type: 'Savaş',
+    title: 'İstanbul — Savunma Raporu',
+    date: '16.05.2026 22:41',
+    preview: 'Yenilgi. Saldırı geri püskürtüldü.',
+    winner: 'enemy',
+    attacker: 'Komutan_Alpha',
+    defender: 'KaraKurt',
+    attackerLosses: '180 Piyade, 8 Tank, 2 Zırhlı',
+    defenderLosses: '45 Piyade, 1 Tank',
+    loot: [],
+  },
+  {
+    id: 'r4',
+    filterType: 'spy',
+    type: 'Casusluk',
+    title: 'Trabzon — Sabotaj Raporu',
+    date: '16.05.2026 18:15',
+    preview: 'Casuslar yakalandı — operasyon başarısız.',
+    winner: null,
+    intelSuccess: false,
+    findings: '3 casus kayıp',
+  },
+];
 
 export const newsFeed = [
   { type: 'fetih', text: '[KaraKurt] İstanbul\'u fethetti!', time: '20:32' },
@@ -106,7 +196,10 @@ export const mapCities = [
   { name: 'Bot_Kale_03', owner: 'Bot_Kale_03', rank: 'Er', population: 3200, type: 'Dağlık', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
 ];
 
-export const expeditionSummary = { incoming: 1, outgoing: 2 };
+export const expeditionSummary = {
+  incoming: activeExpeditions.filter((e) => e.direction === 'returning').length,
+  outgoing: activeExpeditions.filter((e) => e.direction === 'outgoing').length,
+};
 
 export const constructionQueue = [
   { name: 'Fabrika', level: 8, remaining: '01:45:00' },

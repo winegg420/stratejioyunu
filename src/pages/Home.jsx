@@ -1,11 +1,11 @@
 import PageHeader from '../components/PageHeader';
 import NewsFeed from '../components/NewsFeed';
 import CityStatusPanel from '../components/CityStatusPanel';
+import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
 import {
   newsFeed,
   constructionQueue,
   productionQueue,
-  activeExpeditions,
   CITY_NAME,
   CITY_TYPE,
 } from '../data/placeholder';
@@ -27,6 +27,7 @@ export default function Home() {
   return (
     <div className="page home-page">
       <CityStatusPanel />
+      <ExpeditionTrackerPanel />
       <PageHeader
         title="Ana Merkez"
         subtitle={`${CITY_NAME} · ${CITY_TYPE} · Tüm sunucu olayları ve şehir özeti`}
@@ -57,17 +58,6 @@ export default function Home() {
                 remaining={q.remaining}
                 queued={q.queued}
               />
-            ))}
-          </ul>
-        </section>
-        <section className="panel">
-          <h3 className="panel-title">Aktif Seferler</h3>
-          <ul className="expedition-mini-list">
-            {activeExpeditions.map((e) => (
-              <li key={e.id}>
-                <strong>{e.target}</strong> — {e.type}
-                <span className="timer">{e.eta}</span>
-              </li>
             ))}
           </ul>
         </section>
