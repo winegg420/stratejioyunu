@@ -1,6 +1,6 @@
 import { applyUnitDisplayList, getUnitDisplayName } from './unitCatalog';
 
-export const GAME_NAME = '[OYUN ADI]';
+export const GAME_NAME = 'STRATEJİ OYUNU';
 export const SERVER_NAME = 'Türkiye-1 Sezon';
 export const CITY_NAME = 'İzmir';
 export const CITY_TYPE = 'Kıyı Şehri';

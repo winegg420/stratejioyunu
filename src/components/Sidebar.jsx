@@ -21,7 +21,7 @@ export default function Sidebar() {
     <>
       <nav className="sidebar sidebar-desktop" aria-label="Tam menü">
         <div className="sidebar-server">
-          <span className="server-label">Sunucu</span>
+          <span className="server-label">SUNUCU</span>
           <span className="server-name">{SERVER_NAME}</span>
           <span className="city-type">{activeCity?.type}</span>
         </div>

@@ -52,14 +52,14 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="auth-screen">
+    <div className="auth-screen auth-page-wrapper">
       <AuthMapBackground />
       <div className="auth-overlay" />
       <div className="auth-card">
         <header className="auth-header">
           <p className="auth-eyebrow">Dünya Haritası Stratejisi</p>
-          <h1 className="auth-title">{GAME_NAME}</h1>
-          <p className="auth-subtitle">Türkiye haritasında fetih, diplomasi ve strateji</p>
+          <h1 className="auth-title auth-card__title">{GAME_NAME}</h1>
+          <p className="auth-subtitle auth-card__sub">Türkiye haritasında fetih, diplomasi ve strateji</p>
           {isSupabaseConfigured && (
             <span className="auth-supabase-badge">Supabase bağlı</span>
           )}

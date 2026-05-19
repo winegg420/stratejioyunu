@@ -746,3 +746,440 @@ button {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* ═══ HOME PAGE — Siber HUD Geliştirmeleri ═══ */
+
+.home-status-strip {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.home-stat-block {
+  flex: 1 1 120px;
+  background: rgba(18, 28, 58, 0.6);
+  border: 1px solid var(--hud-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-stat-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--hud-border);
+}
+
+.home-stat-block--accent {
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 16px rgba(94, 184, 255, 0.15);
+}
+
+.home-stat-block--accent::before {
+  background: var(--hud-accent);
+  box-shadow: 0 0 8px var(--hud-accent-glow);
+}
+
+.home-stat-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(180, 200, 240, 0.55);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.home-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--hud-accent);
+  line-height: 1;
+}
+
+.home-stat-block--accent .home-stat-value {
+  text-shadow: 0 0 12px var(--hud-accent-glow);
+}
+
+.home-stat-sub {
+  font-size: 10px;
+  color: rgba(180, 200, 240, 0.4);
+  font-family: var(--font-mono);
+}
+
+.home-panels-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.home-panels-row > * {
+  flex: 1 1 300px;
+}
+
+.queue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(100, 140, 220, 0.08);
+  gap: 8px;
+}
+
+.queue-item:last-child {
+  border-bottom: none;
+}
+
+.queue-item--queued {
+  opacity: 0.6;
+}
+
+.queue-item__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(200, 220, 255, 0.85);
+}
+
+.queue-item__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hud-accent);
+  box-shadow: 0 0 6px var(--hud-accent-glow);
+  flex-shrink: 0;
+}
+
+.queue-item--queued .queue-item__dot {
+  background: rgba(100, 140, 220, 0.4);
+  box-shadow: none;
+}
+
+.queue-item__detail {
+  font-size: 11px;
+  color: rgba(150, 180, 230, 0.5);
+  font-family: var(--font-mono);
+}
+
+.queue-item__timer {
+  font-size: 12px;
+  color: var(--hud-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.queue-empty {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: rgba(150, 180, 230, 0.35);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-align: center;
+  list-style: none;
+}
+
+.panel-title__icon {
+  margin-right: 8px;
+  opacity: 0.8;
+}
+
+.home-panel {
+  min-height: 140px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(100, 140, 220, 0.08);
+  font-size: 13px;
+  color: rgba(200, 220, 255, 0.75);
+  list-style: none;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item--warn {
+  color: var(--hud-alert-orange);
+}
+
+.notif-item--info {
+  color: rgba(94, 184, 255, 0.85);
+}
+
+.notif-tag {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  background: rgba(100, 140, 220, 0.15);
+  border: 1px solid rgba(100, 140, 220, 0.25);
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: rgba(150, 190, 255, 0.7);
+  margin-top: 1px;
+}
+
+.notif-item--warn .notif-tag {
+  background: rgba(255, 159, 90, 0.15);
+  border-color: rgba(255, 159, 90, 0.3);
+  color: var(--hud-alert-orange);
+}
+
+.hud-shell .sidebar-server,
+.app-shell.hud-shell .sidebar-server {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--hud-border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hud-shell .server-label,
+.app-shell.hud-shell .server-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(150, 180, 230, 0.4);
+  font-family: var(--font-mono);
+}
+
+.hud-shell .server-name,
+.app-shell.hud-shell .server-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hud-accent);
+  letter-spacing: 0.04em;
+}
+
+.hud-shell .city-type,
+.app-shell.hud-shell .city-type {
+  font-size: 10px;
+  color: rgba(150, 180, 230, 0.45);
+  font-family: var(--font-mono);
+}
+
+.hud-shell .game-title,
+.app-shell.hud-shell .game-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--hud-accent);
+  text-shadow: 0 0 12px var(--hud-accent-glow);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.building-blocked-overlay {
+  z-index: 10;
+  background: rgba(8, 10, 24, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.building-blocked-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--hud-lock-cyan);
+  text-shadow: 0 0 8px var(--hud-lock-glow);
+}
+
+.building-card--starter {
+  border-color: rgba(74, 220, 120, 0.35) !important;
+  box-shadow: 0 0 16px rgba(74, 220, 120, 0.1) !important;
+}
+
+.building-card--starter .btn-build-start:not(:disabled) {
+  background: rgba(40, 160, 80, 0.25) !important;
+  border-color: rgba(74, 220, 120, 0.5) !important;
+  color: #6dffaa !important;
+  text-shadow: 0 0 8px rgba(109, 255, 170, 0.5) !important;
+}
+
+.expedition-tracker-panel {
+  border: 1px solid var(--hud-border);
+  border-radius: 8px;
+  background: var(--hud-bg-panel);
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .home-status-strip {
+    gap: 8px;
+  }
+
+  .home-stat-block {
+    flex: 1 1 80px;
+    padding: 10px 12px;
+  }
+
+  .home-stat-value {
+    font-size: 20px;
+  }
+
+  .home-panels-row {
+    flex-direction: column;
+  }
+}
+
+.auth-page-wrapper {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page-wrapper::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(60, 30, 140, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 75% 70%, rgba(20, 60, 160, 0.15) 0%, transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-page-wrapper .auth-card {
+  background: rgba(16, 22, 48, 0.88);
+  border: 1px solid var(--hud-border);
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(94, 184, 255, 0.08) inset,
+    0 24px 64px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card__title {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--hud-accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 0 16px var(--hud-accent-glow);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.auth-card__sub {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(150, 180, 230, 0.45);
+  font-family: var(--font-mono);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* ═══ PANEL / BTN — Tutarlı HUD ═══ */
+
+.hud-shell .panel-title,
+.app-shell.hud-shell .panel-title {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(150, 190, 255, 0.6);
+  font-family: var(--font-mono);
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(100, 140, 220, 0.12);
+  display: flex;
+  align-items: center;
+}
+
+.buildings-page .buildings-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.hud-shell .badge,
+.app-shell.hud-shell .badge {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(94, 184, 255, 0.12);
+  border: 1px solid rgba(94, 184, 255, 0.25);
+  color: rgba(150, 200, 255, 0.75);
+  font-family: var(--font-mono);
+}
+
+.hud-shell .card:not(.building-card--unbuilt),
+.app-shell.hud-shell .card:not(.building-card--unbuilt) {
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hud-shell .btn,
+.app-shell.hud-shell .btn {
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 8px 14px;
+}
+
+.hud-shell .btn-primary:not(:disabled),
+.app-shell.hud-shell .btn-primary:not(:disabled) {
+  background: rgba(40, 80, 200, 0.2);
+  border-color: rgba(94, 184, 255, 0.4);
+  color: var(--hud-accent);
+}
+
+.hud-shell .btn-primary:hover:not(:disabled),
+.app-shell.hud-shell .btn-primary:hover:not(:disabled) {
+  background: rgba(40, 80, 200, 0.35);
+  border-color: var(--hud-accent);
+  box-shadow: 0 0 12px var(--hud-accent-glow);
+}
+
+.hud-shell .btn-primary:disabled,
+.app-shell.hud-shell .btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.hud-shell .btn-secondary:not(:disabled),
+.app-shell.hud-shell .btn-secondary:not(:disabled) {
+  background: rgba(30, 40, 80, 0.3);
+  border-color: rgba(100, 140, 220, 0.25);
+  color: rgba(150, 180, 230, 0.65);
+}
+
+.hud-shell .btn-secondary:hover:not(:disabled),
+.app-shell.hud-shell .btn-secondary:hover:not(:disabled) {
+  border-color: rgba(100, 140, 220, 0.5);
+  color: rgba(180, 210, 255, 0.9);
+}
+
+.hud-shell .btn-secondary:disabled,
+.app-shell.hud-shell .btn-secondary:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
