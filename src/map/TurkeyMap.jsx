@@ -39,7 +39,7 @@ function FlyToCity({ lat, lng, zoom = 9 }) {
   const map = useMap();
   useEffect(() => {
     if (lat != null && lng != null) {
-      map.flyTo([lat, lng], zoom, { duration: 0.85 });
+      map.flyTo([lat, lng], zoom, { animate: true, duration: 1.5, easeLinearity: 0.25 });
     }
   }, [map, lat, lng, zoom]);
   return null;
@@ -323,7 +323,7 @@ export default function TurkeyMap() {
         mapLocked={mapLocked}
       />
 
-      <div className="map-container-wrap map-container-wrap--cyber">
+      <div className="map-container map-container-wrap map-container-wrap--cyber">
         {!mapReady && (
           <div className="map-loading-placeholder" aria-live="polite">
             Harita yükleniyor…
@@ -353,6 +353,7 @@ export default function TurkeyMap() {
               ref={provinceLayerRef}
               data={provinces}
               style={provinceStyle}
+              smoothFactor={1.5}
               onEachFeature={onEachProvince}
             />
           )}
@@ -362,6 +363,7 @@ export default function TurkeyMap() {
               ref={districtLayerRef}
               data={districts}
               style={() => getDistrictStyle()}
+              smoothFactor={1.5}
               onEachFeature={onEachDistrict}
             />
           )}

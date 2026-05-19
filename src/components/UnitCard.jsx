@@ -52,8 +52,10 @@ export default function UnitCard({ unit, awayMap }) {
       <div className="card-header unit-card-header">
         <div className="unit-card-titles">
           <h3>{unit.name}</h3>
-          {unit.designation ? (
-            <p className="unit-designation">{unit.designation}</p>
+          {unit.designationCode || unit.designation ? (
+            <p className="unit-designation">
+              DESIGNATION: {unit.designationCode ?? unit.designation?.toUpperCase().replace(/\s+/g, '-')}
+            </p>
           ) : null}
         </div>
         <span className="badge badge-troop-stock">

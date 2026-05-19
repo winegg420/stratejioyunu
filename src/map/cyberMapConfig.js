@@ -12,7 +12,7 @@ export const ROUTE_STYLES = {
   trade: { color: '#22d3ee', dashArray: '4, 8', className: 'cyber-route cyber-route--trade' },
 };
 
-export const FOG_FILL = { fillColor: '#030712', fillOpacity: 0.72, stroke: false };
+export const FOG_FILL = { fillColor: '#020205', fillOpacity: 0.88, stroke: false };
 
 export const VISION_RADIUS_DEG = 1.65;
 export const SPY_VISION_RADIUS_DEG = 2.4;

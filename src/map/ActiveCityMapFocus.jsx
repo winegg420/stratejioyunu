@@ -7,7 +7,7 @@ export default function ActiveCityMapFocus({ lat, lng, activeCityId }) {
 
   useEffect(() => {
     if (lat == null || lng == null) return;
-    map.setView([lat, lng], 6, { animate: false });
+    map.flyTo([lat, lng], 6, { animate: true, duration: 1.5, easeLinearity: 0.25 });
   }, [map, activeCityId, lat, lng]);
 
   return null;

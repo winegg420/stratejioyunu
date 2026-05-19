@@ -44,7 +44,12 @@ export default function Profile() {
   };
 
   return (
-    <div className="page profile-page">
+    <div className={`page profile-page${confirmOpen ? ' profile-page--vip-reset' : ''}`}>
+      {confirmOpen && (
+        <div className="profile-vip-reset-overlay" aria-hidden="true">
+          <p className="profile-vip-reset-msg">SERVER RESET INITIATED</p>
+        </div>
+      )}
       <PageHeader
         title="Profil"
         subtitle="Rütbe, rozetler, VIP katmanı ve sezon geçmişi."

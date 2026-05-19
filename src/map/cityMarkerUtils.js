@@ -8,9 +8,16 @@ export const HQ_GREEN = '#22ff88';
 export function createActiveHqIcon() {
   return L.divIcon({
     className: 'active-hq-marker',
-    html: '<span class="active-hq-marker__glyph" aria-hidden="true">★</span>',
-    iconSize: [48, 48],
-    iconAnchor: [24, 24],
+    html: `
+      <span class="active-hq-radar" aria-hidden="true">
+        <span class="active-hq-radar__ring active-hq-radar__ring--1"></span>
+        <span class="active-hq-radar__ring active-hq-radar__ring--2"></span>
+        <span class="active-hq-radar__ring active-hq-radar__ring--3"></span>
+      </span>
+      <span class="active-hq-marker__glyph" aria-hidden="true">★</span>
+    `,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
   });
 }
 

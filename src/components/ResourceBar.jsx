@@ -8,7 +8,7 @@ import ServerTimeClock from './ServerTimeClock';
 
 const DEPOT_WARN_PCT = 90;
 
-function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow }) {
+function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCrisis }) {
   const hasDepot = resource.max != null;
   const frozen = resource.productionFrozen || depotOverflow;
   const workforceCut = resource.workforcePenalty && !frozen;
@@ -22,26 +22,28 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow }) {
         depotWarn && !depotOverflow && 'depot-warn',
         depotOverflow && 'depot-overflow',
         workforceCut && 'resource-item--workforce',
+        energyCrisis && 'resource-item--energy-crisis',
       ]
         .filter(Boolean)
         .join(' ')}
-      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${depotOverflow ? ' — depo taştı, üretim durdu' : ''}${workforceCut ? ` — ${WORKFORCE_PENALTY_LABEL}` : ''}`}
+      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${depotOverflow ? ' — depo taştı, üretim durdu' : ''}${workforceCut ? ` — ${WORKFORCE_PENALTY_LABEL}` : ''}${energyCrisis ? ' — enerji krizi' : ''}`}
     >
       <span className="res-icon" aria-hidden="true">
         {resource.icon}
       </span>
       <div className="res-body">
         <span className="res-label">{resource.label}</span>
-        <span className="res-value">
+        <span className="res-value font-hud-data">
           {formatCompactNumber(resource.current)}
           {hasDepot && <span className="res-max"> / {formatCompactNumber(resource.max)}</span>}
+          {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         </span>
         {hasDepot && (
           <div className="res-bar" role="progressbar" aria-valuenow={Math.min(100, pct)} aria-valuemin={0} aria-valuemax={100}>
             <div className="res-fill" style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
         )}
-        <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
+        <span className={`res-rate font-hud-data${frozen ? ' res-rate--stopped' : ''}`}>
           {frozen ? 'DURDU' : resource.rate}
         </span>
       </div>
@@ -58,6 +60,9 @@ export default function ResourceBar() {
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const flashes = useGameStore((s) => s.flashes);
   const workforceShortage = hasWorkforceShortage(activeCity);
+
+  const energyRes = resources.find((r) => r.id === 'energy');
+  const energyCrisis = energyRes != null && energyRes.current < 0;
 
   return (
     <header className={`resource-bar${workforceShortage ? ' resource-bar--workforce-warn' : ''}`}>
@@ -97,6 +102,7 @@ export default function ResourceBar() {
                 flash={Boolean(flashes[r.id])}
                 depotWarn={depotWarn}
                 depotOverflow={depotOverflow}
+                energyCrisis={r.id === 'energy' && energyCrisis}
               />
             );
           })}

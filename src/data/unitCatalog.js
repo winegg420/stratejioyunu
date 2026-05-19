@@ -3,14 +3,17 @@ export const UNIT_DISPLAY_BY_ID = {
   infantry: {
     name: "'Gölge' Operasyon Timi",
     designation: 'Light Infantry',
+    code: 'SHADOW-OP-T1',
   },
   armor: {
     name: "'Karasu' Zırhlı Taşıyıcı",
     designation: 'Armored Personnel Carrier',
+    code: 'KARASU-APC-T2',
   },
   tank: {
     name: "'Pars' Ana Muharebe Tankı",
     designation: 'Main Battle Tank',
+    code: 'PARS-MBT-T3',
   },
   airdefense: {
     name: "'Kalkan-S' Savunma Kompleksi",
@@ -63,7 +66,12 @@ export function applyUnitDisplay(unit) {
   if (!unit?.id) return unit;
   const overlay = UNIT_DISPLAY_BY_ID[unit.id];
   if (!overlay) return unit;
-  return { ...unit, name: overlay.name, designation: overlay.designation };
+  return {
+    ...unit,
+    name: overlay.name,
+    designation: overlay.designation,
+    designationCode: overlay.code,
+  };
 }
 
 export function applyUnitDisplayList(units) {

@@ -266,4 +266,7 @@ export const NAV_ITEMS = [
   { path: '/harita', icon: '🗺️', label: 'Harita' },
   { path: '/profil', icon: '👤', label: 'Profil' },
   { path: '/mesajlar', icon: '✉️', label: 'Mesajlar' },
+  { path: null, icon: '🤝', label: 'İttifak', locked: true },
+  { path: null, icon: '🌌', label: 'Galaksi', locked: true },
+  { path: null, icon: '🧬', label: 'Teknoloji Ağacı', locked: true },
 ];

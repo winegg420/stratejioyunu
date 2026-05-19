@@ -35,21 +35,26 @@ export function getCityMarkerStyle(status) {
   };
 }
 
+export const MAP_BORDER_STYLE = {
+  color: 'rgba(0, 240, 255, 0.4)',
+  weight: 1.2,
+  lineJoin: 'round',
+  lineCap: 'round',
+};
+
 export function getProvinceStyle() {
   return {
-    fillColor: '#0f172a',
-    fillOpacity: 0.55,
-    color: '#1e3a5f',
-    weight: 1,
+    fillColor: '#0a1220',
+    fillOpacity: 0.5,
+    ...MAP_BORDER_STYLE,
   };
 }
 
 export function getDistrictStyle() {
   return {
-    fillColor: '#111827',
-    fillOpacity: 0.65,
-    color: '#22d3ee',
-    weight: 0.8,
+    fillColor: '#0d1525',
+    fillOpacity: 0.62,
+    ...MAP_BORDER_STYLE,
   };
 }
 

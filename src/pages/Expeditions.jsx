@@ -116,13 +116,18 @@ export default function Expeditions() {
             </tbody>
           </table>
         ) : (
-          <EmptyState
-            icon="⚔️"
-            title="Henüz aktif seferiniz yok"
-            description="Haritadan bir şehir seçip ordu gönderebilirsiniz."
-            actionLabel="Haritayı Aç"
-            actionTo="/harita"
-          />
+          <div className="expeditions-radar-empty" role="status">
+            <div className="expeditions-radar-empty__grid" aria-hidden="true" />
+            <p className="expeditions-radar-empty__title">
+              RADAR AKTİF: HAREKET HALİNDE FİLO BULUNAMADI
+            </p>
+            <p className="expeditions-radar-empty__hint">
+              Haritadan hedef seçerek sefer başlatabilirsiniz.
+            </p>
+            <Link to="/harita" className="btn btn-primary btn-sm">
+              Haritayı Aç
+            </Link>
+          </div>
         )}
       </section>
 

@@ -1,12 +1,18 @@
 ﻿import { useActionLock } from '../hooks/useActionLock';
-import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { remainingFromEndsAt } from '../lib/gameUtils';
 import { canAffordCost } from '../utils/resourceCosts';
 import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
-import { arePrerequisitesMet, formatPrerequisiteList, getUnmetPrerequisites } from '../lib/buildingUtils';
+import {
+  arePrerequisitesMet,
+  BUILDING_LABELS,
+  formatPrerequisiteList,
+  getUnmetPrerequisites,
+} from '../lib/buildingUtils';
 import { getBuildingVisual } from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
+import BuildCountdownHud from './BuildCountdownHud';
 
 export default function BuildingCard({ building }) {
   const now = useGameStore((s) => s.now);
@@ -29,7 +35,11 @@ export default function BuildingCard({ building }) {
   const displayCost = nextSpec?.cost ?? null;
   const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
   const isUnbuilt = building.level < 1;
+  const isBlocked = !prereqsMet;
   const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet;
+  const blockedLabel = unmetPrereqs.length
+    ? `[ ENGELLENDİ: ${(BUILDING_LABELS[unmetPrereqs[0].id] ?? unmetPrereqs[0].id).toUpperCase()} SV.${unmetPrereqs[0].level} GEREKLİ ]`
+    : '[ ENGELLENDİ ]';
   const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
 
   const upgradeLabel = queueFull
@@ -39,7 +49,7 @@ export default function BuildingCard({ building }) {
       : !prereqsMet
         ? 'Ön Koşul Eksik'
         : isUnbuilt
-          ? 'İnşa Et'
+          ? '[ İNŞA ET ]'
           : 'Yükselt';
 
   const handleUpgrade = () => {
@@ -54,7 +64,15 @@ export default function BuildingCard({ building }) {
   const card = (
     <article
       id={`building-card-${building.id}`}
-      className={`card building-card ${upgrading ? 'upgrading' : ''} ${isUnbuilt ? 'building-card--unbuilt' : ''}`}
+      className={[
+        'card',
+        'building-card',
+        upgrading && 'upgrading',
+        isBlocked && 'building-card--blocked',
+        isUnbuilt && prereqsMet && 'building-card--starter',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {queueBadge && (
         <span
@@ -63,9 +81,9 @@ export default function BuildingCard({ building }) {
           {queueBadge}
         </span>
       )}
-      {isUnbuilt && (
-        <div className="building-lock-overlay" aria-hidden="true">
-          <span className="building-lock-icon">🔒</span>
+      {isBlocked && (
+        <div className="building-blocked-overlay" aria-hidden="true">
+          <span className="building-blocked-label">{blockedLabel}</span>
         </div>
       )}
       <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
@@ -99,9 +117,9 @@ export default function BuildingCard({ building }) {
           <span className="stat-value">{building.level}</span>
         </div>
         {upgrading && (
-          <div className="stat highlight">
+          <div className="stat highlight stat--countdown">
             <span className="stat-label">Kalan</span>
-            <span className="stat-value timer">{formatSeconds(remaining)}</span>
+            <BuildCountdownHud remaining={remaining} />
           </div>
         )}
       </div>
@@ -123,7 +141,7 @@ export default function BuildingCard({ building }) {
       <div className="card-actions">
         <button
           type="button"
-          className={`btn btn-primary${actionLocked ? ' btn-hud-loading' : ''}`}
+          className={`btn btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
           disabled={!canBuild || buildBusy}
           onClick={handleUpgrade}
         >

@@ -1,8 +1,43 @@
+import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 
-function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onStart }) {
+const ALL_UNITS = [...landUnits, ...airUnits, ...seaUnits];
+
+function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onStart, productionHud }) {
   const display = queued ? 'Sırada' : formatSeconds(remaining);
+
+  if (productionHud) {
+    return (
+      <li className={`production-queue-hud${queued ? ' production-queue-hud--queued' : ''}`}>
+        <span className="production-queue-hud__thumb" aria-hidden="true">
+          {item.unitImage ?? '⚔️'}
+        </span>
+        <div className="production-queue-hud__body">
+          <span className="production-queue-hud__label">{item.label}</span>
+          <span className="production-queue-hud__detail">{item.detail}</span>
+          <div className="production-queue-hud__bar" aria-hidden="true">
+            <div className="production-queue-hud__fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="production-queue-hud__timer font-hud-data">{display}</span>
+        </div>
+        <div className="active-queue-actions">
+          {queued ? (
+            <button type="button" className="btn btn-primary btn-sm" disabled={!onStart} onClick={onStart}>
+              Başlat
+            </button>
+          ) : (
+            <button type="button" className="btn btn-speedup btn-sm" onClick={onSpeedUp}>
+              Hızlandır
+            </button>
+          )}
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
+            İptal
+          </button>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li className={`active-queue-row${queued ? ' is-queued' : ''}`}>
@@ -53,20 +88,29 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   const startQueuedProduction = useGameStore((s) => s.startQueuedProduction);
   const hasActive = queue.some((q) => !q.queued);
 
-  const items = queue.map((q) => ({
-    id: q.id,
-    label: queueType === 'construction' ? q.name : q.unit,
-    detail: queueType === 'construction' ? `Seviye ${q.targetLevel}` : `×${q.count}`,
-    queued: q.queued,
-    remaining: q.queued ? 0 : remainingFromEndsAt(q.endsAt, now),
-    progress: q.queued ? 0 : progressFromTiming(q.startedAt, q.endsAt, now),
-  }));
+  const isProduction = queueType === 'production';
+
+  const items = queue.map((q) => {
+    const unitMeta = isProduction ? ALL_UNITS.find((u) => u.id === q.unitId) : null;
+    return {
+      id: q.id,
+      label: queueType === 'construction' ? q.name : q.unit,
+      detail: queueType === 'construction' ? `Seviye ${q.targetLevel}` : `×${q.count}`,
+      unitImage: unitMeta?.image,
+      queued: q.queued,
+      remaining: q.queued ? 0 : remainingFromEndsAt(q.endsAt, now),
+      progress: q.queued ? 0 : progressFromTiming(q.startedAt, q.endsAt, now),
+    };
+  });
 
   if (!items.length) {
+    const emptyPlaceholder = queueType === 'construction'
+      ? '[ İNŞAAT ALANI BOŞ / SİSTEM HAZIR ]'
+      : emptyText;
     return (
-      <section className="active-queue-panel active-queue-panel--empty">
+      <section className="active-queue-panel active-queue-panel--empty active-queue-panel--placeholder">
         <h3 className="active-queue-title">{title}</h3>
-        <p className="active-queue-empty">{emptyText}</p>
+        <p className="active-queue-empty">{emptyPlaceholder}</p>
       </section>
     );
   }
@@ -78,7 +122,7 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   return (
     <section className="active-queue-panel">
       <h3 className="active-queue-title">{title}</h3>
-      <ul className="active-queue-list">
+      <ul className={`active-queue-list${isProduction ? ' active-queue-list--production' : ''}`}>
         {items.map((item) => (
           <QueueRow
             key={item.id}
@@ -86,6 +130,7 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
             queued={item.queued}
             remaining={item.remaining}
             progress={item.progress}
+            productionHud={isProduction}
             onSpeedUp={() => onSpeedUp(item.id)}
             onCancel={() => onCancel(item.id)}
             onStart={() => !hasActive && onStartQueued(item.id)}

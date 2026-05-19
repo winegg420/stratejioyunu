@@ -70,11 +70,11 @@ export default function ReportDetail({ report }) {
         <dl className="report-battle-stats">
           <div>
             <dt>Saldıran</dt>
-            <dd>{report.attacker}</dd>
+            <dd className={won ? 'report-side--winner' : 'report-side--loser'}>{report.attacker}</dd>
           </div>
           <div>
             <dt>Savunan</dt>
-            <dd>{report.defender}</dd>
+            <dd className={won ? 'report-side--loser' : 'report-side--winner'}>{report.defender}</dd>
           </div>
         </dl>
         <LossBreakdownTable

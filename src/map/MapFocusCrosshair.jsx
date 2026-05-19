@@ -13,7 +13,7 @@ export default function MapFocusCrosshair({ lat, lng }) {
 
   const focusBase = () => {
     if (lat == null || lng == null) return;
-    map.flyTo([lat, lng], 8, { duration: 0.35, easeLinearity: 0.2 });
+    map.flyTo([lat, lng], 8, { animate: true, duration: 1.5, easeLinearity: 0.25 });
   };
 
   if (!host) return null;

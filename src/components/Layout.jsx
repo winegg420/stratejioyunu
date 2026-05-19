@@ -4,6 +4,8 @@ import ResourceBar from './ResourceBar';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import ToastContainer from './ToastContainer';
+import PwaUpdateBanner from './PwaUpdateBanner';
+import RouteTransitionLoader from './RouteTransitionLoader';
 import { useGameStore } from '../stores/gameStore';
 import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 
@@ -57,6 +59,8 @@ export default function Layout() {
       className={`app-shell hud-shell${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
       <ResourceBar />
+      <PwaUpdateBanner />
+      <RouteTransitionLoader />
       <ToastContainer />
       <div className="main-shell">
         <Sidebar />

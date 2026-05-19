@@ -3,11 +3,12 @@ import { Circle } from 'react-leaflet';
 const RANGE_METERS = 250000;
 
 const RANGE_STYLE = {
-  color: '#22ff88',
+  color: '#00f0ff',
   weight: 1,
-  fillColor: '#22ff88',
-  fillOpacity: 0.05,
-  opacity: 0.85,
+  fillColor: '#00f0ff',
+  fillOpacity: 0.03,
+  opacity: 0.75,
+  dashArray: '5, 10',
 };
 
 export default function ActiveCityRangeLayer({ lat, lng }) {

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import './index.css';
 import './styles/hud-shell.css';
+import './styles/hud-revisions.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {
@@ -13,7 +14,7 @@ if (import.meta.env.PROD) {
       window.setInterval(() => registration?.update(), 60 * 60 * 1000);
     },
     onNeedRefresh() {
-      window.location.reload();
+      window.dispatchEvent(new CustomEvent('pwa-need-refresh'));
     },
   });
 }
