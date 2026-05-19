@@ -65,12 +65,13 @@ export function refundResourcesWithDepotCap(resources, refundItems = []) {
   return applyLootWithDepotCap(resources, refundItems);
 }
 
-export function refundCostWithDepotCap(resources, costStr, qty = 1) {
+export function refundCostWithDepotCap(resources, costStr, qty = 1, refundFactor = 1) {
   if (!costStr || costStr === '—') return { resources, overflow: [] };
+  const factor = Math.max(0, Math.min(1, refundFactor));
   const costs = costStr.split('·').map((part) => {
     const match = part.trim().match(/([\d.,]+)\s+(\S+)/);
     if (!match) return null;
-    const amount = Number(match[1].replace(/\./g, '').replace(',', '.'));
+    const amount = Math.floor(Number(match[1].replace(/\./g, '').replace(',', '.')) * factor);
     const labelMap = { yemek: 'Yemek', metal: 'Metal', yakıt: 'Yakıt', para: 'Para', enerji: 'Enerji' };
     const label = labelMap[match[2].toLowerCase()] || match[2];
     return { label, amount: amount * qty };

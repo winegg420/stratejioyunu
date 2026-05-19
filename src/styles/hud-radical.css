@@ -1,0 +1,284 @@
+/* ═══ RADİKAL SİBER HUD — Panel şasi, kaynak barı, butonlar ═══ */
+
+:root {
+  --hud-chassis-border: rgba(0, 240, 255, 0.15);
+  --hud-chassis-bg: rgba(5, 10, 20, 0.85);
+  --hud-chassis-grid: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  --hud-clip: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+/* 1 — Panel / kart şasi */
+.hud-shell .panel,
+.app-shell.hud-shell .panel,
+.hud-shell .card:not(.building-card--blocked),
+.app-shell.hud-shell .card:not(.building-card--blocked) {
+  border: 1px solid var(--hud-chassis-border) !important;
+  background-color: var(--hud-chassis-bg) !important;
+  background-image: var(--hud-chassis-grid) !important;
+  background-size: 20px 20px !important;
+  clip-path: var(--hud-clip);
+}
+
+.building-card--blocked {
+  opacity: 0.3 !important;
+  filter: grayscale(100%) brightness(0.35) !important;
+  pointer-events: auto;
+}
+
+.building-card--blocked:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--hud-chassis-border) !important;
+}
+
+.building-card--blocked .building-blocked-overlay {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 0, 0, 0.05),
+    rgba(255, 0, 0, 0.05) 10px,
+    rgba(0, 0, 0, 0.5) 10px,
+    rgba(0, 0, 0, 0.5) 20px
+  ) !important;
+  backdrop-filter: blur(1px);
+}
+
+.building-blocked-label {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  color: #ff5555 !important;
+  text-shadow: 0 0 10px rgba(255, 50, 50, 0.6) !important;
+}
+
+/* 2 — Kaynak barı çelik */
+.resource-bar--steel {
+  border-bottom: 2px solid #00f0ff !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.resource-bar--steel .resource-item {
+  background: linear-gradient(180deg, #070c14 0%, #020408 100%) !important;
+  border-right: 1px solid rgba(0, 240, 255, 0.12);
+  border-radius: 0 !important;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+}
+
+.resource-bar--steel .resource-item:last-child {
+  border-right: none;
+}
+
+.resource-bar--steel .res-value {
+  font-size: 1.1rem !important;
+}
+
+.resource-bar--steel .res-hourly {
+  display: block;
+  font-size: 0.58rem;
+  color: rgba(150, 190, 255, 0.4);
+  letter-spacing: 0.06em;
+  margin-top: 1px;
+}
+
+/* 3 — HUD butonlar */
+.btn-hud-primary,
+.hud-shell .btn-hud-primary {
+  background: transparent !important;
+  border: 1px solid #00ff66 !important;
+  color: #00ff66 !important;
+  box-shadow: inset 0 0 5px rgba(0, 255, 102, 0.2);
+  transition: all 0.3s ease !important;
+}
+
+.btn-hud-primary:hover:not(:disabled) {
+  background: #00ff66 !important;
+  color: #020408 !important;
+  box-shadow: 0 0 14px rgba(0, 255, 102, 0.45) !important;
+}
+
+.btn-hud-secondary {
+  background: transparent !important;
+  border: 1px solid rgba(0, 240, 255, 0.45) !important;
+  color: rgba(0, 240, 255, 0.85) !important;
+  box-shadow: inset 0 0 5px rgba(0, 240, 255, 0.12);
+  transition: all 0.3s ease !important;
+}
+
+.btn-hud-secondary:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.btn-hud-danger {
+  background: transparent !important;
+  border: 1px solid #ff4444 !important;
+  color: #ff6666 !important;
+  box-shadow: inset 0 0 5px rgba(255, 60, 60, 0.2);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  transition: all 0.3s ease;
+}
+
+.btn-hud-danger:hover:not(:disabled) {
+  background: rgba(255, 60, 60, 0.2) !important;
+  color: #fff !important;
+}
+
+.building-cancel-btn {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+.card-actions {
+  flex-wrap: wrap;
+}
+
+/* 5 — Sidebar aktif sekme */
+.hud-shell .nav-link,
+.app-shell.hud-shell .nav-link {
+  border-left: 3px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.hud-shell .nav-link.active,
+.app-shell.hud-shell .nav-link.active {
+  border-left-color: #00f0ff !important;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.14), transparent) !important;
+}
+
+.hud-shell .nav-link.active .nav-label::before,
+.app-shell.hud-shell .nav-link.active .nav-label::before {
+  content: '> ';
+  color: #00f0ff;
+  font-weight: 700;
+}
+
+/* 6 — Harita arama konsolu */
+.map-toolbar--cyber {
+  border: 2px solid rgba(0, 240, 255, 0.3) !important;
+  background: rgba(5, 10, 20, 0.92) !important;
+  background-image: var(--hud-chassis-grid) !important;
+  background-size: 20px 20px !important;
+  clip-path: var(--hud-clip);
+  padding: 10px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.map-toolbar--cyber input,
+.map-toolbar--cyber select,
+.map-city-select {
+  background: #020408 !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  color: #22ff88 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.75rem !important;
+}
+
+.map-toolbar--cyber .btn {
+  border-color: rgba(0, 240, 255, 0.35) !important;
+}
+
+.map-toolbar--cyber .map-city-search-label {
+  color: rgba(0, 240, 255, 0.7);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+}
+
+/* 7 — Konsol sayfa düzeni */
+.page--console {
+  width: 100%;
+  max-width: none;
+}
+
+.hud-shell .content-area,
+.app-shell.hud-shell .content-area {
+  padding: 10px !important;
+}
+
+.page--console .card-grid,
+.buildings-page .buildings-grid {
+  gap: 12px !important;
+}
+
+/* 8 — Rapor tabloları */
+.report-detail--ledger {
+  font-family: var(--font-mono);
+}
+
+.report-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.report-ledger-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: rgba(0, 240, 255, 0.75);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+}
+
+.report-ledger-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.report-ledger-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.report-ledger-block h4 {
+  color: rgba(150, 200, 255, 0.7);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* 9 — Sayfa başlığı HUD */
+.page-header--hud {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  padding-bottom: 12px;
+  margin-bottom: 1rem;
+}
+
+.page-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-header__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3333;
+  box-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
+  animation: hud-status-blink 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.page-header__status {
+  margin: 4px 0 0;
+  font-size: 0.62rem;
+  color: rgba(150, 190, 255, 0.45);
+  letter-spacing: 0.12em;
+}
+
+@keyframes hud-status-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* 10 — Global kontrast */
+body {
+  background-color: #030508 !important;
+  color: #d1d5db !important;
+}

@@ -1,12 +1,12 @@
 :root {
-  --bg-deep: #0a0e14;
-  --bg-panel: #121a24;
-  --bg-card: #182230;
-  --bg-hover: #1f2d3d;
+  --bg-deep: #030508;
+  --bg-panel: #0a1018;
+  --bg-card: #0d1520;
+  --bg-hover: #121c28;
   --border: #2a3f55;
   --border-glow: #3d6a8a;
-  --text: #e8eef4;
-  --text-muted: #8fa3b8;
+  --text: #d1d5db;
+  --text-muted: #8b9aab;
   --accent: #4a9eff;
   --accent-dim: #2d6cb5;
   --success: #22c55e;

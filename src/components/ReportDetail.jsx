@@ -17,9 +17,9 @@ function LossBreakdownTable({ title, rows, fallbackText }) {
   }
 
   return (
-    <div className="report-loss-block">
+    <div className="report-loss-block report-ledger-block">
       <h4>{title}</h4>
-      <table className="report-loss-table">
+      <table className="report-loss-table report-ledger-table">
         <thead>
           <tr>
             <th>Birlik</th>
@@ -57,7 +57,7 @@ export default function ReportDetail({ report }) {
       : buildLossRows(report.troopPayload, report.attackerLosses, null);
 
     return (
-      <div className="report-detail">
+      <div className="report-detail report-detail--ledger">
         <div className={`report-winner-banner ${won ? 'report-winner-banner--win' : 'report-winner-banner--loss'}`}>
           <span className="report-winner-icon" aria-hidden="true">
             {won ? '🏆' : '💀'}

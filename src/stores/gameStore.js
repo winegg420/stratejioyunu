@@ -481,7 +481,7 @@ export const useGameStore = create((set, get) => ({
       return o;
     });
 
-    set({ now, cities, flashes, expeditions, researches, intelOperations });
+    set({ now, lastTickAt: now, cities, flashes, expeditions, researches, intelOperations });
 
     completedResearchIds.forEach((id) => {
       const r = researches.find((x) => x.id === id);
@@ -1490,9 +1490,11 @@ export const useGameStore = create((set, get) => ({
     const item = city.constructionQueue.find((q) => q.id === queueId);
     if (!item) return;
 
+    const refundFactor = item.queued ? 1 : 0.5;
+
     let resources = city.resources;
     if (item.costPaid) {
-      const refunded = refundCostWithDepotCap(resources, item.costPaid, item.costQty ?? 1);
+      const refunded = refundCostWithDepotCap(resources, item.costPaid, item.costQty ?? 1, refundFactor);
       resources = refunded.resources;
       if (refunded.overflow?.length) {
         useNotificationStore.getState().addToast(
@@ -1513,7 +1515,10 @@ export const useGameStore = create((set, get) => ({
       buildings,
       constructionQueue: city.constructionQueue.filter((q) => q.id !== queueId),
     });
-    useNotificationStore.getState().addToast('İnşaat iptal edildi', 'info');
+    useNotificationStore.getState().addToast(
+      item.queued ? 'İnşaat kuyruktan çıkarıldı' : 'İnşaat iptal edildi — kaynakların %50\'si iade edildi',
+      'info',
+    );
   },
 
   cancelProduction: (queueId) => {
@@ -1622,7 +1627,31 @@ export const useGameStore = create((set, get) => ({
 
   /** Sekme / pencere odağına dönünce sayaçları gerçek zamana senkronize et. */
   syncTimersOnWake: () => {
-    set({ now: Date.now() });
+    const now = Date.now();
+    const state = get();
+    const last = state.lastTickAt ?? now;
+    const elapsedSec = Math.min(Math.floor((now - last) / 1000), 60 * 60 * 8);
+
+    if (elapsedSec > 1) {
+      const vipMult = getVipMultiplierFromState(state);
+      const cities = { ...state.cities };
+      for (const [cityId, city] of Object.entries(cities)) {
+        let resources = city.resources.map((r) => {
+          if (r.productionFrozen || (r.max != null && r.current > r.max)) return r;
+          const inc = ratePerSecond(r.rate) * elapsedSec;
+          if (!inc) return r;
+          let next = r.current + inc;
+          if (r.max != null) next = Math.min(r.max, next);
+          return { ...r, current: Math.floor(next) };
+        });
+        resources = applyProductionFreeze(resources, city.buildings, { ...city, resources }, vipMult);
+        cities[cityId] = { ...city, resources };
+      }
+      set({ cities, now, lastTickAt: now });
+    } else {
+      set({ now, lastTickAt: now });
+    }
+
     get().touchPlayerActivity();
     get()._runServerCleansing(false, 'wake');
     get().tick();

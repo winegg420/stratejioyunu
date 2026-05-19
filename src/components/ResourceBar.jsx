@@ -2,6 +2,19 @@
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
+
+function parseHourlyFromRate(rateStr) {
+  const match = rateStr?.match(/\+([\d.,]+)/);
+  if (!match) return 0;
+  return Number(match[1].replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function formatHourlyLabel(rateStr) {
+  const hourly = parseHourlyFromRate(rateStr);
+  if (!hourly) return '—';
+  if (hourly >= 1000) return `+${formatCompactNumber(hourly)}/h`;
+  return `+${hourly}/h`;
+}
 import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
 import NotificationBell from './NotificationBell';
 import ServerTimeClock from './ServerTimeClock';
@@ -46,6 +59,9 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
         <span className={`res-rate font-hud-data${frozen ? ' res-rate--stopped' : ''}`}>
           {frozen ? 'DURDU' : resource.rate}
         </span>
+        {!frozen && resource.rate && (
+          <span className="res-hourly font-hud-data">{formatHourlyLabel(resource.rate)}</span>
+        )}
       </div>
     </div>
   );
@@ -65,7 +81,7 @@ export default function ResourceBar() {
   const energyCrisis = energyRes != null && energyRes.current < 0;
 
   return (
-    <header className={`resource-bar${workforceShortage ? ' resource-bar--workforce-warn' : ''}`}>
+    <header className={`resource-bar resource-bar--steel${workforceShortage ? ' resource-bar--workforce-warn' : ''}`}>
       {workforceShortage && (
         <p className="resource-bar-workforce-warn" role="status">
           {WORKFORCE_PENALTY_LABEL}

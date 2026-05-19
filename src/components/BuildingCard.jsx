@@ -20,6 +20,7 @@ export default function BuildingCard({ building }) {
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
+  const cancelConstruction = useGameStore((s) => s.cancelConstruction);
   const queueFull = useConstructionQueueFull();
   const { locked: actionLocked, runLocked } = useActionLock();
 
@@ -38,8 +39,8 @@ export default function BuildingCard({ building }) {
   const isBlocked = !prereqsMet;
   const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet;
   const blockedLabel = unmetPrereqs.length
-    ? `[ ENGELLENDİ: ${(BUILDING_LABELS[unmetPrereqs[0].id] ?? unmetPrereqs[0].id).toUpperCase()} SV.${unmetPrereqs[0].level} GEREKLİ ]`
-    : '[ ENGELLENDİ ]';
+    ? `[ SEKTÖR KİLİTLİ: ${(BUILDING_LABELS[unmetPrereqs[0].id] ?? unmetPrereqs[0].id).toUpperCase()} SV.${unmetPrereqs[0].level} ]`
+    : '[ SEKTÖR KİLİTLİ ]';
   const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
 
   const upgradeLabel = queueFull
@@ -139,9 +140,19 @@ export default function BuildingCard({ building }) {
         <p className="building-lock-label">{formatPrerequisiteList(unmetPrereqs)}</p>
       )}
       <div className="card-actions">
+        {upgrading && queueEntry && (
+          <button
+            type="button"
+            className="btn btn-hud-danger btn-sm building-cancel-btn"
+            disabled={actionLocked}
+            onClick={() => cancelConstruction(queueEntry.id)}
+          >
+            [ İPTAL ET ]
+          </button>
+        )}
         <button
           type="button"
-          className={`btn btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
+          className={`btn btn-hud-primary btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
           disabled={!canBuild || buildBusy}
           onClick={handleUpgrade}
         >
@@ -149,7 +160,7 @@ export default function BuildingCard({ building }) {
         </button>
         <button
           type="button"
-          className={`btn btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
+          className={`btn btn-hud-secondary btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
           disabled={!canAfford || !prereqsMet || queueFull || actionLocked}
           onClick={handleQueue}
         >

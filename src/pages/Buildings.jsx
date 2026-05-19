@@ -29,7 +29,7 @@ export default function Buildings() {
   }, [hash, buildings]);
 
   return (
-    <div className="page page-wrapper buildings-page">
+    <div className="page page-wrapper buildings-page page--console">
       <PageHeader
         title="Binalar"
         subtitle="Aynı anda 1 bina yükseltilebilir. Diğerleri kuyruğa eklenebilir."

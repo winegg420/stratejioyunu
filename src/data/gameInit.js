@@ -50,6 +50,7 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
   return {
     activeCityId: 'izmir',
     now: Date.now(),
+    lastTickAt: Date.now(),
     playerMeta,
     _cleansingTick: 0,
     mapRouteSyncRev: 0,

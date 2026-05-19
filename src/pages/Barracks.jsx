@@ -13,6 +13,8 @@ export default function Barracks() {
   const awayMap = useTroopsAwayMap(activeCityId);
   const troops = useActiveCityIdleTroops();
   const idleAgents = useGameStore((s) => s.cities[s.activeCityId]?.idleAgents ?? 0);
+  const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? []);
+  const productionQueueKey = productionQueue.map((q) => q.id).join('-') || 'empty';
   const landUnits = useMemo(
     () =>
       landUnitDefs.map((u) => {
@@ -25,7 +27,7 @@ export default function Barracks() {
   );
 
   return (
-    <div className="page">
+    <div className="page page--console barracks-page">
       <PageHeader
         title="Kışla"
         subtitle="Kara birlikleri — Kışla inşa edildikten sonra üretilir."
@@ -36,6 +38,7 @@ export default function Barracks() {
         )}
       />
       <ActiveQueue
+        key={productionQueueKey}
         title={`Aktif Kuyruk — ${cityName}`}
         queueType="production"
         emptyText="Üretim kuyruğu boş. Bir birlik seçip üretim başlatabilirsiniz."
