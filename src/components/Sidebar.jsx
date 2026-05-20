@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <nav className="sidebar sidebar-desktop" aria-label="Tam menü">
+      <nav className="sidebar sidebar-desktop sidebar-hud" aria-label="Tam menü">
         <div className="sidebar-server">
           <span className="server-label">SUNUCU</span>
           <span className="server-name">{SERVER_NAME}</span>
@@ -34,9 +34,20 @@ export default function Sidebar() {
                   className="nav-link nav-link--locked"
                   onClick={() => setLockedFeature(item.label)}
                 >
-                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-icon">
+                    {item.icon}
+                    <span className="nav-lock-icon" aria-hidden="true">🔒</span>
+                  </span>
                   <span className="nav-label">{item.label}</span>
-                  <span className="nav-badge nav-badge--locked">KİLİT</span>
+                  <span
+                    className="nav-badge nav-badge--hq-lock"
+                  >
+                    {item.label === 'İttifak'
+                      ? '[ KİLİTLİ: HQ SV.1 ]'
+                      : item.lockTag
+                        ? `[ KİLİTLİ: ${item.lockTag} ]`
+                        : '[ KİLİTLİ ]'}
+                  </span>
                 </button>
               ) : (
                 <NavLink
@@ -70,6 +81,7 @@ export default function Sidebar() {
       <SystemLockedModal
         open={Boolean(lockedFeature)}
         featureLabel={lockedFeature}
+        variant={lockedFeature === 'Güneş Sistemi' || lockedFeature === 'İttifak' ? 'upgrade' : 'default'}
         onClose={() => setLockedFeature(null)}
       />
     </>

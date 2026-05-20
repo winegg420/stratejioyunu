@@ -1,0 +1,552 @@
+/* PAKET A+B — Canlı veri, kilit şeridi, harita, terminal monokrom */
+
+.nav-lock-icon {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  font-size: 0.55rem;
+  filter: drop-shadow(0 0 4px rgba(255, 80, 80, 0.6));
+}
+
+.nav-icon {
+  position: relative;
+}
+
+/* 1 — Kaynak saatlik üretim */
+.res-hourly-live {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(74, 222, 128, 0.55);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.2);
+}
+
+.building-card .card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.building-card .card-header h3 {
+  flex: 1 1 auto;
+  min-width: 50%;
+}
+
+/* 2 — Bina maliyet / süre */
+.building-level-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(0, 240, 255, 0.75);
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.06);
+}
+
+.building-next-level {
+  font-size: 0.68rem;
+  color: rgba(160, 255, 176, 0.5);
+  margin-left: 0.35rem;
+}
+
+.building-build-time {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #67e8f9;
+  text-shadow: 0 0 8px rgba(103, 232, 249, 0.25);
+}
+
+.cost-breakdown--deficit .cost-breakdown-needed,
+.cost-breakdown--deficit .cost-breakdown-label {
+  color: #f87171 !important;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.35);
+}
+
+/* 4 — Sektör kilitli */
+.building-card--blocked {
+  opacity: 0.3 !important;
+  filter: none !important;
+}
+
+.building-card--blocked .building-blocked-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inset: 0;
+  z-index: 5;
+}
+
+.building-card--blocked .building-blocked-overlay::before,
+.building-card--blocked .building-blocked-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.building-card--blocked .building-blocked-overlay::before {
+  background: linear-gradient(
+    135deg,
+    transparent 46%,
+    rgba(255, 0, 0, 0.4) 48%,
+    rgba(255, 0, 0, 0.4) 52%,
+    transparent 54%
+  );
+}
+
+.building-card--blocked .building-blocked-overlay::after {
+  background: linear-gradient(
+    -135deg,
+    transparent 46%,
+    rgba(255, 0, 0, 0.4) 48%,
+    rgba(255, 0, 0, 0.4) 52%,
+    transparent 54%
+  );
+}
+
+.building-blocked-label {
+  position: relative;
+  z-index: 2;
+  max-width: 92%;
+  text-align: center;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.35 !important;
+  color: #ff5555 !important;
+  text-shadow:
+    0 0 12px rgba(255, 50, 50, 0.8),
+    0 0 24px rgba(255, 0, 0, 0.4) !important;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(255, 80, 80, 0.5);
+  background: rgba(8, 0, 0, 0.75);
+}
+
+/* 7 — Bina ikon hücre dokusu */
+.building-img-wrap--cell-grid {
+  background-color: #0a1018;
+  background-image: radial-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+  background-size: 5px 5px;
+}
+
+/* 3 — Birim kod adı + üretim süresi */
+.unit-tactical-code {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(0, 240, 255, 0.65);
+}
+
+.unit-prod-duration {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #67e8f9;
+}
+
+/* 8 — Siber vidalar */
+.map-toolbar--console {
+  border-width: 3px !important;
+  position: relative;
+}
+
+.map-toolbar--console::before,
+.map-toolbar--console::after,
+.map-focus-crosshair--neon::before,
+.map-focus-crosshair--neon::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  background: rgba(0, 240, 255, 0.12);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.map-toolbar--console::before {
+  top: 4px;
+  left: 4px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.map-toolbar--console::after {
+  top: 4px;
+  right: 4px;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+
+.map-focus-crosshair--neon {
+  border-width: 2px !important;
+  position: relative;
+}
+
+.map-focus-crosshair--neon::before {
+  top: 3px;
+  left: 3px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.map-focus-crosshair--neon::after {
+  bottom: 3px;
+  right: 3px;
+  top: auto;
+  left: auto;
+  clip-path: polygon(100% 100%, 0 100%, 100% 0);
+}
+
+/* 10 — Tarama başlat */
+.map-search-btn--scan {
+  min-width: 7.5rem;
+}
+
+.map-search-btn--scan.is-scanning {
+  animation: terminal-scan-pulse 0.45s ease-out;
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.45) !important;
+}
+
+@keyframes terminal-scan-pulse {
+  0% { letter-spacing: 0.02em; opacity: 0.7; }
+  40% { letter-spacing: 0.14em; opacity: 1; }
+  100% { letter-spacing: 0.08em; opacity: 1; }
+}
+
+/* 5 — Güneş sistemi kilit */
+.nav-badge--solar-lock {
+  font-size: 0.48rem !important;
+}
+
+/* System locked upgrade */
+.system-locked-panel--upgrade .system-locked-title {
+  font-size: 1.1rem;
+  color: #fbbf24;
+}
+
+.system-locked-panel--upgrade .system-locked-sub {
+  color: #ff5555;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* Savaş ledger raporu */
+.combat-ledger-banner {
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(3, 10, 18, 0.9);
+}
+
+.combat-ledger-banner--win {
+  border-color: rgba(74, 222, 128, 0.4);
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.12);
+}
+
+.combat-ledger-banner--loss {
+  border-color: rgba(248, 113, 113, 0.4);
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.1);
+}
+
+.combat-ledger-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #67e8f9;
+  margin-bottom: 0.35rem;
+}
+
+.combat-ledger-banner--win .combat-ledger-tag {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+}
+
+.combat-ledger-banner--loss .combat-ledger-tag {
+  color: #f87171;
+}
+
+.combat-ledger-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.65rem;
+  color: rgba(160, 255, 176, 0.55);
+}
+
+.combat-ledger-vs {
+  color: rgba(0, 240, 255, 0.5);
+}
+
+.combat-ledger-terminal {
+  margin: 0.65rem 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(74, 222, 128, 0.65);
+  background: #020408;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.combat-ledger-dmg {
+  color: #4ade80;
+}
+
+.combat-ledger-dmg--hit {
+  color: #f87171;
+}
+
+/* Casusluk intelligence ledger */
+.intel-ledger-banner {
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  background: rgba(3, 10, 18, 0.92);
+}
+
+.intel-ledger-banner--full {
+  border-color: rgba(74, 222, 128, 0.45);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.12);
+}
+
+.intel-ledger-banner--breached {
+  border-color: rgba(248, 113, 113, 0.5);
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.15);
+}
+
+.intel-ledger-banner--storage,
+.intel-ledger-banner--defense {
+  border-color: rgba(103, 232, 249, 0.35);
+}
+
+.intel-ledger-tag {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #67e8f9;
+  margin-bottom: 0.35rem;
+}
+
+.intel-ledger-banner--full .intel-ledger-tag {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
+}
+
+.intel-ledger-banner--breached .intel-ledger-tag {
+  color: #f87171;
+}
+
+.intel-ledger-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.62rem;
+  color: rgba(160, 255, 176, 0.5);
+}
+
+.intel-ledger-vs {
+  color: rgba(0, 240, 255, 0.55);
+}
+
+.intel-ledger-terminal {
+  margin: 0.65rem 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(103, 232, 249, 0.7);
+  background: #020408;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.intel-caught-alert {
+  margin-bottom: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(40, 8, 8, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.intel-caught-alert strong {
+  color: #f87171;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
+}
+
+.intel-caught-alert span {
+  font-size: 0.68rem;
+  color: rgba(248, 113, 113, 0.75);
+}
+
+/* Siber ops ledger (raporlar + istihbarat) */
+.cyber-ledger-banner {
+  margin-bottom: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: rgba(20, 6, 40, 0.55);
+}
+
+.cyber-ledger-banner--success {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(6, 30, 18, 0.5);
+}
+
+.cyber-ledger-banner--failed {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(30, 8, 8, 0.5);
+}
+
+.cyber-ledger-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #c084fc;
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.45);
+}
+
+.cyber-ledger-banner--success .cyber-ledger-tag {
+  color: #4ade80;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+}
+
+.cyber-ledger-banner--failed .cyber-ledger-tag {
+  color: #f87171;
+}
+
+.cyber-ledger-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: rgba(192, 132, 252, 0.75);
+}
+
+.cyber-ledger-vs {
+  color: rgba(216, 180, 254, 0.55);
+}
+
+.cyber-ledger-terminal {
+  margin: 0.65rem 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(216, 180, 254, 0.75);
+  background: #08040f;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.intel-cyber-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.72rem;
+  color: rgba(192, 132, 252, 0.85);
+}
+
+.barracks-agent-hint {
+  font-size: 0.75em;
+  opacity: 0.65;
+  font-weight: 400;
+}
+
+.research-section--kbrn {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.research-kbrn-intro {
+  margin-bottom: 0.75rem;
+}
+
+.badge--kbrn {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fbbf24;
+}
+
+.card--kbrn-locked {
+  opacity: 0.55;
+}
+
+.kbrn-ledger-banner {
+  margin-bottom: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  background: rgba(40, 32, 6, 0.55);
+}
+
+.kbrn-ledger-banner--success {
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(30, 28, 8, 0.6);
+}
+
+.kbrn-ledger-banner--failed {
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.kbrn-ledger-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+}
+
+.kbrn-ledger-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: rgba(251, 191, 36, 0.8);
+}
+
+.kbrn-ledger-terminal {
+  margin: 0.65rem 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(253, 224, 71, 0.75);
+  background: #0c0a04;
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  white-space: pre-wrap;
+}
+
+.kbrn-trace-alert {
+  margin-bottom: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(40, 20, 8, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.kbrn-trace-alert strong {
+  color: #fb923c;
+  font-size: 0.78rem;
+}
+
+.intel-kbrn-preview {
+  border-color: rgba(234, 179, 8, 0.25);
+  color: rgba(251, 191, 36, 0.9);
+}

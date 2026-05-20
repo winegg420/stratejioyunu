@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   getDisplayName,
@@ -7,6 +7,8 @@ import {
   signInWithPassword,
   signOutSupabase,
 } from '../lib/auth';
+import { stopSyncPolling } from '../lib/supabaseSync';
+import { useGameStore } from '../stores/gameStore';
 
 const AUTH_KEY = 'strateji_auth_demo';
 const PLAYER_KEY = 'strateji_player_name';
@@ -41,6 +43,15 @@ export function AuthProvider({ children }) {
   const [playerName, setPlayerName] = useState(() =>
     isDemoAuthed() ? readDemoPlayerName() : 'Komutan_Alpha',
   );
+  const hydratedUserRef = useRef(null);
+
+  const hydrateGameForUser = useCallback(async (user) => {
+    if (!user?.id) return;
+    if (hydratedUserRef.current === user.id) return;
+    const name = getDisplayName(user);
+    const ok = await useGameStore.getState().hydrateFromSupabase(user.id, name);
+    if (ok) hydratedUserRef.current = user.id;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +70,7 @@ export function AuthProvider({ children }) {
             setPlayerName(getDisplayName(existing.user));
             setIsDemo(false);
             clearDemoAuth();
+            await hydrateGameForUser(existing.user);
           }
         } else if (!cancelled && isDemoAuthed()) {
           setIsDemo(true);
@@ -84,6 +96,11 @@ export function AuthProvider({ children }) {
         setIsDemo(false);
         clearDemoAuth();
         setPlayerName(getDisplayName(nextSession.user));
+        hydrateGameForUser(nextSession.user);
+      } else {
+        hydratedUserRef.current = null;
+        stopSyncPolling();
+        useGameStore.setState({ _supabaseHydrated: false });
       }
     });
 
@@ -91,9 +108,12 @@ export function AuthProvider({ children }) {
       cancelled = true;
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [hydrateGameForUser]);
 
   const loginDemo = useCallback((name = 'Oyuncu') => {
+    hydratedUserRef.current = null;
+    stopSyncPolling();
+    useGameStore.setState({ _supabaseHydrated: false });
     const displayName = setDemoAuth(name);
     setSession(null);
     setIsDemo(true);
@@ -121,11 +141,18 @@ export function AuthProvider({ children }) {
     setIsDemo(false);
     clearDemoAuth();
     setPlayerName(getDisplayName(nextSession?.user));
+    hydratedUserRef.current = null;
+    if (nextSession?.user) {
+      await hydrateGameForUser(nextSession.user);
+    }
     return { mode: 'supabase' };
-  }, [loginDemo]);
+  }, [loginDemo, hydrateGameForUser]);
 
   const logout = useCallback(async () => {
     clearDemoAuth();
+    hydratedUserRef.current = null;
+    stopSyncPolling();
+    useGameStore.setState({ _supabaseHydrated: false });
     setSession(null);
     setIsDemo(false);
     setPlayerName('Komutan_Alpha');

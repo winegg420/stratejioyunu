@@ -18,20 +18,32 @@ export const resources = [
 ];
 
 export const buildings = [
-  { id: 'hq', name: 'Merkez Bina', category: 'Temel', level: 1, maxLevel: null, desc: 'Şehrin komuta merkezi. Radar menzili ve yeni oyuncu koruması.', image: '🏛️', cost: '—', time: '—', producing: false },
-  { id: 'farm', name: 'Çiftlik', category: 'Üretim', level: 8, maxLevel: null, desc: 'Yemek üretir. Asker besleme ve nüfus büyümesi için kritik.', image: '🌾', cost: '2.400 metal · 1.800 yemek', time: '02:14:30', producing: true },
-  { id: 'refinery', name: 'Rafineri', category: 'Üretim', level: 6, maxLevel: null, desc: 'Yakıt üretir. Seferler ve araç hareketi için gerekli.', image: '⛽', cost: '3.100 metal · 2.200 para', time: '—', producing: false },
-  { id: 'factory', name: 'Maden', category: 'Üretim', level: 7, maxLevel: null, desc: 'Metal ve mineral çıkarımı. Bina inşaatı ve araç üretimi için.', image: '🏭', cost: '4.500 metal · 1.200 para', time: '01:45:00', producing: false, upgrading: true },
-  { id: 'depot', name: 'Depo', category: 'Lojistik', level: 4, maxLevel: null, desc: 'Kaynak depolama kapasitesi ve lojistik terminal.', image: '📦', cost: '2.800 metal · 1.000 yemek', time: '01:10:00', producing: false },
-  { id: 'plant', name: 'Santral', category: 'Üretim', level: 9, maxLevel: null, desc: 'Enerji üretir. Fabrika ve rafinerinin çalışması için zorunlu.', image: '⚡', cost: '—', time: '—', producing: true },
-  { id: 'tax', name: 'Vergi Binası', category: 'Ekonomi', level: 5, maxLevel: null, desc: 'Para üretir. Vergi oranı ayarlanabilir.', image: '🏛️', cost: '1.800 metal', time: '00:52:10', producing: false },
-  { id: 'barracks', name: 'Kışla', category: 'Askeri', level: 10, maxLevel: null, desc: 'Kara birliği üretimi.', image: '🪖', cost: '5.200 metal', time: '03:20:00', producing: false },
+  { id: 'hq', name: 'Komuta Merkezi', category: 'Temel', level: 1, maxLevel: null, desc: 'Bölge komuta merkezi. Radar menzili ve yeni üs koruması.', image: '🏛️', cost: '—', time: '—', producing: false },
+  { id: 'farm', name: 'Lojistik Tarım Tesisi', category: 'Üretim', level: 8, maxLevel: null, desc: 'Gıda ve ikmal üretimi. Nüfus ve moral için kritik.', image: '🌾', cost: '2.400 metal · 1.800 yemek', time: '02:14:30', producing: true },
+  { id: 'refinery', name: 'Yakıt Rafinerisi', category: 'Üretim', level: 6, maxLevel: null, desc: 'Yakıt üretir. Konvoy ve motorlu birlikler için.', image: '⛽', cost: '3.100 metal · 2.200 para', time: '—', producing: false },
+  { id: 'factory', name: 'Endüstri Kompleksi', category: 'Üretim', level: 7, maxLevel: null, desc: 'Metal ve mühimmat hammaddesi. İnşaat ve araç üretimi.', image: '🏭', cost: '4.500 metal · 1.200 para', time: '01:45:00', producing: false, upgrading: true },
+  { id: 'depot', name: 'Lojistik Depo', category: 'Lojistik', level: 4, maxLevel: null, desc: 'Kaynak depolama ve sevkiyat terminali.', image: '📦', cost: '2.800 metal · 1.000 yemek', time: '01:10:00', producing: false },
+  { id: 'plant', name: 'Enerji Santrali', category: 'Üretim', level: 9, maxLevel: null, desc: 'Elektrik üretimi. Endüstri ve rafineri için zorunlu.', image: '⚡', cost: '—', time: '—', producing: true },
+  { id: 'tax', name: 'Maliye Dairesi', category: 'Ekonomi', level: 5, maxLevel: null, desc: 'Vergi geliri. Oran artışı morali düşürür.', image: '🏦', cost: '1.800 metal', time: '00:52:10', producing: false },
+  { id: 'barracks', name: 'Kışla', category: 'Askeri', level: 10, maxLevel: null, desc: 'Kara birliği üretimi ve eğitim.', image: '🪖', cost: '5.200 metal', time: '03:20:00', producing: false },
   { id: 'airport', name: 'Hava Üssü', category: 'Askeri', level: 4, maxLevel: null, desc: 'Hava birliği üretimi ve üs operasyonları.', image: '✈️', cost: '8.000 metal', time: '—', producing: false },
-  { id: 'shipyard', name: 'Tersane', category: 'Askeri', level: 3, maxLevel: null, desc: 'Deniz birliği üretimi. Sadece kıyı şehirlerde.', image: '⚓', cost: '6.500 metal', time: '—', producing: false, coastalOnly: true },
-  { id: 'intel', name: 'İstihbarat Merkezi', category: 'Teknoloji', level: 6, maxLevel: null, desc: 'Casusluk ve karşı istihbarat.', image: '🕵️', cost: '3.400 metal', time: '—', producing: false },
-  { id: 'wall', name: 'Kale Duvarı', category: 'Savunma', level: 7, maxLevel: null, desc: 'Savunma bonusu sağlar.', image: '🏰', cost: '4.100 metal', time: '—', producing: false },
-  { id: 'market', name: 'Pazar Yeri', category: 'Ticaret', level: 4, maxLevel: null, desc: 'Ticaret yapmaya izin verir.', image: '🏪', cost: '2.200 metal', time: '—', producing: false },
-  { id: 'research', name: 'Araştırma Merkezi', category: 'Teknoloji', level: 8, maxLevel: null, desc: 'Teknoloji araştırmalarını açar.', image: '🔬', cost: '—', time: '—', producing: false },
+  { id: 'shipyard', name: 'Deniz Üssü', category: 'Askeri', level: 3, maxLevel: null, desc: 'Deniz birliği üretimi. Kıyı şehirlerinde.', image: '⚓', cost: '6.500 metal', time: '—', producing: false, coastalOnly: true },
+  { id: 'intel', name: 'İstihbarat Merkezi', category: 'Teknoloji', level: 6, maxLevel: null, desc: 'Keşif, SIGINT ve karşı istihbarat.', image: '📡', cost: '3.400 metal', time: '—', producing: false },
+  { id: 'wall', name: 'Çevre Savunma Hattı', category: 'Savunma', level: 7, maxLevel: null, desc: 'Perimetre savunması ve eriş kontrolü.', image: '🛡️', cost: '4.100 metal', time: '—', producing: false },
+  { id: 'market', name: 'Ticaret Terminali', category: 'Ticaret', level: 4, maxLevel: null, desc: 'Kaynak transferi ve konvoy ticareti.', image: '🏪', cost: '2.200 metal', time: '—', producing: false },
+  { id: 'research', name: 'Ar-Ge Merkezi', category: 'Teknoloji', level: 8, maxLevel: null, desc: 'Askeri teknoloji araştırmaları.', image: '🔬', cost: '—', time: '—', producing: false },
+  {
+    id: 'cyber_ops',
+    name: 'Siber Operasyon Merkezi',
+    category: 'Siber',
+    level: 0,
+    maxLevel: null,
+    desc: 'Altyapı sabotajı, verim düşürme ve muhabere baskısı operasyonları.',
+    image: '💻',
+    cost: '2.200 metal · 1.400 enerji',
+    time: '00:09:00',
+    producing: false,
+  },
 ];
 
 export const researches = [
@@ -42,13 +54,13 @@ export const researches = [
 ];
 
 const landUnitsBase = [
-  { id: 'infantry', name: 'Piyade', attack: 10, defense: 8, cost: '120 metal · 80 yemek', time: '00:08:00', count: 2400, image: '🪖', desc: 'Temel kara birliği. Özel tim ve şehir savunmasında etkili.' },
-  { id: 'armor', name: 'Zırhlı Araç', attack: 25, defense: 20, cost: '450 metal · 200 yemek', time: '00:22:00', count: 380, image: '🚛', desc: 'Hafif zırhlı taşıyıcı. Piyadeye karşı güçlü; ana muharebe tankına zayıf.' },
-  { id: 'tank', name: 'Tank', attack: 45, defense: 35, cost: '900 metal · 400 yemek · 200 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Ana muharebe tankı. Zırhlı ve piyadeye karşı güçlü.' },
-  { id: 'airdefense', name: 'Hava Savunma', attack: 15, defense: 55, cost: '750 metal · 350 yemek · 250 enerji', time: '00:38:00', count: 40, image: '📡', desc: 'Hava saldırılarına karşı sabit ve mobil savunma platformu.' },
-  { id: 'sniper', name: 'Keskin Nişancı', attack: 30, defense: 12, cost: '350 metal · 150 yemek', time: '00:18:00', count: 85, image: '🎯', desc: 'Piyade ve özel timlere karşı etkili.' },
-  { id: 'special', name: 'Özel Tim', attack: 40, defense: 25, cost: '700 metal · 300 yemek · 150 para', time: '00:35:00', count: 45, image: '⚔️', desc: 'Casusluk ve sabotaj operasyonlarında kullanılır.' },
-  { id: 'colonist', name: 'Göçmen / İnşaat Aracı', attack: 5, defense: 10, cost: '800 metal · 600 yemek · 200 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Yeni şehir kurmak için zorunlu koloni birliği.' },
+  { id: 'infantry', name: 'Piyade', attack: 42, defense: 38, cost: '280 metal · 160 yemek', time: '00:08:00', count: 2400, image: '🪖', desc: 'Siber destekli hafif piyade. Şehir savunması ve gerilla taktiklerinde etkili.' },
+  { id: 'armor', name: 'Zırhlı Araç', attack: 68, defense: 72, cost: '720 metal · 340 yemek · 120 yakıt', time: '00:22:00', count: 380, image: '🚛', desc: 'Zırhlı taşıyıcı konvoyu. Piyadeye karşı üstün; ağır tanklara karşı sınırlı.' },
+  { id: 'tank', name: 'Tank', attack: 118, defense: 95, cost: '1.450 metal · 620 yemek · 280 yakıt', time: '00:45:00', count: 120, image: '🛡️', desc: 'Ana muharebe tankı. Zırhlı birlik ve sabit savunmaya karşı yüksek penetrasyon.' },
+  { id: 'airdefense', name: 'Hava Savunma', attack: 35, defense: 142, cost: '980 metal · 420 yemek · 380 enerji', time: '00:38:00', count: 40, image: '📡', desc: 'Entegre hava savunma bataryası. İHA ve bombardımana karşı kritik.' },
+  { id: 'sniper', name: 'Keskin Nişancı', attack: 88, defense: 28, cost: '520 metal · 210 yemek', time: '00:18:00', count: 85, image: '🎯', desc: 'Uzun menzil eliminasyon timi. Hafif piyade ve keşif birliklerine karşı ölümcül.' },
+  { id: 'special', name: 'Özel Tim', attack: 102, defense: 64, cost: '1.120 metal · 480 yemek · 260 para', time: '00:35:00', count: 45, image: '⚔️', desc: 'Gölge operasyon ve sabotaj. Düşman lojistik hatlarına yüksek baskı.' },
+  { id: 'colonist', name: 'Göçmen / İnşaat Aracı', attack: 8, defense: 22, cost: '1.600 metal · 900 yemek · 420 para', time: '01:30:00', count: 0, image: '🏙️', desc: 'Koloni ve üs inşaat konvoyu. Yeni şehir kurulumu için zorunlu.' },
 ];
 
 export const landUnits = applyUnitDisplayList(landUnitsBase);
@@ -225,7 +237,7 @@ export const mapCities = [
   { name: 'Ankara', owner: 'SteelWolf', rank: 'Yüzbaşı', population: 22000, type: 'Büyükşehir', tier: 'capital', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
   { name: 'Manisa', owner: null, rank: null, population: 0, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'empty', lat: 38.62, lng: 27.43 },
   { name: 'Trabzon', owner: 'Falcon99', rank: 'Çavuş', population: 8500, type: 'Kıyı', tier: 'town', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
-  { name: 'Bot_Kale_03', owner: 'Bot_Kale_03', rank: 'Er', population: 3200, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
+  { name: 'Bot_USS_03', owner: 'Bot_USS_03', rank: 'Er', population: 3200, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
 ];
 
 export const expeditionSummary = {
@@ -267,4 +279,5 @@ export const NAV_ITEMS = [
   { path: '/profil', icon: '👤', label: 'Profil' },
   { path: '/mesajlar', icon: '✉️', label: 'Mesajlar' },
   { path: null, icon: '🤝', label: 'İttifak', locked: true },
+  { path: '/istihbarat', icon: '💻', label: 'Siber Operasyon', locked: true, lockTag: 'CYBER OPS SV.1' },
 ];

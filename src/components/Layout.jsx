@@ -6,6 +6,9 @@ import BottomNav from './BottomNav';
 import ToastContainer from './ToastContainer';
 import PwaUpdateBanner from './PwaUpdateBanner';
 import RouteTransitionLoader from './RouteTransitionLoader';
+import ContentInfoModal from './ContentInfoModal';
+import { useAuth } from '../context/AuthContext';
+import { startSyncPolling, stopSyncPolling } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
 import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -26,6 +29,7 @@ export default function Layout() {
   const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
   const initWorldSystems = useGameStore((s) => s.initWorldSystems);
   const touchPlayerActivity = useGameStore((s) => s.touchPlayerActivity);
+  const { session, authMode } = useAuth();
 
   useHudButtonStrokes();
 
@@ -34,6 +38,20 @@ export default function Layout() {
   }, [initWorldSystems]);
 
   useEffect(() => startTicker(), [startTicker]);
+
+  useEffect(() => {
+    if (authMode !== 'supabase' || !session?.user?.id) {
+      stopSyncPolling();
+      return undefined;
+    }
+
+    startSyncPolling(
+      () => useGameStore.getState(),
+      (patch) => useGameStore.setState(patch),
+      (id) => useGameStore.getState()._completeExpedition(id),
+    );
+    return stopSyncPolling;
+  }, [authMode, session?.user?.id]);
 
   useEffect(() => {
     const onWake = () => {
@@ -73,12 +91,13 @@ export default function Layout() {
 
   return (
     <div
-      className={`app-shell hud-shell${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
+      className={`app-shell hud-shell hud-final${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
       <ResourceBar />
       <PwaUpdateBanner />
       <RouteTransitionLoader />
       <ToastContainer />
+      <ContentInfoModal />
       <div className="main-shell">
         <Sidebar />
         <main className="content-area" ref={contentRef}>

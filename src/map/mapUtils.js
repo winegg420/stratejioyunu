@@ -44,9 +44,13 @@ export const MAP_BORDER_STYLE = {
 
 export function getProvinceStyle() {
   return {
-    fillColor: '#0a1220',
-    fillOpacity: 0.5,
-    ...MAP_BORDER_STYLE,
+    fillColor: '#060d18',
+    fillOpacity: 0.06,
+    color: 'rgba(0, 240, 255, 0.4)',
+    weight: 1.2,
+    lineJoin: 'round',
+    lineCap: 'round',
+    opacity: 0.75,
   };
 }
 
@@ -59,5 +63,10 @@ export function getDistrictStyle() {
 }
 
 export function getHoverStyle(base) {
-  return { ...base, fillOpacity: (base.fillOpacity || 0.35) + 0.2, weight: 2.5 };
+  return {
+    ...base,
+    fillOpacity: Math.min(0.14, (base.fillOpacity || 0.06) + 0.06),
+    weight: 1.6,
+    color: 'rgba(0, 240, 255, 0.55)',
+  };
 }

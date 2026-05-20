@@ -3,7 +3,7 @@ import NewsFeed from '../components/NewsFeed';
 import CityStatusPanel from '../components/CityStatusPanel';
 import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
 import HomeRegionPreview from '../components/HomeRegionPreview';
-import { newsFeed } from '../data/placeholder';
+import { newsFeed as staticNewsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
 
@@ -22,17 +22,52 @@ function QueueItem({ name, detail, endsAt, queued, now }) {
   );
 }
 
+const STAT_ICONS = {
+  'AKTİF SEFER': '⚔',
+  'İNŞAAT KUYRUĞU': '🏗',
+  'ÜRETİM KUYRUĞU': '⚙',
+  'OKUNMAYAN RAPOR': '📡',
+  'ŞEHİR SAYISI': '🏙',
+};
+
 function StatBlock({ label, value, sub, accent }) {
+  const icon = STAT_ICONS[label] ?? '◈';
   return (
-    <div className={`home-stat-block${accent ? ' home-stat-block--accent' : ''}`}>
-      <span className="home-stat-label">{label}</span>
-      <span className="home-stat-value font-hud-data">{value}</span>
-      {sub && <span className="home-stat-sub">{sub}</span>}
+    <div
+      className={[
+        'home-stat-block',
+        'home-stat-block--chassis',
+        accent && 'home-stat-block--accent',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <span className="home-stat-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="home-stat-body">
+        <span className="home-stat-label">{label}</span>
+        <span className="home-stat-value">{value}</span>
+        {sub && <span className="home-stat-sub">{sub}</span>}
+      </div>
     </div>
   );
 }
 
 export default function Home() {
+  const liveNews = useGameStore((s) => s.newsLog ?? []);
+  const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
+  const newsItems = [
+    ...(globalOutbreak?.active
+      ? [{
+        type: 'global-alarm',
+        text: `[ GLOBAL ALARM ] Aktif: ${globalOutbreak.regionName} — karantina sürüyor`,
+        time: 'CANLI',
+      }]
+      : []),
+    ...liveNews,
+    ...staticNewsFeed,
+  ].slice(0, 24);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -47,7 +82,7 @@ export default function Home() {
   const productionCount = city?.productionQueue?.length ?? 0;
 
   return (
-    <div className="page home-page">
+    <div className="page home-page page--command">
       <PageHeader
         title="Ana Merkez"
         subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Komuta Paneli`}
@@ -150,7 +185,7 @@ export default function Home() {
             <span className="panel-title__icon">🌐</span>
             Sunucu Haberleri
           </h3>
-          <NewsFeed items={newsFeed} />
+          <NewsFeed items={newsItems} />
         </section>
       </div>
     </div>

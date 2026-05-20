@@ -4,17 +4,16 @@ import { toRawInputNumber } from '../lib/formatNumber';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
-import CostBreakdown from './CostBreakdown';
+import { resolveUnitInfoPayload } from '../lib/contentInfoResolver';
 import TroopStockLabel from './TroopStockLabel';
-import UnitDetailModal from './UnitDetailModal';
 
 export default function UnitCard({ unit, awayMap }) {
+  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
-  const resources = city?.resources ?? STORE_EMPTY_ARRAY;
   const enqueueProduction = useGameStore((s) => s.enqueueProduction);
+  const openContentInfo = useGameStore((s) => s.openContentInfo);
   const { locked: actionLocked, runLocked } = useActionLock();
   const [qtyInput, setQtyInput] = useState('10');
-  const [detailOpen, setDetailOpen] = useState(false);
 
   const qty = Number(qtyInput);
   const validQty = Number.isFinite(qty) && qty > 0;
@@ -48,32 +47,20 @@ export default function UnitCard({ unit, awayMap }) {
     runLocked(() => enqueueProduction(unit.id, qty, { addToQueue: true }));
   };
 
+  const openInfo = () => openContentInfo(resolveUnitInfoPayload(unit));
+
   return (
-    <article className="card unit-card">
-      <UnitDetailModal
-        unit={unit}
-        qty={validQty ? qty : 0}
-        resources={resources}
-        awayMap={awayMap}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      />
+    <article className="card unit-card content-card--slim">
+      <span className="content-card__intel-badge">[ i ]</span>
       <button
         type="button"
-        className="unit-card-open-btn"
-        onClick={() => setDetailOpen(true)}
-        aria-label={`${unit.name} detayları`}
+        className="content-card__intel-hit"
+        onClick={openInfo}
+        aria-label={`${unit.name} ansiklopedi`}
       >
         <div className="card-visual">{unit.image}</div>
-        <div className="card-header unit-card-header">
-          <div className="unit-card-titles">
-            <h3>{unit.name}</h3>
-            {unit.designationCode || unit.designation ? (
-              <p className="unit-designation">
-                DESIGNATION: {unit.designationCode ?? unit.designation?.toUpperCase().replace(/\s+/g, '-')}
-              </p>
-            ) : null}
-          </div>
+        <div className="content-card__head unit-card-header">
+          <h3>{unit.name}</h3>
           <span className="badge badge-troop-stock">
             <TroopStockLabel
               troop={{ id: unit.id, available: unit.idle ?? unit.count }}
@@ -82,26 +69,10 @@ export default function UnitCard({ unit, awayMap }) {
           </span>
         </div>
       </button>
-      <p className="card-desc">{unit.desc}</p>
-      <table className="stats-table">
-        <thead>
-          <tr>
-            <th>Saldırı</th>
-            <th>Savunma</th>
-            <th>Maliyet</th>
-            <th>Süre</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{unit.attack}</td>
-            <td>{unit.defense}</td>
-            <td>{unit.cost}</td>
-            <td>{unit.time}</td>
-          </tr>
-        </tbody>
-      </table>
-      <CostBreakdown costStr={unit.cost} qty={validQty ? qty : 0} resources={resources} />
+      <p className="content-card__meta">
+        Birim maliyeti: <strong>{unit.cost}</strong>
+        {unit.time && unit.time !== '—' ? ` · ${unit.time}` : ''}
+      </p>
       <div className="card-actions unit-card-actions">
         <div className="qty-input-wrap">
           <input

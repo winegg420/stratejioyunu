@@ -21,7 +21,7 @@ export default function MapFocusCrosshair({ lat, lng }) {
   return createPortal(
     <button
       type="button"
-      className="map-focus-crosshair"
+      className="map-focus-crosshair map-focus-crosshair--neon"
       onClick={focusBase}
       aria-label="Üsse odaklan"
       title="Aktif şehre odaklan"

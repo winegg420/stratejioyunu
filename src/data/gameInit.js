@@ -6,6 +6,7 @@ import {
   getStarterIdleTroops,
   getStarterResources,
 } from '../lib/buildingUtils';
+import { enrichCityModel } from '../lib/cityModel';
 import { getDefaultIdlePopulation } from '../lib/populationUtils';
 import { loadPlayerMeta } from '../lib/playerMetaStorage';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
@@ -27,17 +28,18 @@ export function createCityState(overrides = {}) {
     productionQueue: overrides.productionQueue ?? [],
   };
   const idlePopulation = overrides.idlePopulation ?? getDefaultIdlePopulation(base);
+  const cityCtx = enrichCityModel({ ...base, idlePopulation });
   const resources = applyProductionFreeze(
     baseResources,
     bld,
-    { ...base, idlePopulation },
+    cityCtx,
     vipMult,
   );
-  return {
+  return enrichCityModel({
     ...base,
     resources,
     idlePopulation,
-  };
+  });
 }
 
 export function createFoundCityState(troopPayload = {}) {
@@ -66,6 +68,10 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     playerCities,
     cities: {
       izmir: createCityState({
+        buildings: createStarterBuildings({ useDemoLevels: true }),
+        population: 12500,
+        happiness: 78,
+        taxRate: 15,
         idleAgents: 6,
         idlePopulation: 2400,
         idleTroops: getStarterIdleTroops().map((t) =>
@@ -91,5 +97,10 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     mapFocusRequest: null,
     flashes: {},
     meydanBattle: null,
+    cyberOpsLog: [],
+    globalCbrnOutbreak: null,
+    newsLog: [],
+    lastCbrnEventAt: 0,
+    _cbrnTickCount: 0,
   };
 }

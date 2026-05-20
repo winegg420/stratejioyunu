@@ -72,12 +72,71 @@ import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingU
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { applyExpeditionLoot, refundCostWithDepotCap } from '../lib/lootUtils';
 import { buildLossRows } from '../lib/reportLosses';
+import { findSpyReportForCity, getEnemyTroopsFromReport } from '../lib/spyIntel';
+import {
+  buildCombatReport,
+  calcRaidLoot,
+  LOOT_RATE,
+  resolveDefenderArmy,
+  resolveDefenderDepot,
+  runCombat,
+} from '../utils/combatEngine';
+import {
+  calcCyberVirusTravelSeconds,
+  calcSpyProbeTravelSeconds,
+  generateBotResearches,
+  generateDefenderBuildings,
+  generateBotKbrnResearches,
+  resolveCyberVirusMission,
+  resolveSpyMission,
+} from '../utils/spyEngine';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
+import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
+import {
+  buildCyberOpsLogEntry,
+  canLaunchCyberAbility,
+  getUnlockedCyberCapabilities,
+} from '../lib/cyberOps';
+import {
+  canLaunchStealthCbrnOp,
+  getWeaponDevelopmentLevel,
+  isKbrnBranchUnlocked,
+  scaleKbrnResearchCost,
+} from '../lib/kbrnResearch';
+import {
+  buildKbrnDefenderAlertReport,
+  calcKbrnChemTravelSeconds,
+  getCbrnChemOpCost,
+  resolveKbrnChemMission,
+  tickCbrnWorldEvents,
+  triggerRandomCbrnEvent as rollGlobalCbrnOutbreak,
+} from '../utils/cbrnEngine';
+import {
+  computeCityHappiness,
+  getActiveCyberBarracksSlow,
+  getActiveKbrnBarracksBlock,
+  getHappinessProductionSpeedMultiplier,
+  getKbrnPopulationDrain,
+  pruneCyberEffects,
+  pruneKbrnEffects,
+} from '../lib/happinessSystem';
+import {
+  hydrateGameStore,
+  isSyncEnabled,
+  scheduleSaveGameState,
+  syncExpeditionsFromServer,
+} from '../lib/supabaseSync';
 
 /** Stable fallbacks — React 19 getSnapshot must return cached references when store is unchanged. */
 export const STORE_EMPTY_ARRAY = [];
+
+function cloudSync(get, options = {}) {
+  const state = get();
+  if (!state._supabaseHydrated) return;
+  scheduleSaveGameState(state, options);
+}
 
 function getActiveCity(state) {
   return state.cities[state.activeCityId];
@@ -91,6 +150,59 @@ function patchCity(set, get, cityId, patch) {
       [cityId]: { ...cities[cityId], ...patch },
     },
   });
+}
+
+function refreshCityMorale(state, cityId) {
+  const city = state.cities[cityId];
+  if (!city) return city;
+
+  const cyberEffects = pruneCyberEffects(city.cyberEffects);
+  const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
+  const happiness = computeCityHappiness(
+    { ...city, cyberEffects, kbrnEffects },
+    {
+      cityId,
+      incomingAttacks: state.incomingAttacks,
+      expeditions: state.expeditions,
+    },
+  );
+  const popDrain = getKbrnPopulationDrain(kbrnEffects);
+  const basePopulation = city.basePopulation ?? city.population ?? 0;
+  const population = Math.max(400, basePopulation - popDrain);
+  const vipMult = getVipMultiplierFromState(state);
+  const resources = applyProductionFreeze(
+    city.resources,
+    city.buildings,
+    {
+      ...city,
+      cityId,
+      cyberEffects,
+      kbrnEffects,
+      happiness,
+      population,
+      _incomingAttacks: state.incomingAttacks,
+      _expeditions: state.expeditions,
+    },
+    vipMult,
+  );
+
+  return enrichCityModel({
+    ...city,
+    cyberEffects,
+    kbrnEffects,
+    happiness,
+    population,
+    basePopulation,
+    resources,
+  });
+}
+
+function refreshAllCitiesMorale(state) {
+  const cities = {};
+  for (const [cityId] of Object.entries(state.cities)) {
+    cities[cityId] = refreshCityMorale(state, cityId);
+  }
+  return cities;
 }
 
 function slugCityId(name) {
@@ -241,7 +353,7 @@ function generateTradeReport(expedition, delivered, overflow = []) {
     date: nowReportDate(),
     preview: delivered
       ? (overflow.length ? 'Teslimat yapıldı — depo taşması var.' : 'Kargo hedef şehre ulaştı.')
-      : 'Kervan geri döndü.',
+      : 'Konvoy geri döndü.',
     cargo,
     overflow,
     originCityId: expedition.originCityId,
@@ -278,6 +390,18 @@ function getVipMultiplierFromState(state) {
 
 function restoreTroopsToCity(city, troopPayload) {
   if (!troopPayload) return city;
+  if (troopPayload.kbrn?.agents != null) {
+    return {
+      ...city,
+      idleAgents: (city.idleAgents ?? 0) + troopPayload.kbrn.agents,
+    };
+  }
+  if (troopPayload.cyberVirus?.agents != null) {
+    return {
+      ...city,
+      idleAgents: (city.idleAgents ?? 0) + troopPayload.cyberVirus.agents,
+    };
+  }
   if (troopPayload.spies != null) {
     return {
       ...city,
@@ -318,6 +442,12 @@ function tickAllCities(state, now) {
 export const useGameStore = create((set, get) => ({
   ...createInitialGameState(loadPlayerMeta()),
 
+  contentInfoPayload: null,
+
+  openContentInfo: (payload) => set({ contentInfoPayload: payload ?? null }),
+
+  closeContentInfo: () => set({ contentInfoPayload: null }),
+
   getActiveCity: () => getActiveCity(get()),
 
   getDevelopmentScore: () => computeDevelopmentScore(get()),
@@ -340,6 +470,17 @@ export const useGameStore = create((set, get) => ({
     set({ mapCities });
     get()._runServerCleansing(false);
     get().touchPlayerActivity();
+  },
+
+  hydrateFromSupabase: async (userId, playerName) => {
+    const ok = await hydrateGameStore(userId, {
+      playerName,
+      getState: get,
+      setState: (patch) => set(patch),
+      completeExpedition: (id) => get()._completeExpedition(id),
+    });
+    if (ok) get().initWorldSystems();
+    return ok;
   },
 
   _runServerCleansing: (notify = true, source = 'tick') => {
@@ -413,6 +554,273 @@ export const useGameStore = create((set, get) => ({
   setActiveCity: (cityId) => {
     if (!get().cities[cityId]) return;
     set({ activeCityId: cityId, now: Date.now() });
+    cloudSync(get, { cityId, activeCityId: true });
+  },
+
+  setCityTaxRate: (taxRate) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+
+    const nextRate = clampTaxRate(taxRate);
+    const nextCity = refreshCityMorale(
+      { ...state, cities: { ...state.cities, [cityId]: { ...city, taxRate: nextRate } } },
+      cityId,
+    );
+
+    patchCity(set, get, cityId, { taxRate: nextRate, happiness: nextCity.happiness, resources: nextCity.resources });
+    useNotificationStore.getState().addToast(
+      `Vergi oranı %${nextRate} — moral ${nextCity.happiness}%`,
+      nextRate > 20 ? 'warn' : 'info',
+    );
+    cloudSync(get, { cityId });
+    return true;
+  },
+
+  getCyberCapabilities: () => {
+    const city = get().cities[get().activeCityId];
+    return getUnlockedCyberCapabilities(city);
+  },
+
+  launchCyberAttack: ({ abilityId, targetCityName, agentCount = 1 }) => {
+    const state = get();
+    const mapCity = state.mapCities.find((c) => c.name === targetCityName);
+    if (!mapCity) return false;
+    return get().startCyberVirusExpedition({
+      targetCity: mapCity,
+      abilityId,
+      agentCount,
+    });
+  },
+
+  startCyberVirusExpedition: ({ targetCity, abilityId, agentCount = 1 }) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city || !targetCity?.name) return false;
+
+    const check = canLaunchCyberAbility(city, abilityId);
+    if (!check.ok) {
+      useNotificationStore.getState().addToast(check.reason, 'warn');
+      return false;
+    }
+
+    const ability = check.ability;
+    const agents = Math.max(1, Math.floor(Number(agentCount) || 1));
+    if ((city.idleAgents ?? 0) < agents) {
+      useNotificationStore.getState().addToast('Yetersiz siber ajan', 'warn');
+      return false;
+    }
+
+    if (!canAffordCost(ability.cost, 1, city.resources)) {
+      useNotificationStore.getState().addToast('Siber operasyon için yetersiz kaynak', 'warn');
+      return false;
+    }
+
+    const popCost = getAgentPopulationCost(agents);
+    if (!canAffordPopulation(city, popCost)) {
+      useNotificationStore.getState().addToast('Nüfus yetersiz — ajan konvoyu', 'warn');
+      return false;
+    }
+
+    const isOwn = state.playerCities.some((pc) => pc.name === targetCity.name);
+    if (isOwn) {
+      useNotificationStore.getState().addToast('Kendi üssünüze siber saldırı gönderilemez', 'warn');
+      return false;
+    }
+
+    const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
+    const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
+    const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
+    const duration = calcCyberVirusTravelSeconds({
+      origin,
+      target: targetCoords,
+      agentCount: agents,
+      mapCities: state.mapCities,
+    });
+    const distKm = getExpeditionDistanceKm(origin, targetCoords);
+    const timing = createQueueTiming(duration);
+
+    const resources = deductCost(ability.cost, 1, city.resources);
+    const withPop = deductPopulation(
+      { ...city, resources, idleAgents: (city.idleAgents ?? 0) - agents },
+      popCost,
+    );
+
+    const expedition = {
+      id: genId('exp'),
+      originCityId: cityId,
+      originCityName,
+      target: targetCity.name,
+      targetLat: targetCity.lat,
+      targetLng: targetCity.lng,
+      mode: 'cyber',
+      type: 'Siber Virüs Konvoyu',
+      direction: 'outgoing',
+      troops: `${agents} Siber Ajan`,
+      troopPayload: { cyberVirus: { abilityId, agents } },
+      player: getCurrentPlayerName(),
+      units: agents,
+      distance: formatDistanceKm(distKm),
+      airRush: false,
+      durationSeconds: duration,
+      ...timing,
+    };
+
+    patchCity(set, get, cityId, {
+      resources: withPop.resources,
+      idleAgents: withPop.idleAgents,
+      idlePopulation: withPop.idlePopulation,
+    });
+
+    set({
+      expeditions: [...state.expeditions, expedition],
+      navBadges: { ...state.navBadges, expeditions: true },
+    });
+
+    useNotificationStore.getState().addToast(
+      `${agents} siber ajan — ${ability.name} → ${targetCity.name}`,
+      'intel',
+    );
+    cloudSync(get, {
+      cityId,
+      immediate: true,
+      expedition: expedition,
+    });
+    return true;
+  },
+
+  startKbrnChemExpedition: ({ targetCity, agentCount = 2 }) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city || !targetCity?.name) return false;
+
+    if (!isKbrnBranchUnlocked(city)) {
+      useNotificationStore.getState().addToast(
+        'KBRN dalı için Ar-Ge Merkezi Sv.8+ gerekli',
+        'warn',
+      );
+      return false;
+    }
+
+    if (!canLaunchStealthCbrnOp(state.researches)) {
+      useNotificationStore.getState().addToast(
+        'KBRN Silahı Geliştirme araştırmasını tamamlayın',
+        'warn',
+      );
+      return false;
+    }
+
+    const chemLevel = getWeaponDevelopmentLevel(state.researches);
+    const costStr = getCbrnChemOpCost(chemLevel);
+    const agents = Math.max(1, Math.floor(Number(agentCount) || 1));
+
+    if ((city.idleAgents ?? 0) < agents) {
+      useNotificationStore.getState().addToast('Yetersiz KBRN operatörü (ajan)', 'warn');
+      return false;
+    }
+
+    if (!canAffordCost(costStr, 1, city.resources)) {
+      useNotificationStore.getState().addToast('KBRN operasyonu için yetersiz kaynak', 'warn');
+      return false;
+    }
+
+    const popCost = getAgentPopulationCost(agents);
+    if (!canAffordPopulation(city, popCost)) {
+      useNotificationStore.getState().addToast('Nüfus yetersiz — KBRN timi', 'warn');
+      return false;
+    }
+
+    if (state.playerCities.some((pc) => pc.name === targetCity.name)) {
+      useNotificationStore.getState().addToast('Kendi üssünüze KBRN saldırısı yapılamaz', 'warn');
+      return false;
+    }
+
+    const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
+    const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
+    const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
+    const duration = calcKbrnChemTravelSeconds({
+      origin,
+      target: targetCoords,
+      agentCount: agents,
+      mapCities: state.mapCities,
+    });
+    const distKm = getExpeditionDistanceKm(origin, targetCoords);
+    const timing = createQueueTiming(duration);
+
+    const resources = deductCost(costStr, 1, city.resources);
+    const withPop = deductPopulation(
+      { ...city, resources, idleAgents: (city.idleAgents ?? 0) - agents },
+      popCost,
+    );
+
+    const expedition = {
+      id: genId('exp'),
+      originCityId: cityId,
+      originCityName,
+      target: targetCity.name,
+      targetLat: targetCity.lat,
+      targetLng: targetCity.lng,
+      mode: 'kbrn',
+      type: 'KBRN Kimyasal Baskı',
+      direction: 'outgoing',
+      troops: `${agents} KBRN Operatörü`,
+      troopPayload: { kbrn: { opId: 'chem_pressure', agents } },
+      player: getCurrentPlayerName(),
+      units: agents,
+      distance: formatDistanceKm(distKm),
+      airRush: false,
+      durationSeconds: duration,
+      ...timing,
+    };
+
+    patchCity(set, get, cityId, {
+      resources: withPop.resources,
+      idleAgents: withPop.idleAgents,
+      idlePopulation: withPop.idlePopulation,
+    });
+
+    set({
+      expeditions: [...state.expeditions, expedition],
+      navBadges: { ...state.navBadges, expeditions: true },
+    });
+
+    useNotificationStore.getState().addToast(
+      `KBRN kimyasal baskı — ${targetCity.name} (${agents} operatör)`,
+      'warn',
+    );
+    cloudSync(get, { cityId, immediate: true, expedition });
+    return true;
+  },
+
+  /** Test / GM — anında bölgesel salgın tetikle */
+  triggerGlobalCbrnEvent: () => {
+    const state = get();
+    if (state.globalCbrnOutbreak?.active) return false;
+    const rolled = rollGlobalCbrnOutbreak(state);
+    if (!rolled) return false;
+
+    let cities = { ...state.cities, ...rolled.cityPatches };
+    cities = Object.fromEntries(
+      Object.entries(cities).map(([id, c]) => [
+        id,
+        refreshCityMorale({ ...state, cities }, id),
+      ]),
+    );
+
+    set({
+      globalCbrnOutbreak: rolled.globalCbrnOutbreak,
+      mapCities: rolled.mapCities,
+      cities,
+      newsLog: [rolled.newsItem, ...(state.newsLog ?? [])].slice(0, 48),
+      lastCbrnEventAt: rolled.lastCbrnEventAt,
+    });
+
+    useNotificationStore.getState().addToast(rolled.newsItem.text, 'danger');
+    cloudSync(get, { saveAllCities: true, savePlayerMeta: true, researches: true });
+    return true;
   },
 
   clearNavBadge: (key) => {
@@ -440,9 +848,18 @@ export const useGameStore = create((set, get) => ({
       return { ...r, current: rounded };
     });
 
-    const vipMult = getVipMultiplierFromState(state);
-    const frozenResources = applyProductionFreeze(resources, activeCity.buildings, activeCity, vipMult);
-    patchCity(set, get, activeCityId, { resources: frozenResources });
+    const refreshed = refreshCityMorale(
+      { ...state, cities: { ...state.cities, [activeCityId]: { ...activeCity, resources } } },
+      activeCityId,
+    );
+    patchCity(set, get, activeCityId, {
+      resources: refreshed.resources,
+      happiness: refreshed.happiness,
+      cyberEffects: refreshed.cyberEffects,
+      kbrnEffects: refreshed.kbrnEffects,
+      population: refreshed.population,
+      quarantine: refreshed.quarantine,
+    });
 
     const cleanseTick = (state._cleansingTick ?? 0) + 1;
     if (cleanseTick >= CLEANSING_INTERVAL_TICKS) {
@@ -452,7 +869,24 @@ export const useGameStore = create((set, get) => ({
       set({ _cleansingTick: cleanseTick });
     }
 
-    const { cities, completed } = tickAllCities(get(), now);
+    const stateBeforeQueues = get();
+    const { cities: queueCities, completed } = tickAllCities(stateBeforeQueues, now);
+    const stateForMorale = { ...get(), cities: queueCities };
+    let cities = Object.fromEntries(
+      Object.entries(queueCities).map(([id]) => [id, refreshCityMorale(stateForMorale, id)]),
+    );
+
+    const cbrnState = { ...stateBeforeQueues, cities, now };
+    const cbrnPatch = tickCbrnWorldEvents(cbrnState, now);
+    if (cbrnPatch?.cities) {
+      const merged = { ...cities, ...cbrnPatch.cities };
+      cities = Object.fromEntries(
+        Object.entries(merged).map(([id, c]) => [
+          id,
+          refreshCityMorale({ ...get(), cities: merged, now }, id),
+        ]),
+      );
+    }
 
     const completedExpeditionIds = [];
     for (const e of state.expeditions) {
@@ -485,7 +919,32 @@ export const useGameStore = create((set, get) => ({
       return o;
     });
 
-    set({ now, lastTickAt: now, cities, flashes, expeditions, researches, intelOperations });
+    set({
+      now,
+      lastTickAt: now,
+      cities,
+      flashes,
+      expeditions,
+      researches,
+      intelOperations,
+      ...(cbrnPatch?.globalCbrnOutbreak != null
+        ? { globalCbrnOutbreak: cbrnPatch.globalCbrnOutbreak }
+        : {}),
+      ...(cbrnPatch?.mapCities ? { mapCities: cbrnPatch.mapCities } : {}),
+      ...(cbrnPatch?.newsLog ? { newsLog: cbrnPatch.newsLog } : {}),
+      ...(cbrnPatch?.lastCbrnEventAt ? { lastCbrnEventAt: cbrnPatch.lastCbrnEventAt } : {}),
+      ...(cbrnPatch?._cbrnTickCount != null ? { _cbrnTickCount: cbrnPatch._cbrnTickCount } : {}),
+    });
+
+    if (cbrnPatch?.newsLog?.length) {
+      const latest = cbrnPatch.newsLog[0];
+      if (latest?.type === 'global-alarm') {
+        useNotificationStore.getState().addToast(latest.text, 'danger');
+      }
+    }
+    if (cbrnPatch?.saveCbrn) {
+      cloudSync(get, { saveAllCities: true, savePlayerMeta: true, researches: true });
+    }
 
     completedResearchIds.forEach((id) => {
       const r = researches.find((x) => x.id === id);
@@ -570,6 +1029,7 @@ export const useGameStore = create((set, get) => ({
       `İnşaat Tamamlandı: ${item.name}${newRate ? ` · Üretim ${newRate}` : ''}`,
       'success',
     );
+    cloudSync(get, { cityId, saveAllUnits: true });
   },
 
   _completeProduction: (cityId, itemId) => {
@@ -594,12 +1054,24 @@ export const useGameStore = create((set, get) => ({
       `Üretim Tamamlandı: ${item.count} ${item.unit}`,
       'success',
     );
+    cloudSync(get, { cityId, saveAllUnits: true });
   },
 
   _completeExpedition: (expeditionId) => {
     const state = get();
     const exp = state.expeditions.find((e) => e.id === expeditionId);
     if (!exp) return;
+
+    const syncExp = (extra = {}) => {
+      cloudSync(get, {
+        immediate: true,
+        expeditionIdsToComplete: [expeditionId],
+        syncAllExpeditions: true,
+        cityId: exp.originCityId || get().activeCityId,
+        saveAllUnits: true,
+        ...extra,
+      });
+    };
 
     const isReturnLeg =
       exp.direction === 'returning'
@@ -609,6 +1081,7 @@ export const useGameStore = create((set, get) => ({
 
     if (exp.mode === 'found' && exp.direction === 'outgoing') {
       get()._completeFoundCity(expeditionId);
+      syncExp();
       return;
     }
 
@@ -631,6 +1104,7 @@ export const useGameStore = create((set, get) => ({
           `Ticaret kargosu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'üse'} iade edildi`,
           overflow.length ? 'warn' : 'success',
         );
+        syncExp();
         return;
       }
 
@@ -666,6 +1140,7 @@ export const useGameStore = create((set, get) => ({
           : `Ordu ${state.playerCities.find((c) => c.id === cityId)?.name ?? 'şehre'} döndü`,
         'success',
       );
+      syncExp();
       return;
     }
 
@@ -698,38 +1173,296 @@ export const useGameStore = create((set, get) => ({
         overflow.length ? 'Kargo teslim — depo taşması oluştu' : 'Ticaret kargosu teslim edildi',
         overflow.length ? 'warn' : 'success',
       );
+      syncExp({ reports: [report] });
       return;
     }
 
-    const isSpy = exp.type.toLowerCase().includes('casus');
-    const report = isSpy
-      ? generateSpyReport(exp, Math.random() > 0.25)
-      : generateBattleReport(exp, Math.random() > 0.35);
-
+    const isKbrn = exp.mode === 'kbrn' || exp.type?.toLowerCase().includes('kbrn');
+    const isCyber = !isKbrn && (exp.mode === 'cyber' || exp.type?.toLowerCase().includes('siber virüs'));
+    const isSpy = !isKbrn && !isCyber && exp.type.toLowerCase().includes('casus');
     const cityId = exp.originCityId || state.activeCityId;
     const city = state.cities[cityId];
-    if (city && report.loot?.length && report.winner === 'player') {
-      const { resources, overflow } = applyExpeditionLoot(city.resources, report.loot);
+
+    if (isKbrn) {
+      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const originCity = state.cities[cityId];
+      const agentCount = exp.troopPayload?.kbrn?.agents ?? 2;
+      const targetPc = state.playerCities.find((c) => c.name === exp.target);
+      const defenderCity = targetPc ? state.cities[targetPc.id] : null;
+      const defenderResearches = targetPc
+        ? state.researches
+        : generateBotKbrnResearches(mapCity);
+
+      const kbrnResult = resolveKbrnChemMission({
+        expedition: exp,
+        attackerResearches: state.researches,
+        defenderResearches,
+        defenderCity,
+        mapCity,
+        agentCount,
+        attackerName: getCurrentPlayerName(),
+      });
+
+      const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+      const reportsToAdd = [kbrnResult.report];
+
+      if (targetPc && defenderCity) {
+        const alert = buildKbrnDefenderAlertReport({
+          target: exp.target,
+          roll: kbrnResult.roll,
+          attackerTrace: kbrnResult.attackerTrace,
+          effectApplied: Boolean(kbrnResult.effect),
+        });
+        reportsToAdd.push(alert);
+      }
+
+      const cityPatches = {};
+      if (originCity && kbrnResult.agentsReturned > 0) {
+        cityPatches[cityId] = {
+          ...originCity,
+          idleAgents: (originCity.idleAgents ?? 0) + kbrnResult.agentsReturned,
+        };
+      }
+
+      if (kbrnResult.success && kbrnResult.effect && targetPc && defenderCity) {
+        const nextTarget = refreshCityMorale(
+          {
+            ...state,
+            cities: {
+              ...state.cities,
+              [targetPc.id]: {
+                ...defenderCity,
+                kbrnEffects: [...(defenderCity.kbrnEffects ?? []), kbrnResult.effect],
+              },
+            },
+          },
+          targetPc.id,
+        );
+        cityPatches[targetPc.id] = nextTarget;
+      }
+
+      set({
+        expeditions,
+        reports: [...reportsToAdd, ...state.reports],
+        navBadges: { expeditions: expeditions.length > 0, reports: true },
+        ...(Object.keys(cityPatches).length
+          ? { cities: { ...state.cities, ...cityPatches } }
+          : {}),
+      });
+
+      useNotificationStore.getState().addToast(
+        kbrnResult.success
+          ? `[ KBRN OPS LEDGER ]: SUCCESS — ${exp.target}`
+          : '[ KBRN OPS LEDGER ]: FAILED — panzehir etkisiz kıldı',
+        kbrnResult.success ? 'warn' : 'info',
+      );
+      syncExp({ reports: reportsToAdd });
+      if (targetPc && kbrnResult.effect) {
+        cloudSync(get, { cityId: targetPc.id });
+      }
+      return;
+    }
+
+    if (isCyber) {
+      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const originCity = state.cities[cityId];
+      const abilityId = exp.troopPayload?.cyberVirus?.abilityId;
+      const agentCount = exp.troopPayload?.cyberVirus?.agents ?? 1;
+      const targetPc = state.playerCities.find((c) => c.name === exp.target);
+      const defenderCity = targetPc ? state.cities[targetPc.id] : null;
+
+      const cyberResult = resolveCyberVirusMission({
+        expedition: exp,
+        attackerCity: originCity,
+        defenderCity,
+        mapCity,
+        abilityId,
+        agentCount,
+        attackerName: getCurrentPlayerName(),
+      });
+
+      const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+      const reportsToAdd = [cyberResult.report];
+      const logEntry = buildCyberOpsLogEntry({
+        ability: { id: abilityId, name: cyberResult.report.cyberLedger?.abilityName ?? abilityId },
+        originCityName: exp.originCityName,
+        targetCityName: exp.target,
+        success: cyberResult.success,
+      });
+
+      const cityPatches = {};
+      if (originCity && cyberResult.agentsReturned > 0) {
+        cityPatches[cityId] = {
+          ...originCity,
+          idleAgents: (originCity.idleAgents ?? 0) + cyberResult.agentsReturned,
+        };
+      }
+
+      if (cyberResult.success && cyberResult.effect && targetPc && defenderCity) {
+        const nextTarget = refreshCityMorale(
+          {
+            ...state,
+            cities: {
+              ...state.cities,
+              [targetPc.id]: {
+                ...defenderCity,
+                cyberEffects: [...(defenderCity.cyberEffects ?? []), cyberResult.effect],
+              },
+            },
+          },
+          targetPc.id,
+        );
+        cityPatches[targetPc.id] = nextTarget;
+      }
+
+      set({
+        expeditions,
+        reports: [...reportsToAdd, ...state.reports],
+        navBadges: { expeditions: expeditions.length > 0, reports: true },
+        cyberOpsLog: [logEntry, ...(state.cyberOpsLog ?? [])].slice(0, 40),
+        ...(Object.keys(cityPatches).length
+          ? { cities: { ...state.cities, ...cityPatches } }
+          : {}),
+      });
+
+      useNotificationStore.getState().addToast(
+        cyberResult.success
+          ? `[ CYBER OPS LEDGER ]: SUCCESS — ${exp.target}`
+          : `[ CYBER OPS LEDGER ]: FAILED — virüs temizlendi`,
+        cyberResult.success ? 'intel' : 'warn',
+      );
+      syncExp({ reports: reportsToAdd });
+      if (targetPc && cyberResult.effect) {
+        cloudSync(get, { cityId: targetPc.id });
+      }
+      return;
+    }
+
+    if (isSpy) {
+      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const originCity = state.cities[cityId];
+      const spyResult = resolveSpyMission({
+        expedition: exp,
+        attackerContext: {
+          researches: state.researches,
+          buildings: originCity?.buildings ?? [],
+        },
+        defenderContext: {
+          mapCity,
+          resources: resolveDefenderDepot(mapCity),
+          buildings: generateDefenderBuildings(mapCity),
+          troops: resolveDefenderArmy(mapCity),
+          researches: generateBotResearches(mapCity),
+        },
+        attackerName: getCurrentPlayerName(),
+      });
+
+      const reportsToAdd = [spyResult.report];
+      if (spyResult.battleReport) {
+        reportsToAdd.push(spyResult.battleReport);
+      }
+
+      if (originCity) {
+        const returned = spyResult.spiesReturned ?? 0;
+        if (returned > 0) {
+          patchCity(set, get, cityId, {
+            idleSpies: (originCity.idleSpies ?? 0) + returned,
+          });
+        }
+      }
+
+      const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+      set({
+        expeditions,
+        reports: [...reportsToAdd, ...state.reports],
+        navBadges: { expeditions: expeditions.length > 0, reports: true },
+      });
+
+      useNotificationStore.getState().addToast(
+        spyResult.caught
+          ? 'Giriş Engellendi — Sonda yakalandı, çatışma çıktı!'
+          : spyResult.depth >= 3
+            ? '[ INTELLIGENCE REPORT ] alındı'
+            : 'Casusluk sondası tamamlandı',
+        spyResult.caught ? 'danger' : 'intel',
+      );
+      syncExp({ reports: reportsToAdd });
+      return;
+    }
+
+    const mapCity = state.mapCities.find((c) => c.name === exp.target);
+    const spyReport = findSpyReportForCity(state.reports, exp.target);
+    const defenderCounts = resolveDefenderArmy(mapCity, {
+      spyEnemyTroops: getEnemyTroopsFromReport(spyReport),
+    });
+    const attackerCounts = exp.troopPayload && !exp.troopPayload.spies
+      ? exp.troopPayload
+      : {};
+    const combat = runCombat(attackerCounts, defenderCounts);
+    const defenderResources = resolveDefenderDepot(mapCity);
+    const loot = combat.attackerWon ? calcRaidLoot(defenderResources, LOOT_RATE) : [];
+
+    const report = buildCombatReport({
+      expedition: exp,
+      combat,
+      loot,
+      attackerName: getCurrentPlayerName(),
+      defenderName: mapCity?.owner || exp.target,
+    });
+
+    if (city && loot.length > 0) {
+      const { resources, overflow } = applyExpeditionLoot(city.resources, loot);
       const vipMult = getVipMultiplierFromState(get());
       const frozenResources = applyProductionFreeze(resources, city.buildings, city, vipMult);
       patchCity(set, get, cityId, { resources: frozenResources });
       if (overflow.length > 0) {
         useNotificationStore.getState().addToast(
-          `Depo taştı — ${overflow.map((o) => `${o.amount} ${o.label}`).join(', ')} depoda (üretim durdu)`,
+          `Depo taştı — ${overflow.map((o) => `${o.amount} ${o.label}`).join(', ')}`,
           'warn',
         );
       }
     }
 
-    const expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+    const origin = resolveCityCoords(exp.originCityName, state.playerCities, state.mapCities);
+    const targetCoords = { lat: exp.targetLat, lng: exp.targetLng };
+    const returnDuration = calcExpeditionTravelSeconds({
+      origin: targetCoords,
+      target: origin,
+      troopQty: combat.survivingAttacker,
+      mapCities: state.mapCities,
+      mode: 'attack',
+    });
+    const returnTiming = createQueueTiming(returnDuration);
+    const pseudoIdle = landUnits.map((u) => ({
+      ...u,
+      available: combat.survivingAttacker[u.id] || 0,
+    }));
+    const survivorTotal = Object.values(combat.survivingAttacker).reduce((a, b) => a + b, 0);
+
+    let expeditions = state.expeditions.filter((e) => e.id !== expeditionId);
+    if (survivorTotal > 0) {
+      expeditions = [
+        ...expeditions,
+        {
+          ...exp,
+          id: genId('exp'),
+          direction: 'returning',
+          type: 'Geri Dönüş',
+          troops: formatTroopsSummary(combat.survivingAttacker, pseudoIdle),
+          troopPayload: { ...combat.survivingAttacker },
+          skipCombat: true,
+          recalled: false,
+          ...returnTiming,
+        },
+      ];
+    }
+
     const pastExpeditions = [
       {
         id: genId('past'),
         target: exp.target,
-        result: report.winner === 'player' ? 'Zafer' : report.winner === 'enemy' ? 'Yenilgi' : 'Tamamlandı',
-        loot: report.loot?.length
-          ? report.loot.map((l) => `${l.amount} ${l.label}`).join(', ')
-          : '—',
+        result: combat.attackerWon ? 'Zafer' : 'Yenilgi',
+        loot: loot.length ? loot.map((l) => `${l.amount} ${l.label}`).join(', ') : '—',
         date: report.date,
       },
       ...state.pastExpeditions,
@@ -746,9 +1479,12 @@ export const useGameStore = create((set, get) => ({
     });
 
     useNotificationStore.getState().addToast(
-      isSpy ? 'Casusluk Raporu Geldi' : 'Savaş Raporu Geldi',
-      isSpy ? 'intel' : 'success',
+      combat.attackerWon
+        ? `[ COMBAT LEDGER ]: WIN — Ganimet toplandı`
+        : '[ COMBAT LEDGER ]: LOSS — Birlikler geri çekiliyor',
+      combat.attackerWon ? 'success' : 'danger',
     );
+    syncExp({ reports: [report] });
   },
 
   _completeFoundCity: (expeditionId) => {
@@ -1102,6 +1838,7 @@ export const useGameStore = create((set, get) => ({
       queued ? `${building.name} kuyruğa eklendi` : `${building.name} yükseltmesi başladı`,
       'success',
     );
+    cloudSync(get, { cityId });
     return true;
   },
 
@@ -1126,10 +1863,18 @@ export const useGameStore = create((set, get) => ({
 
     const hasActive = city.productionQueue.some((q) => !q.queued);
     const queued = addToQueue || hasActive;
-    const duration = parseTimeToSeconds(unitMeta.time) || 30;
+    const baseDuration = parseTimeToSeconds(unitMeta.time) || 30;
+    const happyMult = getHappinessProductionSpeedMultiplier(city.happiness ?? 100);
+    const barracksSlow = 1
+      + getActiveCyberBarracksSlow(city.cyberEffects)
+      + getActiveKbrnBarracksBlock(city.kbrnEffects);
+    const scaledDuration = Math.max(
+      5,
+      Math.round((baseDuration * count * barracksSlow) / Math.max(0.15, happyMult)),
+    );
     const timing = queued
-      ? { durationSeconds: duration, startedAt: null, endsAt: null }
-      : createQueueTiming(duration * count);
+      ? { durationSeconds: scaledDuration, startedAt: null, endsAt: null }
+      : createQueueTiming(scaledDuration);
 
     const item = {
       id: genId('pq'),
@@ -1155,6 +1900,7 @@ export const useGameStore = create((set, get) => ({
       queued ? `${count} ${unitDef.name} kuyruğa eklendi` : `${count} ${unitDef.name} üretiliyor`,
       'success',
     );
+    cloudSync(get, { cityId, saveAllUnits: true });
     return true;
   },
 
@@ -1206,13 +1952,20 @@ export const useGameStore = create((set, get) => ({
     const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
     const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
     const expeditionMode = isFound ? 'found' : isSpy ? 'spy' : 'attack';
-    const duration = calcExpeditionTravelSeconds({
-      origin,
-      target: targetCoords,
-      troopQty: isSpy ? { spies: spyCount } : troopQty,
-      mapCities: state.mapCities,
-      mode: expeditionMode,
-    });
+    const duration = isSpy
+      ? calcSpyProbeTravelSeconds({
+        origin,
+        target: targetCoords,
+        spyCount,
+        mapCities: state.mapCities,
+      })
+      : calcExpeditionTravelSeconds({
+        origin,
+        target: targetCoords,
+        troopQty,
+        mapCities: state.mapCities,
+        mode: expeditionMode,
+      });
     const distKm = getExpeditionDistanceKm(origin, targetCoords);
     const timing = createQueueTiming(duration);
 
@@ -1225,7 +1978,7 @@ export const useGameStore = create((set, get) => ({
       targetLat: targetCity.lat,
       targetLng: targetCity.lng,
       mode: expeditionMode,
-      type: isFound ? 'Şehir Kur' : isSpy ? 'Casus Keşfi' : 'Saldırı',
+      type: isFound ? 'Şehir Kur' : isSpy ? 'Casusluk Sondası' : 'Saldırı',
       direction: 'outgoing',
       troops: isSpy ? `${spyCount} Casus` : troops,
       troopPayload: isSpy ? { spies: spyCount } : { ...troopQty },
@@ -1254,6 +2007,13 @@ export const useGameStore = create((set, get) => ({
       'info',
     );
 
+    const latest = get().expeditions.find((e) => e.id === expedition.id) ?? expedition;
+    cloudSync(get, {
+      cityId,
+      immediate: true,
+      expedition: latest,
+      saveAllUnits: true,
+    });
     return true;
   },
 
@@ -1333,6 +2093,11 @@ export const useGameStore = create((set, get) => ({
       `Ticaret konvoyu ${targetCityName} yolunda`,
       'info',
     );
+    cloudSync(get, {
+      cityId,
+      immediate: true,
+      expedition: get().expeditions.find((e) => e.id === expedition.id) ?? expedition,
+    });
     return true;
   },
 
@@ -1559,8 +2324,19 @@ export const useGameStore = create((set, get) => ({
     const list = state.researches ?? [];
     const research = list.find((r) => r.id === researchId);
     if (!research || research.active || research.queued || research.cost === '—') return false;
+    const activeCity = getActiveCity(state);
+    if (research.category === 'kbrn' && !isKbrnBranchUnlocked(activeCity)) {
+      useNotificationStore.getState().addToast(
+        'KBRN araştırmaları için Ar-Ge Merkezi Sv.8 gerekli',
+        'warn',
+      );
+      return false;
+    }
+    const costStr = research.category === 'kbrn'
+      ? scaleKbrnResearchCost(research.cost, research.level ?? 0)
+      : research.cost;
     if (!addToQueue && list.some((r) => r.active)) return false;
-    if (!canAffordCost(research.cost, 1, getActiveCity(state).resources)) return false;
+    if (!canAffordCost(costStr, 1, activeCity.resources)) return false;
 
     const hasActive = list.some((r) => r.active);
     const queued = addToQueue || hasActive;
@@ -1571,13 +2347,20 @@ export const useGameStore = create((set, get) => ({
 
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
-    const resources = deductCost(research.cost, 1, city.resources);
+    const resources = deductCost(costStr, 1, city.resources);
     patchCity(set, get, cityId, { resources });
 
     set({
       researches: list.map((r) =>
         r.id === researchId
-          ? { ...r, active: !queued, queued, ...timing, queueId: genId('rq') }
+          ? {
+            ...r,
+            active: !queued,
+            queued,
+            ...timing,
+            queueId: genId('rq'),
+            lastPaidCost: costStr,
+          }
           : r,
       ),
     });
@@ -1586,6 +2369,7 @@ export const useGameStore = create((set, get) => ({
       queued ? `${research.name} kuyruğa eklendi` : `${research.name} araştırması başladı`,
       'success',
     );
+    cloudSync(get, { cityId, researches: true });
     return true;
   },
 
@@ -1613,7 +2397,10 @@ export const useGameStore = create((set, get) => ({
 
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
-    const { resources, overflow } = refundCostWithDepotCap(city.resources, research.cost, 1);
+    const refundCost = research.category === 'kbrn'
+      ? (research.lastPaidCost ?? scaleKbrnResearchCost(research.cost, Math.max(0, (research.level ?? 1) - 1)))
+      : research.cost;
+    const { resources, overflow } = refundCostWithDepotCap(city.resources, refundCost, 1);
     patchCity(set, get, cityId, { resources });
     if (overflow?.length) {
       useNotificationStore.getState().addToast('Depo dolu — iade kaynağının bir kısmı silindi', 'warn');
@@ -1638,19 +2425,22 @@ export const useGameStore = create((set, get) => ({
 
     if (elapsedSec > 1) {
       const vipMult = getVipMultiplierFromState(state);
-      const cities = { ...state.cities };
-      for (const [cityId, city] of Object.entries(cities)) {
-        let resources = city.resources.map((r) => {
-          if (r.productionFrozen || (r.max != null && r.current > r.max)) return r;
-          const inc = ratePerSecond(r.rate) * elapsedSec;
-          if (!inc) return r;
-          let next = r.current + inc;
-          if (r.max != null) next = Math.min(r.max, next);
-          return { ...r, current: Math.floor(next) };
-        });
-        resources = applyProductionFreeze(resources, city.buildings, { ...city, resources }, vipMult);
-        cities[cityId] = { ...city, resources };
-      }
+      const cities = refreshAllCitiesMorale({
+        ...state,
+        cities: Object.fromEntries(
+          Object.entries(state.cities).map(([cityId, city]) => {
+            let resources = city.resources.map((r) => {
+              if (r.productionFrozen || (r.max != null && r.current > r.max)) return r;
+              const inc = ratePerSecond(r.rate) * elapsedSec;
+              if (!inc) return r;
+              let next = r.current + inc;
+              if (r.max != null) next = Math.min(r.max, next);
+              return { ...r, current: Math.floor(next) };
+            });
+            return { ...city, resources };
+          }),
+        ),
+      });
       set({ cities, now, lastTickAt: now });
     } else {
       set({ now, lastTickAt: now });
@@ -1659,6 +2449,15 @@ export const useGameStore = create((set, get) => ({
     get().touchPlayerActivity();
     get()._runServerCleansing(false, 'wake');
     get().tick();
+    cloudSync(get, { saveAllUnits: true });
+
+    if (isSyncEnabled() && get()._supabaseHydrated) {
+      syncExpeditionsFromServer(
+        get,
+        (patch) => set(patch),
+        (id) => get()._completeExpedition(id),
+      ).catch((err) => console.warn('[gameStore] expedition sync', err));
+    }
   },
 
   startTicker: () => {

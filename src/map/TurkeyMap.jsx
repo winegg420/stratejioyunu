@@ -1,25 +1,22 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import './map-tactical.css';
 import CityDetailPanel from './CityDetailPanel';
 import CityMarkers from './CityMarkers';
 import MapAnimatedLayers from './MapAnimatedLayers';
-import FogOfWarLayer from './FogOfWarLayer';
 import MapHudControls from './MapHudControls';
+import MapHudConnector from './MapHudConnector';
+import MapPlayerDataLinks from './MapPlayerDataLinks';
 import MapFocusCrosshair from './MapFocusCrosshair';
 import ActiveCityMapFocus from './ActiveCityMapFocus';
-import ActiveCityRangeLayer from './ActiveCityRangeLayer';
 import MapBoundsReporter from './MapBoundsReporter';
 import MapMaxBounds from './MapMaxBounds';
 import MapMiniMap from './MapMiniMap';
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
 import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
-import {
-  CITY_STATUS_COLORS,
-  getProvinceStyle,
-  getHoverStyle,
-} from './mapUtils';
+import { CITY_STATUS_COLORS, getProvinceStyle, getHoverStyle } from './mapUtils';
 import CityTerritoryLayer from './CityTerritoryLayer';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
@@ -70,13 +67,28 @@ function HudBridge() {
   return <MapHudControls />;
 }
 
+function MapCoordTooltip({ hover }) {
+  if (!hover) return null;
+  return (
+    <div
+      className="map-coord-tooltip"
+      style={{ left: hover.x, top: hover.y }}
+      role="tooltip"
+    >
+      {hover.name && <span className="map-coord-tooltip__city">{hover.name}</span>}
+      <span>
+        COORD_X: {hover.lat.toFixed(2)} | Y: {hover.lng.toFixed(2)}
+      </span>
+    </div>
+  );
+}
+
 export default function TurkeyMap() {
   const [mapReady, setMapReady] = useState(false);
   const mapCities = useGameStore((s) => s.mapCities);
   const expeditions = useGameStore((s) => s.expeditions);
   const mapFocusRequest = useGameStore((s) => s.mapFocusRequest);
   const clearMapFocusRequest = useGameStore((s) => s.clearMapFocusRequest);
-  const reports = useGameStore((s) => s.reports);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks);
@@ -84,15 +96,14 @@ export default function TurkeyMap() {
   const isMobile = useIsMobile();
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
-  const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
   const [search, setSearch] = useState('');
   const [searchCoord, setSearchCoord] = useState('');
-  const provinceLayerRef = useRef(null);
   const [fitBounds, setFitBounds] = useState(null);
   const [flyTarget, setFlyTarget] = useState(null);
   const [cityPick, setCityPick] = useState('');
   const [viewport, setViewport] = useState(null);
+  const [hoverCoord, setHoverCoord] = useState(null);
   const setViewportStable = useCallback((next) => {
     setViewport((prev) => {
       if (!prev || !next) return next;
@@ -116,6 +127,7 @@ export default function TurkeyMap() {
   }, []);
   const [hudCollapsed, setHudCollapsed] = useState(false);
   const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
+  const [scanPulse, setScanPulse] = useState(false);
 
   const interactionLocked = isMobile ? mapLocked : true;
 
@@ -148,6 +160,13 @@ export default function TurkeyMap() {
   }, []);
 
   useEffect(() => {
+    fetch('/geo/provinces.json')
+      .then((r) => r.json())
+      .then(setProvinces)
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
     if (!mapFocusRequest) return;
     const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
     const home = mapCities.find((c) => c.name === originPc?.name);
@@ -163,41 +182,21 @@ export default function TurkeyMap() {
     clearMapFocusRequest();
   }, [mapFocusRequest, playerCities, mapCities, clearMapFocusRequest]);
 
-  useEffect(() => {
-    fetch('/geo/provinces.json')
-      .then((r) => r.json())
-      .then(setProvinces)
-      .catch(console.error);
-  }, []);
-
-  const onProvinceClick = useCallback((feature, layer) => {
-    const name = feature.properties.shapeName;
-    layer.on('click', () => {
-      setSelectedProvince({ name });
-      setFitBounds(layer.getBounds());
-    });
-  }, []);
-
   const provinceStyle = useCallback(() => getProvinceStyle(), []);
 
-  const onEachProvince = useCallback(
-    (feature, layer) => {
-      const name = feature.properties.shapeName;
+  const onEachProvince = useCallback((feature, layer) => {
+    const name = feature.properties?.shapeName;
+    if (name) {
       layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
-      onProvinceClick(feature, layer);
-      layer.on('mouseover', () => layer.setStyle(getHoverStyle(getProvinceStyle())));
-      layer.on('mouseout', () => layer.setStyle(getProvinceStyle()));
-    },
-    [onProvinceClick],
-  );
-
-  const clearProvinceFocus = () => {
-    setSelectedProvince(null);
-    setFitBounds(null);
-  };
+    }
+    layer.on('mouseover', () => layer.setStyle(getHoverStyle(getProvinceStyle())));
+    layer.on('mouseout', () => layer.setStyle(getProvinceStyle()));
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setScanPulse(true);
+    window.setTimeout(() => setScanPulse(false), 480);
     const q = search.trim().toLowerCase();
     const coord = searchCoord.trim();
     if (coord) {
@@ -222,8 +221,13 @@ export default function TurkeyMap() {
     ? mapCities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : mapCities;
 
+  const handleCityHover = useCallback((payload) => setHoverCoord(payload), []);
+  const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
+
   return (
-    <div className={`map-page map-page--cyber ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}>
+    <div
+      className={`map-page map-page--cyber map-page--tactical ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}
+    >
       {isMobile && (
         <div className="map-mobile-controls map-mobile-controls--cyber">
           <button
@@ -265,28 +269,34 @@ export default function TurkeyMap() {
         </div>
       )}
 
-      <MapToolbar
-        mapCities={mapCities}
-        cityPick={cityPick}
-        setCityPick={setCityPick}
-        onCitySelect={(city) => {
-          setCityPick(city.name);
-          setFlyTarget({ lat: city.lat, lng: city.lng });
-          setSelectedCity(city);
-          setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
-        }}
-        search={search}
-        setSearch={setSearch}
-        searchCoord={searchCoord}
-        setSearchCoord={setSearchCoord}
+      <MapCoordTooltip hover={hoverCoord} />
+
+      <div className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical">
+        <MapToolbar
+          mapCities={mapCities}
+          cityPick={cityPick}
+          setCityPick={setCityPick}
+          onCitySelect={(city) => {
+            setCityPick(city.name);
+            setFlyTarget({ lat: city.lat, lng: city.lng });
+            setSelectedCity(city);
+            setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+          }}
+          search={search}
+          setSearch={setSearch}
+          searchCoord={searchCoord}
+          setSearchCoord={setSearchCoord}
         handleSearch={handleSearch}
-        selectedProvince={selectedProvince}
-        clearProvinceFocus={clearProvinceFocus}
+        scanPulse={scanPulse}
         isMobile={isMobile}
         mapLocked={mapLocked}
       />
+        <div className="map-tactical-overlay" aria-hidden="true">
+          <div className="map-tactical-grid" />
+          <div className="map-tactical-scanlines" />
+          <div className="map-tactical-radar-sweep" />
+        </div>
 
-      <div className="map-container map-container-wrap map-container-wrap--cyber">
         {!mapReady && (
           <div className="map-loading-placeholder" aria-live="polite">
             Harita yükleniyor…
@@ -312,27 +322,21 @@ export default function TurkeyMap() {
           <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
           {provinces && (
             <GeoJSON
-              key="provinces"
-              ref={provinceLayerRef}
+              key="provinces-radar"
               data={provinces}
+              className="map-province-layer"
               style={provinceStyle}
               smoothFactor={1.5}
               onEachFeature={onEachProvince}
             />
           )}
+          <MapPlayerDataLinks playerCities={playerCities} />
           <CityTerritoryLayer
             mapCities={filteredCities}
             playerCities={playerCities}
             playerName={playerName}
           />
           <MapBoundsReporter onViewportChange={setViewportStable} />
-          <FogOfWarLayer
-            playerCities={playerCities}
-            mapCities={mapCities}
-            expeditions={expeditions}
-            reports={reports}
-          />
-          <ActiveCityRangeLayer lat={activeLat} lng={activeLng} />
           <MapAnimatedLayers
             expeditions={expeditions}
             mapCities={mapCities}
@@ -345,6 +349,8 @@ export default function TurkeyMap() {
             underAttack={underAttack}
             incomingAttacks={incomingAttacks}
             onSelectCity={setSelectedCity}
+            onCityHover={handleCityHover}
+            onCityHoverEnd={handleCityHoverEnd}
           />
           <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
           {fitBounds && <FitBounds bounds={fitBounds} />}
@@ -352,6 +358,9 @@ export default function TurkeyMap() {
             <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
           )}
           {(!isMobile || !hudCollapsed) && <HudBridge />}
+          {activeLat != null && activeLng != null && (
+            <MapHudConnector lat={activeLat} lng={activeLng} />
+          )}
           <MapFocusCrosshair lat={activeLat} lng={activeLng} />
         </MapContainer>
         )}
@@ -378,7 +387,9 @@ export default function TurkeyMap() {
         <div className={`map-minimap-wrap${miniMapCollapsed && isMobile ? ' map-minimap-wrap--collapsed' : ''}`}>
           <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
         </div>
-        <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
+        {selectedCity && (
+          <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
+        )}
       </div>
     </div>
   );
@@ -394,15 +405,19 @@ function MapToolbar({
   searchCoord,
   setSearchCoord,
   handleSearch,
-  selectedProvince,
-  clearProvinceFocus,
+  scanPulse,
   isMobile,
   mapLocked,
 }) {
   if (isMobile && mapLocked) return null;
 
   return (
-    <div className="map-toolbar map-toolbar--cyber">
+    <div className="map-toolbar map-toolbar--cyber map-toolbar--console">
+      <div className="map-console-header">
+        <span className="map-console-header__bolt" aria-hidden="true">◆ ◆</span>
+        <span className="map-console-header__title">[ TACTICAL SEARCH CONSOLE ]</span>
+        <span className="map-console-header__bolt" aria-hidden="true">◆ ◆</span>
+      </div>
       <div className="map-city-search">
         <label className="map-city-search-label" htmlFor="map-city-select">
           Şehir Ara
@@ -426,21 +441,26 @@ function MapToolbar({
           ))}
         </select>
       </div>
-      <form className="map-search" onSubmit={handleSearch}>
+      <form className="map-search map-search--console" onSubmit={handleSearch}>
         <input
           type="text"
+          className="map-search-input"
           placeholder="Şehir veya oyuncu ara..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <input
           type="text"
+          className="map-search-coord"
           placeholder="Koordinat: 38.42, 27.14"
           value={searchCoord}
           onChange={(e) => setSearchCoord(e.target.value)}
         />
-        <button type="submit" className="btn btn-primary">
-          Ara
+        <button
+          type="submit"
+          className={`btn map-search-btn map-search-btn--scan${scanPulse ? ' is-scanning' : ''}`}
+        >
+          [ TARAMA BAŞLAT ]
         </button>
       </form>
       <div className="map-legend map-legend--cyber">
@@ -448,16 +468,8 @@ function MapToolbar({
         <span><i className="legend-dot legend-dot--spy" /> Casus rotası</span>
         <span><i className="legend-dot legend-dot--return" /> Geri dönüş</span>
         <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
-        <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman</span>
+        <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman / Boş</span>
       </div>
-      {selectedProvince && (
-        <div className="map-province-bar">
-          <span>{selectedProvince.name} — il sınırı</span>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={clearProvinceFocus}>
-            Türkiye görünümü
-          </button>
-        </div>
-      )}
     </div>
   );
 }

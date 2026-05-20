@@ -1,4 +1,10 @@
 import { getHqLevel } from './buildingUtils';
+import {
+  applyHappinessToResourceRates,
+  computeCityHappiness,
+  pruneCyberEffects,
+  pruneKbrnEffects,
+} from './happinessSystem';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -82,6 +88,16 @@ export function applyProductionFreeze(resources, buildings, cityOrIdlePop, produ
 
   if (productionMultiplier > 1) {
     withRates = applyVipProductionBonus(withRates, productionMultiplier);
+  }
+
+  if (city) {
+    const cyberEffects = pruneCyberEffects(city.cyberEffects);
+    const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
+    const happiness = computeCityHappiness(
+      { ...city, cyberEffects, kbrnEffects, resources: withRates },
+      { cityId: city.cityId, incomingAttacks: city._incomingAttacks, expeditions: city._expeditions },
+    );
+    withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
   }
 
   return applyDepotFreeze(withRates);

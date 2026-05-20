@@ -4,6 +4,8 @@ const LABEL_TO_ID = {
   yakıt: 'fuel',
   para: 'money',
   enerji: 'energy',
+  reaktör: 'energy',
+  kapsül: 'energy',
 };
 
 export function parseUnitCost(costStr) {

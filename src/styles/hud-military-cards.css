@@ -1,0 +1,217 @@
+/* Prompt 1 — Ağır askeri çelik bina kartı şasisi */
+
+.building-card.building-card--steel,
+.hud-shell .building-card.building-card--steel,
+.app-shell.hud-shell .building-card.building-card--steel {
+  position: relative;
+  border: 1px solid rgba(0, 240, 255, 0.15) !important;
+  background-color: rgba(5, 10, 20, 0.85) !important;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 10, 20, 0.92) 0%, rgba(2, 4, 8, 0.98) 100%) !important;
+  background-size: 20px 20px, 20px 20px, 100% 100% !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
+    0 12px 32px rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: none !important;
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.building-card.building-card--steel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, transparent 50%, rgba(0, 240, 255, 0.35) 50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.building-card.building-card--steel:hover:not(.building-card--blocked) {
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.12) inset,
+    0 0 24px rgba(0, 240, 255, 0.12),
+    0 14px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+.building-card.building-card--steel .card-header h3 {
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+.building-card.building-card--steel .badge {
+  border-color: rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.08);
+  color: rgba(0, 240, 255, 0.85);
+}
+
+.building-card.building-card--steel .card-visual {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+.building-card.building-card--steel.building-card--blocked {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Prompt 2 — Birim LED hücreleri ve envanter barı */
+
+.unit-card,
+.hud-shell .unit-card,
+.app-shell.hud-shell .unit-card {
+  border: 1px solid rgba(0, 240, 255, 0.15) !important;
+  background:
+    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(5, 10, 20, 0.88) 0%, rgba(2, 4, 8, 0.96) 100%) !important;
+  background-size: 16px 16px, 16px 16px, 100% 100% !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.05) inset !important;
+}
+
+.unit-led-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0 0 0.75rem;
+}
+
+.unit-led-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  background: linear-gradient(180deg, rgba(8, 14, 24, 0.95) 0%, rgba(3, 6, 12, 0.98) 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+}
+
+.unit-led-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.unit-led-value {
+  font-family: var(--font-mono, 'Share Tech Mono', 'Courier New', monospace);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+}
+
+.unit-led-cell--attack .unit-led-value,
+.unit-led-cell--defense .unit-led-value {
+  color: #4ade80;
+  text-shadow:
+    0 0 8px rgba(74, 222, 128, 0.55),
+    0 0 16px rgba(34, 197, 94, 0.25);
+}
+
+.unit-led-value--amber {
+  font-size: 0.78rem;
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+}
+
+.unit-led-value--cyan {
+  color: #67e8f9;
+  text-shadow: 0 0 10px rgba(103, 232, 249, 0.3);
+}
+
+.unit-stock-bar {
+  margin: 0 0 0.85rem;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(0, 240, 255, 0.14);
+  background: rgba(3, 8, 16, 0.9);
+}
+
+.unit-stock-bar__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.unit-stock-bar__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.unit-stock-bar__value {
+  font-family: var(--font-mono, 'Share Tech Mono', 'Courier New', monospace);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4ade80;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.45);
+}
+
+.unit-stock-bar__track {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  overflow: hidden;
+}
+
+.unit-stock-bar__fill {
+  height: 100%;
+  min-width: 2px;
+  background: linear-gradient(90deg, #166534 0%, #4ade80 55%, #86efac 100%);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.45);
+  transition: width 0.35s ease;
+}
+
+.barracks-page--military .card-grid {
+  gap: 1rem;
+}
+
+.barracks-page--military .barracks-agent-counter {
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: rgba(0, 240, 255, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 0.35rem 0.65rem;
+  background: rgba(5, 10, 20, 0.85);
+}
+
+.barracks-page--military .barracks-agent-counter strong {
+  color: #4ade80;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+}
+
+@media (max-width: 480px) {
+  .unit-led-grid {
+    grid-template-columns: 1fr;
+  }
+}

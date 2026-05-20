@@ -1,6 +1,7 @@
 import { buildings as buildingDefs } from '../data/placeholder';
 import { getLevelOneSpec } from '../data/buildingCatalog';
 import { getUnitDisplayName } from '../data/unitCatalog';
+import { createKbrnResearchTemplates } from './kbrnResearch';
 
 export const HQ_BUILDING_ID = 'hq';
 
@@ -9,13 +10,17 @@ export const MILITARY_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 export const PANEL_LOCKED_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
 export const BUILDING_LABELS = {
-  hq: 'Merkez Bina',
+  hq: 'Komuta Merkezi',
   barracks: 'Kışla',
   airport: 'Hava Üssü',
-  shipyard: 'Tersane',
-  research: 'Araştırma Merkezi',
-  factory: 'Maden',
-  depot: 'Depo',
+  shipyard: 'Deniz Üssü',
+  research: 'Ar-Ge Merkezi',
+  factory: 'Endüstri Kompleksi',
+  depot: 'Lojistik Depo',
+  cyber_ops: 'Siber Operasyon Merkezi',
+  wall: 'Çevre Savunma Hattı',
+  intel: 'İstihbarat Merkezi',
+  tax: 'Maliye Dairesi',
 };
 
 export const RESEARCH_BUILDING_ID = 'research';
@@ -40,6 +45,7 @@ export const BUILDING_PREREQUISITES = {
   market: [{ id: 'tax', level: 2 }],
   research: [{ id: 'factory', level: 3 }, { id: 'market', level: 1 }],
   depot: [{ id: 'factory', level: 2 }],
+  cyber_ops: [{ id: 'intel', level: 2 }, { id: 'research', level: 2 }],
 };
 
 export function getBuildingPrerequisites(buildingId) {
@@ -68,19 +74,23 @@ export function formatPrerequisiteList(unmet) {
 
 export const STARTER_BUILT_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
-export function createStarterBuildings() {
+export function createStarterBuildings({ useDemoLevels = false } = {}) {
   return buildingDefs.map((b) => {
     const levelOne = getLevelOneSpec(b.id);
     const preBuilt = STARTER_BUILT_BUILDING_IDS.includes(b.id);
+    const demoLevel = useDemoLevels ? Math.max(0, b.level ?? 0) : 0;
+    const level = useDemoLevels
+      ? (b.id === HQ_BUILDING_ID ? Math.max(1, demoLevel) : demoLevel)
+      : (preBuilt ? 1 : 0);
     return {
       ...b,
-      level: preBuilt ? 1 : 0,
+      level,
       cost: levelOne?.cost ?? b.cost,
       time: levelOne?.time ?? b.time,
       upgrading: false,
       producing: false,
-      locked: preBuilt ? false : PANEL_LOCKED_BUILDING_IDS.includes(b.id),
-      built: preBuilt,
+      locked: level < 1 && PANEL_LOCKED_BUILDING_IDS.includes(b.id),
+      built: level > 0,
     };
   });
 }
@@ -125,10 +135,11 @@ export function getStarterIdleTroops() {
 }
 
 export function createStarterResearches() {
-  return [
-    { id: 'r1', name: 'Kara Saldırı Teknolojisi', level: 0, max: 15, desc: 'Kara birliklerine +%3 saldırı bonusu', active: false, queued: false, time: '04:22:15', cost: '2.800 metal · 1.200 para' },
-    { id: 'r2', name: 'Üretim Hızı', level: 0, max: 15, desc: 'Tüm kaynak üretimine +%2 bonus', active: false, queued: false, time: '—', cost: '3.500 metal' },
-    { id: 'r3', name: 'Casusluk Etkinliği', level: 0, max: 15, desc: 'Casus operasyonlarında başarı şansı', active: false, queued: false, time: '—', cost: '4.000 metal · 2.000 para' },
-    { id: 'r4', name: 'Hava Savunma', level: 0, max: 15, desc: 'Hava saldırılarına karşı savunma', active: false, queued: false, time: '—', cost: '5.200 metal' },
+  const standard = [
+    { id: 'r1', category: 'standard', name: 'Kara Saldırı Teknolojisi', level: 0, max: 15, desc: 'Kara birliklerine +%3 saldırı bonusu', active: false, queued: false, time: '04:22:15', cost: '2.800 metal · 1.200 para' },
+    { id: 'r2', category: 'standard', name: 'Üretim Hızı', level: 0, max: 15, desc: 'Tüm kaynak üretimine +%2 bonus', active: false, queued: false, time: '—', cost: '3.500 metal' },
+    { id: 'r3', category: 'standard', name: 'Casusluk Etkinliği', level: 0, max: 15, desc: 'Casus operasyonlarında başarı şansı', active: false, queued: false, time: '—', cost: '4.000 metal · 2.000 para' },
+    { id: 'r4', category: 'standard', name: 'Hava Savunma', level: 0, max: 15, desc: 'Hava saldırılarına karşı savunma', active: false, queued: false, time: '—', cost: '5.200 metal' },
   ];
+  return [...standard, ...createKbrnResearchTemplates()];
 }

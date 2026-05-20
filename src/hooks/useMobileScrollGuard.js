@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const SCROLL_ALLOW_SELECTORS = [
   '.content-area',
   '.leaflet-container',
-  '.unit-detail-modal',
+  '.content-info-modal',
   '.system-locked-panel',
   '.city-detail-panel',
   '.report-detail--ledger',

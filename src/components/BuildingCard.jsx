@@ -1,17 +1,17 @@
-﻿import { useActionLock } from '../hooks/useActionLock';
+﻿import { useState } from 'react';
+import { useActionLock } from '../hooks/useActionLock';
 import { remainingFromEndsAt } from '../lib/gameUtils';
 import { canAffordCost } from '../utils/resourceCosts';
-import CostBreakdown from './CostBreakdown';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
 import {
   arePrerequisitesMet,
   BUILDING_LABELS,
-  formatPrerequisiteList,
   getUnmetPrerequisites,
 } from '../lib/buildingUtils';
 import { getBuildingVisual } from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
+import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
 import BuildCountdownHud from './BuildCountdownHud';
 
 export default function BuildingCard({ building }) {
@@ -21,6 +21,7 @@ export default function BuildingCard({ building }) {
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
   const cancelConstruction = useGameStore((s) => s.cancelConstruction);
+  const openContentInfo = useGameStore((s) => s.openContentInfo);
   const queueFull = useConstructionQueueFull();
   const { locked: actionLocked, runLocked } = useActionLock();
 
@@ -39,8 +40,12 @@ export default function BuildingCard({ building }) {
   const isBlocked = !prereqsMet;
   const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet;
   const blockedLabel = unmetPrereqs.length
-    ? `[ SEKTÖR KİLİTLİ: ${(BUILDING_LABELS[unmetPrereqs[0].id] ?? unmetPrereqs[0].id).toUpperCase()} SV.${unmetPrereqs[0].level} ]`
+    ? `[ SEKTÖR KİLİTLİ: ${unmetPrereqs
+      .map((req) => `${(BUILDING_LABELS[req.id] ?? req.id).toUpperCase()} SV.${req.level} GEREKLİ`)
+      .join(' · ')} ]`
     : '[ SEKTÖR KİLİTLİ ]';
+  const currentLevel = building.level ?? 0;
+  const targetLevel = nextSpec?.targetLevel ?? currentLevel + 1;
   const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
 
   const upgradeLabel = queueFull
@@ -61,6 +66,16 @@ export default function BuildingCard({ building }) {
   };
   const buildBusy = actionLocked || upgrading;
   const visual = getBuildingVisual(building.id);
+  const [imgSrc, setImgSrc] = useState(visual?.image ?? '');
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const handleImgError = () => {
+    setImgFailed(true);
+  };
+
+  const openInfo = () => {
+    if (city) openContentInfo(resolveBuildingInfoPayload(building, city));
+  };
 
   const card = (
     <article
@@ -68,6 +83,8 @@ export default function BuildingCard({ building }) {
       className={[
         'card',
         'building-card',
+        'building-card--steel',
+        'content-card--slim',
         upgrading && 'upgrading',
         isBlocked && 'building-card--blocked',
         isUnbuilt && 'building-card--unbuilt',
@@ -76,6 +93,7 @@ export default function BuildingCard({ building }) {
         .filter(Boolean)
         .join(' ')}
     >
+      <span className="content-card__intel-badge">[ i ]</span>
       {queueBadge && (
         <span
           className={`building-queue-badge${queueEntry.queued ? ' building-queue-badge--queued' : ' building-queue-badge--active'}`}
@@ -88,57 +106,53 @@ export default function BuildingCard({ building }) {
           <span className="building-blocked-label">{blockedLabel}</span>
         </div>
       )}
-      <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
-        {visual ? (
-          <>
-            <div
-              className={`building-img-wrap${building.id === 'barracks' ? ' building-img-wrap--barracks' : ''}`}
-            >
-              <img
-                src={visual.image}
-                alt=""
-                className="building-card__img"
-                loading="lazy"
-                decoding="async"
-              />
+      <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${building.name} ansiklopedi`}>
+        <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
+          {visual && !imgFailed ? (
+            <>
+              <div
+                className={`building-img-wrap building-img-wrap--cell-grid${building.id === 'barracks' ? ' building-img-wrap--barracks' : ''}`}
+              >
+                <img
+                  src={imgSrc || visual.image}
+                  alt=""
+                  className="building-card__img"
+                  loading="lazy"
+                  decoding="async"
+                  onError={handleImgError}
+                />
+              </div>
+            </>
+          ) : visual ? (
+            <div className="building-img-wrap building-card__silhouette-fallback" aria-hidden="true">
+              {building.image}
             </div>
-            <p className="building-designation">{visual.designation}</p>
-          </>
-        ) : (
-          <span className="building-card__emoji">{building.image}</span>
-        )}
-      </div>
-      <div className="card-header">
-        <h3>{building.name}</h3>
-        <span className="badge">{building.category}</span>
-      </div>
-      <p className="card-desc">{building.desc}</p>
-      <div className="card-stats">
-        <div className="stat">
-          <span className="stat-label">Seviye</span>
-          <span className="stat-value">{building.level}</span>
+          ) : (
+            <span className="building-card__emoji">{building.image}</span>
+          )}
         </div>
-        {upgrading && (
-          <div className="stat highlight stat--countdown">
-            <span className="stat-label">Kalan</span>
-            <BuildCountdownHud remaining={remaining} />
-          </div>
-        )}
-      </div>
-      {displayCost ? (
-        <>
-          <p className="card-cost">
-            Maliyet
-            {isUnbuilt ? ' (Sv.1 inşaat)' : ` (Sv.${nextSpec.targetLevel})`}
-            : {displayCost}
-          </p>
-          <CostBreakdown costStr={displayCost} qty={1} resources={resources} />
-        </>
-      ) : (
-        <p className="card-cost card-cost--missing">Maliyet tanımlı değil</p>
+        <div className="content-card__head">
+          <h3>{building.name}</h3>
+          <span className="building-level-badge">
+            Sv.{currentLevel}
+            {nextSpec && currentLevel > 0 && (
+              <span className="building-next-level">→ Sv.{targetLevel}</span>
+            )}
+          </span>
+        </div>
+      </button>
+      {upgrading && (
+        <p className="content-card__meta">
+          Kalan: <BuildCountdownHud remaining={remaining} />
+        </p>
       )}
-      {isUnbuilt && !prereqsMet && unmetPrereqs.length > 0 && (
-        <p className="building-lock-label">{formatPrerequisiteList(unmetPrereqs)}</p>
+      {displayCost ? (
+        <p className="content-card__meta">
+          {isUnbuilt ? 'İnşaat' : 'Yükseltme'} maliyeti: <strong>{displayCost}</strong>
+          {nextSpec?.time ? ` · ${nextSpec.time}` : ''}
+        </p>
+      ) : (
+        <p className="content-card__meta">Maliyet tanımlı değil</p>
       )}
       <div className="card-actions">
         {upgrading && queueEntry && (

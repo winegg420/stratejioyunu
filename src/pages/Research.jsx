@@ -1,42 +1,82 @@
+import { useMemo } from 'react';
 import PageHeader from '../components/PageHeader';
-import CostBreakdown from '../components/CostBreakdown';
 import LockedFeatureGate from '../components/LockedFeatureGate';
+import { resolveResearchInfoPayload } from '../lib/contentInfoResolver';
 import { RESEARCH_BUILDING_ID } from '../lib/buildingUtils';
-import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
+import {
+  isKbrnBranchUnlocked,
+  KBRN_CATEGORY,
+  KBRN_RESEARCH_CENTER_UNLOCK,
+  scaleKbrnResearchCost,
+} from '../lib/kbrnResearch';
+import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
 import { canAffordCost } from '../utils/resourceCosts';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 
-function ResearchCard({ item }) {
+function ResearchCard({ item, kbrnLocked }) {
   const now = useGameStore((s) => s.now);
+  const city = useGameStore((s) => s.cities[s.activeCityId]);
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const enqueueResearch = useGameStore((s) => s.enqueueResearch);
   const startQueuedResearch = useGameStore((s) => s.startQueuedResearch);
   const cancelResearch = useGameStore((s) => s.cancelResearch);
+  const openContentInfo = useGameStore((s) => s.openContentInfo);
+
+  const displayCost = item.category === KBRN_CATEGORY
+    ? scaleKbrnResearchCost(item.cost, item.level ?? 0)
+    : item.cost;
 
   const hasActive = researches.some((r) => r.active);
   const remaining = item.active ? remainingFromEndsAt(item.endsAt, now) : 0;
-  const canAfford = item.cost !== '—' && canAffordCost(item.cost, 1, resources);
-  const canStart = !item.active && !item.queued && canAfford && !hasActive;
-  const canQueue = !item.active && !item.queued && canAfford && hasActive;
+  const canAfford = displayCost !== '—' && canAffordCost(displayCost, 1, resources);
+  const branchBlocked = item.category === KBRN_CATEGORY && kbrnLocked;
+  const canStart = !branchBlocked && !item.active && !item.queued && canAfford && !hasActive;
+  const canQueue = !branchBlocked && !item.active && !item.queued && canAfford && hasActive;
+
+  const openInfo = () => {
+    if (city) openContentInfo(resolveResearchInfoPayload(item, city));
+  };
 
   const card = (
-    <article className={`card ${item.active ? 'upgrading' : ''} ${item.queued ? 'is-queued' : ''}`}>
-      <div className="card-header">
-        <h3>{item.name}</h3>
-        <span className="badge">Sv. {item.level} / {item.max}</span>
-        {item.active && <span className="timer-badge">{formatSeconds(remaining)}</span>}
-        {item.queued && <span className="timer-badge">Sırada</span>}
-      </div>
-      <p className="card-desc">{item.desc}</p>
-      <p className="card-cost">Maliyet: {item.cost}</p>
-      <CostBreakdown costStr={item.cost} qty={1} resources={resources} />
+    <article
+      className={[
+        'card',
+        'content-card--slim',
+        'content-card--research',
+        item.active && 'upgrading',
+        item.queued && 'is-queued',
+        branchBlocked && 'card--kbrn-locked',
+      ].filter(Boolean).join(' ')}
+    >
+      <span className="content-card__intel-badge">[ i ]</span>
+      <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${item.name} ansiklopedi`}>
+        <div className="card-visual-research" aria-hidden="true">
+          {item.category === KBRN_CATEGORY ? '☢️' : '🔬'}
+        </div>
+        <div className="content-card__head">
+          <h3>{item.name}</h3>
+          <span className="badge">Sv. {item.level} / {item.max}</span>
+          {item.category === KBRN_CATEGORY && <span className="badge badge--kbrn">KBRN</span>}
+          {item.active && <span className="timer-badge">{formatSeconds(remaining)}</span>}
+          {item.queued && <span className="timer-badge">Sırada</span>}
+        </div>
+      </button>
+      {branchBlocked ? (
+        <p className="content-card__meta hint card-kbrn-lock">
+          Kilitli — Ar-Ge Sv.{KBRN_RESEARCH_CENTER_UNLOCK}+
+        </p>
+      ) : (
+        <p className="content-card__meta">
+          Maliyet: <strong>{displayCost}</strong>
+        </p>
+      )}
       <div className="card-actions">
         {item.queued ? (
           <button
             type="button"
             className="btn btn-primary"
-            disabled={hasActive}
+            disabled={hasActive || branchBlocked}
             onClick={() => startQueuedResearch(item.id)}
           >
             Başlat
@@ -49,7 +89,7 @@ function ResearchCard({ item }) {
         <button
           type="button"
           className="btn btn-secondary"
-          disabled={!canQueue || item.active || item.queued}
+          disabled={!canQueue || item.active || item.queued || branchBlocked}
           onClick={() => enqueueResearch(item.id, { addToQueue: true })}
         >
           Kuyruğa Ekle
@@ -72,18 +112,49 @@ function ResearchCard({ item }) {
 
 export default function Research() {
   const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
+  const city = useActiveCity();
+  const kbrnUnlocked = isKbrnBranchUnlocked(city);
+
+  const { standard, kbrn } = useMemo(() => {
+    const std = researches.filter((r) => r.category !== KBRN_CATEGORY);
+    const kb = researches.filter((r) => r.category === KBRN_CATEGORY);
+    return { standard: std, kbrn: kb };
+  }, [researches]);
 
   return (
-    <div className="page">
+    <div className="page page--research">
       <PageHeader
         title="Araştırma"
-        subtitle="Araştırmalar otomatik başlamaz — Araştırma Merkezi inşa edildikten sonra kullanılır."
+        subtitle="Standart askeri teknolojiler ve ileri KBRN savunma/taktik dalı."
       />
-      <div className="card-grid">
-        {researches.map((r) => (
-          <ResearchCard key={r.id} item={r} />
-        ))}
-      </div>
+      <section className="research-section">
+        <h2 className="panel-title">Askeri Teknolojiler</h2>
+        <div className="card-grid">
+          {standard.map((r) => (
+            <ResearchCard key={r.id} item={r} kbrnLocked={false} />
+          ))}
+        </div>
+      </section>
+
+      <section className="research-section research-section--kbrn">
+        <h2 className="panel-title">
+          KBRN Savunma & Taktik
+          {!kbrnUnlocked && (
+            <span className="research-kbrn-gate">
+              {' '}(Ar-Ge Sv.{KBRN_RESEARCH_CENTER_UNLOCK}+)
+            </span>
+          )}
+        </h2>
+        <p className="hint research-kbrn-intro">
+          Kimyasal, biyolojik, radyolojik ve nükleer protokoller — geçici lojistik felç;
+          kalıcı bina yıkımı yok. En yüksek araştırma maliyeti.
+        </p>
+        <div className="card-grid">
+          {kbrn.map((r) => (
+            <ResearchCard key={r.id} item={r} kbrnLocked={!kbrnUnlocked} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

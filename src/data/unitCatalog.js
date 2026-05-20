@@ -1,47 +1,63 @@
-/** Telif güvenli kod adları + askeri tip sınıflandırması (kart alt başlığı). */
+/** Günümüz askeri birim kod adları + tip sınıflandırması. */
 export const UNIT_DISPLAY_BY_ID = {
   infantry: {
-    name: "'Gölge' Operasyon Timi",
-    designation: 'Light Infantry',
-    code: 'SHADOW-OP-T1',
+    name: 'Piyade Taburu',
+    designation: 'Light Infantry Battalion',
+    code: 'MIL-IN-01',
   },
   armor: {
-    name: "'Karasu' Zırhlı Taşıyıcı",
+    name: 'Zırhlı Personel Taşıyıcı',
     designation: 'Armored Personnel Carrier',
-    code: 'KARASU-APC-T2',
+    code: 'MIL-APC-15',
   },
   tank: {
-    name: "'Pars' Ana Muharebe Tankı",
+    name: 'Ana Muharebe Tankı',
     designation: 'Main Battle Tank',
-    code: 'PARS-MBT-T3',
+    code: 'MIL-MBT-07',
   },
   airdefense: {
-    name: "'Kalkan-S' Savunma Kompleksi",
-    designation: 'Air Defense Complex',
+    name: 'Hava Savunma Bataryası',
+    designation: 'Air Defense Battery',
+    code: 'MIL-ADS-04',
+  },
+  sniper: {
+    name: 'Keskin Nişancı Timi',
+    designation: 'Designated Marksman Team',
+    code: 'MIL-DMR-02',
+  },
+  special: {
+    name: 'Özel Kuvvetler Timi',
+    designation: 'Special Operations Forces',
+    code: 'MIL-SOF-11',
+  },
+  colonist: {
+    name: 'Üs Kurma Konvoyu',
+    designation: 'Forward Operating Base Logistics',
+    code: 'MIL-FOB-01',
   },
   fighter: {
-    name: "'Yıldırım-X' Çok Rollü Avcı",
+    name: 'Çok Rollü Muharebe Uçağı',
     designation: 'Multi-role Fighter',
   },
   bomber: {
-    name: "'Karayel' Stratejik Bombardıman",
+    name: 'Stratejik Bombardıman Uçağı',
     designation: 'Strategic Bomber',
   },
   drone: {
-    name: "'Gözcü' Taktik Keşif İHA",
+    name: 'Taktik Keşif İHA',
     designation: 'Tactical Reconnaissance UAV',
   },
   patrol: {
-    name: "'Tayfun' Sınıfı Hücumbot",
+    name: 'Hücumbot',
     designation: 'Fast Attack Craft',
   },
   frigate: {
-    name: "'Milgem-S' Sınıfı Fırkateyn",
+    name: 'Güdümlü Fırkateyn',
     designation: 'Guided-Missile Frigate',
   },
   sub: {
-    name: "'Girdap' Stratejik Denizaltı",
-    designation: 'Strategic Submarine',
+    name: 'Taarruz Denizaltısı',
+    designation: 'Attack Submarine',
   },
 };
 
@@ -60,6 +76,8 @@ export const LEGACY_UNIT_NAME_TO_ID = {
   firkateyn: 'frigate',
   fırkateyn: 'frigate',
   denizaltı: 'sub',
+  'siber-gölge': 'infantry',
+  'gölge operasyon': 'infantry',
 };
 
 export function applyUnitDisplay(unit) {

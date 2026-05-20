@@ -81,6 +81,11 @@ export const BUILDING_CATALOG = {
       1: { cost: '600 metal · 400 para', time: '00:10:00' },
     },
   },
+  cyber_ops: {
+    levels: {
+      1: { cost: '2.200 metal · 1.400 enerji', time: '00:09:00' },
+    },
+  },
 };
 
 function scaleCostString(costStr, multiplier) {

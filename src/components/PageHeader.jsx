@@ -1,12 +1,18 @@
 const PAGE_STATUS = {
   'Ana Merkez': '[ STATUS: OPERATIONAL ]',
   Binalar: '[ STATUS: CONSTRUCTION ]',
+  Araştırma: '[ STATUS: RESEARCH ]',
   Kışla: '[ STATUS: COMBAT READY ]',
   'Hava Üssü': '[ STATUS: AIRSPACE ]',
   Tersane: '[ STATUS: NAVAL OPS ]',
   Seferler: '[ STATUS: COLD WAR ZONE ]',
+  İstihbarat: '[ STATUS: INTEL OPS ]',
+  Ticaret: '[ STATUS: LOGISTICS ]',
+  Diplomasi: '[ STATUS: DIPLOMACY ]',
   Harita: '[ STATUS: TACTICAL GRID ]',
   Raporlar: '[ STATUS: INTEL FEED ]',
+  Profil: '[ STATUS: PERSONNEL ]',
+  Mesajlar: '[ STATUS: COMMS ]',
 };
 
 export default function PageHeader({ title, subtitle, action, status }) {
@@ -19,7 +25,7 @@ export default function PageHeader({ title, subtitle, action, status }) {
           <span className="page-header__status-dot" aria-hidden="true" />
           <h1 className="page-title">{title}</h1>
         </div>
-        <p className="page-header__status font-hud-data">{statusLine}</p>
+        <p className="page-header__status">{statusLine}</p>
         {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>
       {action ? <div className="page-action">{action}</div> : null}

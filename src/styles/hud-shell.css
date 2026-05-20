@@ -276,8 +276,8 @@ body::before {
 
 .building-card--unbuilt .card-visual {
   filter: none !important;
-  opacity: 0.55;
-  background: rgba(40, 70, 120, 0.2);
+  opacity: 1 !important;
+  background: rgba(40, 70, 120, 0.15) !important;
 }
 
 .building-card--unbuilt .card-header h3,

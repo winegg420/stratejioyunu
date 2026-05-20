@@ -1,0 +1,48 @@
+---
+description: Strateji oyunu uzun vadeli jeopolitik vizyon ve mimari referans (ittifak, harita, diplomasi, savaş arşivi)
+alwaysApply: true
+---
+
+# Master Plan & Gelecek Vizyonu
+
+Bu proje siber-askeri temalı bir strateji MMO’sudur. Mevcut ve gelecek kodlama (özellikle **Diplomasi**, **İttifak**, **Harita**, **Haber Akışı**, **Raporlar**) aşağıdaki vizyonu **bozmayacak esnek mimariler** ile ilerlemelidir.
+
+## Mimari ilkeler (şimdi ve sonra)
+
+- **Katmanlı ölçek:** Tekil oyuncu → bölgesel blok → küresel pakt; aynı veri modeli farklı kapsamlarla (`scope`: city | region | alliance | nation | global) genişletilebilir olmalı.
+- **İttifak ≠ tek tip:** NAP, ticaret konvoyu, ortak Ar-Ge, bölgesel savaş bloku, ulusal pakt — hepsi `alliance` / `pact` türleri veya `relationship` kayıtları olarak modellenmeli; hard-code tek “ittifak” yapısı yok.
+- **Coğrafya birinci sınıf:** Harita bölgeleri (ör. İç Anadolu, Karadeniz) ve ileride ülke sınırları ID ile sabit; saldırı/NAP/konvoy kuralları `regionId` / `geoBlockId` üzerinden bağlanmalı.
+- **Çatışma ölçeği:** Tekil seferler mevcut `expeditions` ile kalır; makro savaşlar ayrı `conflict` / `warCampaign` kavramı (çoklu ittifak, çoklu şehir, fazlı tur) olarak eklenmeli — mevcut sefer motoruna sıkıştırılmamalı.
+- **Kalıcılık & tarih:** Büyük savaş sonuçları `game_reports` + gelecekte `hall_of_fame`; haberler `newsLog` / global ticker ile duyurulur. Rapor şeması genişletilebilir (`conflictId`, `allianceIds`, `regionScope`, `casualtiesSummary`).
+- **Geriye uyumluluk:** Yeni alanlar nullable veya feature-flag; Supabase migration’lar additive; client store patch’leri optional alanları tolere etmeli.
+
+---
+
+## 1. Jeopolitik İttifak & Coğrafi Bloklaşma
+
+- Oyuncular haritada **yan yana veya uzak** stratejik ittifaklar kurabilir.
+- Aynı bölgede **NAP (saldırmazlık)** → uzun barış, ortak kaynak/Ar-Ge, **ticaret kervanları (konvoylar)**.
+- Diplomasi UI ve store: ilişki durumu (`neutral` | `nap` | `trade` | `alliance` | `war`), süreli pakt bitişi, karşılıklı onay.
+
+## 2. Bölgesel Makro Savaşlar
+
+- Oyuncu sayısı ve harita genişledikçe **coğrafya stratejiyi belirler**.
+- Bölgesel dev bloklar → kaçınılmaz makro gerilim (ör. **İç Anadolu İttifak Bloku** vs **Karadeniz İttifak Bloku**).
+- Sistem: tekil çatışma yerine **bölgesel ittifak savaşları** — onlarca oyuncu, ortak **üs savunma**, blok bazlı savaş hedefleri ve skor.
+
+## 3. Uluslararası Küresel Savaş Odası
+
+- Küresel ölçek: **ülke sınırları** ve **ulusal/bölgesel paktlar** (ör. Türkiye Bloku vs Balkan Bloku).
+- Harita katmanı: `nationId` / `geoBlockId` ile küresel güç dengesi; diplomasi ve savaş kuralları uluslararası kapsama genişler.
+
+## 4. Şeref Kürsüsü (Hall of Fame) & Savaş Arşivi
+
+- Büyük ittifak savaşlarının sonuçları, kayıpları, **kazanan ittifak liderleri** kalıcı DB’de.
+- Tablolar: mevcut `game_reports` + planlanan **`hall_of_fame`**.
+- **Global Haber Akışı (News Ticker):** “Tarihin En Büyük Muharebesi Patlak Verdi!” gibi anonslar; `newsLog` / world events ile entegre.
+
+---
+
+## Uygulama notu (agent)
+
+Bu kural **kod yazma talimatı değildir**; vizyon referansıdır. Kullanıcı açıkça istemedikçe bu maddelerin tam UI/backend implementasyonuna atlanmaz; ancak **Diplomasi, İttifak, Harita, rapor ve haber** değişikliklerinde yukarıdaki ölçeklenebilirlik gözetilir.

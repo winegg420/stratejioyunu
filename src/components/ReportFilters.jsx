@@ -2,6 +2,8 @@ const FILTERS = [
   { id: 'all', label: 'Hepsi' },
   { id: 'battle', label: 'Savaş' },
   { id: 'spy', label: 'Casusluk' },
+  { id: 'cyber', label: 'Siber Ops' },
+  { id: 'kbrn', label: 'KBRN' },
   { id: 'trade', label: 'Ticaret/Lojistik' },
 ];
 

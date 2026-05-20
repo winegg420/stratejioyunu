@@ -1,0 +1,232 @@
+/* Madde 5 — Ana Merkez özet kutuları (ağır şasi) */
+
+.home-stat-block--chassis {
+  flex: 1 1 130px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem 0.7rem;
+  border: 1px solid rgba(0, 240, 255, 0.15) !important;
+  border-radius: 0 !important;
+  background: linear-gradient(180deg, #070c14 0%, #020408 100%) !important;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, #070c14 0%, #020408 100%) !important;
+  background-size: 12px 12px, 12px 12px, 100% 100% !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.04) inset !important;
+  overflow: hidden;
+}
+
+.home-stat-block--chassis::before {
+  display: none;
+}
+
+.home-stat-block--chassis.home-stat-block--accent {
+  border-color: rgba(74, 222, 128, 0.35) !important;
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.08) inset,
+    0 0 18px rgba(74, 222, 128, 0.12) !important;
+}
+
+.home-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: rgba(0, 240, 255, 0.55);
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.25));
+  border-right: 1px solid rgba(0, 240, 255, 0.1);
+  padding-right: 0.5rem;
+}
+
+.home-stat-block--accent .home-stat-icon {
+  color: #4ade80;
+  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.45));
+}
+
+.home-stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.home-stat-block--chassis .home-stat-label {
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.home-stat-block--chassis .home-stat-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #4ade80 !important;
+  text-shadow:
+    0 0 10px rgba(74, 222, 128, 0.55),
+    0 0 20px rgba(34, 197, 94, 0.2);
+  line-height: 1.1;
+}
+
+.home-stat-block--chassis .home-stat-sub {
+  color: rgba(148, 163, 184, 0.5);
+}
+
+/* Madde 9 — Telsiz durum başlığı */
+
+.page-header--hud {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18) !important;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.page-header--hud::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.35) 20%,
+    rgba(0, 240, 255, 0.15) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.page-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+}
+
+.page-title {
+  margin: 0;
+  color: #d1d5db;
+}
+
+.page-header__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.85);
+  animation: status-led-blink 1.1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.page-header__status {
+  margin: 0.35rem 0 0 !important;
+  font-size: 0.62rem !important;
+  font-weight: 600;
+  letter-spacing: 0.14em !important;
+  color: rgba(148, 163, 184, 0.55) !important;
+  text-transform: uppercase;
+}
+
+.page-subtitle {
+  color: rgba(148, 163, 184, 0.65);
+}
+
+@keyframes status-led-blink {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 1);
+  }
+}
+
+/* Sunucu zamanı — terminal yeşili */
+
+.server-time-clock--terminal .server-time-value {
+  color: #4ade80 !important;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.server-time-clock--terminal {
+  border-color: rgba(74, 222, 128, 0.35) !important;
+  background: rgba(3, 10, 8, 0.9) !important;
+}
+
+.server-time-clock--terminal .server-time-label {
+  color: rgba(74, 222, 128, 0.45);
+}
+
+/* Madde 10 — Sidebar HUD aktif sekme & kilit */
+
+.hud-shell .sidebar-desktop,
+.app-shell.hud-shell .sidebar-desktop {
+  width: var(--sidebar-w);
+}
+
+.hud-shell .nav-list .nav-link,
+.hud-shell .nav-list .nav-link--locked,
+.app-shell.hud-shell .nav-list .nav-link,
+.app-shell.hud-shell .nav-list .nav-link--locked {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-left: 3px solid transparent !important;
+  border-radius: 0;
+  padding: 0.55rem 0.75rem 0.55rem 0.65rem;
+}
+
+.hud-shell .nav-link.active,
+.app-shell.hud-shell .nav-link.active {
+  border-left-color: #00f0ff !important;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(0, 240, 255, 0.04) 45%, transparent 100%) !important;
+  color: #e2e8f0 !important;
+  box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04);
+}
+
+.hud-shell .nav-link.active .nav-label,
+.app-shell.hud-shell .nav-link.active .nav-label {
+  color: #f1f5f9;
+}
+
+.nav-badge--hq-lock {
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  font-size: 0.52rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  padding: 0.15rem 0.35rem !important;
+  color: #ff5555 !important;
+  background: rgba(255, 50, 50, 0.12) !important;
+  border: 1px solid rgba(255, 80, 80, 0.45) !important;
+  border-radius: 0 !important;
+  text-shadow: 0 0 10px rgba(255, 50, 50, 0.65) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-link--locked {
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.nav-link--locked:hover {
+  background: rgba(255, 50, 50, 0.06) !important;
+  border-left-color: rgba(255, 80, 80, 0.25) !important;
+}

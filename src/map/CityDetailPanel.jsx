@@ -1,6 +1,17 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useActionLock } from '../hooks/useActionLock';
+import { formatHappinessLabel, pruneCyberEffects } from '../lib/happinessSystem';
 import { getTroopStock } from '../lib/troopStock';
+import { CYBER_ABILITIES, getCyberOpsLevel } from '../lib/cyberOps';
+import {
+  calcCyberAttackSuccessChance,
+  calcCyberVirusTravelSeconds,
+  resolveDefenderCyberOpsLevel,
+} from '../utils/spyEngine';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { isCityInOperationRange } from '../lib/mapRange';
+import { getCityOwnerLabel } from './mapOwnership';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import TroopStockLabel from '../components/TroopStockLabel';
 import ExpeditionEtaStrip from '../components/ExpeditionEtaStrip';
@@ -9,16 +20,7 @@ import {
   isAirOnlyExpedition,
   resolveCityCoords,
 } from '../lib/expeditionTravel';
-import {
-  FOUND_CITY_COLONIST_ID,
-  FOUND_CITY_COST,
-  FOUND_CITY_MIN_COLONISTS,
-  FOUND_CITY_UNIT_LABEL,
-  getColonistTroop,
-  getFoundCityButtonTitle,
-  getFoundCityReadiness,
-} from '../lib/foundCityConfig';
-import { isCityInOperationRange } from '../lib/mapRange';
+import { calcSpyProbeTravelSeconds } from '../utils/spyEngine';
 import {
   useActiveCityIdleTroops,
   useActiveCityResources,
@@ -27,11 +29,11 @@ import {
 } from '../stores/gameStore';
 
 const STATUS_LABELS = {
-  own: 'Kendi şehriniz',
-  enemy: 'Düşman şehri',
-  empty: 'Boş — alınabilir',
-  vassal: 'Vasal şehir',
-  bot: 'Bot şehri',
+  own: 'Kendi üssünüz',
+  enemy: 'Düşman üssü',
+  empty: 'Boş — işgal edilebilir',
+  vassal: 'Vasal üs',
+  bot: 'Bot üssü',
   siege: 'Kuşatma altında',
 };
 
@@ -39,20 +41,16 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
   const stock = getTroopStock(troop, awayMap);
   const idleCap = stock.idle;
 
-  const handleMax = () => onChange(idleCap);
-
   return (
-    <div className="city-panel-troop-row">
-      <div className="city-panel-troop-meta">
-        <span className="city-panel-troop-icon" aria-hidden="true">
-          {troop.icon}
-        </span>
+    <div className="map-cmd-troop-row">
+      <div className="map-cmd-troop-meta">
+        <span className="map-cmd-troop-icon" aria-hidden="true">{troop.icon}</span>
         <div>
-          <span className="city-panel-troop-name">{troop.name}</span>
-          <TroopStockLabel troop={troop} awayMap={awayMap} className="city-panel-troop-stock" />
+          <span className="map-cmd-troop-name">{troop.name}</span>
+          <TroopStockLabel troop={troop} awayMap={awayMap} className="map-cmd-troop-stock" />
         </div>
       </div>
-      <div className="city-panel-troop-input">
+      <div className="map-cmd-troop-input">
         <input
           type="number"
           className="input-qty"
@@ -61,7 +59,7 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
           value={value}
           onChange={(e) => onChange(Math.min(idleCap, Math.max(0, Number(e.target.value) || 0)))}
         />
-        <button type="button" className="btn btn-max" onClick={handleMax}>
+        <button type="button" className="btn btn-max" onClick={() => onChange(idleCap)}>
           MAX
         </button>
       </div>
@@ -69,17 +67,46 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
   );
 }
 
-export default function CityDetailPanel({ city, onClose }) {
-  if (!city) return null;
-  return <CityDetailPanelContent city={city} onClose={onClose} />;
+function useLiveMapCity(mapCity) {
+  const playerName = getCurrentPlayerName();
+
+  return useGameStore(
+    useShallow((s) => {
+      if (!mapCity?.name) return null;
+      const live = s.mapCities.find((c) => c.name === mapCity.name) ?? mapCity;
+      const pc = s.playerCities.find((p) => p.name === mapCity.name);
+      const gameCity = pc ? s.cities[pc.id] : null;
+      const owner = getCityOwnerLabel(live, playerName);
+      const cyberActive = pruneCyberEffects(gameCity?.cyberEffects ?? []).length > 0;
+
+      return {
+        live: { ...live, owner },
+        pc,
+        gameCity,
+        population: gameCity?.population ?? live.population ?? 0,
+        happiness: gameCity?.happiness ?? null,
+        taxRate: gameCity?.taxRate ?? null,
+        resources: gameCity?.resources ?? null,
+        cyberActive,
+        cyberEffects: gameCity?.cyberEffects ?? [],
+      };
+    }),
+  );
 }
 
-function CityDetailPanelContent({ city, onClose }) {
-  const [panelMode, setPanelMode] = useState(null);
-  const [troopQty, setTroopQty] = useState({});
-  const [spyQty, setSpyQty] = useState(0);
-  const [foundCityName, setFoundCityName] = useState('');
+export default function CityDetailPanel({ city, onClose }) {
+  if (!city) return null;
+  return <MapCommandModal city={city} onClose={onClose} />;
+}
 
+function MapCommandModal({ city, onClose }) {
+  const [actionMode, setActionMode] = useState(null);
+  const [troopQty, setTroopQty] = useState({});
+  const [spyQty, setSpyQty] = useState(1);
+  const [cyberAgentQty, setCyberAgentQty] = useState(1);
+  const [cyberAbilityId, setCyberAbilityId] = useState(CYBER_ABILITIES[0]?.id ?? '');
+
+  const live = useLiveMapCity(city);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const activeCityName = useGameStore(
     (s) => s.playerCities.find((c) => c.id === s.activeCityId)?.name ?? '',
@@ -87,40 +114,44 @@ function CityDetailPanelContent({ city, onClose }) {
   const idleTroops = useActiveCityIdleTroops();
   const resources = useActiveCityResources();
   const idleSpies = useGameStore((s) => s.cities[s.activeCityId]?.idleSpies ?? 0);
+  const idleAgents = useGameStore((s) => s.cities[s.activeCityId]?.idleAgents ?? 0);
+  const originCity = useGameStore((s) => s.cities[s.activeCityId]);
   const awayMap = useTroopsAwayMap(activeCityId);
   const startExpedition = useGameStore((s) => s.startExpedition);
+  const startCyberVirusExpedition = useGameStore((s) => s.startCyberVirusExpedition);
+  const getCyberCapabilities = useGameStore((s) => s.getCyberCapabilities);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
   const { locked: actionLocked, runLocked } = useActionLock();
-  useEffect(() => {
-    setTroopQty({});
-    setSpyQty(0);
-    setFoundCityName('');
-  }, [activeCityId]);
+
+  const display = live ?? {
+    live: city,
+    population: city.population ?? 0,
+    happiness: null,
+    owner: city.owner || 'Boş',
+    cyberActive: false,
+    resources: null,
+  };
+
+  const mapCity = display.live;
+  const color = CITY_STATUS_COLORS[mapCity.status] || '#9ca3af';
+  const inRadarRange = isCityInOperationRange(mapCity, activeCityId, playerCities, mapCities);
+  const isAnyOwnCity = mapCity.status === 'own';
+  const canAttack = !isAnyOwnCity && mapCity.status !== 'empty' && inRadarRange;
+  const canSpy = !isAnyOwnCity && (mapCity.status === 'enemy' || mapCity.status === 'bot') && inRadarRange;
+  const outOfRange = mapCity.status !== 'own' && !inRadarRange;
+  const cyberCapabilities = getCyberCapabilities();
 
   useEffect(() => {
-    setPanelMode(null);
+    setActionMode(null);
     setTroopQty({});
-    setSpyQty(0);
-    setFoundCityName('');
+    setSpyQty(1);
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [city, onClose]);
-
-  const color = CITY_STATUS_COLORS[city.status] || '#9ca3af';
-  const owner = city.owner || 'Boş';
-  const cityType = city.type || '—';
-  const inRadarRange = isCityInOperationRange(city, activeCityId, playerCities, mapCities);
-  const canFound = city.status === 'empty' && inRadarRange
-    && !playerCities.some((c) => c.name === city.name);
-  const isActiveOwnCity = city.status === 'own' && city.name === activeCityName;
-  const isAnyOwnCity = city.status === 'own';
-  const canAttack = !isAnyOwnCity && city.status !== 'empty' && inRadarRange;
-  const canSpy = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot') && inRadarRange;
-  const outOfRange = city.status !== 'own' && !inRadarRange;
+  }, [city?.name, onClose]);
 
   const originCoords = useMemo(
     () => resolveCityCoords(activeCityName, playerCities, mapCities),
@@ -130,52 +161,58 @@ function CityDetailPanelContent({ city, onClose }) {
   const attackDuration = useMemo(
     () => calcExpeditionTravelSeconds({
       origin: originCoords,
-      target: { lat: city.lat, lng: city.lng },
+      target: { lat: mapCity.lat, lng: mapCity.lng },
       troopQty,
       mapCities,
       mode: 'attack',
     }),
-    [originCoords, city.lat, city.lng, troopQty, mapCities],
-  );
-
-  const foundDuration = useMemo(
-    () => calcExpeditionTravelSeconds({
-      origin: originCoords,
-      target: { lat: city.lat, lng: city.lng },
-      troopQty,
-      mapCities,
-      mode: 'found',
-    }),
-    [originCoords, city.lat, city.lng, troopQty, mapCities],
+    [originCoords, mapCity.lat, mapCity.lng, troopQty, mapCities],
   );
 
   const spyDuration = useMemo(
-    () => calcExpeditionTravelSeconds({
+    () => calcSpyProbeTravelSeconds({
       origin: originCoords,
-      target: { lat: city.lat, lng: city.lng },
-      troopQty: { spies: spyQty },
+      target: { lat: mapCity.lat, lng: mapCity.lng },
+      spyCount: spyQty,
       mapCities,
-      mode: 'spy',
     }),
-    [originCoords, city.lat, city.lng, spyQty, mapCities],
+    [originCoords, mapCity.lat, mapCity.lng, spyQty, mapCities],
   );
 
-  const airRushAttack = isAirOnlyExpedition(troopQty);
+  const cyberDuration = useMemo(
+    () => calcCyberVirusTravelSeconds({
+      origin: originCoords,
+      target: { lat: mapCity.lat, lng: mapCity.lng },
+      agentCount: cyberAgentQty,
+      mapCities,
+    }),
+    [originCoords, mapCity.lat, mapCity.lng, cyberAgentQty, mapCities],
+  );
 
-  const setTroop = (id, val) => setTroopQty((prev) => ({ ...prev, [id]: val }));
+  const cyberSuccessPreview = useMemo(() => {
+    if (!originCity) return null;
+    const attackerFw = getCyberOpsLevel(originCity);
+    const defenderFw = resolveDefenderCyberOpsLevel({ mapCity, defenderCity: display.gameCity });
+    const chance = calcCyberAttackSuccessChance(attackerFw, defenderFw);
+    return {
+      attackerFw,
+      defenderFw,
+      diff: attackerFw - defenderFw,
+      chancePct: Math.round(chance * 100),
+    };
+  }, [originCity, mapCity, display.gameCity]);
 
   const attackTotal = Object.values(troopQty).reduce((a, b) => a + (Number(b) || 0), 0);
   const canStartAttack =
     attackTotal >= 1
     && idleTroops.every((t) => (Number(troopQty[t.id]) || 0) <= t.available);
   const canStartSpy = spyQty >= 1 && spyQty <= idleSpies;
-  const showAttackBtn = !isAnyOwnCity && city.status !== 'empty';
-  const showSpyBtn = !isAnyOwnCity && (city.status === 'enemy' || city.status === 'bot');
+  const airRushAttack = isAirOnlyExpedition(troopQty);
 
   const confirmAttack = () => {
     if (!canStartAttack || actionLocked) return;
     runLocked(() => {
-      const ok = startExpedition({ targetCity: city, troopQty, mode: 'attack' });
+      const ok = startExpedition({ targetCity: mapCity, troopQty, mode: 'attack' });
       if (ok) onClose();
     });
   };
@@ -183,70 +220,134 @@ function CityDetailPanelContent({ city, onClose }) {
   const confirmSpy = () => {
     if (!canStartSpy || actionLocked) return;
     runLocked(() => {
-      const ok = startExpedition({ targetCity: city, troopQty: { spies: spyQty }, mode: 'spy' });
+      const ok = startExpedition({ targetCity: mapCity, troopQty: { spies: spyQty }, mode: 'spy' });
       if (ok) onClose();
     });
   };
 
-  const colonistTroop = getColonistTroop(idleTroops);
-  const foundReadiness = getFoundCityReadiness({ idleTroops, resources, troopQty, awayMap });
-  const foundButtonTitle = getFoundCityButtonTitle(foundReadiness);
-  const canOpenFound = canFound && foundReadiness.canOpenPanel;
-
-  const confirmFound = () => {
-    if (!foundReadiness.canStartExpedition || actionLocked) return;
-    runLocked(() => {
-      const ok = startExpedition({
-        targetCity: city,
-        troopQty: { [FOUND_CITY_COLONIST_ID]: troopQty[FOUND_CITY_COLONIST_ID] || 0 },
-        mode: 'found',
-        newCityName: foundCityName,
-      });
-      if (ok) onClose();
-    });
-  };
+  const resourceList = display.resources ?? [
+    { id: 'food', label: 'Yemek', icon: '🌾' },
+    { id: 'metal', label: 'Metal', icon: '⚙️' },
+    { id: 'fuel', label: 'Yakıt', icon: '⛽' },
+    { id: 'money', label: 'Para', icon: '💰' },
+  ];
 
   return (
-    <>
-      <button type="button" className="city-panel-backdrop" onClick={onClose} aria-label="Paneli kapat" />
-      <aside className="city-panel" role="dialog" aria-labelledby="city-panel-title">
-        <div className="city-panel-header">
-          <h2 id="city-panel-title">{city.name}</h2>
-          <button type="button" className="popup-close" onClick={onClose} aria-label="Kapat">
+    <div className="map-command-modal-root" role="presentation">
+      <button
+        type="button"
+        className="map-command-modal__backdrop"
+        onClick={onClose}
+        aria-label="Komuta modalını kapat"
+      />
+      <div
+        className="map-command-modal hud-panel-border"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="map-command-modal-title"
+      >
+        <span className="map-command-modal__screw map-command-modal__screw--tl" aria-hidden="true" />
+        <span className="map-command-modal__screw map-command-modal__screw--tr" aria-hidden="true" />
+        <span className="map-command-modal__screw map-command-modal__screw--bl" aria-hidden="true" />
+        <span className="map-command-modal__screw map-command-modal__screw--br" aria-hidden="true" />
+
+        <header className="map-command-modal__header">
+          <div>
+            <p className="map-command-modal__eyebrow">[ MERKEZİ KOMUTA MODALI ]</p>
+            <h2 id="map-command-modal-title">{mapCity.name}</h2>
+            <span className="map-command-modal__status" style={{ borderColor: color, color }}>
+              {STATUS_LABELS[mapCity.status] ?? mapCity.status}
+            </span>
+          </div>
+          <button type="button" className="map-command-modal__close" onClick={onClose} aria-label="Kapat">
             ×
           </button>
+        </header>
+
+        <div className="map-command-modal__stats">
+          <div className="map-command-modal__stat">
+            <span className="map-command-modal__stat-label">Sahip</span>
+            <strong>{display.live.owner || 'Boş'}</strong>
+          </div>
+          <div className="map-command-modal__stat">
+            <span className="map-command-modal__stat-label">Nüfus</span>
+            <strong>{(display.population ?? 0).toLocaleString('tr-TR')}</strong>
+          </div>
+          <div className="map-command-modal__stat">
+            <span className="map-command-modal__stat-label">Mutluluk</span>
+            <strong>
+              {display.happiness != null
+                ? `%${display.happiness} · ${formatHappinessLabel(display.happiness)}`
+                : '—'}
+            </strong>
+          </div>
+          <div className="map-command-modal__stat">
+            <span className="map-command-modal__stat-label">Koordinat</span>
+            <strong className="font-hud-data">
+              {mapCity.lat?.toFixed(2)}, {mapCity.lng?.toFixed(2)}
+            </strong>
+          </div>
+          {display.cyberActive && (
+            <div className="map-command-modal__stat map-command-modal__stat--alert">
+              <span className="map-command-modal__stat-label">Siber baskı</span>
+              <strong>AKTİF</strong>
+            </div>
+          )}
         </div>
 
-        <span className="status-pill" style={{ borderColor: color, color }}>
-          {STATUS_LABELS[city.status]}
-        </span>
+        <section className="map-command-modal__resources" aria-label="Kaynak durumu">
+          <h3 className="map-command-modal__section-title">Kaynak Durumu</h3>
+          <ul className="map-command-modal__resource-grid">
+            {resourceList.map((r) => (
+              <li key={r.id}>
+                <span>{r.icon} {r.label}</span>
+                <strong>
+                  {typeof r.current === 'number'
+                    ? Math.floor(r.current).toLocaleString('tr-TR')
+                    : '—'}
+                  {r.max != null ? ` / ${Math.floor(r.max).toLocaleString('tr-TR')}` : ''}
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-        <dl className="popup-dl city-panel-dl">
-          <dt>Sahibi</dt>
-          <dd>{owner}</dd>
-          <dt>Şehir Tipi</dt>
-          <dd>{cityType}</dd>
-          {city.rank && (
-            <>
-              <dt>Rütbe</dt>
-              <dd>{city.rank}</dd>
-            </>
-          )}
-          {city.population > 0 && (
-            <>
-              <dt>Nüfus</dt>
-              <dd>{city.population.toLocaleString('tr-TR')}</dd>
-            </>
-          )}
-        </dl>
+        {outOfRange && (
+          <p className="map-command-modal__warn">Radar menzili dışı — taktiksel emirler kilitli.</p>
+        )}
 
-        {panelMode === 'attack' && canAttack && (
-          <div className="city-panel-form">
-            <h3 className="city-panel-form-title">⚔️ Hızlı Saldırı</h3>
-            <p className="city-panel-form-hint city-panel-origin-hint">
-              Çıkış şehri: <strong>{activeCityName}</strong> — birlikler yalnızca bu şehirden düşer
-            </p>
-            <p className="city-panel-form-hint">Gönderilecek birlik miktarını seçin</p>
+        {!actionMode && (
+          <div className="map-command-modal__actions">
+            <button
+              type="button"
+              className="map-cmd-btn map-cmd-btn--troops"
+              disabled={!canAttack || outOfRange}
+              onClick={() => setActionMode('troops')}
+            >
+              [ ORDULARI KAYDIR ]
+            </button>
+            <button
+              type="button"
+              className="map-cmd-btn map-cmd-btn--intel"
+              disabled={!canSpy || outOfRange}
+              onClick={() => setActionMode('intel')}
+            >
+              [ İSTİHBARAT GÖNDER ]
+            </button>
+            <button
+              type="button"
+              className="map-cmd-btn map-cmd-btn--cyber"
+              disabled={outOfRange || cyberCapabilities.length === 0}
+              onClick={() => setActionMode('cyber')}
+            >
+              [ SİBER OPERASYON BAŞLAT ]
+            </button>
+          </div>
+        )}
+
+        {actionMode === 'troops' && (
+          <section className="map-command-modal__panel">
+            <h3>Ordu kaydırma — {activeCityName}</h3>
             <ExpeditionEtaStrip durationSeconds={attackDuration} airRush={airRushAttack} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
@@ -254,181 +355,118 @@ function CityDetailPanelContent({ city, onClose }) {
                 troop={t}
                 awayMap={awayMap}
                 value={troopQty[t.id] ?? 0}
-                onChange={(v) => setTroop(t.id, v)}
+                onChange={(v) => setTroopQty((prev) => ({ ...prev, [t.id]: v }))}
               />
             ))}
-            <button type="button" className="btn btn-danger" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
-              {actionLocked ? 'Yükleniyor…' : 'Seferi Başlat'}
-            </button>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
-              İptal
-            </button>
-          </div>
-        )}
-
-        {panelMode === 'found' && canOpenFound && (
-          <div className="city-panel-form">
-            <h3 className="city-panel-form-title">🏙️ Şehir Kur</h3>
-            <p className="city-panel-form-hint city-panel-origin-hint">
-              Çıkış şehri: <strong>{activeCityName}</strong> — kolonistler bu şehirden ayrılır
-            </p>
-            <p className="city-panel-form-hint">
-              En az <strong>{FOUND_CITY_MIN_COLONISTS} {FOUND_CITY_UNIT_LABEL}</strong> (boşta) ve{' '}
-              <strong>{FOUND_CITY_COST}</strong> gerekir.
-            </p>
-            <label className="city-panel-form-field">
-              <span>Yeni şehir adı</span>
-              <input
-                type="text"
-                className="input-text"
-                value={foundCityName}
-                onChange={(e) => setFoundCityName(e.target.value)}
-                placeholder="Boş bırakılırsa: Yeni Koloni / Siber Üs"
-                maxLength={32}
-              />
-            </label>
-            <ExpeditionEtaStrip durationSeconds={foundDuration} />
-            {colonistTroop ? (
-              <TroopDispatchRow
-                troop={colonistTroop}
-                awayMap={awayMap}
-                value={troopQty[FOUND_CITY_COLONIST_ID] ?? 0}
-                onChange={(v) => setTroop(FOUND_CITY_COLONIST_ID, v)}
-              />
-            ) : (
-              <p className="city-panel-form-hint city-panel-found-warn">
-                {FOUND_CITY_UNIT_LABEL} birliği mevcut değil — önce kışlada üretin.
-              </p>
-            )}
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!foundReadiness.canStartExpedition || actionLocked}
-              onClick={confirmFound}
-            >
-              {actionLocked ? 'Yükleniyor…' : 'Şehir Kur Seferini Başlat'}
-            </button>
-            {!foundReadiness.canStartExpedition && (
-              <p className="city-panel-form-hint city-panel-found-warn">
-                {foundReadiness.colonistIdle < FOUND_CITY_MIN_COLONISTS
-                  ? `En az ${FOUND_CITY_MIN_COLONISTS} ${FOUND_CITY_UNIT_LABEL} seçin (boşta: ${foundReadiness.colonistIdle}).`
-                  : `${FOUND_CITY_UNIT_LABEL} miktarını boşta stokla sınırlayın (max: ${foundReadiness.colonistIdle}).`}
-              </p>
-            )}
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
-              İptal
-            </button>
-          </div>
-        )}
-
-        {panelMode === 'spy' && canSpy && (
-          <div className="city-panel-form">
-            <h3 className="city-panel-form-title">Casusluk</h3>
-            <p className="city-panel-form-hint city-panel-origin-hint">
-              Çıkış şehri: <strong>{activeCityName}</strong> — casuslar bu şehirden düşer
-            </p>
-            <p className="city-panel-form-hint">
-              Mevcut boşta casus: <strong>{idleSpies}</strong>
-            </p>
-            <ExpeditionEtaStrip durationSeconds={spyDuration} />
-            <div className="city-panel-troop-row">
-              <div className="city-panel-troop-meta">
-                <span className="city-panel-troop-icon" aria-hidden="true">
-                  🕵️
-                </span>
-                <div>
-                  <span className="city-panel-troop-name">Casus</span>
-                  <span className="city-panel-troop-available">
-                    Mevcut boşta: <strong>{idleSpies}</strong>
-                  </span>
-                </div>
-              </div>
-              <div className="city-panel-troop-input">
-                <input
-                  type="number"
-                  className="input-qty"
-                  min={0}
-                  max={idleSpies}
-                  value={spyQty}
-                  onChange={(e) =>
-                    setSpyQty(Math.min(idleSpies, Math.max(0, Number(e.target.value) || 0)))
-                  }
-                />
-                <button type="button" className="btn btn-max" onClick={() => setSpyQty(idleSpies)}>
-                  MAX
-                </button>
-              </div>
+            <div className="map-command-modal__panel-actions">
+              <button type="button" className="btn btn-danger" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
+                Seferi Başlat
+              </button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
+                Geri
+              </button>
             </div>
-            <button type="button" className="btn btn-primary" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
-              {actionLocked ? 'Yükleniyor…' : 'Casus Gönder'}
-            </button>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPanelMode(null)}>
-              İptal
-            </button>
-          </div>
+          </section>
         )}
 
-        {!panelMode && (
-          <div className="popup-actions city-panel-actions">
-            {outOfRange && (
-              <p className="city-panel-range-warn">
-                Bu şehir radar menziliniz dışında. Operasyonlar kullanılamaz.
-              </p>
-            )}
-            {isActiveOwnCity && (
-              <p className="city-panel-own-warn">
-                Aktif şehrinize saldırı veya casusluk emri verilemez.
-              </p>
-            )}
-            {showAttackBtn && (
+        {actionMode === 'intel' && (
+          <section className="map-command-modal__panel">
+            <h3>İstihbarat sondası — {mapCity.name}</h3>
+            <p className="map-command-modal__hint">Boşta casus: <strong>{idleSpies}</strong></p>
+            <ExpeditionEtaStrip durationSeconds={spyDuration} />
+            <div className="map-cmd-troop-row">
+              <span>Casus sayısı</span>
+              <input
+                type="number"
+                className="input-qty"
+                min={1}
+                max={idleSpies}
+                value={spyQty}
+                onChange={(e) => setSpyQty(Math.min(idleSpies, Math.max(1, Number(e.target.value) || 1)))}
+              />
+            </div>
+            <div className="map-command-modal__panel-actions">
+              <button type="button" className="btn btn-primary" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
+                Sonda Gönder
+              </button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
+                Geri
+              </button>
+            </div>
+          </section>
+        )}
+
+        {actionMode === 'cyber' && (
+          <section className="map-command-modal__panel">
+            <h3>Siber Virüs/Ajan — {mapCity.name}</h3>
+            <p className="map-command-modal__hint">
+              Boşta ajan: <strong>{idleAgents}</strong>
+              {cyberSuccessPreview && (
+                <> · FW {cyberSuccessPreview.attackerFw} vs {cyberSuccessPreview.defenderFw}
+                  {' '}(Δ{cyberSuccessPreview.diff >= 0 ? '+' : ''}{cyberSuccessPreview.diff})
+                  {' '}— Sızma: <strong>%{cyberSuccessPreview.chancePct}</strong>
+                </>
+              )}
+            </p>
+            <ExpeditionEtaStrip durationSeconds={cyberDuration} />
+            <div className="map-cmd-troop-row">
+              <span>Siber ajan</span>
+              <input
+                type="number"
+                className="input-qty"
+                min={1}
+                max={idleAgents}
+                value={cyberAgentQty}
+                onChange={(e) => setCyberAgentQty(Math.min(idleAgents, Math.max(1, Number(e.target.value) || 1)))}
+              />
+            </div>
+            <ul className="map-command-modal__cyber-list">
+              {CYBER_ABILITIES.map((ability) => {
+                const unlocked = cyberCapabilities.some((c) => c.id === ability.id);
+                const selected = cyberAbilityId === ability.id;
+                return (
+                  <li key={ability.id} className={selected ? 'map-cmd-cyber-selected' : ''}>
+                    <strong>{ability.name}</strong>
+                    <span>{ability.subtitle ?? ability.desc}</span>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={!unlocked}
+                      onClick={() => setCyberAbilityId(ability.id)}
+                    >
+                      {unlocked ? (selected ? 'Seçili' : 'Seç') : `Sv.${ability.minLevel}`}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="map-command-modal__panel-actions">
               <button
                 type="button"
                 className="btn btn-danger"
-                disabled={outOfRange}
-                title={outOfRange ? 'Radar menzili dışı' : undefined}
-                onClick={() => !outOfRange && setPanelMode('attack')}
+                disabled={
+                  actionLocked
+                  || idleAgents < cyberAgentQty
+                  || !cyberCapabilities.some((c) => c.id === cyberAbilityId)
+                }
+                onClick={() => runLocked(() => {
+                  const ok = startCyberVirusExpedition({
+                    targetCity: mapCity,
+                    abilityId: cyberAbilityId,
+                    agentCount: cyberAgentQty,
+                  });
+                  if (ok) onClose();
+                })}
               >
-                ⚔️ Asker Gönder
+                Virüs Gönder
               </button>
-            )}
-            {showSpyBtn && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={outOfRange}
-                title={outOfRange ? 'Radar menzili dışı' : undefined}
-                onClick={() => !outOfRange && setPanelMode('spy')}
-              >
-                Casus Gönder
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
+                Geri
               </button>
-            )}
-            {canFound && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!foundReadiness.canOpenPanel}
-                title={foundButtonTitle}
-                onClick={() => foundReadiness.canOpenPanel && setPanelMode('found')}
-              >
-                🏙️ Şehir Kur
-              </button>
-            )}
-            {canFound && !foundReadiness.canOpenPanel && (
-              <p className="city-panel-found-req">{foundButtonTitle}</p>
-            )}
-            {city.status === 'empty' && !canFound && outOfRange && (
-              <button type="button" className="btn btn-primary" disabled title="Radar menzili dışı">
-                🏙️ Şehir Kur
-              </button>
-            )}
-            {city.status === 'own' && (
-              <button type="button" className="btn btn-secondary" onClick={onClose}>
-                Merkeze Git
-              </button>
-            )}
-          </div>
+            </div>
+          </section>
         )}
-      </aside>
-    </>
+      </div>
+    </div>
   );
 }

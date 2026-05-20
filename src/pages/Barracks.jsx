@@ -27,13 +27,15 @@ export default function Barracks() {
   );
 
   return (
-    <div className="page page--console barracks-page">
+    <div className="page page--console barracks-page barracks-page--military">
       <PageHeader
         title="Kışla"
+        status="[ STATUS: TACTICAL UNITS ]"
         subtitle="Kara birlikleri — Kışla inşa edildikten sonra üretilir."
         action={(
-          <span className="barracks-agent-counter" title="İstihbarat ajanları">
+          <span className="barracks-agent-counter" title="İstihbarat ve siber virüs operasyonları">
             Mevcut / Boşta Ajan: <strong>{idleAgents}</strong>
+            <span className="barracks-agent-hint"> (keşif + siber)</span>
           </span>
         )}
       />

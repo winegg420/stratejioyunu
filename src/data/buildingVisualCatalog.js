@@ -22,7 +22,11 @@ export const BUILDING_VISUALS = {
   },
   wall: {
     image: '/buildings/wall.jpg',
-    designation: 'Fortified Perimeter Defense',
+    designation: 'Perimeter Defense Line',
+  },
+  cyber_ops: {
+    image: '/buildings/intel.jpg',
+    designation: 'Cyber Operations Command',
   },
   market: {
     image: '/buildings/market.jpg',

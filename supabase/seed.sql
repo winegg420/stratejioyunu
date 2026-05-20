@@ -1,1 +1,3 @@
--- Auth aşamasında veritabanı tablosu yok; ileride oyun verisi için kullanılacak.
+-- Şema: supabase/schema.sql
+-- Yeni hesap sonrası başlangıç üssü (giriş yapan kullanıcı):
+--   select public.seed_starter_city(auth.uid());
