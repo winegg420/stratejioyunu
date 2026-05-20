@@ -21,26 +21,27 @@
 }
 
 .building-card--blocked {
-  opacity: 0.3 !important;
-  filter: grayscale(100%) brightness(0.35) !important;
+  opacity: 1 !important;
+  filter: none !important;
   pointer-events: auto;
 }
 
+.building-card--blocked .building-card__img,
+.building-card--blocked .building-img-wrap .building-card__img,
+.building-card--unbuilt .building-card__img,
+.building-card--unbuilt .building-img-wrap .building-card__img {
+  filter: blur(1px) saturate(0.65) brightness(0.82) !important;
+  opacity: 0.9 !important;
+}
+
 .building-card--blocked:hover {
-  transform: none !important;
-  box-shadow: none !important;
-  border-color: var(--hud-chassis-border) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.15) !important;
 }
 
 .building-card--blocked .building-blocked-overlay {
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255, 0, 0, 0.05),
-    rgba(255, 0, 0, 0.05) 10px,
-    rgba(0, 0, 0, 0.5) 10px,
-    rgba(0, 0, 0, 0.5) 20px
-  ) !important;
-  backdrop-filter: blur(1px);
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(0.5px);
 }
 
 .building-blocked-label {

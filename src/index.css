@@ -3619,6 +3619,18 @@ body.map-scroll-locked {
   filter: grayscale(0.35);
 }
 
+.locked-feature-gate .unit-card-open-btn {
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+}
+
+.locked-feature-gate .unit-card .card-actions {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(0.35);
+}
+
 .locked-feature-gate__hint {
   margin: 0;
   padding: 8px 10px;
@@ -3881,7 +3893,10 @@ body.map-scroll-locked {
 
 .locked-feature-gate__overlay {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
   z-index: 2;
   cursor: pointer;
 }

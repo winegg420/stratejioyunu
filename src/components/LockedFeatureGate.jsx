@@ -16,9 +16,7 @@ export default function LockedFeatureGate({ buildingId, children, featureName })
 
   return (
     <div className="locked-feature-gate">
-      <div className="locked-feature-gate__content" aria-hidden="true">
-        {children}
-      </div>
+      {children}
       <Link
         to={`/binalar#${buildingId}`}
         className="locked-feature-gate__overlay"
@@ -30,7 +28,7 @@ export default function LockedFeatureGate({ buildingId, children, featureName })
         <Link to={`/binalar#${buildingId}`} className="locked-feature-gate__link">
           {label}
         </Link>{' '}
-        inşa edilmeli (Binalar → İnşa Et).
+        inşa edilmeli (Binalar → İnşa Et). Birlik bilgisi için görsele tıklayın.
       </p>
     </div>
   );

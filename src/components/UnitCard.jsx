@@ -6,6 +6,7 @@ import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
 import CostBreakdown from './CostBreakdown';
 import TroopStockLabel from './TroopStockLabel';
+import UnitDetailModal from './UnitDetailModal';
 
 export default function UnitCard({ unit, awayMap }) {
   const city = useGameStore((s) => s.cities[s.activeCityId]);
@@ -13,6 +14,7 @@ export default function UnitCard({ unit, awayMap }) {
   const enqueueProduction = useGameStore((s) => s.enqueueProduction);
   const { locked: actionLocked, runLocked } = useActionLock();
   const [qtyInput, setQtyInput] = useState('10');
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const qty = Number(qtyInput);
   const validQty = Number.isFinite(qty) && qty > 0;
@@ -48,23 +50,38 @@ export default function UnitCard({ unit, awayMap }) {
 
   return (
     <article className="card unit-card">
-      <div className="card-visual">{unit.image}</div>
-      <div className="card-header unit-card-header">
-        <div className="unit-card-titles">
-          <h3>{unit.name}</h3>
-          {unit.designationCode || unit.designation ? (
-            <p className="unit-designation">
-              DESIGNATION: {unit.designationCode ?? unit.designation?.toUpperCase().replace(/\s+/g, '-')}
-            </p>
-          ) : null}
+      <UnitDetailModal
+        unit={unit}
+        qty={validQty ? qty : 0}
+        resources={resources}
+        awayMap={awayMap}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+      />
+      <button
+        type="button"
+        className="unit-card-open-btn"
+        onClick={() => setDetailOpen(true)}
+        aria-label={`${unit.name} detayları`}
+      >
+        <div className="card-visual">{unit.image}</div>
+        <div className="card-header unit-card-header">
+          <div className="unit-card-titles">
+            <h3>{unit.name}</h3>
+            {unit.designationCode || unit.designation ? (
+              <p className="unit-designation">
+                DESIGNATION: {unit.designationCode ?? unit.designation?.toUpperCase().replace(/\s+/g, '-')}
+              </p>
+            ) : null}
+          </div>
+          <span className="badge badge-troop-stock">
+            <TroopStockLabel
+              troop={{ id: unit.id, available: unit.idle ?? unit.count }}
+              awayMap={awayMap}
+            />
+          </span>
         </div>
-        <span className="badge badge-troop-stock">
-          <TroopStockLabel
-            troop={{ id: unit.id, available: unit.idle ?? unit.count }}
-            awayMap={awayMap}
-          />
-        </span>
-      </div>
+      </button>
       <p className="card-desc">{unit.desc}</p>
       <table className="stats-table">
         <thead>

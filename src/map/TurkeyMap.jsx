@@ -18,12 +18,10 @@ import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
 import {
   CITY_STATUS_COLORS,
   getProvinceStyle,
-  getDistrictStyle,
   getHoverStyle,
 } from './mapUtils';
-import PlayerTerritoryLayer from './PlayerTerritoryLayer';
+import CityTerritoryLayer from './CityTerritoryLayer';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
-import { normalizeProvinceCode } from './mapOwnership';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
@@ -86,14 +84,11 @@ export default function TurkeyMap() {
   const isMobile = useIsMobile();
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
-  const [districts, setDistricts] = useState(null);
   const [selectedProvince, setSelectedProvince] = useState(null);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
   const [search, setSearch] = useState('');
   const [searchCoord, setSearchCoord] = useState('');
   const provinceLayerRef = useRef(null);
-  const districtLayerRef = useRef(null);
   const [fitBounds, setFitBounds] = useState(null);
   const [flyTarget, setFlyTarget] = useState(null);
   const [cityPick, setCityPick] = useState('');
@@ -146,10 +141,6 @@ export default function TurkeyMap() {
   }, [activePlayerCity, mapCities]);
 
   const playerName = getCurrentPlayerName();
-  const playerProvinceCodes = useMemo(
-    () => [...new Set(playerCities.map((c) => normalizeProvinceCode(c.province)).filter(Boolean))],
-    [playerCities],
-  );
 
   useEffect(() => {
     setMapReady(true);
@@ -189,38 +180,13 @@ export default function TurkeyMap() {
       .catch(console.error);
   }, []);
 
-  const loadDistricts = useCallback(async (iso, name) => {
-    setLoadingDistricts(true);
-    setDistricts(null);
-    setSelectedProvince({ iso, name });
-    try {
-      const data = await fetch(`/geo/districts/${iso}.json`).then((r) => r.json());
-      setDistricts(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingDistricts(false);
-    }
+  const onProvinceClick = useCallback((feature, layer) => {
+    const name = feature.properties.shapeName;
+    layer.on('click', () => {
+      setSelectedProvince({ name });
+      setFitBounds(layer.getBounds());
+    });
   }, []);
-
-  const onProvinceClick = useCallback(
-    (feature, layer) => {
-      const iso = feature.properties.shapeISO;
-      const name = feature.properties.shapeName;
-      const provinceCode = normalizeProvinceCode(iso);
-      layer.on('click', () => {
-        if (playerProvinceCodes.includes(provinceCode)) {
-          setDistricts(null);
-          setSelectedProvince({ iso, name, ownTerritory: true });
-          setFitBounds(layer.getBounds());
-          return;
-        }
-        loadDistricts(iso, name);
-        setFitBounds(layer.getBounds());
-      });
-    },
-    [loadDistricts, playerProvinceCodes],
-  );
 
   const provinceStyle = useCallback(() => getProvinceStyle(), []);
 
@@ -235,15 +201,7 @@ export default function TurkeyMap() {
     [onProvinceClick],
   );
 
-  const onEachDistrict = useCallback((feature, layer) => {
-    const name = feature.properties.name;
-    layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
-    layer.on('mouseover', () => layer.setStyle(getHoverStyle(getDistrictStyle())));
-    layer.on('mouseout', () => layer.setStyle(getDistrictStyle()));
-  }, []);
-
-  const clearDistricts = () => {
-    setDistricts(null);
+  const clearProvinceFocus = () => {
     setSelectedProvince(null);
     setFitBounds(null);
   };
@@ -333,11 +291,9 @@ export default function TurkeyMap() {
         setSearchCoord={setSearchCoord}
         handleSearch={handleSearch}
         selectedProvince={selectedProvince}
-        loadingDistricts={loadingDistricts}
-        clearDistricts={clearDistricts}
+        clearProvinceFocus={clearProvinceFocus}
         isMobile={isMobile}
         mapLocked={mapLocked}
-        playerName={playerName}
       />
 
       <div className="map-container map-container-wrap map-container-wrap--cyber">
@@ -364,7 +320,7 @@ export default function TurkeyMap() {
           <MapMaxBounds />
           {isMobile && <MapInteractionController interactionLocked={interactionLocked} />}
           <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
-          {provinces && !districts && (
+          {provinces && (
             <GeoJSON
               key="provinces"
               ref={provinceLayerRef}
@@ -374,23 +330,11 @@ export default function TurkeyMap() {
               onEachFeature={onEachProvince}
             />
           )}
-          {provinces && (
-            <PlayerTerritoryLayer
-              provinces={provinces}
-              playerProvinces={playerProvinceCodes}
-              playerName={playerName}
-            />
-          )}
-          {districts && (
-            <GeoJSON
-              key={selectedProvince?.iso}
-              ref={districtLayerRef}
-              data={districts}
-              style={() => getDistrictStyle()}
-              smoothFactor={1.5}
-              onEachFeature={onEachDistrict}
-            />
-          )}
+          <CityTerritoryLayer
+            mapCities={filteredCities}
+            playerCities={playerCities}
+            playerName={playerName}
+          />
           <MapBoundsReporter onViewportChange={setViewportStable} />
           <FogOfWarLayer
             playerCities={playerCities}
@@ -461,11 +405,9 @@ function MapToolbar({
   setSearchCoord,
   handleSearch,
   selectedProvince,
-  loadingDistricts,
-  clearDistricts,
+  clearProvinceFocus,
   isMobile,
   mapLocked,
-  playerName,
 }) {
   if (isMobile && mapLocked) return null;
 
@@ -520,15 +462,9 @@ function MapToolbar({
       </div>
       {selectedProvince && (
         <div className="map-province-bar">
-          <span>
-            {selectedProvince.ownTerritory
-              ? `${selectedProvince.name} — ${playerName} (bölge sınırı)`
-              : loadingDistricts
-                ? 'İlçeler yükleniyor...'
-                : `${selectedProvince.name} ilçeleri`}
-          </span>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={clearDistricts}>
-            {selectedProvince.ownTerritory ? 'Türkiye görünümü' : 'İl görünümüne dön'}
+          <span>{selectedProvince.name} — il sınırı</span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={clearProvinceFocus}>
+            Türkiye görünümü
           </button>
         </div>
       )}

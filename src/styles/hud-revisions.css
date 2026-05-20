@@ -1382,3 +1382,181 @@ button {
     flex: 1 1 100%;
   }
 }
+
+/* Birim detay popup */
+.unit-card-open-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.unit-card-open-btn:hover .card-visual {
+  filter: brightness(1.08);
+}
+
+.unit-detail-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 6, 12, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.unit-detail-modal {
+  width: min(480px, 100%);
+  max-height: min(86vh, 720px);
+  overflow: auto;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.unit-detail-modal__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.unit-detail-modal__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.unit-detail-modal__title {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.unit-detail-modal__designation {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #22ff88;
+}
+
+.unit-detail-modal__close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.unit-detail-modal__desc {
+  margin: 0 0 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.unit-detail-modal__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.75rem;
+  margin: 0 0 0.85rem;
+}
+
+.unit-detail-modal__stats div {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(4, 12, 22, 0.65);
+}
+
+.unit-detail-modal__stats dt {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.unit-detail-modal__stats dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: #e8f4ff;
+}
+
+.unit-detail-modal__cost-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.unit-detail-modal__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Şehir sınır etiketleri */
+.city-territory-label {
+  background: none !important;
+  border: none !important;
+}
+
+.city-territory-label__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.08rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(20, 4, 6, 0.88);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  border-radius: 4px;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.25);
+  pointer-events: none;
+}
+
+.city-territory-label--own .city-territory-label__inner {
+  background: rgba(2, 14, 10, 0.88);
+  border-color: rgba(34, 255, 136, 0.55);
+  box-shadow: 0 0 14px rgba(34, 255, 136, 0.22);
+}
+
+.city-territory-label__city {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffe4e4;
+}
+
+.city-territory-label--own .city-territory-label__city {
+  color: #d7ffe8;
+}
+
+.city-territory-label__owner {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: #ff6b6b;
+  letter-spacing: 0.05em;
+}
+
+.city-territory-label--own .city-territory-label__owner {
+  color: #22ff88;
+}
+
+.buildings-page .building-card--unbuilt .card-visual,
+.buildings-page .building-card--blocked .card-visual {
+  opacity: 1 !important;
+}
+
+.buildings-page .building-card--unbuilt .building-card__img,
+.buildings-page .building-card--blocked .building-card__img {
+  filter: blur(1px) saturate(0.7) brightness(0.85) !important;
+  opacity: 0.92 !important;
+}
