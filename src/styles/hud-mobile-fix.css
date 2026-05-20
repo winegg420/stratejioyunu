@@ -1,56 +1,111 @@
-/* ═══ Mobil düzen düzeltmeleri — sayfa çakışması / taşma ═══ */
+/* ═══ Mobil düzen — tek scroll alanı, iOS kayma düzeltmesi ═══ */
 
 @media (max-width: 900px) {
   :root {
     --resource-bar-h: 64px;
+    --bottom-nav-h: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Uygulama kabuğu: tek scroll alanı content-area */
-  .app-shell.hud-shell {
+  /* Dış sayfa kaymasını kilitle (Layout mount iken html class eklenir) */
+  html.mobile-shell-active,
+  html.mobile-shell-active body {
+    width: 100%;
+    height: 100%;
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  html.mobile-shell-active body {
+    position: fixed;
+    inset: 0;
+    touch-action: manipulation;
+  }
+
+  html.mobile-shell-active #root {
+    height: 100%;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Uygulama kabuğu */
+  .app-shell.hud-shell {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100vw;
+    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0 !important;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding-top: var(--resource-bar-h);
     padding-bottom: 0 !important;
   }
 
   .main-shell {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
+    width: 100%;
+    max-width: 100vw;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
 
+  .sidebar-desktop {
+    display: none !important;
+  }
+
+  /* Tek scroll konteyneri */
   .content-area {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
-    padding: 0.65rem 0.5rem calc(var(--bottom-nav-h) + 0.65rem) !important;
+    touch-action: pan-y;
+    padding: 0.65rem 0.5rem calc(var(--bottom-nav-h) + 0.5rem) !important;
     position: relative;
     z-index: 2;
-    isolation: isolate;
   }
 
-  .page {
-    max-width: none;
+  .hud-shell .content-area,
+  .app-shell.hud-shell .content-area {
+    padding: 0.65rem 0.5rem calc(var(--bottom-nav-h) + 0.5rem) !important;
+  }
+
+  .page,
+  .page-wrapper,
+  .home-page,
+  .buildings-page {
+    max-width: 100%;
     width: 100%;
     min-width: 0;
-    position: relative;
+    overflow-x: hidden;
   }
 
-  /* Kaynak barı — sabit yükseklik, içerik taşmasın */
+  .buildings-page.page-wrapper {
+    z-index: auto !important;
+    isolation: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Kaynak barı */
   .resource-bar {
     height: var(--resource-bar-h) !important;
     min-height: var(--resource-bar-h);
     max-height: var(--resource-bar-h);
     overflow: hidden;
+    z-index: 1210 !important;
   }
 
   .resource-bar-inner {
@@ -71,6 +126,7 @@
 
   .resource-item {
     min-width: 0 !important;
+    max-width: none !important;
     padding: 0.12rem 0.15rem !important;
     overflow: hidden;
   }
@@ -95,11 +151,12 @@
     display: none;
   }
 
-  .resource-bar-actions {
-    flex-shrink: 0;
+  .bottom-nav {
+    z-index: 1200 !important;
+    padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
   }
 
-  /* clip-path mobilde render bug'ı yapabiliyor */
+  /* clip-path mobilde render bug */
   .hud-shell .panel,
   .app-shell.hud-shell .panel,
   .hud-shell .card:not(.building-card--blocked),
@@ -107,7 +164,6 @@
     clip-path: none !important;
   }
 
-  /* Ana sayfa panelleri alt alta */
   .home-panels-row {
     flex-direction: column !important;
     gap: 12px !important;
@@ -125,24 +181,12 @@
     gap: 8px !important;
   }
 
-  .home-stat-block {
-    flex: none !important;
-    min-width: 0 !important;
-  }
-
-  /* Binalar / kışla grid */
-  .buildings-page.page-wrapper,
-  .buildings-grid {
-    z-index: auto !important;
-    isolation: auto !important;
-  }
-
   .page--console .card-grid,
   .buildings-page .buildings-grid {
     gap: 10px !important;
   }
 
-  /* Harita sayfası — tam ekran flex */
+  /* Harita — flex içinde, body kilidi yok */
   .route-map .content-area {
     padding: 0 !important;
     overflow: hidden !important;
@@ -151,50 +195,78 @@
     min-height: 0;
   }
 
+  .route-map:has(.map-interaction-unlocked) .content-area {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .route-map .map-page-wrapper {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    max-width: none;
+    max-width: 100%;
     width: 100%;
   }
 
   .route-map .map-page {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     height: auto !important;
+    max-height: none;
+    gap: 0;
+  }
+
+  .route-map .map-page.map-interaction-locked {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto;
+  }
+
+  .route-map .map-page.map-interaction-unlocked {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: none;
   }
 
   .route-map .map-container-wrap {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
   }
 
-  /* Geçiş loader alt menünün altında kalsın */
+  .route-map .map-page.map-interaction-locked .map-container-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .route-transition-loader {
     z-index: 900 !important;
     pointer-events: none !important;
   }
 
-  /* Alt menü her zaman üstte */
-  .bottom-nav {
-    z-index: 1200 !important;
-  }
-
-  .resource-bar {
-    z-index: 1210 !important;
-  }
-
-  /* Harita dışında harita elemanları kesin gizli */
+  /* Harita dışında harita elemanlarını gizle */
   .app-shell:not(.route-map) .map-page,
   .app-shell:not(.route-map) .map-page-wrapper,
   .app-shell:not(.route-map) .map-container-wrap,
-  .app-shell:not(.route-map) .turkey-map {
+  .app-shell:not(.route-map) .turkey-map,
+  .app-shell:not(.route-map) .leaflet-container {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
     height: 0 !important;
     overflow: hidden !important;
+  }
+
+  /* Modallar */
+  .unit-detail-modal-root,
+  .system-locked-root {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body.map-scroll-locked {
+    position: static !important;
+    overflow: hidden !important;
+    width: auto !important;
+    height: auto !important;
   }
 }

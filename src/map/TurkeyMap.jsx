@@ -148,16 +148,6 @@ export default function TurkeyMap() {
   }, []);
 
   useEffect(() => {
-    if (!isMobile) return undefined;
-    if (mapLocked) {
-      document.body.classList.add('map-scroll-locked');
-    } else {
-      document.body.classList.remove('map-scroll-locked');
-    }
-    return () => document.body.classList.remove('map-scroll-locked');
-  }, [isMobile, mapLocked]);
-
-  useEffect(() => {
     if (!mapFocusRequest) return;
     const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
     const home = mapCities.find((c) => c.name === originPc?.name);

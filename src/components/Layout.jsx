@@ -8,11 +8,15 @@ import PwaUpdateBanner from './PwaUpdateBanner';
 import RouteTransitionLoader from './RouteTransitionLoader';
 import { useGameStore } from '../stores/gameStore';
 import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
+import { useIsMobile } from '../hooks/useIsMobile';
+
+const MOBILE_SHELL_CLASS = 'mobile-shell-active';
 
 export default function Layout() {
   const { pathname } = useLocation();
   const isMapPage = pathname === '/harita';
   const isBuildingsPage = pathname === '/binalar';
+  const isMobile = useIsMobile();
   const startTicker = useGameStore((s) => s.startTicker);
   const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
@@ -49,10 +53,17 @@ export default function Layout() {
   }, [pathname, clearNavBadge]);
 
   useEffect(() => {
+    if (!isMobile) {
+      document.documentElement.classList.remove(MOBILE_SHELL_CLASS);
+      return undefined;
+    }
+    document.documentElement.classList.add(MOBILE_SHELL_CLASS);
+    return () => document.documentElement.classList.remove(MOBILE_SHELL_CLASS);
+  }, [isMobile]);
+
+  useEffect(() => {
     document.body.classList.remove('map-scroll-locked');
-    if (!isMapPage) return undefined;
-    return () => document.body.classList.remove('map-scroll-locked');
-  }, [pathname, isMapPage]);
+  }, [pathname]);
 
   return (
     <div
