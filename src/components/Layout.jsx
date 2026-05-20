@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import ResourceBar from './ResourceBar';
 import Sidebar from './Sidebar';
@@ -9,6 +9,7 @@ import RouteTransitionLoader from './RouteTransitionLoader';
 import { useGameStore } from '../stores/gameStore';
 import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
 
 const MOBILE_SHELL_CLASS = 'mobile-shell-active';
 
@@ -17,6 +18,8 @@ export default function Layout() {
   const isMapPage = pathname === '/harita';
   const isBuildingsPage = pathname === '/binalar';
   const isMobile = useIsMobile();
+  const contentRef = useRef(null);
+  useMobileScrollGuard(isMobile);
   const startTicker = useGameStore((s) => s.startTicker);
   const clearNavBadge = useGameStore((s) => s.clearNavBadge);
 
@@ -63,11 +66,14 @@ export default function Layout() {
 
   useEffect(() => {
     document.body.classList.remove('map-scroll-locked');
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
   }, [pathname]);
 
   return (
     <div
-      className={`app-shell hud-shell${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
+      className={`app-shell hud-shell${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
       <ResourceBar />
       <PwaUpdateBanner />
@@ -75,7 +81,7 @@ export default function Layout() {
       <ToastContainer />
       <div className="main-shell">
         <Sidebar />
-        <main className="content-area">
+        <main className="content-area" ref={contentRef}>
           <Outlet />
         </main>
       </div>
