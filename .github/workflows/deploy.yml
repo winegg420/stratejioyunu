@@ -1,7 +1,7 @@
 name: Deploy to Vercel
 
-# Vercel Git entegrasyonu push'ta zaten build alır.
-# Bu workflow yalnızca VERCEL_TOKEN geçerliyse CLI ile deploy eder.
+# Push sonrası build doğrulaması + geçerli VERCEL_TOKEN varsa prod deploy.
+# Token geçersizse workflow uyarı verir; yerel: npm run deploy
 
 on:
   push:
@@ -37,5 +37,16 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@54.1.0
 
+      - name: Validate Vercel token
+        id: vercel-token
+        run: |
+          if vercel whoami --token="${{ secrets.VERCEL_TOKEN }}" >/dev/null 2>&1; then
+            echo "valid=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::VERCEL_TOKEN geçersiz veya eksik. GitHub Secrets güncellenmeli. Yerel deploy: npm run deploy"
+          fi
+
       - name: Deploy production
+        if: steps.vercel-token.outputs.valid == 'true'
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}

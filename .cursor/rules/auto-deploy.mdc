@@ -1,0 +1,19 @@
+---
+description: Kod revizyonu sonrası otomatik commit, push ve Vercel deploy
+alwaysApply: true
+---
+
+# Otomatik sunucu güncelleme
+
+Bu projede anlamlı kod değişikliği yaptıktan sonra **her zaman** sunucuyu güncelle:
+
+1. `npm run build` ile derlemenin geçtiğini doğrula
+2. Kullanıcı açıkça istemediyse bile değişiklikleri commit + push et (kullanıcı commit istemediyse sadece deploy adımını atla)
+3. **Mutlaka** prod deploy çalıştır: `npm run deploy` (veya `npx vercel deploy --prod --yes`)
+4. Deploy sonucunu kullanıcıya bildir (URL + başarı/hata)
+
+## Notlar
+
+- GitHub Actions `VERCEL_TOKEN` geçersiz olabilir; CI deploy başarısız olsa bile yerel `npm run deploy` ile prod güncellenmeli
+- Push tek başına yeterli değil — Vercel Git entegrasyonu kapalı/ token bozuksa site eski kalır
+- PWA cache: kullanıcıya hard refresh (`Ctrl+Shift+R`) hatırlat
