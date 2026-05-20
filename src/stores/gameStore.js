@@ -69,6 +69,7 @@ import {
   resolveFoundCityName,
 } from '../lib/foundCityConfig';
 import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
+import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { applyExpeditionLoot, refundCostWithDepotCap } from '../lib/lootUtils';
 import { buildLossRows } from '../lib/reportLosses';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
@@ -333,7 +334,10 @@ export const useGameStore = create((set, get) => ({
 
   initWorldSystems: () => {
     const state = get();
-    syncRegistryFromMap(state.mapCities);
+    const playerName = getCurrentPlayerName();
+    const mapCities = syncMapCitiesForPlayer(state.mapCities, state.playerCities, playerName);
+    syncRegistryFromMap(mapCities);
+    set({ mapCities });
     get()._runServerCleansing(false);
     get().touchPlayerActivity();
   },

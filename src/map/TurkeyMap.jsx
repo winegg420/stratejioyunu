@@ -21,6 +21,9 @@ import {
   getDistrictStyle,
   getHoverStyle,
 } from './mapUtils';
+import PlayerTerritoryLayer from './PlayerTerritoryLayer';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { normalizeProvinceCode } from './mapOwnership';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
@@ -142,6 +145,12 @@ export default function TurkeyMap() {
     );
   }, [activePlayerCity, mapCities]);
 
+  const playerName = getCurrentPlayerName();
+  const playerProvinceCodes = useMemo(
+    () => [...new Set(playerCities.map((c) => normalizeProvinceCode(c.province)).filter(Boolean))],
+    [playerCities],
+  );
+
   useEffect(() => {
     setMapReady(true);
     return () => setMapReady(false);
@@ -198,12 +207,19 @@ export default function TurkeyMap() {
     (feature, layer) => {
       const iso = feature.properties.shapeISO;
       const name = feature.properties.shapeName;
+      const provinceCode = normalizeProvinceCode(iso);
       layer.on('click', () => {
+        if (playerProvinceCodes.includes(provinceCode)) {
+          setDistricts(null);
+          setSelectedProvince({ iso, name, ownTerritory: true });
+          setFitBounds(layer.getBounds());
+          return;
+        }
         loadDistricts(iso, name);
         setFitBounds(layer.getBounds());
       });
     },
-    [loadDistricts],
+    [loadDistricts, playerProvinceCodes],
   );
 
   const provinceStyle = useCallback(() => getProvinceStyle(), []);
@@ -288,7 +304,7 @@ export default function TurkeyMap() {
               <option value="">Şehir ara...</option>
               {mapCities.map((c) => (
                 <option key={c.name} value={c.name}>
-                  {c.name}
+                  {c.name} — {c.owner || (c.status === 'bot' ? 'Bot' : 'Boş')}
                 </option>
               ))}
             </select>
@@ -321,6 +337,7 @@ export default function TurkeyMap() {
         clearDistricts={clearDistricts}
         isMobile={isMobile}
         mapLocked={mapLocked}
+        playerName={playerName}
       />
 
       <div className="map-container map-container-wrap map-container-wrap--cyber">
@@ -355,6 +372,13 @@ export default function TurkeyMap() {
               style={provinceStyle}
               smoothFactor={1.5}
               onEachFeature={onEachProvince}
+            />
+          )}
+          {provinces && (
+            <PlayerTerritoryLayer
+              provinces={provinces}
+              playerProvinces={playerProvinceCodes}
+              playerName={playerName}
             />
           )}
           {districts && (
@@ -441,6 +465,7 @@ function MapToolbar({
   clearDistricts,
   isMobile,
   mapLocked,
+  playerName,
 }) {
   if (isMobile && mapLocked) return null;
 
@@ -464,7 +489,7 @@ function MapToolbar({
           <option value="">Şehir seçin...</option>
           {mapCities.map((c) => (
             <option key={c.name} value={c.name}>
-              {c.name}
+              {c.name} — {c.owner || (c.status === 'bot' ? 'Bot' : 'Boş')}
             </option>
           ))}
         </select>
@@ -496,10 +521,14 @@ function MapToolbar({
       {selectedProvince && (
         <div className="map-province-bar">
           <span>
-            {loadingDistricts ? 'İlçeler yükleniyor...' : `${selectedProvince.name} ilçeleri`}
+            {selectedProvince.ownTerritory
+              ? `${selectedProvince.name} — ${playerName} (bölge sınırı)`
+              : loadingDistricts
+                ? 'İlçeler yükleniyor...'
+                : `${selectedProvince.name} ilçeleri`}
           </span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={clearDistricts}>
-            İl görünümüne dön
+            {selectedProvince.ownTerritory ? 'Türkiye görünümü' : 'İl görünümüne dön'}
           </button>
         </div>
       )}

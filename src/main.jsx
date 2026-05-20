@@ -5,6 +5,7 @@ import './index.css';
 import './styles/hud-shell.css';
 import './styles/hud-revisions.css';
 import './styles/hud-radical.css';
+import './styles/hud-mobile-fix.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {

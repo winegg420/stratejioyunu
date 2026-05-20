@@ -70,6 +70,7 @@ export default function BuildingCard({ building }) {
         'building-card',
         upgrading && 'upgrading',
         isBlocked && 'building-card--blocked',
+        isUnbuilt && 'building-card--unbuilt',
         isUnbuilt && prereqsMet && 'building-card--starter',
       ]
         .filter(Boolean)

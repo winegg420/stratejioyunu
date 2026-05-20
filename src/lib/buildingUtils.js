@@ -66,18 +66,21 @@ export function formatPrerequisiteList(unmet) {
     .join(' · ');
 }
 
+export const STARTER_BUILT_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
+
 export function createStarterBuildings() {
   return buildingDefs.map((b) => {
     const levelOne = getLevelOneSpec(b.id);
+    const preBuilt = STARTER_BUILT_BUILDING_IDS.includes(b.id);
     return {
       ...b,
-      level: 0,
+      level: preBuilt ? 1 : 0,
       cost: levelOne?.cost ?? b.cost,
       time: levelOne?.time ?? b.time,
       upgrading: false,
       producing: false,
-      locked: PANEL_LOCKED_BUILDING_IDS.includes(b.id),
-      built: false,
+      locked: preBuilt ? false : PANEL_LOCKED_BUILDING_IDS.includes(b.id),
+      built: preBuilt,
     };
   });
 }

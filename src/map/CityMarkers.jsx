@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { Marker } from 'react-leaflet';
+import { Marker, Tooltip } from 'react-leaflet';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { getCityOwnerLabel } from './mapOwnership';
 import {
   createActiveHqIcon,
   createCityMarkerIcon,
@@ -50,6 +52,7 @@ export default function CityMarkers({
     () => buildMarkerList(mapCities, playerCities),
     [mapCities, playerCities],
   );
+  const playerName = getCurrentPlayerName();
 
   return (
     <>
@@ -76,7 +79,19 @@ export default function CityMarkers({
             icon={icon}
             zIndexOffset={isActive ? 1200 : city.isOwn ? 400 : 0}
             eventHandlers={{ click: () => onSelectCity(city) }}
-          />
+          >
+            <Tooltip
+              permanent
+              direction="top"
+              offset={[0, -6]}
+              className="map-city-label-tooltip"
+            >
+              <span className="map-city-label__name">{city.name}</span>
+              <span className="map-city-label__owner">
+                {getCityOwnerLabel(city, playerName)}
+              </span>
+            </Tooltip>
+          </Marker>
         );
       })}
     </>

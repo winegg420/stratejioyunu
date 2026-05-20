@@ -1,0 +1,200 @@
+/* ═══ Mobil düzen düzeltmeleri — sayfa çakışması / taşma ═══ */
+
+@media (max-width: 900px) {
+  :root {
+    --resource-bar-h: 64px;
+  }
+
+  /* Uygulama kabuğu: tek scroll alanı content-area */
+  .app-shell.hud-shell {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0 !important;
+  }
+
+  .main-shell {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-area {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.65rem 0.5rem calc(var(--bottom-nav-h) + 0.65rem) !important;
+    position: relative;
+    z-index: 2;
+    isolation: isolate;
+  }
+
+  .page {
+    max-width: none;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+  }
+
+  /* Kaynak barı — sabit yükseklik, içerik taşmasın */
+  .resource-bar {
+    height: var(--resource-bar-h) !important;
+    min-height: var(--resource-bar-h);
+    max-height: var(--resource-bar-h);
+    overflow: hidden;
+  }
+
+  .resource-bar-inner {
+    height: 100%;
+    min-height: 0;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 0.35rem;
+  }
+
+  .resources-row {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 0.2rem !important;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .resource-item {
+    min-width: 0 !important;
+    padding: 0.12rem 0.15rem !important;
+    overflow: hidden;
+  }
+
+  .resource-bar--steel .res-value {
+    font-size: 0.68rem !important;
+    line-height: 1.15;
+  }
+
+  .resource-bar--steel .res-hourly,
+  .resource-item .res-bar,
+  .resource-item .res-rate {
+    display: none !important;
+  }
+
+  .res-label {
+    font-size: 0.48rem !important;
+    line-height: 1.1;
+  }
+
+  .res-stgn-badge {
+    display: none;
+  }
+
+  .resource-bar-actions {
+    flex-shrink: 0;
+  }
+
+  /* clip-path mobilde render bug'ı yapabiliyor */
+  .hud-shell .panel,
+  .app-shell.hud-shell .panel,
+  .hud-shell .card:not(.building-card--blocked),
+  .app-shell.hud-shell .card:not(.building-card--blocked) {
+    clip-path: none !important;
+  }
+
+  /* Ana sayfa panelleri alt alta */
+  .home-panels-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .home-panels-row > * {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .home-status-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .home-stat-block {
+    flex: none !important;
+    min-width: 0 !important;
+  }
+
+  /* Binalar / kışla grid */
+  .buildings-page.page-wrapper,
+  .buildings-grid {
+    z-index: auto !important;
+    isolation: auto !important;
+  }
+
+  .page--console .card-grid,
+  .buildings-page .buildings-grid {
+    gap: 10px !important;
+  }
+
+  /* Harita sayfası — tam ekran flex */
+  .route-map .content-area {
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .route-map .map-page-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    width: 100%;
+  }
+
+  .route-map .map-page {
+    flex: 1;
+    min-height: 0;
+    height: auto !important;
+  }
+
+  .route-map .map-container-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Geçiş loader alt menünün altında kalsın */
+  .route-transition-loader {
+    z-index: 900 !important;
+    pointer-events: none !important;
+  }
+
+  /* Alt menü her zaman üstte */
+  .bottom-nav {
+    z-index: 1200 !important;
+  }
+
+  .resource-bar {
+    z-index: 1210 !important;
+  }
+
+  /* Harita dışında harita elemanları kesin gizli */
+  .app-shell:not(.route-map) .map-page,
+  .app-shell:not(.route-map) .map-page-wrapper,
+  .app-shell:not(.route-map) .map-container-wrap,
+  .app-shell:not(.route-map) .turkey-map {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+}

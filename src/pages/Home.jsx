@@ -2,6 +2,7 @@ import PageHeader from '../components/PageHeader';
 import NewsFeed from '../components/NewsFeed';
 import CityStatusPanel from '../components/CityStatusPanel';
 import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
+import HomeRegionPreview from '../components/HomeRegionPreview';
 import { newsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
@@ -71,6 +72,7 @@ export default function Home() {
       </div>
 
       <div className="home-panels-row">
+        <HomeRegionPreview />
         <CityStatusPanel />
         <ExpeditionTrackerPanel />
       </div>

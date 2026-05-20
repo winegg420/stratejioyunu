@@ -49,10 +49,10 @@ export default function Layout() {
   }, [pathname, clearNavBadge]);
 
   useEffect(() => {
-    if (!isMapPage) {
-      document.body.classList.remove('map-scroll-locked');
-    }
-  }, [isMapPage]);
+    document.body.classList.remove('map-scroll-locked');
+    if (!isMapPage) return undefined;
+    return () => document.body.classList.remove('map-scroll-locked');
+  }, [pathname, isMapPage]);
 
   return (
     <div

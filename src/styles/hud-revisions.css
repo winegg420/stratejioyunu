@@ -1183,3 +1183,202 @@ button {
   opacity: 0.25;
   cursor: not-allowed;
 }
+
+/* Inşa edilmemiş binalar — silüet + hafif blur */
+.building-card--unbuilt {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.building-card--unbuilt .card-visual {
+  position: relative;
+}
+
+.building-card--unbuilt .card-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(4, 10, 18, 0.22);
+  pointer-events: none;
+}
+
+.building-card--unbuilt .building-card__img,
+.building-card--unbuilt .building-img-wrap .building-card__img {
+  filter: blur(1px) saturate(0.7) brightness(0.82) !important;
+  opacity: 0.9 !important;
+}
+
+.building-card--blocked {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.building-card--blocked .building-card__img,
+.building-card--blocked .building-img-wrap .building-card__img {
+  filter: blur(1.5px) saturate(0.55) brightness(0.75) !important;
+  opacity: 0.88 !important;
+}
+
+.building-card--blocked .building-blocked-overlay {
+  background: rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(0.5px);
+}
+
+/* Harita şehir etiketleri */
+.leaflet-tooltip.map-city-label-tooltip {
+  background: rgba(4, 12, 22, 0.92) !important;
+  border: 1px solid rgba(0, 240, 255, 0.35) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+  padding: 0.25rem 0.45rem !important;
+  color: #d1d5db !important;
+  font-family: var(--font-ui) !important;
+  line-height: 1.25 !important;
+  white-space: nowrap;
+}
+
+.leaflet-tooltip.map-city-label-tooltip::before {
+  border-top-color: rgba(0, 240, 255, 0.35) !important;
+}
+
+.map-city-label__name {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e8f4ff;
+}
+
+.map-city-label__owner {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: #22ff88;
+  letter-spacing: 0.05em;
+}
+
+.player-territory-label {
+  background: none !important;
+  border: none !important;
+}
+
+.player-territory-label__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 0.55rem;
+  background: rgba(2, 14, 10, 0.82);
+  border: 1px solid rgba(34, 255, 136, 0.45);
+  border-radius: 4px;
+  box-shadow: 0 0 18px rgba(34, 255, 136, 0.2);
+  pointer-events: none;
+}
+
+.player-territory-label__region {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(200, 255, 220, 0.85);
+}
+
+.player-territory-label__owner {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #22ff88;
+  text-shadow: 0 0 10px rgba(34, 255, 136, 0.45);
+}
+
+/* Ana merkez bölge haritası */
+.home-region-preview {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.home-region-preview__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.home-region-preview__head .panel-title {
+  margin: 0;
+}
+
+.home-region-preview__sub {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.home-region-preview__sub strong {
+  color: #22ff88;
+}
+
+.home-region-preview__canvas {
+  aspect-ratio: 4 / 3;
+  min-height: 160px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 6px;
+  background: radial-gradient(ellipse at center, rgba(0, 40, 60, 0.35), rgba(2, 6, 12, 0.95));
+  overflow: hidden;
+}
+
+.home-region-preview__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.home-region-preview__land {
+  fill: rgba(10, 30, 45, 0.85);
+  stroke: #22ff88;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px rgba(34, 255, 136, 0.35));
+}
+
+.home-region-preview__city-dot {
+  fill: #22ff88;
+  stroke: #031a0f;
+  stroke-width: 0.4;
+}
+
+.home-region-preview__city-label {
+  fill: rgba(220, 240, 255, 0.9);
+  font-size: 3.2px;
+  font-family: var(--font-ui);
+  text-anchor: middle;
+}
+
+.home-region-preview__owner-label {
+  fill: #22ff88;
+  font-size: 4px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.home-region-preview__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .home-panels-row {
+    flex-wrap: wrap;
+  }
+
+  .home-region-preview {
+    flex: 1 1 100%;
+  }
+}

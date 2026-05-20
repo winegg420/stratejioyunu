@@ -9,6 +9,8 @@ import {
 import { getDefaultIdlePopulation } from '../lib/populationUtils';
 import { loadPlayerMeta } from '../lib/playerMetaStorage';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
@@ -47,6 +49,11 @@ export function createFoundCityState(troopPayload = {}) {
 }
 
 export function createInitialGameState(playerMeta = loadPlayerMeta()) {
+  const playerCities = [
+    { id: 'izmir', name: 'İzmir', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
+    { id: 'cesme', name: 'Çeşme', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
+  ];
+
   return {
     activeCityId: 'izmir',
     now: Date.now(),
@@ -56,10 +63,7 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     mapRouteSyncRev: 0,
     incomingAttacks: [],
     researches: createStarterResearches().map((r) => ({ ...r })),
-    playerCities: [
-      { id: 'izmir', name: 'İzmir', province: '35', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
-      { id: 'cesme', name: 'Çeşme', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
-    ],
+    playerCities,
     cities: {
       izmir: createCityState({
         idleAgents: 6,
@@ -74,7 +78,11 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
       }),
       cesme: createCityState(),
     },
-    mapCities: mapCities.map((c) => ({ ...c })),
+    mapCities: syncMapCitiesForPlayer(
+      mapCities.map((c) => ({ ...c })),
+      playerCities,
+      getCurrentPlayerName(),
+    ),
     expeditions: [],
     intelOperations: [],
     reports: reports.map((r) => ({ ...r })),
