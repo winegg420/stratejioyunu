@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -16,9 +17,11 @@ import MapMaxBounds from './MapMaxBounds';
 import MapMiniMap from './MapMiniMap';
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
 import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
-import { CITY_STATUS_COLORS, getProvinceStyle, getHoverStyle } from './mapUtils';
+import { getProvinceStyle, getHoverStyle } from './mapUtils';
 import CityTerritoryLayer from './CityTerritoryLayer';
-import { getCurrentPlayerName } from '../lib/playerIdentity';
+import NeighborCountriesLayer from './NeighborCountriesLayer';
+import TacticalSearchConsole from './TacticalSearchConsole';
+import { normalizeMapCities } from './botCityUtils';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
@@ -84,11 +87,15 @@ function MapCoordTooltip({ hover }) {
 }
 
 export default function TurkeyMap() {
+  const navigate = useNavigate();
   const [mapReady, setMapReady] = useState(false);
-  const mapCities = useGameStore((s) => s.mapCities);
+  const mapCitiesRaw = useGameStore((s) => s.mapCities);
+  const mapCities = useMemo(() => normalizeMapCities(mapCitiesRaw), [mapCitiesRaw]);
   const expeditions = useGameStore((s) => s.expeditions);
   const mapFocusRequest = useGameStore((s) => s.mapFocusRequest);
   const clearMapFocusRequest = useGameStore((s) => s.clearMapFocusRequest);
+  const mapTargetPickRequest = useGameStore((s) => s.mapTargetPickRequest);
+  const fulfillMapTargetPick = useGameStore((s) => s.fulfillMapTargetPick);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks);
@@ -151,8 +158,6 @@ export default function TurkeyMap() {
       }
     );
   }, [activePlayerCity, mapCities]);
-
-  const playerName = getCurrentPlayerName();
 
   useEffect(() => {
     setMapReady(true);
@@ -224,9 +229,26 @@ export default function TurkeyMap() {
   const handleCityHover = useCallback((payload) => setHoverCoord(payload), []);
   const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
 
+  const handleSelectCity = useCallback((city) => {
+    if (mapTargetPickRequest) {
+      const own = new Set(playerCities.map((c) => c.name));
+      if (own.has(city.name)) return;
+      fulfillMapTargetPick(city.name);
+      navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
+      return;
+    }
+    setSelectedCity(city);
+  }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate]);
+
   return (
     <div
-      className={`map-page map-page--cyber map-page--tactical ${mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked'}`}
+      className={[
+        'map-page',
+        'map-page--cyber',
+        'map-page--tactical',
+        mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked',
+        mapTargetPickRequest && 'map-page--pick-target',
+      ].filter(Boolean).join(' ')}
     >
       {isMobile && (
         <div className="map-mobile-controls map-mobile-controls--cyber">
@@ -248,15 +270,17 @@ export default function TurkeyMap() {
                 const city = mapCities.find((c) => c.name === name);
                 if (city) {
                   setFlyTarget({ lat: city.lat, lng: city.lng });
-                  setSelectedCity(city);
-                  setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+                  handleSelectCity(city);
+                  if (!mapTargetPickRequest) {
+                    setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+                  }
                 }
               }}
             >
               <option value="">Şehir ara...</option>
               {mapCities.map((c) => (
                 <option key={c.name} value={c.name}>
-                  {c.name} — {c.owner || (c.status === 'bot' ? 'Bot' : 'Boş')}
+                  {c.name} — {c.status === 'bot' ? 'BOT' : (c.owner || 'Boş')}
                 </option>
               ))}
             </select>
@@ -271,26 +295,34 @@ export default function TurkeyMap() {
 
       <MapCoordTooltip hover={hoverCoord} />
 
+      {mapTargetPickRequest && (
+        <div className="map-pick-target-banner" role="status">
+          [ HEDEF SEÇ ] — Haritada bir düşman üssüne tıklayın
+        </div>
+      )}
+
       <div className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical">
-        <MapToolbar
-          mapCities={mapCities}
-          cityPick={cityPick}
-          setCityPick={setCityPick}
-          onCitySelect={(city) => {
-            setCityPick(city.name);
-            setFlyTarget({ lat: city.lat, lng: city.lng });
-            setSelectedCity(city);
-            setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
-          }}
-          search={search}
-          setSearch={setSearch}
-          searchCoord={searchCoord}
-          setSearchCoord={setSearchCoord}
-        handleSearch={handleSearch}
-        scanPulse={scanPulse}
-        isMobile={isMobile}
-        mapLocked={mapLocked}
-      />
+        {(!isMobile || !mapLocked) && (
+          <TacticalSearchConsole
+            mapCities={mapCities}
+            cityPick={cityPick}
+            setCityPick={setCityPick}
+            onCitySelect={(city) => {
+              setCityPick(city.name);
+              setFlyTarget({ lat: city.lat, lng: city.lng });
+              handleSelectCity(city);
+              if (!mapTargetPickRequest) {
+                setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+              }
+            }}
+            search={search}
+            setSearch={setSearch}
+            searchCoord={searchCoord}
+            setSearchCoord={setSearchCoord}
+            handleSearch={handleSearch}
+            scanPulse={scanPulse}
+          />
+        )}
         <div className="map-tactical-overlay" aria-hidden="true">
           <div className="map-tactical-grid" />
           <div className="map-tactical-scanlines" />
@@ -320,6 +352,7 @@ export default function TurkeyMap() {
           <MapMaxBounds />
           {isMobile && <MapInteractionController interactionLocked={interactionLocked} />}
           <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
+          <NeighborCountriesLayer />
           {provinces && (
             <GeoJSON
               key="provinces-radar"
@@ -334,7 +367,6 @@ export default function TurkeyMap() {
           <CityTerritoryLayer
             mapCities={filteredCities}
             playerCities={playerCities}
-            playerName={playerName}
           />
           <MapBoundsReporter onViewportChange={setViewportStable} />
           <MapAnimatedLayers
@@ -348,7 +380,7 @@ export default function TurkeyMap() {
             activeCityId={activeCityId}
             underAttack={underAttack}
             incomingAttacks={incomingAttacks}
-            onSelectCity={setSelectedCity}
+            onSelectCity={handleSelectCity}
             onCityHover={handleCityHover}
             onCityHoverEnd={handleCityHoverEnd}
           />
@@ -390,85 +422,6 @@ export default function TurkeyMap() {
         {selectedCity && (
           <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
         )}
-      </div>
-    </div>
-  );
-}
-
-function MapToolbar({
-  mapCities,
-  cityPick,
-  setCityPick,
-  onCitySelect,
-  search,
-  setSearch,
-  searchCoord,
-  setSearchCoord,
-  handleSearch,
-  scanPulse,
-  isMobile,
-  mapLocked,
-}) {
-  if (isMobile && mapLocked) return null;
-
-  return (
-    <div className="map-toolbar map-toolbar--cyber map-toolbar--console">
-      <div className="map-console-header">
-        <span className="map-console-header__bolt" aria-hidden="true">◆ ◆</span>
-        <span className="map-console-header__title">[ TACTICAL SEARCH CONSOLE ]</span>
-        <span className="map-console-header__bolt" aria-hidden="true">◆ ◆</span>
-      </div>
-      <div className="map-city-search">
-        <label className="map-city-search-label" htmlFor="map-city-select">
-          Şehir Ara
-        </label>
-        <select
-          id="map-city-select"
-          className="map-city-select"
-          value={cityPick}
-          onChange={(e) => {
-            const name = e.target.value;
-            setCityPick(name);
-            const city = mapCities.find((c) => c.name === name);
-            if (city) onCitySelect(city);
-          }}
-        >
-          <option value="">Şehir seçin...</option>
-          {mapCities.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.name} — {c.owner || (c.status === 'bot' ? 'Bot' : 'Boş')}
-            </option>
-          ))}
-        </select>
-      </div>
-      <form className="map-search map-search--console" onSubmit={handleSearch}>
-        <input
-          type="text"
-          className="map-search-input"
-          placeholder="Şehir veya oyuncu ara..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <input
-          type="text"
-          className="map-search-coord"
-          placeholder="Koordinat: 38.42, 27.14"
-          value={searchCoord}
-          onChange={(e) => setSearchCoord(e.target.value)}
-        />
-        <button
-          type="submit"
-          className={`btn map-search-btn map-search-btn--scan${scanPulse ? ' is-scanning' : ''}`}
-        >
-          [ TARAMA BAŞLAT ]
-        </button>
-      </form>
-      <div className="map-legend map-legend--cyber">
-        <span><i className="legend-dot legend-dot--attack" /> Saldırı rotası</span>
-        <span><i className="legend-dot legend-dot--spy" /> Casus rotası</span>
-        <span><i className="legend-dot legend-dot--return" /> Geri dönüş</span>
-        <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
-        <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman / Boş</span>
       </div>
     </div>
   );

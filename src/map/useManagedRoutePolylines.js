@@ -5,9 +5,10 @@ import { isCleansedGhostEndpoint } from './mapRouteUtils';
 function routePathOptions(route) {
   return {
     color: route.color,
-    weight: 3,
-    opacity: 0.92,
+    weight: 3.5,
+    opacity: 0.95,
     dashArray: route.dashArray,
+    dashOffset: '0',
     lineCap: 'round',
     className: route.className,
   };

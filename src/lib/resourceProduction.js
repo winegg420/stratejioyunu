@@ -5,6 +5,7 @@ import {
   pruneCyberEffects,
   pruneKbrnEffects,
 } from './happinessSystem';
+import { getGovernanceProductionMultiplier } from './presidencySystem';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -73,8 +74,32 @@ function applyDepotFreeze(resources) {
   });
 }
 
-/** Bina oranları → işçi cezası → VIP çarpanı → depo dondurması. */
-export function applyProductionFreeze(resources, buildings, cityOrIdlePop, productionMultiplier = 1) {
+function applyGovernanceProductionBonus(resources, governanceStyle) {
+  const mult = getGovernanceProductionMultiplier(governanceStyle);
+  if (!governanceStyle || mult === 1) return resources;
+
+  return resources.map((r) => {
+    if (!PRODUCTION_RESOURCE_IDS.has(r.id)) {
+      return { ...r, governanceProductionBonus: false };
+    }
+    const hourly = parseHourlyRate(r.rate);
+    if (hourly <= 0) return { ...r, governanceProductionBonus: false };
+    return {
+      ...r,
+      rate: formatRate(Math.max(0, Math.floor(hourly * mult))),
+      governanceProductionBonus: mult > 1,
+    };
+  });
+}
+
+/** Bina oranları → işçi cezası → VIP çarpanı → mutluluk → ideoloji → depo dondurması. */
+export function applyProductionFreeze(
+  resources,
+  buildings,
+  cityOrIdlePop,
+  productionMultiplier = 1,
+  governanceStyle = null,
+) {
   const idlePop = typeof cityOrIdlePop === 'object'
     ? getIdlePopulation(cityOrIdlePop)
     : (cityOrIdlePop ?? 1);
@@ -95,9 +120,15 @@ export function applyProductionFreeze(resources, buildings, cityOrIdlePop, produ
     const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
     const happiness = computeCityHappiness(
       { ...city, cyberEffects, kbrnEffects, resources: withRates },
-      { cityId: city.cityId, incomingAttacks: city._incomingAttacks, expeditions: city._expeditions },
+      {
+        cityId: city.cityId,
+        incomingAttacks: city._incomingAttacks,
+        expeditions: city._expeditions,
+        governanceStyle: governanceStyle ?? city._governanceStyle ?? null,
+      },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
+    withRates = applyGovernanceProductionBonus(withRates, governanceStyle ?? city._governanceStyle ?? null);
   }
 
   return applyDepotFreeze(withRates);

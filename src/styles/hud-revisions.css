@@ -887,6 +887,214 @@ button {
   list-style: none;
 }
 
+/* Askeri boş kuyruk durumu */
+.queue-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1rem;
+  margin: 0.25rem 0;
+  list-style: none;
+  text-align: center;
+  border: 1px dashed rgba(0, 240, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(6, 14, 28, 0.85) 0%, rgba(4, 10, 22, 0.95) 100%);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.queue-empty-state__icon {
+  font-size: 1.35rem;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.35));
+}
+
+.queue-empty-state__tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: rgba(0, 240, 255, 0.75);
+}
+
+.queue-empty-state__title {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(200, 220, 240, 0.88);
+}
+
+.queue-empty-state__hint {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.expedition-tracker-panel--empty .queue-empty-state {
+  margin-top: 0.5rem;
+  border-style: solid;
+  border-color: rgba(100, 140, 220, 0.15);
+}
+
+/* Ana merkez — üs istatistik kartı (mini harita yerine) */
+.home-city-stats {
+  flex: 1 1 280px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-city-stats__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.home-city-stats__head .panel-title {
+  margin: 0;
+}
+
+.home-city-stats__badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  color: rgba(0, 240, 255, 0.8);
+}
+
+.home-city-stats__intro {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.home-city-stats__intro strong {
+  color: rgba(0, 240, 255, 0.9);
+}
+
+.home-city-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.home-city-stats__row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  background: rgba(0, 240, 255, 0.03);
+}
+
+.home-city-stats__row--warn {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(40, 28, 6, 0.25);
+}
+
+.home-city-stats__icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.home-city-stats__label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.home-city-stats__value {
+  display: block;
+  font-size: 0.88rem;
+  color: #e8f4ff;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-city-stats__meta {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.home-city-stats__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.65rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 240, 255, 0.12);
+  font-size: 0.72rem;
+}
+
+.home-city-stats__shield {
+  color: rgba(74, 222, 128, 0.9);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.home-city-stats__link {
+  color: rgba(0, 240, 255, 0.85);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.home-city-stats__link:hover {
+  text-decoration: underline;
+}
+
+/* Koruma rozeti — parlak askeri vurgu */
+.protection-badge--active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(74, 222, 128, 0.55);
+  background: linear-gradient(135deg, rgba(6, 48, 28, 0.9), rgba(12, 72, 40, 0.75));
+  box-shadow:
+    0 0 12px rgba(74, 222, 128, 0.35),
+    0 0 0 1px rgba(74, 222, 128, 0.15) inset;
+  border-radius: 3px;
+  cursor: help;
+  animation: protection-pulse 2.5s ease-in-out infinite;
+}
+
+.protection-badge__icon {
+  font-size: 0.95rem;
+  filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.8));
+}
+
+.protection-badge__text {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6dffaa;
+  text-shadow: 0 0 8px rgba(109, 255, 170, 0.55);
+}
+
+@keyframes protection-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(74, 222, 128, 0.3),
+      0 0 0 1px rgba(74, 222, 128, 0.12) inset;
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(74, 222, 128, 0.5),
+      0 0 0 1px rgba(74, 222, 128, 0.25) inset;
+  }
+}
+
 .panel-title__icon {
   margin-right: 8px;
   opacity: 0.8;

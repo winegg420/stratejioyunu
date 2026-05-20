@@ -1,4 +1,5 @@
-﻿import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
+﻿import QueueEmptyState from './QueueEmptyState';
+import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 
 const DIRECTION_META = {
@@ -64,7 +65,13 @@ export default function ExpeditionTrackerPanel() {
     return (
       <section className="expedition-tracker-panel expedition-tracker-panel--empty">
         <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
-        <p className="expedition-tracker-empty">Yolda aktif sefer yok. Haritadan sefer başlatın.</p>
+        <QueueEmptyState
+          as="div"
+          tag="[ SEFER YOK ]"
+          title="Yolda aktif sefer yok"
+          hint="Harita sekmesinden hedef seçerek saldırı veya keşif seferi başlatın."
+          icon="⚔"
+        />
       </section>
     );
   }

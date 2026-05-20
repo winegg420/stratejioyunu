@@ -34,6 +34,8 @@ export const BUILDING_RESOURCE_MAP = {
   factory: 'metal',
   plant: 'energy',
   tax: 'money',
+  /** KBRN / ileri Ar-Ge — çok düşük saatlik uranyum (Ar-Ge Sv.8+) */
+  research: 'uranium',
 };
 
 export const BASE_HOURLY = {
@@ -42,6 +44,7 @@ export const BASE_HOURLY = {
   factory: 15,
   plant: 8,
   tax: 22,
+  research: 0.4,
 };
 
 export const HOURLY_PER_LEVEL = {
@@ -50,7 +53,11 @@ export const HOURLY_PER_LEVEL = {
   factory: 3,
   plant: 1.5,
   tax: 4,
+  research: 0.12,
 };
+
+/** Ar-Ge Merkezi bu seviyeden itibaren uranyum üretir */
+export const URANIUM_RESEARCH_UNLOCK_LEVEL = 8;
 
 export function computeBuildingHourly(buildingId, level) {
   const base = BASE_HOURLY[buildingId] ?? 0;
@@ -62,10 +69,12 @@ export function recalculateResourceRates(buildings, resources, productionMultipl
   const mult = productionMultiplier > 0 ? productionMultiplier : 1;
   const hourlyByResource = {};
   for (const b of buildings) {
-    if ((b.level ?? 0) < 1) continue;
+    const lv = b.level ?? 0;
+    if (lv < 1) continue;
+    if (b.id === 'research' && lv < URANIUM_RESEARCH_UNLOCK_LEVEL) continue;
     const resId = BUILDING_RESOURCE_MAP[b.id];
     if (!resId) continue;
-    hourlyByResource[resId] = (hourlyByResource[resId] || 0) + computeBuildingHourly(b.id, b.level);
+    hourlyByResource[resId] = (hourlyByResource[resId] || 0) + computeBuildingHourly(b.id, lv);
   }
 
   return resources.map((r) => {

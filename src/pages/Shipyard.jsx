@@ -1,5 +1,7 @@
 import PageHeader from '../components/PageHeader';
 import UnitCard from '../components/UnitCard';
+import ActiveQueue from '../components/ActiveQueue';
+import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { seaUnits } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
@@ -17,17 +19,28 @@ export default function Shipyard() {
         subtitle="Deniz birlikleri — Tersane inşa edildikten sonra üretilir."
       />
       {!isCoastal ? (
-        <div className="alert alert-warn">
-          Bu şehir iç bölgede. Deniz kuvveti üretmek için kıyı şehri seçmelisiniz.
-        </div>
+        <MilitaryEmptyState
+          variant="panel"
+          tag="[ KIYI GEREKLİ ]"
+          icon="🌊"
+          title="İç bölge — tersane kapalı"
+          hint="Deniz birlikleri üretmek için kıyı şehri seçin (üst çubuktan şehir değiştirin)."
+        />
       ) : (
-        <div className="card-grid">
-          {seaUnits.map((u) => (
-            <LockedFeatureGate key={u.id} buildingId="shipyard" featureName={u.name}>
-              <UnitCard unit={u} />
-            </LockedFeatureGate>
-          ))}
-        </div>
+        <>
+          <ActiveQueue
+            title={`Aktif Kuyruk — ${activeCity?.name ?? 'Şehir'}`}
+            queueType="production"
+            emptyText="Deniz birliği üretimi için bir gemi seçip kuyruğa ekleyin."
+          />
+          <div className="card-grid">
+            {seaUnits.map((u) => (
+              <LockedFeatureGate key={u.id} buildingId="shipyard" featureName={u.name}>
+                <UnitCard unit={u} />
+              </LockedFeatureGate>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

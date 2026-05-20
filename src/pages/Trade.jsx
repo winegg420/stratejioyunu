@@ -200,8 +200,11 @@ export default function Trade() {
           </ul>
         ) : (
           <EmptyState
+            tag="[ KONVOY YOK ]"
             icon="🐪"
             title="Yolda kervan yok"
+            actionLabel="Haritayı Aç"
+            actionTo="/harita"
             description="Kaynak gönderdiğinizde neon ticaret hattı ve hareketli kargo haritada görünür."
           />
         )}

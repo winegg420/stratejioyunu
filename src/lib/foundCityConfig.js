@@ -4,7 +4,7 @@ import { EMPTY_AWAY_MAP, getTroopStock } from './troopStock';
 export const FOUND_CITY_COLONIST_ID = 'colonist';
 export const FOUND_CITY_UNIT_LABEL = 'Göçmen / İnşaat Aracı';
 export const FOUND_CITY_MIN_COLONISTS = 1;
-export const FOUND_CITY_COST = '2.000 metal · 1.500 yemek · 500 para';
+export const FOUND_CITY_COST = '2.000 metal · 1.500 nüfus · 500 bütçe';
 
 export const FOUND_CITY_DEFAULT_NAMES = ['Yeni Koloni', 'Siber Üs'];
 

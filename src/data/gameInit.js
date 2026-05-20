@@ -6,18 +6,22 @@ import {
   getStarterIdleTroops,
   getStarterResources,
 } from '../lib/buildingUtils';
+import { ensureCityResources } from './resourceCatalog';
 import { enrichCityModel } from '../lib/cityModel';
 import { getDefaultIdlePopulation } from '../lib/populationUtils';
 import { loadPlayerMeta } from '../lib/playerMetaStorage';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { loadPlayerGovernance } from '../lib/briefingStorage';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
   const vipMult = overrides.vipProductionMultiplier
     ?? getVipProductionMultiplier(loadPlayerMeta().vipTier ?? 0);
-  const baseResources = (overrides.resources ?? getStarterResources()).map((r) => ({ ...r }));
+  const baseResources = ensureCityResources(
+    (overrides.resources ?? getStarterResources()).map((r) => ({ ...r })),
+  );
   const base = {
     resources: baseResources,
     buildings: bld.map((b) => ({ ...b })),
@@ -95,6 +99,8 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     pastExpeditions: [],
     navBadges: { expeditions: false, reports: false },
     mapFocusRequest: null,
+    mapTargetPickRequest: null,
+    mapTargetPickResult: null,
     flashes: {},
     meydanBattle: null,
     cyberOpsLog: [],
@@ -102,5 +108,6 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     newsLog: [],
     lastCbrnEventAt: 0,
     _cbrnTickCount: 0,
+    playerGovernance: loadPlayerGovernance(getCurrentPlayerName()),
   };
 }

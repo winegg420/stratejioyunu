@@ -102,7 +102,7 @@ function UnitBody({ data }) {
           <dd>{data.cargo} birim</dd>
         </div>
         <div>
-          <dt>Yakıt / sefer</dt>
+          <dt>Petrol / sefer</dt>
           <dd>{data.fuelPerSortie}</dd>
         </div>
         <div>

@@ -189,11 +189,11 @@ export const BUILDING_ENCYCLOPEDIA = {
     effectLabel: 'Komuta menzili',
     perLevel: (lv) => `Radar +${lv * 8} km · Yeni üs koruması +${lv} gün`,
   },
-  farm: { lore: 'Gıda ve ikmal üretimi. Nüfus ve moral için kritik.', effectLabel: 'Saatlik yemek' },
-  refinery: { lore: 'Yakıt rafinerisi. Motorlu birlikler ve konvoylar için.', effectLabel: 'Saatlik yakıt' },
+  farm: { lore: 'Gıda ve ikmal üretimi. Nüfus ve moral için kritik.', effectLabel: 'Saatlik nüfus' },
+  refinery: { lore: 'Yakıt rafinerisi. Motorlu birlikler ve konvoylar için.', effectLabel: 'Saatlik petrol' },
   factory: { lore: 'Metal ve mühimmat hammaddesi.', effectLabel: 'Saatlik metal' },
   plant: { lore: 'Elektrik üretimi. Endüstri hatları için zorunlu.', effectLabel: 'Saatlik enerji' },
-  tax: { lore: 'Vergi geliri. Yüksek oran moral kaybına yol açar.', effectLabel: 'Saatlik para' },
+  tax: { lore: 'Vergi geliri. Yüksek oran moral kaybına yol açar.', effectLabel: 'Saatlik bütçe' },
   depot: {
     lore: 'Kaynak depolama ve sevkiyat terminali.',
     effectLabel: 'Depo kapasitesi',
@@ -230,9 +230,11 @@ export const BUILDING_ENCYCLOPEDIA = {
     perLevel: (lv) => `Konvoy kapasitesi +${lv * 6}%`,
   },
   research: {
-    lore: 'Askeri teknoloji araştırmaları.',
-    effectLabel: 'Ar-Ge',
-    perLevel: (lv) => `Araştırma hızı +${lv * 3}%`,
+    lore: 'Askeri teknoloji ve KBRN protokolleri. Sv.8+ düşük uranyum üretimi.',
+    effectLabel: 'Uranyum / Ar-Ge',
+    perLevel: (lv) => (lv >= 8
+      ? `Uranyum +${(0.4 + lv * 0.12).toFixed(1)}/sa · Ar-Ge +${lv * 3}%`
+      : `Ar-Ge +${lv * 3}% (Uranyum Sv.8+)`),
   },
   cyber_ops: {
     lore: 'Siber virüs, dezenformasyon ve altyapı baskısı.',

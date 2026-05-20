@@ -112,15 +112,7 @@ export function getBuildingById(city, buildingId) {
   return city?.buildings?.find((b) => b.id === buildingId);
 }
 
-export function getStarterResources() {
-  return [
-    { id: 'food', label: 'Yemek', icon: '🌾', current: 800, max: 5000, rate: '+0/sa' },
-    { id: 'fuel', label: 'Yakıt', icon: '⛽', current: 400, max: 3000, rate: '+0/sa' },
-    { id: 'metal', label: 'Metal', icon: '⚙️', current: 600, max: 4000, rate: '+0/sa' },
-    { id: 'energy', label: 'Enerji', icon: '⚡', current: 200, max: null, rate: '+0/sa' },
-    { id: 'money', label: 'Para', icon: '💰', current: 500, max: 8000, rate: '+0/sa' },
-  ];
-}
+export { getStarterResources, ensureCityResources, normalizeResourceRow } from '../data/resourceCatalog';
 
 export function getStarterIdleTroops() {
   return [
@@ -136,9 +128,9 @@ export function getStarterIdleTroops() {
 
 export function createStarterResearches() {
   const standard = [
-    { id: 'r1', category: 'standard', name: 'Kara Saldırı Teknolojisi', level: 0, max: 15, desc: 'Kara birliklerine +%3 saldırı bonusu', active: false, queued: false, time: '04:22:15', cost: '2.800 metal · 1.200 para' },
+    { id: 'r1', category: 'standard', name: 'Kara Saldırı Teknolojisi', level: 0, max: 15, desc: 'Kara birliklerine +%3 saldırı bonusu', active: false, queued: false, time: '04:22:15', cost: '2.800 metal · 1.200 bütçe' },
     { id: 'r2', category: 'standard', name: 'Üretim Hızı', level: 0, max: 15, desc: 'Tüm kaynak üretimine +%2 bonus', active: false, queued: false, time: '—', cost: '3.500 metal' },
-    { id: 'r3', category: 'standard', name: 'Casusluk Etkinliği', level: 0, max: 15, desc: 'Casus operasyonlarında başarı şansı', active: false, queued: false, time: '—', cost: '4.000 metal · 2.000 para' },
+    { id: 'r3', category: 'standard', name: 'Casusluk Etkinliği', level: 0, max: 15, desc: 'Casus operasyonlarında başarı şansı', active: false, queued: false, time: '—', cost: '4.000 metal · 2.000 bütçe' },
     { id: 'r4', category: 'standard', name: 'Hava Savunma', level: 0, max: 15, desc: 'Hava saldırılarına karşı savunma', active: false, queued: false, time: '—', cost: '5.200 metal' },
   ];
   return [...standard, ...createKbrnResearchTemplates()];

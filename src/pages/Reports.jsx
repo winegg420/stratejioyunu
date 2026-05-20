@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
+import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import ReportFilters from '../components/ReportFilters';
 import ReportDetail from '../components/ReportDetail';
 import BattleSimulator from '../components/BattleSimulator';
@@ -176,11 +177,20 @@ export default function Reports() {
             ))}
           </ul>
           {filtered.length === 0 && (
-            <p className="report-filter-empty">Bu filtrede rapor bulunamadı.</p>
+            <div className="report-filter-empty-wrap">
+              <MilitaryEmptyState
+                variant="inline"
+                tag="[ FİLTRE BOŞ ]"
+                icon="🔍"
+                title="Bu filtrede rapor yok"
+                hint="Farklı bir kategori seçin veya yeni sefer tamamlanmasını bekleyin."
+              />
+            </div>
           )}
         </>
       ) : (
         <EmptyState
+          tag="[ RAPOR ARŞİVİ BOŞ ]"
           icon="📋"
           title="Henüz raporunuz yok"
           description="Sefer, keşif ve casusluk operasyonları tamamlandığında detaylı raporlar burada görünür."

@@ -226,10 +226,12 @@ function MapCommandModal({ city, onClose }) {
   };
 
   const resourceList = display.resources ?? [
-    { id: 'food', label: 'Yemek', icon: '🌾' },
-    { id: 'metal', label: 'Metal', icon: '⚙️' },
-    { id: 'fuel', label: 'Yakıt', icon: '⛽' },
-    { id: 'money', label: 'Para', icon: '💰' },
+    { id: 'food', label: 'Nüfus', icon: '👥' },
+    { id: 'fuel', label: 'Petrol', icon: '🛢️' },
+    { id: 'metal', label: 'Metal', icon: '🔩' },
+    { id: 'energy', label: 'Enerji', icon: '⚡' },
+    { id: 'money', label: 'Bütçe', icon: '💰' },
+    { id: 'uranium', label: 'Uranyum', icon: '☢️' },
   ];
 
   return (

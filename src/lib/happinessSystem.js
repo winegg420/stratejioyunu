@@ -1,6 +1,7 @@
 import { clampHappiness, DEFAULT_HAPPINESS, DEFAULT_TAX_RATE } from './cityModel';
 import { formatRate } from './gameUtils';
 import { BUILDING_RESOURCE_MAP } from './gameUtils';
+import { getGovernanceHappinessDelta } from './presidencySystem';
 
 const PRODUCTION_RESOURCE_IDS = new Set(Object.values(BUILDING_RESOURCE_MAP));
 
@@ -150,6 +151,10 @@ export function computeCityHappiness(city, context = {}) {
 
   const farm = city?.buildings?.find((b) => b.id === 'farm');
   if ((farm?.level ?? 0) >= 5) happiness += 3;
+
+  if (context.governanceStyle) {
+    happiness += getGovernanceHappinessDelta(context.governanceStyle);
+  }
 
   return clampHappiness(happiness);
 }

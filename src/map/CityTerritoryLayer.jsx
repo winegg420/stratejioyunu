@@ -1,15 +1,9 @@
 import { useMemo } from 'react';
-import { Marker, Polygon } from 'react-leaflet';
-import L from 'leaflet';
-import { getCityOwnerLabel } from './mapOwnership';
-import { inferCityTier } from './cyberMapConfig';
+import { Polygon } from 'react-leaflet';
+import { normalizeMapCity } from './botCityUtils';
 
-const RADIUS_DEG = {
-  capital: 0.42,
-  metropolis: 0.32,
-  town: 0.24,
-  default: 0.2,
-};
+/** Tüm şehirler için eşit bölge yarıçapı (İstanbul/Trabzon büyük kutu sorunu) */
+const TERRITORY_RADIUS_DEG = 0.24;
 
 function circleRing(lat, lng, radiusDeg, points = 56) {
   const ring = [];
@@ -44,6 +38,16 @@ function getTerritoryStyle(city) {
       dashArray: '6 8',
     };
   }
+  if (city.status === 'bot') {
+    return {
+      fillColor: '#64748b',
+      fillOpacity: 0.07,
+      color: '#94a3b8',
+      weight: 2,
+      opacity: 0.65,
+      dashArray: '5 7',
+    };
+  }
   return {
     fillColor: '#ef4444',
     fillOpacity: 0.1,
@@ -53,30 +57,17 @@ function getTerritoryStyle(city) {
   };
 }
 
-function territoryLabelIcon(cityName, ownerLabel, isOwn) {
-  return L.divIcon({
-    className: `city-territory-label${isOwn ? ' city-territory-label--own' : ''}`,
-    html: `
-      <div class="city-territory-label__inner">
-        <span class="city-territory-label__city">${cityName}</span>
-        <span class="city-territory-label__owner">${ownerLabel}</span>
-      </div>
-    `,
-    iconSize: [130, 40],
-    iconAnchor: [65, 20],
-  });
-}
-
-export default function CityTerritoryLayer({ mapCities, playerCities, playerName }) {
+export default function CityTerritoryLayer({ mapCities, playerCities }) {
   const cities = useMemo(() => {
     const byName = new Map();
     for (const city of mapCities) {
-      const pc = playerCities.find((p) => p.name === city.name);
-      byName.set(city.name, {
-        ...city,
-        lat: pc?.lat ?? city.lat,
-        lng: pc?.lng ?? city.lng,
-        isOwn: Boolean(pc) || city.status === 'own',
+      const normalized = normalizeMapCity(city);
+      const pc = playerCities.find((p) => p.name === normalized.name || p.name === city.name);
+      byName.set(normalized.name, {
+        ...normalized,
+        lat: pc?.lat ?? normalized.lat,
+        lng: pc?.lng ?? normalized.lng,
+        isOwn: Boolean(pc) || normalized.status === 'own',
       });
     }
     for (const pc of playerCities) {
@@ -96,9 +87,7 @@ export default function CityTerritoryLayer({ mapCities, playerCities, playerName
   return (
     <>
       {cities.map((city) => {
-        const tier = inferCityTier(city);
-        const radius = RADIUS_DEG[tier] ?? RADIUS_DEG.default;
-        const positions = circleRing(city.lat, city.lng, radius);
+        const positions = circleRing(city.lat, city.lng, TERRITORY_RADIUS_DEG);
         const style = getTerritoryStyle(city);
 
         return (
@@ -111,19 +100,6 @@ export default function CityTerritoryLayer({ mapCities, playerCities, playerName
               lineCap: 'round',
             }}
             smoothFactor={1.5}
-          />
-        );
-      })}
-      {cities.map((city) => {
-        const ownerLabel = getCityOwnerLabel(city, playerName);
-        const isOwn = city.isOwn || city.status === 'own';
-        return (
-          <Marker
-            key={`territory-label-${city.name}`}
-            position={[city.lat, city.lng]}
-            icon={territoryLabelIcon(city.name, ownerLabel, isOwn)}
-            interactive={false}
-            zIndexOffset={-100}
           />
         );
       })}

@@ -1,8 +1,10 @@
 import L from 'leaflet';
 import { CITY_STATUS_COLORS } from './mapUtils';
-import { inferCityTier } from './cyberMapConfig';
 
 export const HQ_GREEN = '#22ff88';
+
+const MARKER_PIN_SIZE = 28;
+const MARKER_LABEL_WIDTH = 112;
 
 function escapeHtml(text) {
   return String(text ?? '')
@@ -13,9 +15,14 @@ function escapeHtml(text) {
 }
 
 function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
-  const owner = ownerLabel && ownerLabel !== 'Boş' ? ownerLabel : null;
+  const isBot = city.status === 'bot';
+  const owner = !isBot && ownerLabel && ownerLabel !== 'Boş' ? ownerLabel : null;
+  const botBadge = isBot
+    ? '<span class="map-marker-label__bot">BOT</span>'
+    : '';
   return `
-    <div class="map-marker-label-stack${cyberActive ? ' map-marker-label-stack--cyber' : ''}">
+    <div class="map-marker-label-stack${cyberActive ? ' map-marker-label-stack--cyber' : ''}${isBot ? ' map-marker-label-stack--bot' : ''}">
+      ${botBadge}
       <span class="map-marker-label__city">${escapeHtml(city.name)}</span>
       ${owner ? `<span class="map-marker-label__owner">${escapeHtml(owner)}</span>` : ''}
     </div>
@@ -23,10 +30,9 @@ function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
 }
 
 function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
-  const tier = inferCityTier(city);
-  const width = tier === 'capital' ? 132 : tier === 'metropolis' ? 124 : 116;
-  const pinH = options.pinHeight ?? 28;
-  const labelH = ownerLabel && ownerLabel !== 'Boş' ? 30 : 18;
+  const pinH = options.pinHeight ?? MARKER_PIN_SIZE;
+  const hasOwner = ownerLabel && ownerLabel !== 'Boş' && city.status !== 'bot';
+  const labelH = city.status === 'bot' ? 22 : (hasOwner ? 30 : 18);
   const totalH = pinH + labelH + 4;
 
   return {
@@ -36,8 +42,8 @@ function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
         ${buildLabelStack(city, ownerLabel, options)}
       </div>
     `,
-    iconSize: [width, totalH],
-    iconAnchor: [width / 2, pinH / 2],
+    iconSize: [MARKER_LABEL_WIDTH, totalH],
+    iconAnchor: [MARKER_LABEL_WIDTH / 2, pinH / 2],
   };
 }
 
@@ -54,7 +60,7 @@ export function createActiveHqIcon(city, ownerLabel) {
     `,
     city,
     ownerLabel,
-    { pinHeight: 32 },
+    { pinHeight: 30 },
   );
 
   return L.divIcon({
@@ -79,13 +85,16 @@ export function createOwnCityIcon(city, { underAttack = false, ownerLabel, cyber
 }
 
 export function createCityMarkerIcon(city, { underAttack = false, ownerLabel, cyberActive = false } = {}) {
-  const tier = inferCityTier(city);
-  const color = underAttack ? '#ef4444' : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy);
-  const size = tier === 'capital' ? 36 : tier === 'metropolis' ? 32 : 28;
+  const isBot = city.status === 'bot';
+  const color = underAttack
+    ? '#ef4444'
+    : (isBot ? CITY_STATUS_COLORS.bot : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy));
+  const size = MARKER_PIN_SIZE;
+  const opacity = isBot ? 0.72 : 0.9;
 
   const wrapped = wrapMarker(
     `
-      <svg viewBox="0 0 32 32" width="${size}" height="${size}" style="color:${color}">
+      <svg viewBox="0 0 32 32" width="${size}" height="${size}" style="color:${color};opacity:${opacity}">
         <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.9"/>
         <circle cx="16" cy="16" r="4" fill="currentColor"/>
       </svg>
@@ -96,7 +105,7 @@ export function createCityMarkerIcon(city, { underAttack = false, ownerLabel, cy
   );
 
   return L.divIcon({
-    className: `map-city-marker map-marker-icon${underAttack ? ' map-city-marker--attack' : ''}`,
+    className: `map-city-marker map-marker-icon${underAttack ? ' map-city-marker--attack' : ''}${isBot ? ' map-city-marker--bot' : ''}`,
     ...wrapped,
   });
 }

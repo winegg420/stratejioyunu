@@ -1,0 +1,230 @@
+/* State Mail — resmi liderden lidere şifreli yazışma istemcisi */
+
+.state-mail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.state-mail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  gap: 0.75rem;
+  min-height: 420px;
+  min-width: 0;
+}
+
+.state-mail-inbox {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid rgba(57, 255, 136, 0.18);
+  background: rgba(4, 12, 10, 0.75);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+
+.state-mail-inbox__head {
+  padding: 0.55rem 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(57, 255, 136, 0.75);
+  border-bottom: 1px solid rgba(57, 255, 136, 0.15);
+}
+
+.state-mail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.state-mail-list__item {
+  padding: 0.6rem 0.65rem;
+  border-bottom: 1px solid rgba(40, 80, 60, 0.35);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  transition: background 0.12s;
+}
+
+.state-mail-list__item:hover {
+  background: rgba(57, 255, 136, 0.06);
+}
+
+.state-mail-list__item.is-selected {
+  background: rgba(57, 255, 136, 0.1);
+  border-left: 3px solid #39ff88;
+}
+
+.state-mail-list__item.is-unread .state-mail-list__from {
+  color: #8dffc0;
+}
+
+.state-mail-list__from {
+  display: block;
+  color: rgba(180, 220, 200, 0.9);
+  margin-bottom: 0.15rem;
+}
+
+.state-mail-list__subject {
+  display: block;
+  color: rgba(148, 180, 165, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.state-mail-list__meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.58rem;
+  color: rgba(100, 160, 130, 0.65);
+}
+
+.state-mail-detail,
+.state-mail-compose {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid rgba(57, 255, 136, 0.18);
+  background:
+    linear-gradient(180deg, rgba(6, 14, 12, 0.95) 0%, rgba(3, 8, 7, 0.98) 100%);
+  font-family: var(--font-mono);
+}
+
+.state-mail-detail__head,
+.state-mail-compose__head {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(57, 255, 136, 0.15);
+}
+
+.state-mail-detail__tag,
+.state-mail-compose__tag {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: rgba(57, 255, 136, 0.7);
+  margin-bottom: 0.35rem;
+}
+
+.state-mail-field {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) minmax(0, 1fr);
+  gap: 0.35rem 0.65rem;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+  font-size: 0.68rem;
+}
+
+.state-mail-field__label {
+  color: rgba(100, 160, 130, 0.85);
+  letter-spacing: 0.06em;
+}
+
+.state-mail-field__value {
+  color: rgba(200, 235, 215, 0.95);
+  word-break: break-word;
+}
+
+.state-mail-field__value--encrypt {
+  color: rgba(57, 255, 136, 0.85);
+  font-size: 0.62rem;
+}
+
+.state-mail-detail__body {
+  flex: 1 1 auto;
+  padding: 0.85rem;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: rgba(180, 220, 200, 0.9);
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.state-mail-compose__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  flex: 1 1 auto;
+}
+
+.state-mail-compose__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(100, 160, 130, 0.9);
+}
+
+.state-mail-compose__form input,
+.state-mail-compose__form select,
+.state-mail-compose__form textarea {
+  font-family: inherit;
+  font-size: 0.72rem;
+  padding: 0.45rem 0.55rem;
+  color: #c8ffe0;
+  background: rgba(0, 20, 14, 0.8);
+  border: 1px solid rgba(57, 255, 136, 0.25);
+  border-radius: 2px;
+}
+
+.state-mail-compose__form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.state-mail-send-btn {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  padding: 0.6rem 1rem;
+  color: #041208;
+  background: linear-gradient(180deg, #4de89a 0%, #2ecc71 100%);
+  border: 1px solid rgba(125, 255, 196, 0.6);
+  box-shadow: 0 0 16px rgba(57, 255, 136, 0.3);
+  cursor: pointer;
+}
+
+.state-mail-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.state-mail-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid rgba(57, 255, 136, 0.12);
+}
+
+.state-mail-toolbar .btn {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 900px) {
+  .state-mail-layout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .state-mail-inbox {
+    max-height: 220px;
+  }
+
+  .state-mail-field {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}

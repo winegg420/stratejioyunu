@@ -1,12 +1,6 @@
-const LABEL_TO_ID = {
-  yemek: 'food',
-  metal: 'metal',
-  yakıt: 'fuel',
-  para: 'money',
-  enerji: 'energy',
-  reaktör: 'energy',
-  kapsül: 'energy',
-};
+import { buildResourceLabelToIdMap } from '../data/resourceCatalog';
+
+const LABEL_TO_ID = buildResourceLabelToIdMap();
 
 export function parseUnitCost(costStr) {
   if (!costStr || costStr === '—') return [];

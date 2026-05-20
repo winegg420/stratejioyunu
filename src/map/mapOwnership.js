@@ -1,4 +1,6 @@
 /** İl kodunu shapeISO / playerCities.province ile eşleştir */
+import { normalizeMapCity, normalizeMapCities } from './botCityUtils';
+
 export function normalizeProvinceCode(code) {
   if (code == null || code === '') return '';
   const digits = String(code).replace(/\D/g, '');
@@ -8,19 +10,19 @@ export function normalizeProvinceCode(code) {
 
 export function getCityOwnerLabel(city, playerName) {
   if (city.isOwn || city.status === 'own') return playerName;
-  if (city.status === 'bot') return city.owner || 'Bot';
+  if (city.status === 'bot') return null;
   if (city.status === 'empty' || !city.owner) return 'Boş';
   return city.owner;
 }
 
 export function syncMapCitiesForPlayer(mapCities, playerCities, playerName) {
   const ownNames = new Set(playerCities.map((c) => c.name));
-  return mapCities.map((c) => {
+  return normalizeMapCities(mapCities).map((c) => {
     if (ownNames.has(c.name) || c.status === 'own') {
       return { ...c, owner: playerName, status: 'own' };
     }
     if (c.status === 'bot') {
-      return { ...c, owner: c.owner || 'Bot' };
+      return { ...c, owner: null };
     }
     if (c.status === 'empty' || !c.owner) {
       return { ...c, owner: null };
@@ -28,3 +30,5 @@ export function syncMapCitiesForPlayer(mapCities, playerCities, playerName) {
     return { ...c };
   });
 }
+
+export { normalizeMapCity, normalizeMapCities };

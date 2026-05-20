@@ -1,5 +1,5 @@
 const PAGE_STATUS = {
-  'Ana Merkez': '[ STATUS: OPERATIONAL ]',
+  'Ana Merkez': '[ KOMUTA MERKEZİ AKTİF ]',
   Binalar: '[ STATUS: CONSTRUCTION ]',
   Araştırma: '[ STATUS: RESEARCH ]',
   Kışla: '[ STATUS: COMBAT READY ]',
@@ -12,7 +12,8 @@ const PAGE_STATUS = {
   Harita: '[ STATUS: TACTICAL GRID ]',
   Raporlar: '[ STATUS: INTEL FEED ]',
   Profil: '[ STATUS: PERSONNEL ]',
-  Mesajlar: '[ STATUS: COMMS ]',
+  Mesajlar: '[ STATUS: STATE-MAIL ]',
+  'State Mail': '[ STATUS: STATE-MAIL · ENCRYPTED ]',
 };
 
 export default function PageHeader({ title, subtitle, action, status }) {

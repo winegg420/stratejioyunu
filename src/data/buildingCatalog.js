@@ -1,39 +1,41 @@
 import { parseUnitCost } from '../utils/resourceCosts';
+import { getResourceCostKeyword } from './resourceCatalog';
 import { formatSeconds, parseTimeToSeconds } from '../lib/gameUtils';
 
 const RESOURCE_LABELS = {
-  food: 'yemek',
-  metal: 'metal',
-  fuel: 'yakıt',
-  money: 'para',
-  energy: 'enerji',
+  food: getResourceCostKeyword('food'),
+  metal: getResourceCostKeyword('metal'),
+  fuel: getResourceCostKeyword('fuel'),
+  money: getResourceCostKeyword('money'),
+  energy: getResourceCostKeyword('energy'),
+  uranium: getResourceCostKeyword('uranium'),
 };
 
 /** Seviye bazlı inşaat / yükseltme maliyetleri ve süreleri. */
 export const BUILDING_CATALOG = {
   hq: {
     levels: {
-      1: { cost: '500 metal · 500 para', time: '00:08:00' },
+      1: { cost: '500 metal · 500 bütçe', time: '00:08:00' },
     },
   },
   farm: {
     levels: {
-      1: { cost: '250 metal · 200 yemek', time: '00:04:00' },
+      1: { cost: '250 metal · 200 nüfus', time: '00:04:00' },
     },
   },
   refinery: {
     levels: {
-      1: { cost: '350 metal · 150 yakıt', time: '00:05:00' },
+      1: { cost: '350 metal · 150 petrol', time: '00:05:00' },
     },
   },
   factory: {
     levels: {
-      1: { cost: '400 metal · 200 yemek', time: '00:06:00' },
+      1: { cost: '400 metal · 200 nüfus', time: '00:06:00' },
     },
   },
   depot: {
     levels: {
-      1: { cost: '300 metal · 150 yemek', time: '00:05:00' },
+      1: { cost: '300 metal · 150 nüfus', time: '00:05:00' },
     },
   },
   plant: {
@@ -43,42 +45,42 @@ export const BUILDING_CATALOG = {
   },
   tax: {
     levels: {
-      1: { cost: '200 metal · 150 para', time: '00:04:00' },
+      1: { cost: '200 metal · 150 bütçe', time: '00:04:00' },
     },
   },
   barracks: {
     levels: {
-      1: { cost: '450 metal · 250 yemek', time: '00:08:00' },
+      1: { cost: '450 metal · 250 nüfus', time: '00:08:00' },
     },
   },
   airport: {
     levels: {
-      1: { cost: '800 metal · 350 yakıt', time: '00:15:00' },
+      1: { cost: '800 metal · 350 petrol', time: '00:15:00' },
     },
   },
   shipyard: {
     levels: {
-      1: { cost: '650 metal · 300 yakıt', time: '00:12:00' },
+      1: { cost: '650 metal · 300 petrol', time: '00:12:00' },
     },
   },
   intel: {
     levels: {
-      1: { cost: '400 metal · 250 para', time: '00:07:00' },
+      1: { cost: '400 metal · 250 bütçe', time: '00:07:00' },
     },
   },
   wall: {
     levels: {
-      1: { cost: '350 metal · 150 yemek', time: '00:06:00' },
+      1: { cost: '350 metal · 150 nüfus', time: '00:06:00' },
     },
   },
   market: {
     levels: {
-      1: { cost: '280 metal · 200 para', time: '00:05:00' },
+      1: { cost: '280 metal · 200 bütçe', time: '00:05:00' },
     },
   },
   research: {
     levels: {
-      1: { cost: '600 metal · 400 para', time: '00:10:00' },
+      1: { cost: '600 metal · 400 bütçe', time: '00:10:00' },
     },
   },
   cyber_ops: {

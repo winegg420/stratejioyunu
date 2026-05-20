@@ -1,8 +1,16 @@
+import { useCallback, useEffect, useState } from 'react';
 import PageHeader from '../components/PageHeader';
+import GlobalBriefingModal from '../components/GlobalBriefingModal';
 import NewsFeed from '../components/NewsFeed';
+import { useAuth } from '../context/AuthContext';
+import {
+  hasSeenGlobalBriefing,
+  markGlobalBriefingSeen,
+} from '../lib/briefingStorage';
 import CityStatusPanel from '../components/CityStatusPanel';
 import ExpeditionTrackerPanel from '../components/ExpeditionTrackerPanel';
-import HomeRegionPreview from '../components/HomeRegionPreview';
+import HomeCityStatsCard from '../components/HomeCityStatsCard';
+import QueueEmptyState from '../components/QueueEmptyState';
 import { newsFeed as staticNewsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
@@ -55,6 +63,28 @@ function StatBlock({ label, value, sub, accent }) {
 }
 
 export default function Home() {
+  const { playerName } = useAuth();
+  const setPlayerGovernance = useGameStore((s) => s.setPlayerGovernance);
+  const playerGovernance = useGameStore((s) => s.playerGovernance);
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const [pendingGovernance, setPendingGovernance] = useState(playerGovernance);
+
+  useEffect(() => {
+    if (!playerName) return;
+    if (!hasSeenGlobalBriefing(playerName)) {
+      setBriefingOpen(true);
+      setPendingGovernance(playerGovernance);
+    }
+  }, [playerName, playerGovernance]);
+
+  const handleBriefingAccept = useCallback(() => {
+    if (pendingGovernance) {
+      setPlayerGovernance(pendingGovernance);
+    }
+    markGlobalBriefingSeen(playerName);
+    setBriefingOpen(false);
+  }, [pendingGovernance, playerName, setPlayerGovernance]);
+
   const liveNews = useGameStore((s) => s.newsLog ?? []);
   const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
   const newsItems = [
@@ -83,9 +113,16 @@ export default function Home() {
 
   return (
     <div className="page home-page page--command">
+      <GlobalBriefingModal
+        open={briefingOpen}
+        selectedGovernance={pendingGovernance}
+        onSelectGovernance={setPendingGovernance}
+        onAccept={handleBriefingAccept}
+      />
       <PageHeader
         title="Ana Merkez"
-        subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Komuta Paneli`}
+        subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}
+        status={playerGovernance ? undefined : '[ ULUSAL BRİFİNG BEKLİYOR ]'}
       />
 
       <div className="home-status-strip">
@@ -107,7 +144,7 @@ export default function Home() {
       </div>
 
       <div className="home-panels-row">
-        <HomeRegionPreview />
+        <HomeCityStatsCard />
         <CityStatusPanel />
         <ExpeditionTrackerPanel />
       </div>
@@ -131,7 +168,12 @@ export default function Home() {
                 />
               ))
             ) : (
-              <li className="queue-empty">Aktif inşaat yok</li>
+              <QueueEmptyState
+                tag="[ KUYRUK BOŞ ]"
+                title="Aktif inşaat yok"
+                hint="Binalar sekmesinden inşaat veya yükseltme başlatın."
+                icon="🏗"
+              />
             )}
           </ul>
         </section>
@@ -154,7 +196,12 @@ export default function Home() {
                 />
               ))
             ) : (
-              <li className="queue-empty">Üretim kuyruğu boş</li>
+              <QueueEmptyState
+                tag="[ KUYRUK BOŞ ]"
+                title="Üretim kuyruğu boş"
+                hint="Kışla, Tersane veya Hava Üssü'nden birim üretin."
+                icon="⚙"
+              />
             )}
           </ul>
         </section>

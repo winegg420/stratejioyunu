@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
+import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
@@ -116,18 +117,15 @@ export default function Expeditions() {
             </tbody>
           </table>
         ) : (
-          <div className="expeditions-radar-empty" role="status">
-            <div className="expeditions-radar-empty__grid" aria-hidden="true" />
-            <p className="expeditions-radar-empty__title">
-              RADAR AKTİF: HAREKET HALİNDE FİLO BULUNAMADI
-            </p>
-            <p className="expeditions-radar-empty__hint">
-              Haritadan hedef seçerek sefer başlatabilirsiniz.
-            </p>
-            <Link to="/harita" className="btn btn-primary btn-sm">
-              Haritayı Aç
-            </Link>
-          </div>
+          <MilitaryEmptyState
+            variant="radar"
+            tag="[ RADAR AKTİF ]"
+            icon="📡"
+            title="Hareket halinde filo bulunamadı"
+            hint="Haritadan hedef seçerek sefer başlatabilirsiniz."
+            actionLabel="Haritayı Aç"
+            actionTo="/harita"
+          />
         )}
       </section>
 
@@ -160,8 +158,11 @@ export default function Expeditions() {
           </table>
         ) : (
           <EmptyState
+            tag="[ ARŞİV BOŞ ]"
             icon="📜"
             title="Geçmiş sefer kaydı yok"
+            actionLabel="Haritaya Git"
+            actionTo="/harita"
             description="Tamamlanan seferler burada listelenir."
           />
         )}

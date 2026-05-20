@@ -48,7 +48,7 @@ export function createKbrnResearchTemplates() {
       active: false,
       queued: false,
       time: '12:00:00',
-      cost: '28.000 metal · 15.000 para · 8.000 enerji',
+      cost: '28.000 metal · 15.000 bütçe · 8.000 enerji · 250 uranyum',
     },
     {
       id: KBRN_RESEARCH_IDS.decontamination,
@@ -60,7 +60,7 @@ export function createKbrnResearchTemplates() {
       active: false,
       queued: false,
       time: '14:00:00',
-      cost: '32.000 metal · 18.000 para · 10.000 enerji',
+      cost: '32.000 metal · 18.000 bütçe · 10.000 enerji · 180 uranyum',
     },
     {
       id: KBRN_RESEARCH_IDS.detection,
@@ -72,7 +72,7 @@ export function createKbrnResearchTemplates() {
       active: false,
       queued: false,
       time: '10:00:00',
-      cost: '24.000 metal · 12.000 para · 6.000 enerji',
+      cost: '24.000 metal · 12.000 bütçe · 6.000 enerji · 120 uranyum',
     },
   ];
 }

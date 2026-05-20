@@ -63,7 +63,7 @@ export function canRevealStealthAttacker({ detectionLevel, spyLevel }) {
 
 export function getCbrnChemOpCost(weaponLevel) {
   const mult = 1 + Math.max(0, weaponLevel - 1) * 0.14;
-  const base = '120.000 para · 55.000 metal · 22.000 enerji · 15.000 yemek · 8.000 reaktör';
+  const base = '120.000 bütçe · 55.000 metal · 22.000 enerji · 15.000 nüfus · 8.000 reaktör';
   return base
     .split('·')
     .map((part) => {

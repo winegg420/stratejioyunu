@@ -1,20 +1,25 @@
 import MilitaryEmptyState from './MilitaryEmptyState';
 
-export default function EmptyState({
-  icon,
+/**
+ * Askeri temalı boş kuyruk / sefer durumu.
+ */
+export default function QueueEmptyState({
+  tag = '[ KUYRUK BOŞ ]',
   title,
-  description,
+  hint,
+  icon = '◈',
+  as = 'li',
   actionLabel,
   actionTo,
-  tag = '[ SİSTEM BEKLEMEDE ]',
 }) {
   return (
     <MilitaryEmptyState
-      variant="panel"
+      variant="queue"
+      as={as}
       tag={tag}
-      icon={icon}
       title={title}
-      description={description}
+      hint={hint}
+      icon={icon}
       actionLabel={actionLabel}
       actionTo={actionTo}
     />

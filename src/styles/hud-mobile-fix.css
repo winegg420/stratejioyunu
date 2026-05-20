@@ -164,6 +164,10 @@
   .building-img-wrap,
   .building-card__img,
   .panel,
+  .home-city-stats__grid {
+    grid-template-columns: 1fr;
+  }
+
   .home-region-preview__canvas {
     max-width: 100%;
   }
@@ -272,5 +276,241 @@
   /* index.css mobil padding-bottom cakismasi */
   html.mobile-shell-active .app-shell {
     padding-bottom: 0 !important;
+  }
+
+  /* 6 kaynak — 3x2 grid */
+  .resources-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, auto);
+    row-gap: 0.2rem !important;
+  }
+
+  .resource-bar-actions,
+  .resource-bar-meta {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .page-header,
+  .page-header__main {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .page-header .btn,
+  .page-header__action {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+
+  .barracks-agent-counter {
+    display: block;
+    max-width: 100%;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .barracks-agent-hint {
+    display: block;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .panel .empty-state,
+  .panel .military-empty--panel {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .template-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .template-btns .btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+    font-size: 0.68rem;
+    padding: 0.4rem 0.35rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  .vote-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .vote-row .btn {
+    align-self: stretch;
+  }
+
+  .report-filters {
+    gap: 0.35rem;
+  }
+
+  .report-filters .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.68rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .report-list-item {
+    min-width: 0;
+  }
+
+  .panel:has(.data-table) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 480px;
+    font-size: 0.78rem;
+  }
+
+  .trade-resource-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .trade-resource-row {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .trade-res-inputs {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .trade-res-inputs .input-qty {
+    flex: 1 1 4rem;
+    min-width: 0;
+  }
+
+  .trade-caravan-list li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .message-list li {
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .msg-header {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .intel-cyber-preview,
+  .intel-kbrn-preview {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+  }
+
+  .intel-target-picker {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+
+  .intel-target-picker .btn {
+    width: 100%;
+  }
+
+  .ops-list li {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .ops-list li .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .active-queue-row,
+  .production-queue-hud {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .active-queue-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .production-queue-hud__body {
+    min-width: 0;
+    flex: 1 1 120px;
+  }
+
+  .content-info-modal {
+    width: calc(100vw - 0.75rem) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    max-height: min(92dvh, 640px);
+    margin: 0.35rem;
+  }
+
+  .content-info-modal__tabs {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .content-info-modal__tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.65rem;
+    padding: 0.35rem 0.4rem;
+  }
+
+  .tactical-search-console {
+    max-width: calc(100vw - 0.5rem) !important;
+    left: 0.25rem !important;
+    right: 0.25rem !important;
+    width: auto !important;
+  }
+
+  .tactical-search-console--minimized {
+    max-width: 12rem !important;
+  }
+
+  .home-status-strip {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .home-city-stats__grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .city-switcher-select {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .protection-badge,
+  .res-protection-chip {
+    font-size: 0.55rem !important;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

@@ -1,4 +1,4 @@
-const RESOURCE_IDS = ['food', 'fuel', 'metal', 'energy', 'money'];
+import { RESOURCE_IDS, getResourceDisplay } from '../data/resourceCatalog';
 
 export function sumTradeAmounts(amounts = {}) {
   return RESOURCE_IDS.reduce((sum, id) => sum + Math.max(0, Number(amounts[id]) || 0), 0);
@@ -63,9 +63,8 @@ export function restoreTradeCargo(resources, amounts) {
 
 export function formatTradeCargoSummary(amounts) {
   const parts = RESOURCE_IDS.filter((id) => (amounts[id] || 0) > 0).map((id) => {
-    const labels = { food: 'Yemek', fuel: 'Yakıt', metal: 'Metal', energy: 'Enerji', money: 'Para' };
-    const icons = { food: '🌾', fuel: '⛽', metal: '⚙️', energy: '⚡', money: '💰' };
-    return `${icons[id]} ${amounts[id].toLocaleString('tr-TR')} ${labels[id]}`;
+    const { label, icon } = getResourceDisplay(id);
+    return `${icon} ${amounts[id].toLocaleString('tr-TR')} ${label}`;
   });
   return parts.join(' · ') || '—';
 }

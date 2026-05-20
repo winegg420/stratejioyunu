@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import AuthMapBackground from '../components/AuthMapBackground';
+import GlobalBriefingModal from '../components/GlobalBriefingModal';
 import { useAuth } from '../context/AuthContext';
 import { GAME_NAME } from '../data/placeholder';
 
@@ -11,6 +12,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewBriefing, setPreviewBriefing] = useState(false);
 
   if (!authReady) {
     return (
@@ -57,9 +59,18 @@ export default function AuthPage() {
       <div className="auth-overlay" />
       <div className="auth-card">
         <header className="auth-header">
-          <p className="auth-eyebrow">Dünya Haritası Stratejisi</p>
+          <p className="auth-eyebrow">[ KÜRESEL BAŞKANLIK · 2044 ]</p>
           <h1 className="auth-title auth-card__title">{GAME_NAME}</h1>
-          <p className="auth-subtitle auth-card__sub">Türkiye haritasında fetih, diplomasi ve strateji</p>
+          <p className="auth-subtitle auth-card__sub">
+            Mutlak otorite — tek lider, resmi State Mail, harita üzerinde güç mücadelesi
+          </p>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm auth-briefing-link"
+            onClick={() => setPreviewBriefing(true)}
+          >
+            [ ULUSAL BRİFİNG ] Oku
+          </button>
           {isSupabaseConfigured && (
             <span className="auth-supabase-badge">Supabase bağlı</span>
           )}
@@ -111,6 +122,12 @@ export default function AuthPage() {
           </button>
         </form>
       </div>
+
+      <GlobalBriefingModal
+        open={previewBriefing}
+        showGovernancePick={false}
+        onAccept={() => setPreviewBriefing(false)}
+      />
     </div>
   );
 }

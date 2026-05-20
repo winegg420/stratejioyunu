@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { createFoundCityState, createInitialGameState } from '../data/gameInit';
+import { ensureCityResources } from '../data/resourceCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   BUILDING_RESOURCE_MAP,
@@ -94,6 +95,8 @@ import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
+import { savePlayerGovernance } from '../lib/briefingStorage';
+import { GOVERNANCE_PROFILES, isValidGovernance } from '../lib/presidencySystem';
 import {
   buildCyberOpsLogEntry,
   canLaunchCyberAbility,
@@ -144,10 +147,13 @@ function getActiveCity(state) {
 
 function patchCity(set, get, cityId, patch) {
   const { cities } = get();
+  const cityPatch = patch.resources
+    ? { ...patch, resources: ensureCityResources(patch.resources) }
+    : patch;
   set({
     cities: {
       ...cities,
-      [cityId]: { ...cities[cityId], ...patch },
+      [cityId]: { ...cities[cityId], ...cityPatch },
     },
   });
 }
@@ -164,6 +170,7 @@ function refreshCityMorale(state, cityId) {
       cityId,
       incomingAttacks: state.incomingAttacks,
       expeditions: state.expeditions,
+      governanceStyle: state.playerGovernance,
     },
   );
   const popDrain = getKbrnPopulationDrain(kbrnEffects);
@@ -184,6 +191,7 @@ function refreshCityMorale(state, cityId) {
       _expeditions: state.expeditions,
     },
     vipMult,
+    state.playerGovernance,
   );
 
   return enrichCityModel({
@@ -255,9 +263,9 @@ function generateBattleReport(expedition, won = true) {
 
   const loot = won
     ? [
-        { icon: '🌾', label: 'Yemek', amount: 1200 + Math.floor(Math.random() * 800) },
-        { icon: '⚙️', label: 'Metal', amount: 900 + Math.floor(Math.random() * 500) },
-        { icon: '💰', label: 'Para', amount: 400 + Math.floor(Math.random() * 300) },
+        { icon: '👥', label: 'Nüfus', amount: 1200 + Math.floor(Math.random() * 800) },
+        { icon: '🔩', label: 'Metal', amount: 900 + Math.floor(Math.random() * 500) },
+        { icon: '💰', label: 'Bütçe', amount: 400 + Math.floor(Math.random() * 300) },
       ]
     : [];
 
@@ -293,7 +301,7 @@ function buildSpyIntelFields(success) {
   if (!success) {
     return [
       { key: 'factory', label: 'Fabrika Seviyesi', hidden: true },
-      { key: 'food', label: 'Yemek Deposu', hidden: true },
+      { key: 'food', label: 'Nüfus Rezervi', hidden: true },
       { key: 'metal', label: 'Metal Deposu', hidden: true },
       { key: 'infantry', label: 'Piyade', hidden: true },
       { key: 'tank', label: 'Tank', hidden: true },
@@ -304,7 +312,7 @@ function buildSpyIntelFields(success) {
   const maybeHide = () => Math.random() > 0.55;
   return [
     { key: 'factory', label: 'Fabrika Seviyesi', value: `Sv.${factoryLevel}`, hidden: maybeHide() },
-    { key: 'food', label: 'Yemek Deposu', value: foodStock.toLocaleString('tr-TR'), hidden: maybeHide() },
+    { key: 'food', label: 'Nüfus Rezervi', value: foodStock.toLocaleString('tr-TR'), hidden: maybeHide() },
     { key: 'metal', label: 'Metal Deposu', value: metalStock.toLocaleString('tr-TR'), hidden: maybeHide() },
     { key: 'infantry', label: 'Piyade', value: infantry.toLocaleString('tr-TR'), hidden: maybeHide() },
     { key: 'tank', label: 'Tank', value: String(tank), hidden: maybeHide() },
@@ -575,6 +583,36 @@ export const useGameStore = create((set, get) => ({
       nextRate > 20 ? 'warn' : 'info',
     );
     cloudSync(get, { cityId });
+    return true;
+  },
+
+  setPlayerGovernance: (style) => {
+    if (!isValidGovernance(style)) return false;
+    const profile = GOVERNANCE_PROFILES[style];
+    const state = get();
+    savePlayerGovernance(getCurrentPlayerName(), style);
+    let nextState = { ...state, playerGovernance: style };
+    const cities = refreshAllCitiesMorale(nextState);
+    nextState = { ...nextState, cities };
+    const cityId = state.activeCityId;
+    const city = cities[cityId];
+    if (city && profile?.suggestedTax != null) {
+      const nextRate = clampTaxRate(profile.suggestedTax);
+      const refreshed = refreshCityMorale(
+        { ...nextState, cities: { ...cities, [cityId]: { ...city, taxRate: nextRate } } },
+        cityId,
+      );
+      nextState = {
+        ...nextState,
+        cities: { ...nextState.cities, [cityId]: refreshed },
+      };
+    }
+    set({ playerGovernance: style, cities: nextState.cities });
+    useNotificationStore.getState().addToast(
+      `Yönetim doktrini aktif: ${profile.label}`,
+      'info',
+    );
+    cloudSync(get);
     return true;
   },
 
@@ -2188,6 +2226,29 @@ export const useGameStore = create((set, get) => ({
   },
 
   clearMapFocusRequest: () => set({ mapFocusRequest: null }),
+
+  requestMapTargetPick: (field, returnPath = '/istihbarat') => {
+    set({
+      mapTargetPickRequest: { field, returnPath },
+      mapTargetPickResult: null,
+    });
+  },
+
+  fulfillMapTargetPick: (cityName) => {
+    const req = get().mapTargetPickRequest;
+    if (!req || !cityName) return;
+    set({
+      mapTargetPickResult: { field: req.field, cityName },
+      mapTargetPickRequest: null,
+    });
+  },
+
+  clearMapTargetPick: () => set({
+    mapTargetPickRequest: null,
+    mapTargetPickResult: null,
+  }),
+
+  clearMapTargetPickResult: () => set({ mapTargetPickResult: null }),
 
   speedUpConstruction: (queueId) => {
     const cityId = get().activeCityId;

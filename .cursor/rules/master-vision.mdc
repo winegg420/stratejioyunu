@@ -5,7 +5,47 @@ alwaysApply: true
 
 # Master Plan & Gelecek Vizyonu
 
-Bu proje siber-askeri temalı bir strateji MMO’sudur. Mevcut ve gelecek kodlama (özellikle **Diplomasi**, **İttifak**, **Harita**, **Haber Akışı**, **Raporlar**) aşağıdaki vizyonu **bozmayacak esnek mimariler** ile ilerlemelidir.
+Bu proje **Küresel Başkanlık (2044)** temalı siber-askeri bir strateji MMO’sudur. Oyuncu mutlak otorite sahibi tek bir **President (Başkan)**’dır. Mevcut ve gelecek kodlama (özellikle **Diplomasi**, **State Mail**, **İttifak**, **Harita**, **Haber Akışı**, **Raporlar**, **mutluluk/üretim**) aşağıdaki vizyonu **bozmayacak esnek mimariler** ile ilerlemelidir.
+
+---
+
+## Küresel Başkanlık — Ana Hikaye & Atmosfer (ANAYASA)
+
+### Mutlak Otorite
+
+- Dünya yeni bir düzene girmiştir: BM, NATO, Dünya Bankası çökmüştür; her ülkeyi **tek bir lider (President)** yönetir.
+- Seçim yok, meclis yok, muhalefet yok — sadece oyuncunun kararları.
+- UI dili: resmi brifing, komuta merkezi, otorite rozeti; sıradan “oyuncu sohbeti” tonu kullanılmaz.
+
+### Siyasi Yelpaze (oyuncu tercihi)
+
+- **Liberal / serbest piyasa:** düşük vergi önerisi, yüksek mutluluk bonusu, hafif üretim/askeri çarpan (`presidencySystem.js` → `GOVERNANCE_LIBERAL`).
+- **Devletçi / merkezi otorite:** yüksek vergi önerisi, mutluluk cezası, güçlü üretim ve askeri çarpan (`GOVERNANCE_STATIST`).
+- Tercih `playerGovernance` + `happinessSystem.js` + `resourceProduction.js` üzerinden **doğrudan** etkilidir; hard-code tek ekonomi modeli yok.
+
+### Resmi Diplomatik Yazışma — State Mail
+
+- Oyuncular arası iletişim **chat değil**; liderden lidere **şifreli resmi e-posta** (`Messages.jsx` → State Mail istemcisi).
+- Zorunlu meta alanlar: `[ GÖNDEREN / PRESIDENT ]`, `[ KONU / SUBJECT ]`, `[ GÜVENLİK PROTOKOLÜ / ENCRYPTION ]`.
+- Gönderim CTA: `[ RESMİ YAZIŞMAYI İMZALA VE GÖNDER ]`.
+
+### Ulusal Brifing (ilk giriş)
+
+- `GlobalBriefingModal` + `globalBriefing.js`: 2044 hikaye metni, typewriter, siber yeşil terminal.
+- İlk oturumda Ana Merkez (`Home.jsx`) popup; giriş ekranında (`AuthPage.jsx`) önizleme linki.
+- Kapanış: `[ OTORİTEYİ ELE AL ]` — brifing görüldü bayrağı `briefingStorage.js`.
+
+### Kod referansları
+
+| Kavram | Dosya |
+|--------|--------|
+| Hikaye metni | `src/data/globalBriefing.js` |
+| Yönetim çarpanları | `src/lib/presidencySystem.js` |
+| Brifing / ideoloji kayıt | `src/lib/briefingStorage.js` |
+| Brifing UI | `src/components/GlobalBriefingModal.jsx` |
+| State Mail UI | `src/pages/Messages.jsx` |
+
+---
 
 ## Mimari ilkeler (şimdi ve sonra)
 

@@ -23,6 +23,6 @@ export const KBRN_CHEM_OPERATIONS = [
     subtitle: 'Kimyasal/biyolojik ajan',
     desc: '1 saat geçici felç — kaynak gizli',
     minChemLevel: 1,
-    baseCost: '120.000 para · 55.000 metal · 22.000 enerji · 15.000 yemek · 8.000 reaktör',
+    baseCost: '120.000 bütçe · 55.000 metal · 22.000 enerji · 15.000 nüfus · 8.000 reaktör',
   },
 ];

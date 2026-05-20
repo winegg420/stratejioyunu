@@ -9,10 +9,10 @@ export const LOOT_RESOURCE_IDS = ['food', 'fuel', 'metal', 'money'];
 const UNIT_MAP = Object.fromEntries(landUnits.map((u) => [u.id, u]));
 
 const RESOURCE_META = {
-  food: { label: 'Yemek', icon: '🌾' },
-  fuel: { label: 'Yakıt', icon: '⛽' },
-  metal: { label: 'Metal', icon: '⚙️' },
-  money: { label: 'Para', icon: '💰' },
+  food: { label: 'Nüfus', icon: '👥' },
+  fuel: { label: 'Petrol', icon: '🛢️' },
+  metal: { label: 'Metal', icon: '🔩' },
+  money: { label: 'Bütçe', icon: '💰' },
   energy: { label: 'Enerji', icon: '⚡' },
 };
 
@@ -304,10 +304,10 @@ export function resolveDefenderDepot(mapCity) {
   const base = Math.floor(pop * 1.8 * mult);
 
   return [
-    { id: 'food', label: 'Yemek', icon: '🌾', current: Math.floor(base * 0.35), max: null },
-    { id: 'fuel', label: 'Yakıt', icon: '⛽', current: Math.floor(base * 0.2), max: null },
-    { id: 'metal', label: 'Metal', icon: '⚙️', current: Math.floor(base * 0.28), max: null },
-    { id: 'money', label: 'Para', icon: '💰', current: Math.floor(base * 0.22), max: null },
+    { id: 'food', label: 'Nüfus', icon: '👥', current: Math.floor(base * 0.35), max: null },
+    { id: 'fuel', label: 'Petrol', icon: '🛢️', current: Math.floor(base * 0.2), max: null },
+    { id: 'metal', label: 'Metal', icon: '🔩', current: Math.floor(base * 0.28), max: null },
+    { id: 'money', label: 'Bütçe', icon: '💰', current: Math.floor(base * 0.22), max: null },
     { id: 'energy', label: 'Enerji', icon: '⚡', current: Math.floor(base * 0.08), max: null },
   ];
 }

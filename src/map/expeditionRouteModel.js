@@ -27,7 +27,13 @@ function getRouteStyle(exp) {
   if (exp.mode === 'found' || exp.type === 'Şehir Kur') {
     return ROUTE_STYLES.found;
   }
-  if (exp.type?.toLowerCase().includes('casus')) {
+  if (
+    exp.mode === 'cyber'
+    || exp.mode === 'spy'
+    || exp.type?.toLowerCase().includes('casus')
+    || exp.type?.toLowerCase().includes('siber')
+    || exp.type?.toLowerCase().includes('istihbarat')
+  ) {
     return ROUTE_STYLES.spy;
   }
   return ROUTE_STYLES.attack;

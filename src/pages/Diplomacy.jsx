@@ -45,6 +45,7 @@ export default function Diplomacy() {
             </ul>
           ) : (
             <EmptyState
+              tag="[ ANLAŞMA YOK ]"
               icon="🤝"
               title="Aktif anlaşma yok"
               description="Diğer oyuncularla ittifak, ateşkes veya ticaret anlaşması yapabilirsiniz."
@@ -67,6 +68,7 @@ export default function Diplomacy() {
           ))
         ) : (
           <EmptyState
+            tag="[ OYLAMA YOK ]"
             icon="🗳️"
             title="Aktif oylama yok"
             description="İttifakınızda üyelik veya karar oylamaları başladığında burada görünür."

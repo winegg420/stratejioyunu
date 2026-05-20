@@ -1,6 +1,7 @@
 import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
+import QueueEmptyState from './QueueEmptyState';
 
 const ALL_UNITS = [...landUnits, ...airUnits, ...seaUnits];
 
@@ -104,13 +105,21 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   });
 
   if (!items.length) {
-    const emptyPlaceholder = queueType === 'construction'
-      ? '[ İNŞAAT ALANI BOŞ / SİSTEM HAZIR ]'
-      : emptyText;
+    const isConstruction = queueType === 'construction';
     return (
       <section className="active-queue-panel active-queue-panel--empty active-queue-panel--placeholder">
         <h3 className="active-queue-title">{title}</h3>
-        <p className="active-queue-empty">{emptyPlaceholder}</p>
+        <QueueEmptyState
+          as="div"
+          tag={isConstruction ? '[ İNŞAAT ALANI BOŞ ]' : '[ ÜRETİM KUYRUĞU BOŞ ]'}
+          icon={isConstruction ? '🏗️' : '⚔️'}
+          title={isConstruction ? 'Sistem hazır — kuyruk bekliyor' : 'Üretim bekliyor'}
+          hint={
+            isConstruction
+              ? 'Aşağıdan bir bina seçerek yükseltme kuyruğuna ekleyebilirsiniz.'
+              : emptyText || 'Bir birlik seçip üretim başlatabilirsiniz.'
+          }
+        />
       </section>
     );
   }
