@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
+import { isFounderPlayer } from '../lib/adminAccess';
 import { profile } from '../data/placeholder';
 import {
   MIN_VIP_DEVELOPMENT_SCORE,
@@ -24,7 +25,8 @@ import { PROTECTION_DAYS } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
 
 export default function Profile() {
-  const { logout, playerName } = useAuth();
+  const { logout, playerName, session } = useAuth();
+  const isFounder = isFounderPlayer(playerName, session?.user?.email);
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [regimeConfirm, setRegimeConfirm] = useState(null);
@@ -126,6 +128,16 @@ export default function Profile() {
           </p>
         </div>
       </div>
+
+      {isFounder && (
+        <section className="panel profile-founder-panel">
+          <h3 className="panel-title">Kurucu Komuta</h3>
+          <p className="hint">Gizli kriz müdahale paneli — God Mode.</p>
+          <button type="button" className="btn btn-danger" onClick={() => navigate('/kurucu-kriz')}>
+            Kriz Komut Merkezi
+          </button>
+        </section>
+      )}
 
       <section className="panel profile-ideology-panel">
         <h3 className="panel-title">Siyasi İdeoloji</h3>

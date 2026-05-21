@@ -14,6 +14,8 @@ import QueueEmptyState from '../components/QueueEmptyState';
 import { newsFeed as staticNewsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
+import CrisisResponsePanel from '../components/CrisisResponsePanel';
+import { formatCrisisLabel } from '../lib/crisisEngine';
 
 function QueueItem({ name, detail, endsAt, queued, now }) {
   const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
@@ -87,7 +89,15 @@ export default function Home() {
 
   const liveNews = useGameStore((s) => s.newsLog ?? []);
   const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
+  const activeCrisis = useGameStore((s) => s.activeCrisis);
   const newsItems = [
+    ...(activeCrisis?.active
+      ? [{
+        type: activeCrisis.admin ? 'crisis-emergency' : 'crisis-alarm',
+        text: `[ ${activeCrisis.admin ? 'KÜRESEL ACİL DURUM' : 'DOĞAL AFET ALARMI'} ] ${formatCrisisLabel(activeCrisis.type)}${activeCrisis.regionName ? ` — ${activeCrisis.regionName}` : ''}`,
+        time: 'CANLI',
+      }]
+      : []),
     ...(globalOutbreak?.active
       ? [{
         type: 'global-alarm',
@@ -124,6 +134,8 @@ export default function Home() {
         subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}
         status={playerIdeology ? undefined : '[ ULUSAL BRİFİNG BEKLİYOR ]'}
       />
+
+      <CrisisResponsePanel />
 
       <div className="home-status-strip">
         <StatBlock

@@ -15,6 +15,7 @@ import './styles/intel-page.css';
 import './styles/military-empty-states.css';
 import './styles/global-briefing.css';
 import './styles/state-mail.css';
+import './styles/crisis.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {

@@ -4,6 +4,7 @@ import { enrichCityModel } from './cityModel';
 import { normalizeIdeology } from './ideologySystem';
 import { loadPlayerIdeology, loadProtectionEndsAt } from './briefingStorage';
 import { computeCityHappiness } from './happinessSystem';
+import { rehydrateCrisisCityEffects } from './crisisEngine';
 import { createStarterBuildings, createStarterResearches, getStarterIdleTroops, getStarterResources } from '../lib/buildingUtils';
 import { pruneCyberEffects, pruneKbrnEffects } from './happinessSystem';
 import { applyProductionFreeze } from '../lib/resourceProduction';
@@ -294,8 +295,10 @@ export async function saveGameState(state, options = {}) {
     const meta = {
       ...(state.playerMeta ?? {}),
       globalCbrnOutbreak: state.globalCbrnOutbreak ?? null,
+      activeCrisis: state.activeCrisis ?? null,
       newsLog: state.newsLog ?? [],
       lastCbrnEventAt: state.lastCbrnEventAt ?? 0,
+      lastCrisisEventAt: state.lastCrisisEventAt ?? 0,
     };
     const tasks = [
       supabase.from('cities').upsert(rows, { onConflict: 'profile_id,id' }),
@@ -405,8 +408,10 @@ export async function saveGameState(state, options = {}) {
     const meta = {
       ...(state.playerMeta ?? {}),
       globalCbrnOutbreak: state.globalCbrnOutbreak ?? state.playerMeta?.globalCbrnOutbreak ?? null,
+      activeCrisis: state.activeCrisis ?? state.playerMeta?.activeCrisis ?? null,
       newsLog: state.newsLog ?? state.playerMeta?.newsLog ?? [],
       lastCbrnEventAt: state.lastCbrnEventAt ?? state.playerMeta?.lastCbrnEventAt ?? 0,
+      lastCrisisEventAt: state.lastCrisisEventAt ?? state.playerMeta?.lastCrisisEventAt ?? 0,
     };
     tasks.push(
       supabase.from('profiles').update({
@@ -602,12 +607,21 @@ export async function loadGameState(userId, { playerName } = {}) {
   const expeditions = (expRes.data ?? []).map(dbRowToExpedition);
   const reports = (reportRes.data ?? []).map(dbRowToReport);
 
+  const activeCrisis = playerMeta.activeCrisis ?? null;
+  const crisisPatches = rehydrateCrisisCityEffects(
+    { cities, playerCities, mapCities: mapCities.map((c) => ({ ...c })), activeCrisis },
+  );
+  for (const [cityId, patch] of Object.entries(crisisPatches)) {
+    if (cities[cityId]) cities[cityId] = { ...cities[cityId], ...patch };
+  }
+
   for (const cityId of Object.keys(cities)) {
     const c = cities[cityId];
     const happiness = computeCityHappiness(c, {
       cityId,
       incomingAttacks: [],
       expeditions,
+      activeCrisis,
     });
     cities[cityId] = { ...c, happiness };
   }
@@ -637,8 +651,10 @@ export async function loadGameState(userId, { playerName } = {}) {
     loyaltyScore: profile.loyalty_score ?? 0,
     playerMeta,
     globalCbrnOutbreak: playerMeta.globalCbrnOutbreak ?? null,
+    activeCrisis: playerMeta.activeCrisis ?? null,
     newsLog: Array.isArray(playerMeta.newsLog) ? playerMeta.newsLog : [],
     lastCbrnEventAt: playerMeta.lastCbrnEventAt ?? 0,
+    lastCrisisEventAt: playerMeta.lastCrisisEventAt ?? 0,
     playerCities,
     cities,
     researches,

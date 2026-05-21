@@ -10,6 +10,11 @@ export const LOYALTY_ACTION = {
   CAPITALIST_BUDGET_SURGE: 'capitalist_budget_surge',
   SOCIALIST_RESOURCE_AID: 'socialist_resource_aid',
   TECHNOCRAT_RESEARCH_COMPLETE: 'technocrat_research_complete',
+  SOCIALIST_CRISIS_AID: 'socialist_crisis_aid',
+  CAPITALIST_CRISIS_FUND: 'capitalist_crisis_fund',
+  TECHNOCRAT_CRISIS_SHIELD: 'technocrat_crisis_shield',
+  NATIONALIST_CRISIS_MOBILIZE: 'nationalist_crisis_mobilize',
+  CRISIS_WRONG_RESPONSE: 'crisis_wrong_response',
 };
 
 /** Koruma sonrası ideoloji değişim maliyeti (Bütçe / money) */
@@ -27,15 +32,23 @@ export const SOCIALIST_AID_MIN_TOTAL = 400;
 const LOYALTY_BY_IDEOLOGY = {
   nationalist: {
     [LOYALTY_ACTION.NATIONALIST_EXPEDITION_WIN]: 140,
+    [LOYALTY_ACTION.NATIONALIST_CRISIS_MOBILIZE]: 82,
+    [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -12,
   },
   capitalist: {
     [LOYALTY_ACTION.CAPITALIST_BUDGET_SURGE]: 75,
+    [LOYALTY_ACTION.CAPITALIST_CRISIS_FUND]: 88,
+    [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -16,
   },
   socialist: {
     [LOYALTY_ACTION.SOCIALIST_RESOURCE_AID]: 110,
+    [LOYALTY_ACTION.SOCIALIST_CRISIS_AID]: 95,
+    [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -18,
   },
   technocrat: {
     [LOYALTY_ACTION.TECHNOCRAT_RESEARCH_COMPLETE]: 95,
+    [LOYALTY_ACTION.TECHNOCRAT_CRISIS_SHIELD]: 100,
+    [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -22,
   },
 };
 
@@ -45,6 +58,11 @@ export function getLoyaltyPoints(ideology, action) {
   const id = normalizeIdeology(ideology);
   if (!id || !action) return 0;
   return LOYALTY_BY_IDEOLOGY[id]?.[action] ?? 0;
+}
+
+/** Negatif sadakat dahil — awardLoyalty bunu kullanır */
+export function applyLoyaltyDelta(currentScore, delta) {
+  return Math.max(0, Math.floor((currentScore ?? 0) + delta));
 }
 
 export function sumPlayerMoney(cities) {

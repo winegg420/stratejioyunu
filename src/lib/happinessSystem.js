@@ -1,6 +1,11 @@
 import { clampHappiness, DEFAULT_HAPPINESS, DEFAULT_TAX_RATE } from './cityModel';
 import { formatRate } from './gameUtils';
 import { BUILDING_RESOURCE_MAP } from './gameUtils';
+import {
+  getCrisisHappinessPenalty,
+  getEconomicCrisisTaxPenaltyMult,
+  pruneCrisisEffects,
+} from './crisisEngine';
 
 const PRODUCTION_RESOURCE_IDS = new Set(Object.values(BUILDING_RESOURCE_MAP));
 
@@ -20,10 +25,11 @@ export function getHappinessProductionSpeedMultiplier(happiness) {
 }
 
 /** Vergi oranı (%) — 15 üzeri mutluluğu düşürür. */
-export function getTaxHappinessPenalty(taxRate = DEFAULT_TAX_RATE) {
+export function getTaxHappinessPenalty(taxRate = DEFAULT_TAX_RATE, { taxPenaltyMult = 1 } = {}) {
   const rate = Number(taxRate) || DEFAULT_TAX_RATE;
   if (rate <= 15) return 0;
-  return Math.min(35, (rate - 15) * 1.1);
+  const base = Math.min(35, (rate - 15) * 1.1);
+  return Math.min(50, base * Math.max(1, taxPenaltyMult));
 }
 
 /** Aktif kuşatma / düşman seferi baskısı */
@@ -140,9 +146,12 @@ export function computeCityHappiness(city, context = {}) {
   const taxRate = city?.taxRate ?? DEFAULT_TAX_RATE;
   const effects = pruneCyberEffects(city?.cyberEffects);
   const kbrn = pruneKbrnEffects(city?.kbrnEffects);
+  const crisisFx = pruneCrisisEffects(city?.crisisEffects);
+  const taxMult = getEconomicCrisisTaxPenaltyMult(context.activeCrisis);
 
   let happiness = base;
-  happiness -= getTaxHappinessPenalty(taxRate);
+  happiness -= getTaxHappinessPenalty(taxRate, { taxPenaltyMult: taxMult });
+  happiness -= getCrisisHappinessPenalty(crisisFx);
   happiness -= getSiegeHappinessPenalty(context.cityId ?? '', context);
   happiness -= getCyberHappinessPenalty(effects);
   happiness = Math.round(happiness * getCyberHappinessMultiplier(effects));

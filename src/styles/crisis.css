@@ -1,0 +1,60 @@
+.crisis-response-panel {
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.25), rgba(15, 23, 42, 0.9));
+  margin-bottom: 1rem;
+}
+
+.crisis-response-panel__title {
+  color: #f87171;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.crisis-response-panel__type {
+  margin-bottom: 0.5rem;
+}
+
+.crisis-response-panel__btn {
+  margin-top: 0.5rem;
+}
+
+.admin-crisis-panel {
+  border: 1px dashed rgba(251, 191, 36, 0.5);
+}
+
+.admin-crisis-panel__warn {
+  margin-bottom: 0.75rem;
+}
+
+.admin-crisis-active {
+  color: #fbbf24;
+  margin-bottom: 0.75rem;
+}
+
+.admin-crisis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.admin-crisis-btn--mega {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+
+.news-crisis-emergency,
+.news-crisis-alarm {
+  border-left: 3px solid #ef4444;
+  background: rgba(127, 29, 29, 0.2);
+}
+
+.news-crisis-emergency .news-text,
+.news-crisis-alarm .news-text {
+  color: #f87171;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+}
+
+.news-crisis-emergency .news-time,
+.news-crisis-alarm .news-time {
+  color: #fca5a5;
+}

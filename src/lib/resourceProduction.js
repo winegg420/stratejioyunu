@@ -6,6 +6,11 @@ import {
   pruneKbrnEffects,
 } from './happinessSystem';
 import { getIdeologyResourceMultiplier } from './ideologySystem';
+import {
+  getActiveCrisisProductionDebuff,
+  getEconomicCrisisMoneyMult,
+  pruneCrisisEffects,
+} from './crisisEngine';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -118,16 +123,47 @@ export function applyProductionFreeze(
   if (city) {
     const cyberEffects = pruneCyberEffects(city.cyberEffects);
     const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
+    const crisisEffects = pruneCrisisEffects(city.crisisEffects);
     const happiness = computeCityHappiness(
-      { ...city, cyberEffects, kbrnEffects, resources: withRates },
+      { ...city, cyberEffects, kbrnEffects, crisisEffects, resources: withRates },
       {
         cityId: city.cityId,
         incomingAttacks: city._incomingAttacks,
         expeditions: city._expeditions,
         playerIdeology: playerIdeology ?? city._playerIdeology ?? null,
+        activeCrisis: city._activeCrisis ?? null,
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
+    const crisisDebuff = getActiveCrisisProductionDebuff(
+      crisisEffects,
+      city._activeCrisis ?? null,
+    );
+    if (crisisDebuff > 0) {
+      withRates = withRates.map((r) => {
+        if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return r;
+        const hourly = parseHourlyRate(r.rate);
+        if (hourly <= 0) return r;
+        return {
+          ...r,
+          rate: formatRate(Math.max(0, Math.floor(hourly * (1 - crisisDebuff)))),
+          crisisPenalty: true,
+        };
+      });
+    }
+    const moneyMult = getEconomicCrisisMoneyMult(city._activeCrisis ?? null);
+    if (moneyMult < 1) {
+      withRates = withRates.map((r) => {
+        if (r.id !== 'money') return r;
+        const hourly = parseHourlyRate(r.rate);
+        if (hourly <= 0) return r;
+        return {
+          ...r,
+          rate: formatRate(Math.max(0, Math.floor(hourly * moneyMult))),
+          economicCrisis: true,
+        };
+      });
+    }
     withRates = applyIdeologyResourceBonus(
       withRates,
       playerIdeology ?? city._playerIdeology ?? null,

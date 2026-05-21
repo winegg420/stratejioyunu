@@ -112,6 +112,7 @@ import {
   isValidIdeology,
 } from '../lib/ideologySystem';
 import {
+  applyLoyaltyDelta,
   buildRegimeChangeNewsText,
   CAPITALIST_BUDGET_SURGE_THRESHOLD,
   getActiveCityMoney,
@@ -123,6 +124,17 @@ import {
   REGIME_CHANGE_HAPPINESS_DROP,
   sumPlayerMoney,
 } from '../lib/loyaltySystem';
+import {
+  CRISIS_LOYALTY_RESPONSE,
+  CRISIS_SEVERITY,
+  CRISIS_TYPE,
+  formatCrisisLabel,
+  isCorrectCrisisResponse,
+  pruneCrisisEffects,
+  shouldTriggerPlayerEconomicCrisis,
+  tickCrisisWorldEvents,
+  triggerCrisis,
+} from '../lib/crisisEngine';
 import {
   buildCyberOpsLogEntry,
   canLaunchCyberAbility,
@@ -143,6 +155,7 @@ import {
   triggerRandomCbrnEvent as rollGlobalCbrnOutbreak,
   formatNewsTickerTime,
 } from '../utils/cbrnEngine';
+import { isFounderPlayer } from '../lib/adminAccess';
 import {
   computeCityHappiness,
   getActiveCyberBarracksSlow,
@@ -191,12 +204,14 @@ function refreshCityMorale(state, cityId) {
 
   const cyberEffects = pruneCyberEffects(city.cyberEffects);
   const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
+  const crisisEffects = pruneCrisisEffects(city.crisisEffects);
   const happiness = computeCityHappiness(
-    { ...city, cyberEffects, kbrnEffects },
+    { ...city, cyberEffects, kbrnEffects, crisisEffects },
     {
       cityId,
       incomingAttacks: state.incomingAttacks,
       expeditions: state.expeditions,
+      activeCrisis: state.activeCrisis,
     },
   );
   const popDrain = getKbrnPopulationDrain(kbrnEffects);
@@ -216,6 +231,8 @@ function refreshCityMorale(state, cityId) {
       _incomingAttacks: state.incomingAttacks,
       _expeditions: state.expeditions,
       _playerIdeology: state.playerIdeology,
+      _activeCrisis: state.activeCrisis,
+      crisisEffects,
     },
     vipMult,
     state.playerIdeology,
@@ -225,6 +242,7 @@ function refreshCityMorale(state, cityId) {
     ...city,
     cyberEffects,
     kbrnEffects,
+    crisisEffects,
     happiness,
     population,
     basePopulation,
@@ -610,6 +628,12 @@ export const useGameStore = create((set, get) => ({
     );
 
     patchCity(set, get, cityId, { taxRate: nextRate, happiness: nextCity.happiness, resources: nextCity.resources });
+
+    const econTrigger = shouldTriggerPlayerEconomicCrisis(city, nextRate);
+    if (econTrigger && !get().activeCrisis?.active) {
+      get()._triggerPlayerEconomicCrisis(cityId, econTrigger.reason);
+    }
+
     useNotificationStore.getState().addToast(
       `Vergi oranı %${nextRate} — moral ${nextCity.happiness}%`,
       nextRate > 20 ? 'warn' : 'info',
@@ -618,13 +642,159 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
+  _triggerPlayerEconomicCrisis: (cityId, reason) => {
+    const state = get();
+    const rolled = triggerCrisis(state, {
+      type: CRISIS_TYPE.ECONOMIC,
+      severity: CRISIS_SEVERITY.MODERATE,
+      playerTriggered: true,
+      targetCityId: cityId,
+    });
+    if (!rolled) return false;
+    let cities = { ...state.cities, ...rolled.cityPatches };
+    cities = Object.fromEntries(
+      Object.entries(cities).map(([id, c]) => [
+        id,
+        refreshCityMorale({ ...state, cities, activeCrisis: rolled.activeCrisis }, id),
+      ]),
+    );
+    set({
+      activeCrisis: rolled.activeCrisis,
+      cities,
+      newsLog: [rolled.newsItem, ...(state.newsLog ?? [])].slice(0, 48),
+      lastCrisisEventAt: rolled.lastCrisisEventAt,
+    });
+    useNotificationStore.getState().addToast(
+      reason === 'extreme_tax'
+        ? '[ EKONOMİK KRİZ ] Aşırı vergi politikası piyasayı çökertti!'
+        : '[ EKONOMİK KRİZ ] İş gücü tükendi — üretim hatları durdu!',
+      'danger',
+    );
+    cloudSync(get, { saveAllCities: true, savePlayerMeta: true, saveProfile: true });
+    return true;
+  },
+
+  adminTriggerCrisis: ({ type, catastrophic = false } = {}) => {
+    const playerKey = getCurrentPlayerName();
+    if (!isFounderPlayer(playerKey)) return false;
+    const state = get();
+    if (state.activeCrisis?.active) {
+      useNotificationStore.getState().addToast('Aktif kriz var — önce sonlanmasını bekleyin veya süreyi bekleyin.', 'warn');
+      return false;
+    }
+    const severity = catastrophic || type === CRISIS_TYPE.EARTHQUAKE
+      ? CRISIS_SEVERITY.CATASTROPHIC
+      : CRISIS_SEVERITY.MODERATE;
+    const rolled = triggerCrisis(state, { type, severity, admin: catastrophic || type === CRISIS_TYPE.EARTHQUAKE });
+    if (!rolled) return false;
+    let cities = { ...state.cities, ...rolled.cityPatches };
+    cities = Object.fromEntries(
+      Object.entries(cities).map(([id, c]) => [
+        id,
+        refreshCityMorale({ ...state, cities, activeCrisis: rolled.activeCrisis }, id),
+      ]),
+    );
+    set({
+      activeCrisis: rolled.activeCrisis,
+      cities,
+      newsLog: [rolled.newsItem, ...(state.newsLog ?? [])].slice(0, 48),
+      lastCrisisEventAt: rolled.lastCrisisEventAt,
+    });
+    useNotificationStore.getState().addToast(
+      `[ KURUCU ] ${formatCrisisLabel(type)} tetiklendi`,
+      'danger',
+    );
+    cloudSync(get, { saveAllCities: true, savePlayerMeta: true, saveProfile: true });
+    return true;
+  },
+
+  respondToCrisis: (responseKey) => {
+    const state = get();
+    const crisis = state.activeCrisis;
+    if (!crisis?.active || crisis.responded) {
+      useNotificationStore.getState().addToast('Aktif kriz yanıtı yok veya zaten yanıtlandı.', 'warn');
+      return false;
+    }
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+
+    const correct = isCorrectCrisisResponse(state.playerIdeology, responseKey);
+    let ok = false;
+
+    if (responseKey === CRISIS_LOYALTY_RESPONSE.socialist_aid) {
+      const food = city.resources?.find((r) => r.id === 'food');
+      const metal = city.resources?.find((r) => r.id === 'metal');
+      if ((food?.current ?? 0) >= 800 && (metal?.current ?? 0) >= 500) {
+        const resources = city.resources.map((r) => {
+          if (r.id === 'food') return { ...r, current: r.current - 800 };
+          if (r.id === 'metal') return { ...r, current: r.current - 500 };
+          return r;
+        });
+        patchCity(set, get, cityId, { resources: ensureCityResources(resources) });
+        ok = true;
+      }
+    } else if (responseKey === CRISIS_LOYALTY_RESPONSE.capitalist_fund) {
+      const money = city.resources?.find((r) => r.id === 'money');
+      if ((money?.current ?? 0) >= 18_000) {
+        const resources = city.resources.map((r) => (
+          r.id === 'money' ? { ...r, current: r.current - 18_000 } : r
+        ));
+        patchCity(set, get, cityId, { resources: ensureCityResources(resources) });
+        ok = true;
+      }
+    } else if (responseKey === CRISIS_LOYALTY_RESPONSE.technocrat_shield) {
+      const cyber = city.buildings?.find((b) => b.id === 'cyber_ops');
+      const plant = city.buildings?.find((b) => b.id === 'plant');
+      const energy = city.resources?.find((r) => r.id === 'energy');
+      if ((cyber?.level ?? 0) >= 1 && (energy?.current ?? 0) >= 3000) {
+        const resources = city.resources.map((r) => (
+          r.id === 'energy' ? { ...r, current: r.current - 3000 } : r
+        ));
+        patchCity(set, get, cityId, { resources: ensureCityResources(resources) });
+        ok = true;
+      }
+    } else if (responseKey === CRISIS_LOYALTY_RESPONSE.nationalist_mobilize) {
+      const troops = city.idleTroops ?? [];
+      const total = troops.reduce((s, t) => s + (t.available ?? 0), 0);
+      if (total >= 120) {
+        ok = true;
+      }
+    }
+
+    if (!ok) {
+      useNotificationStore.getState().addToast('Kriz müdahalesi için kaynak/ordu yetersiz.', 'warn');
+      return false;
+    }
+
+    const action = correct ? responseKey : LOYALTY_ACTION.CRISIS_WRONG_RESPONSE;
+    get().awardLoyalty(action);
+
+    const easedEndsAt = Math.max(Date.now() + 60_000, (crisis.endsAt ?? Date.now()) - 4 * 60 * 1000);
+    set({
+      activeCrisis: { ...crisis, responded: true, endsAt: easedEndsAt },
+    });
+
+    useNotificationStore.getState().addToast(
+      correct
+        ? `[ KRİZ MÜDAHALE ] Doktrin uyumlu müdahale kayda geçti.`
+        : `[ KRİZ MÜDAHALE ] Yanlış protokol — sadakat düştü.`,
+      correct ? 'success' : 'warn',
+    );
+    cloudSync(get, { saveProfile: true, savePlayerMeta: true, cityId });
+    return true;
+  },
+
   awardLoyalty: (action) => {
     const state = get();
     const pts = getLoyaltyPoints(state.playerIdeology, action);
-    if (pts <= 0) return;
-    const next = (state.loyaltyScore ?? 0) + pts;
+    if (!pts) return;
+    const next = applyLoyaltyDelta(state.loyaltyScore, pts);
     set({ loyaltyScore: next });
-    useNotificationStore.getState().addToast(`İdeoloji sadakati +${pts}`, 'success');
+    useNotificationStore.getState().addToast(
+      pts > 0 ? `İdeoloji sadakati +${pts}` : `İdeoloji sadakati ${pts}`,
+      pts > 0 ? 'success' : 'warn',
+    );
     cloudSync(get, { saveProfile: true, savePlayerMeta: true });
   },
 
@@ -1061,6 +1231,27 @@ export const useGameStore = create((set, get) => ({
       );
     }
 
+    const crisisState = {
+      ...get(),
+      cities,
+      now,
+      ...(cbrnPatch?.globalCbrnOutbreak != null ? { globalCbrnOutbreak: cbrnPatch.globalCbrnOutbreak } : {}),
+      ...(cbrnPatch?.newsLog ? { newsLog: cbrnPatch.newsLog } : {}),
+    };
+    const crisisPatch = tickCrisisWorldEvents(crisisState, now);
+    if (crisisPatch?.cities) {
+      const merged = { ...cities, ...crisisPatch.cities };
+      cities = Object.fromEntries(
+        Object.entries(merged).map(([id, c]) => [
+          id,
+          refreshCityMorale(
+            { ...get(), cities: merged, activeCrisis: crisisPatch.activeCrisis ?? get().activeCrisis, now },
+            id,
+          ),
+        ]),
+      );
+    }
+
     const completedExpeditionIds = [];
     for (const e of state.expeditions) {
       if (e.endsAt != null && e.endsAt <= now) completedExpeditionIds.push(e.id);
@@ -1107,6 +1298,10 @@ export const useGameStore = create((set, get) => ({
       ...(cbrnPatch?.newsLog ? { newsLog: cbrnPatch.newsLog } : {}),
       ...(cbrnPatch?.lastCbrnEventAt ? { lastCbrnEventAt: cbrnPatch.lastCbrnEventAt } : {}),
       ...(cbrnPatch?._cbrnTickCount != null ? { _cbrnTickCount: cbrnPatch._cbrnTickCount } : {}),
+      ...(crisisPatch?.activeCrisis != null ? { activeCrisis: crisisPatch.activeCrisis } : {}),
+      ...(crisisPatch?.newsLog ? { newsLog: crisisPatch.newsLog } : {}),
+      ...(crisisPatch?.lastCrisisEventAt ? { lastCrisisEventAt: crisisPatch.lastCrisisEventAt } : {}),
+      ...(crisisPatch?._crisisTickCount != null ? { _crisisTickCount: crisisPatch._crisisTickCount } : {}),
     });
 
     if (cbrnPatch?.newsLog?.length) {
@@ -1115,8 +1310,17 @@ export const useGameStore = create((set, get) => ({
         useNotificationStore.getState().addToast(latest.text, 'danger');
       }
     }
+    if (crisisPatch?.newsLog?.length) {
+      const latest = crisisPatch.newsLog[0];
+      if (latest?.type === 'crisis-emergency' || latest?.type === 'crisis-alarm') {
+        useNotificationStore.getState().addToast(latest.text, 'danger');
+      }
+    }
     if (cbrnPatch?.saveCbrn) {
       cloudSync(get, { saveAllCities: true, savePlayerMeta: true, researches: true });
+    }
+    if (crisisPatch?.saveCrisis) {
+      cloudSync(get, { saveAllCities: true, savePlayerMeta: true, saveProfile: true });
     }
 
     completedResearchIds.forEach((id) => {
@@ -2093,6 +2297,12 @@ export const useGameStore = create((set, get) => ({
       'success',
     );
     cloudSync(get, { cityId, saveAllUnits: true });
+
+    const afterCity = get().cities[cityId];
+    const workforceTrigger = afterCity && shouldTriggerPlayerEconomicCrisis(afterCity, afterCity.taxRate);
+    if (workforceTrigger && !get().activeCrisis?.active) {
+      get()._triggerPlayerEconomicCrisis(cityId, workforceTrigger.reason);
+    }
     return true;
   },
 

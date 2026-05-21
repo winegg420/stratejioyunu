@@ -31,6 +31,7 @@ Hiçbir ideoloji işlemi kilitlemez; uzmanlık çarpanları uygulanır (`playerI
 - İlk **7 gün** (`protection_ends_at`): yeni hesap koruması + **ücretsiz** ideoloji değişimi (`canChangeIdeology`).
 - Sonrası: yüksek **Bütçe** (`IDEOLOGY_CHANGE_COST_MONEY`) ile rejim değişimi; mutluluk sert düşüş + `newsLog` duyurusu. İleride mağaza / gerçek para seçeneği.
 - **Sadakat puanı** (`loyalty_score`): doktrine uygun eylemler ödüllendirilir (milliyetçi sefer zaferi, kapitalist bütçe artışı, sol kaynak yardımı, teknokrat araştırma). Küresel sıralama: `/siralama` (`leaderboardApi.js`).
+- **Kriz motoru** (`crisisEngine.js`): deprem, ekonomik, enerji, göç dalgası — seyrek otomatik + oyuncu tetikli ekonomik kriz (aşırı vergi / iş gücü tükenmesi). Kurucu panel: `/kurucu-kriz`. Kriz müdahalesi `loyalty_score` etkiler.
 - Harita: `[ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]` — renkli parıltı; aynı ideoloji = **Doğal Müttefik**.
 
 ### Resmi Diplomatik Yazışma — State Mail
