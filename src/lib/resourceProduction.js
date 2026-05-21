@@ -5,7 +5,7 @@ import {
   pruneCyberEffects,
   pruneKbrnEffects,
 } from './happinessSystem';
-import { getGovernanceProductionMultiplier } from './presidencySystem';
+import { getIdeologyResourceMultiplier } from './ideologySystem';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -74,20 +74,20 @@ function applyDepotFreeze(resources) {
   });
 }
 
-function applyGovernanceProductionBonus(resources, governanceStyle) {
-  const mult = getGovernanceProductionMultiplier(governanceStyle);
-  if (!governanceStyle || mult === 1) return resources;
+function applyIdeologyResourceBonus(resources, playerIdeology) {
+  if (!playerIdeology) return resources;
 
   return resources.map((r) => {
-    if (!PRODUCTION_RESOURCE_IDS.has(r.id)) {
-      return { ...r, governanceProductionBonus: false };
+    const mult = getIdeologyResourceMultiplier(playerIdeology, r.id);
+    if (!PRODUCTION_RESOURCE_IDS.has(r.id) || mult === 1) {
+      return { ...r, ideologyResourceBonus: false };
     }
     const hourly = parseHourlyRate(r.rate);
-    if (hourly <= 0) return { ...r, governanceProductionBonus: false };
+    if (hourly <= 0) return { ...r, ideologyResourceBonus: false };
     return {
       ...r,
       rate: formatRate(Math.max(0, Math.floor(hourly * mult))),
-      governanceProductionBonus: mult > 1,
+      ideologyResourceBonus: mult !== 1,
     };
   });
 }
@@ -98,7 +98,7 @@ export function applyProductionFreeze(
   buildings,
   cityOrIdlePop,
   productionMultiplier = 1,
-  governanceStyle = null,
+  playerIdeology = null,
 ) {
   const idlePop = typeof cityOrIdlePop === 'object'
     ? getIdlePopulation(cityOrIdlePop)
@@ -124,11 +124,14 @@ export function applyProductionFreeze(
         cityId: city.cityId,
         incomingAttacks: city._incomingAttacks,
         expeditions: city._expeditions,
-        governanceStyle: governanceStyle ?? city._governanceStyle ?? null,
+        playerIdeology: playerIdeology ?? city._playerIdeology ?? null,
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
-    withRates = applyGovernanceProductionBonus(withRates, governanceStyle ?? city._governanceStyle ?? null);
+    withRates = applyIdeologyResourceBonus(
+      withRates,
+      playerIdeology ?? city._playerIdeology ?? null,
+    );
   }
 
   return applyDepotFreeze(withRates);

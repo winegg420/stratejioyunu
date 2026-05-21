@@ -54,6 +54,7 @@ import {
   canAffordTrade,
   deductTradeResources,
   formatTradeCargoSummary,
+  scaleTradeAmounts,
   sumTradeAmounts,
 } from '../lib/tradeUtils';
 import {
@@ -95,8 +96,33 @@ import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
-import { savePlayerGovernance } from '../lib/briefingStorage';
-import { GOVERNANCE_PROFILES, isValidGovernance } from '../lib/presidencySystem';
+import {
+  loadProtectionEndsAt,
+  savePlayerIdeology,
+  saveProtectionEndsAt,
+} from '../lib/briefingStorage';
+import {
+  applyIdeologyTravelSeconds,
+  canChangeIdeology,
+  defaultProtectionEndsAt,
+  formatIdeologyLabel,
+  getProductionDurationMultiplier,
+  getResearchDurationMultiplier,
+  getTradeRevenueMultiplier,
+  isValidIdeology,
+} from '../lib/ideologySystem';
+import {
+  buildRegimeChangeNewsText,
+  CAPITALIST_BUDGET_SURGE_THRESHOLD,
+  getActiveCityMoney,
+  getLoyaltyPoints,
+  IDEOLOGY_CHANGE_COST_MONEY,
+  IDEOLOGY_CHANGE_REAL_MONEY_NOTE,
+  isSocialistAidPayload,
+  LOYALTY_ACTION,
+  REGIME_CHANGE_HAPPINESS_DROP,
+  sumPlayerMoney,
+} from '../lib/loyaltySystem';
 import {
   buildCyberOpsLogEntry,
   canLaunchCyberAbility,
@@ -115,6 +141,7 @@ import {
   resolveKbrnChemMission,
   tickCbrnWorldEvents,
   triggerRandomCbrnEvent as rollGlobalCbrnOutbreak,
+  formatNewsTickerTime,
 } from '../utils/cbrnEngine';
 import {
   computeCityHappiness,
@@ -170,7 +197,6 @@ function refreshCityMorale(state, cityId) {
       cityId,
       incomingAttacks: state.incomingAttacks,
       expeditions: state.expeditions,
-      governanceStyle: state.playerGovernance,
     },
   );
   const popDrain = getKbrnPopulationDrain(kbrnEffects);
@@ -189,9 +215,10 @@ function refreshCityMorale(state, cityId) {
       population,
       _incomingAttacks: state.incomingAttacks,
       _expeditions: state.expeditions,
+      _playerIdeology: state.playerIdeology,
     },
     vipMult,
-    state.playerGovernance,
+    state.playerIdeology,
   );
 
   return enrichCityModel({
@@ -473,7 +500,12 @@ export const useGameStore = create((set, get) => ({
   initWorldSystems: () => {
     const state = get();
     const playerName = getCurrentPlayerName();
-    const mapCities = syncMapCitiesForPlayer(state.mapCities, state.playerCities, playerName);
+    const mapCities = syncMapCitiesForPlayer(
+      state.mapCities,
+      state.playerCities,
+      playerName,
+      state.playerIdeology,
+    );
     syncRegistryFromMap(mapCities);
     set({ mapCities });
     get()._runServerCleansing(false);
@@ -586,35 +618,137 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
-  setPlayerGovernance: (style) => {
-    if (!isValidGovernance(style)) return false;
-    const profile = GOVERNANCE_PROFILES[style];
+  awardLoyalty: (action) => {
     const state = get();
-    savePlayerGovernance(getCurrentPlayerName(), style);
-    let nextState = { ...state, playerGovernance: style };
-    const cities = refreshAllCitiesMorale(nextState);
-    nextState = { ...nextState, cities };
-    const cityId = state.activeCityId;
-    const city = cities[cityId];
-    if (city && profile?.suggestedTax != null) {
-      const nextRate = clampTaxRate(profile.suggestedTax);
-      const refreshed = refreshCityMorale(
-        { ...nextState, cities: { ...cities, [cityId]: { ...city, taxRate: nextRate } } },
-        cityId,
-      );
-      nextState = {
-        ...nextState,
-        cities: { ...nextState.cities, [cityId]: refreshed },
-      };
+    const pts = getLoyaltyPoints(state.playerIdeology, action);
+    if (pts <= 0) return;
+    const next = (state.loyaltyScore ?? 0) + pts;
+    set({ loyaltyScore: next });
+    useNotificationStore.getState().addToast(`İdeoloji sadakati +${pts}`, 'success');
+    cloudSync(get, { saveProfile: true, savePlayerMeta: true });
+  },
+
+  getIdeologyChangeCost: () => IDEOLOGY_CHANGE_COST_MONEY,
+
+  setPlayerIdeology: (ideology, { force = false } = {}) => {
+    if (!isValidIdeology(ideology)) return false;
+    const state = get();
+    if (state.playerIdeology === ideology) return false;
+
+    const isRegimeChange = Boolean(state.playerIdeology) && !force;
+    const freeWindow = canChangeIdeology(state.protectionEndsAt);
+    const playerKey = getCurrentPlayerName();
+
+    if (isRegimeChange && !freeWindow) {
+      const budget = getActiveCityMoney(state.cities, state.activeCityId);
+      if (budget < IDEOLOGY_CHANGE_COST_MONEY) {
+        useNotificationStore.getState().addToast(
+          `Rejim değişimi için ${IDEOLOGY_CHANGE_COST_MONEY.toLocaleString('tr-TR')} Bütçe gerekli.`,
+          'warn',
+        );
+        return false;
+      }
     }
-    set({ playerGovernance: style, cities: nextState.cities });
-    useNotificationStore.getState().addToast(
-      `Yönetim doktrini aktif: ${profile.label}`,
-      'info',
+
+    const playerKeySave = playerKey;
+    savePlayerIdeology(playerKeySave, ideology);
+    let protectionEndsAt = state.protectionEndsAt;
+    if (!protectionEndsAt) {
+      protectionEndsAt = defaultProtectionEndsAt();
+      saveProtectionEndsAt(playerKeySave, protectionEndsAt);
+    }
+
+    let workingState = { ...state, playerIdeology: ideology, protectionEndsAt };
+
+    if (isRegimeChange && !freeWindow) {
+      const cityId = state.activeCityId;
+      const city = state.cities[cityId];
+      if (city) {
+        const resources = (city.resources ?? []).map((r) => (
+          r.id === 'money'
+            ? { ...r, current: Math.max(0, (r.current ?? 0) - IDEOLOGY_CHANGE_COST_MONEY) }
+            : r
+        ));
+        workingState = {
+          ...workingState,
+          cities: {
+            ...workingState.cities,
+            [cityId]: { ...city, resources: ensureCityResources(resources) },
+          },
+        };
+      }
+    }
+
+    let cities = refreshAllCitiesMorale(workingState);
+
+    if (isRegimeChange) {
+      cities = Object.fromEntries(
+        Object.entries(cities).map(([id, c]) => [
+          id,
+          {
+            ...c,
+            happiness: Math.max(
+              5,
+              (c.happiness ?? 72) - REGIME_CHANGE_HAPPINESS_DROP,
+            ),
+          },
+        ]),
+      );
+    }
+
+    const mapCities = syncMapCitiesForPlayer(
+      workingState.mapCities,
+      workingState.playerCities,
+      playerKey,
+      ideology,
     );
-    cloudSync(get);
+
+    let newsLog = state.newsLog ?? [];
+    if (isRegimeChange) {
+      const newsItem = {
+        id: genId('news'),
+        type: 'regime',
+        text: buildRegimeChangeNewsText(playerKey),
+        time: formatNewsTickerTime(),
+        at: Date.now(),
+      };
+      newsLog = [newsItem, ...newsLog].slice(0, 48);
+    }
+
+    set({
+      playerIdeology: ideology,
+      protectionEndsAt,
+      cities,
+      mapCities,
+      newsLog,
+    });
+
+    if (isRegimeChange) {
+      useNotificationStore.getState().addToast(
+        `[ REJİM DEĞİŞİKLİĞİ ] ${formatIdeologyLabel(ideology)} — mutluluk düştü.`,
+        'warn',
+      );
+      cloudSync(get, { saveAllCities: true, saveProfile: true, savePlayerMeta: true });
+    } else {
+      useNotificationStore.getState().addToast(
+        `Siyasi ideoloji: ${formatIdeologyLabel(ideology)}`,
+        'success',
+      );
+      cloudSync(get, { saveProfile: true });
+    }
     return true;
   },
+
+  canChangeIdeology: () => canChangeIdeology(get().protectionEndsAt),
+
+  canAffordIdeologyChange: () => {
+    const state = get();
+    if (canChangeIdeology(state.protectionEndsAt)) return true;
+    return getActiveCityMoney(state.cities, state.activeCityId) >= IDEOLOGY_CHANGE_COST_MONEY;
+  },
+
+  /** @deprecated setPlayerIdeology kullanın */
+  setPlayerGovernance: (style, opts) => get().setPlayerIdeology(style, opts),
 
   getCyberCapabilities: () => {
     const city = get().cities[get().activeCityId];
@@ -908,6 +1042,7 @@ export const useGameStore = create((set, get) => ({
     }
 
     const stateBeforeQueues = get();
+    const moneyBeforeTick = sumPlayerMoney(stateBeforeQueues.cities);
     const { cities: queueCities, completed } = tickAllCities(stateBeforeQueues, now);
     const stateForMorale = { ...get(), cities: queueCities };
     let cities = Object.fromEntries(
@@ -993,6 +1128,14 @@ export const useGameStore = create((set, get) => ({
         );
       }
     });
+    if (completedResearchIds.length > 0) {
+      get().awardLoyalty(LOYALTY_ACTION.TECHNOCRAT_RESEARCH_COMPLETE);
+    }
+
+    const moneyAfterTick = sumPlayerMoney(get().cities);
+    if (moneyAfterTick - moneyBeforeTick >= CAPITALIST_BUDGET_SURGE_THRESHOLD) {
+      get().awardLoyalty(LOYALTY_ACTION.CAPITALIST_BUDGET_SURGE);
+    }
 
     if (Object.keys(flashes).length > 0) {
       setTimeout(() => {
@@ -1192,7 +1335,9 @@ export const useGameStore = create((set, get) => ({
       if (targetPc && exp.tradePayload?.resources) {
         const targetCity = state.cities[targetPc.id];
         if (targetCity) {
-          const delivered = applyTradeDelivery(targetCity.resources, exp.tradePayload.resources);
+          const tradeMult = getTradeRevenueMultiplier(state.playerIdeology);
+          const scaledCargo = scaleTradeAmounts(exp.tradePayload.resources, tradeMult);
+          const delivered = applyTradeDelivery(targetCity.resources, scaledCargo);
           overflow = delivered.overflow;
           patchCity(set, get, targetPc.id, { resources: delivered.resources });
         }
@@ -1211,6 +1356,9 @@ export const useGameStore = create((set, get) => ({
         overflow.length ? 'Kargo teslim — depo taşması oluştu' : 'Ticaret kargosu teslim edildi',
         overflow.length ? 'warn' : 'success',
       );
+      if (targetPc && isSocialistAidPayload(exp.tradePayload?.resources)) {
+        get().awardLoyalty(LOYALTY_ACTION.SOCIALIST_RESOURCE_AID);
+      }
       syncExp({ reports: [report] });
       return;
     }
@@ -1448,6 +1596,10 @@ export const useGameStore = create((set, get) => ({
       defenderName: mapCity?.owner || exp.target,
     });
 
+    if (combat.attackerWon) {
+      get().awardLoyalty(LOYALTY_ACTION.NATIONALIST_EXPEDITION_WIN);
+    }
+
     if (city && loot.length > 0) {
       const { resources, overflow } = applyExpeditionLoot(city.resources, loot);
       const vipMult = getVipMultiplierFromState(get());
@@ -1463,13 +1615,14 @@ export const useGameStore = create((set, get) => ({
 
     const origin = resolveCityCoords(exp.originCityName, state.playerCities, state.mapCities);
     const targetCoords = { lat: exp.targetLat, lng: exp.targetLng };
-    const returnDuration = calcExpeditionTravelSeconds({
+    let returnDuration = calcExpeditionTravelSeconds({
       origin: targetCoords,
       target: origin,
       troopQty: combat.survivingAttacker,
       mapCities: state.mapCities,
       mode: 'attack',
     });
+    returnDuration = applyIdeologyTravelSeconds(returnDuration, state.playerIdeology);
     const returnTiming = createQueueTiming(returnDuration);
     const pseudoIdle = landUnits.map((u) => ({
       ...u,
@@ -1906,9 +2059,10 @@ export const useGameStore = create((set, get) => ({
     const barracksSlow = 1
       + getActiveCyberBarracksSlow(city.cyberEffects)
       + getActiveKbrnBarracksBlock(city.kbrnEffects);
+    const ideologyMult = getProductionDurationMultiplier(state.playerIdeology);
     const scaledDuration = Math.max(
       5,
-      Math.round((baseDuration * count * barracksSlow) / Math.max(0.15, happyMult)),
+      Math.round((baseDuration * count * barracksSlow * ideologyMult) / Math.max(0.15, happyMult)),
     );
     const timing = queued
       ? { durationSeconds: scaledDuration, startedAt: null, endsAt: null }
@@ -1990,7 +2144,7 @@ export const useGameStore = create((set, get) => ({
     const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
     const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
     const expeditionMode = isFound ? 'found' : isSpy ? 'spy' : 'attack';
-    const duration = isSpy
+    let duration = isSpy
       ? calcSpyProbeTravelSeconds({
         origin,
         target: targetCoords,
@@ -2004,6 +2158,9 @@ export const useGameStore = create((set, get) => ({
         mapCities: state.mapCities,
         mode: expeditionMode,
       });
+    if (!isSpy) {
+      duration = applyIdeologyTravelSeconds(duration, state.playerIdeology);
+    }
     const distKm = getExpeditionDistanceKm(origin, targetCoords);
     const timing = createQueueTiming(duration);
 
@@ -2091,13 +2248,14 @@ export const useGameStore = create((set, get) => ({
     const targetCoords = mapTarget
       ? { lat: mapTarget.lat, lng: mapTarget.lng }
       : resolveCityCoords(targetCityName, state.playerCities, state.mapCities);
-    const duration = calcExpeditionTravelSeconds({
+    let duration = calcExpeditionTravelSeconds({
       origin,
       target: targetCoords,
       troopQty: {},
       mapCities: state.mapCities,
       mode: 'trade',
     });
+    duration = applyIdeologyTravelSeconds(duration, state.playerIdeology);
     const distKm = getExpeditionDistanceKm(origin, targetCoords);
     const timing = createQueueTiming(duration);
 
@@ -2401,7 +2559,11 @@ export const useGameStore = create((set, get) => ({
 
     const hasActive = list.some((r) => r.active);
     const queued = addToQueue || hasActive;
-    const duration = parseTimeToSeconds(research.time) || 300;
+    const ideologyMult = getResearchDurationMultiplier(state.playerIdeology);
+    const duration = Math.max(
+      15,
+      Math.round((parseTimeToSeconds(research.time) || 300) * ideologyMult),
+    );
     const timing = queued
       ? { durationSeconds: duration, startedAt: null, endsAt: null }
       : createQueueTiming(duration);
@@ -2440,7 +2602,11 @@ export const useGameStore = create((set, get) => ({
     if (list.some((r) => r.active)) return false;
     const research = list.find((r) => r.id === researchId && r.queued);
     if (!research) return false;
-    const duration = research.durationSeconds || parseTimeToSeconds(research.time) || 300;
+    const ideologyMult = getResearchDurationMultiplier(get().playerIdeology);
+    const duration = Math.max(
+      15,
+      Math.round((research.durationSeconds || parseTimeToSeconds(research.time) || 300) * ideologyMult),
+    );
     const timing = createQueueTiming(duration);
     set({
       researches: list.map((r) =>

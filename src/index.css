@@ -1258,6 +1258,67 @@ a {
   margin-bottom: 1rem;
 }
 
+.profile-ideology-panel .profile-ideology-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.profile-ideology-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  font-size: 0.78rem;
+  border: 1px solid rgba(100, 140, 200, 0.25);
+  background: rgba(6, 14, 28, 0.6);
+  cursor: pointer;
+}
+
+.profile-ideology-btn.is-disabled,
+.profile-ideology-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.profile-regime-modal {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.profile-regime-cost {
+  margin: 0.5rem 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent-blue, #60a5fa);
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+}
+
+.profile-ideology-btn.is-active {
+  border-color: var(--ideology-color, #39ff88);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ideology-color) 35%, transparent);
+}
+
+.profile-ideology-btn__sub {
+  font-size: 0.65rem;
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .profile-ideology-panel .profile-ideology-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .avatar {
   font-size: 3rem;
   width: 80px;

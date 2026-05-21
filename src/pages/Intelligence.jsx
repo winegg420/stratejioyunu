@@ -21,6 +21,7 @@ import {
   getCbrnChemOpCost,
   resolveDefenderDeconLevel,
 } from '../utils/cbrnEngine';
+import { getCyberSuccessBonus } from '../lib/ideologySystem';
 import {
   calcCyberAttackSuccessChance,
   calcCyberVirusTravelSeconds,
@@ -40,6 +41,7 @@ export default function Intelligence() {
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const city = useActiveCity();
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
   const expeditions = useGameStore((s) => s.expeditions ?? STORE_EMPTY_ARRAY);
@@ -92,9 +94,13 @@ export default function Intelligence() {
   const successPreview = useMemo(() => {
     if (!selectedTarget || !city) return null;
     const defenderFw = resolveDefenderCyberOpsLevel({ mapCity: selectedTarget });
-    const chance = calcCyberAttackSuccessChance(attackerFw, defenderFw);
+    const chance = calcCyberAttackSuccessChance(
+      attackerFw,
+      defenderFw,
+      getCyberSuccessBonus(playerIdeology),
+    );
     return { defenderFw, chance: Math.round(chance * 100), diff: attackerFw - defenderFw };
-  }, [selectedTarget, city, attackerFw]);
+  }, [selectedTarget, city, attackerFw, playerIdeology]);
 
   const travelSeconds = useMemo(() => {
     if (!selectedTarget || !city) return 0;

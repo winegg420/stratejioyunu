@@ -72,9 +72,11 @@ create table if not exists public.profiles (
   alliance_name text,
   rank_title text default 'Teğmen',
   rank_score bigint not null default 0 check (rank_score >= 0),
+  loyalty_score bigint not null default 0 check (loyalty_score >= 0),
   server_id text not null default 'turkiye-1',
   active_city_id text,
   protection_ends_at timestamptz,
+  ideology text check (ideology in ('socialist', 'capitalist', 'technocrat', 'nationalist')),
   player_meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
@@ -87,6 +89,9 @@ create unique index if not exists profiles_player_name_server_uidx
 
 create index if not exists profiles_rank_score_idx
   on public.profiles (server_id, rank_score desc);
+
+create index if not exists profiles_loyalty_score_idx
+  on public.profiles (server_id, loyalty_score desc);
 
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at

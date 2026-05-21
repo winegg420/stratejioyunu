@@ -18,6 +18,7 @@ import Diplomacy from './pages/Diplomacy';
 import Reports from './pages/Reports';
 import MapPage from './pages/MapPage';
 import Profile from './pages/Profile';
+import Rankings from './pages/Rankings';
 import Messages from './pages/Messages';
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="diplomasi" element={<PageSafe><Diplomacy /></PageSafe>} />
             <Route path="raporlar" element={<PageSafe><Reports /></PageSafe>} />
             <Route path="harita" element={<PageSafe><MapPage /></PageSafe>} />
+            <Route path="siralama" element={<PageSafe><Rankings /></PageSafe>} />
             <Route path="profil" element={<PageSafe><Profile /></PageSafe>} />
             <Route path="mesajlar" element={<PageSafe><Messages /></PageSafe>} />
           </Route>

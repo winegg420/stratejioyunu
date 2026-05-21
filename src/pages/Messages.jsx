@@ -3,7 +3,7 @@ import PageHeader from '../components/PageHeader';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import { stateMailMessages } from '../data/placeholder';
 import { useAuth } from '../context/AuthContext';
-import { formatGovernanceLabel } from '../lib/presidencySystem';
+import { formatIdeologyLabel } from '../lib/ideologySystem';
 import { useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 
@@ -15,7 +15,7 @@ const ENCRYPTION_OPTIONS = [
 
 export default function Messages() {
   const { playerName } = useAuth();
-  const playerGovernance = useGameStore((s) => s.playerGovernance);
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const addToast = useNotificationStore((s) => s.addToast);
 
   const [selectedId, setSelectedId] = useState(stateMailMessages[0]?.id ?? null);
@@ -49,7 +49,7 @@ export default function Messages() {
       <PageHeader
         title="State Mail"
         subtitle="Liderden lidere resmi, şifreli diplomatik yazışma — sıradan sohbet değildir."
-        status={playerGovernance ? formatGovernanceLabel(playerGovernance) : '[ OTORİTE BEKLENİYOR ]'}
+        status={playerIdeology ? formatIdeologyLabel(playerIdeology) : '[ OTORİTE BEKLENİYOR ]'}
       />
 
       <div className="state-mail-toolbar panel">

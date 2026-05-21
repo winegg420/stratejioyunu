@@ -64,26 +64,26 @@ function StatBlock({ label, value, sub, accent }) {
 
 export default function Home() {
   const { playerName } = useAuth();
-  const setPlayerGovernance = useGameStore((s) => s.setPlayerGovernance);
-  const playerGovernance = useGameStore((s) => s.playerGovernance);
+  const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const [briefingOpen, setBriefingOpen] = useState(false);
-  const [pendingGovernance, setPendingGovernance] = useState(playerGovernance);
+  const [pendingIdeology, setPendingIdeology] = useState(playerIdeology);
 
   useEffect(() => {
     if (!playerName) return;
-    if (!hasSeenGlobalBriefing(playerName)) {
+    if (!hasSeenGlobalBriefing(playerName) || !playerIdeology) {
       setBriefingOpen(true);
-      setPendingGovernance(playerGovernance);
+      setPendingIdeology(playerIdeology);
     }
-  }, [playerName, playerGovernance]);
+  }, [playerName, playerIdeology]);
 
   const handleBriefingAccept = useCallback(() => {
-    if (pendingGovernance) {
-      setPlayerGovernance(pendingGovernance);
+    if (pendingIdeology) {
+      setPlayerIdeology(pendingIdeology, { force: !playerIdeology });
     }
     markGlobalBriefingSeen(playerName);
     setBriefingOpen(false);
-  }, [pendingGovernance, playerName, setPlayerGovernance]);
+  }, [pendingIdeology, playerName, playerIdeology, setPlayerIdeology]);
 
   const liveNews = useGameStore((s) => s.newsLog ?? []);
   const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
@@ -115,14 +115,14 @@ export default function Home() {
     <div className="page home-page page--command">
       <GlobalBriefingModal
         open={briefingOpen}
-        selectedGovernance={pendingGovernance}
-        onSelectGovernance={setPendingGovernance}
+        selectedIdeology={pendingIdeology}
+        onSelectIdeology={setPendingIdeology}
         onAccept={handleBriefingAccept}
       />
       <PageHeader
         title="Ana Merkez"
         subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}
-        status={playerGovernance ? undefined : '[ ULUSAL BRİFİNG BEKLİYOR ]'}
+        status={playerIdeology ? undefined : '[ ULUSAL BRİFİNG BEKLİYOR ]'}
       />
 
       <div className="home-status-strip">

@@ -61,6 +61,17 @@ export function restoreTradeCargo(resources, amounts) {
   return applyTradeDelivery(resources, amounts);
 }
 
+/** İdeoloji ticaret çarpanı (ör. milliyetçi −%15 teslimat). */
+export function scaleTradeAmounts(amounts = {}, multiplier = 1) {
+  if (!amounts || multiplier === 1) return { ...amounts };
+  const scaled = {};
+  for (const id of RESOURCE_IDS) {
+    const raw = Math.max(0, Number(amounts[id]) || 0);
+    scaled[id] = raw > 0 ? Math.max(0, Math.floor(raw * multiplier)) : 0;
+  }
+  return scaled;
+}
+
 export function formatTradeCargoSummary(amounts) {
   const parts = RESOURCE_IDS.filter((id) => (amounts[id] || 0) > 0).map((id) => {
     const { label, icon } = getResourceDisplay(id);

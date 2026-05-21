@@ -9,18 +9,40 @@ import {
   getVipProductionMultiplier,
 } from '../lib/vipPrestige';
 import { formatInactivityDays } from '../lib/serverCleansing';
+import {
+  IDEOLOGY_IDS,
+  IDEOLOGY_PROFILES,
+  formatIdeologyChangeDeadline,
+  formatIdeologyLabel,
+} from '../lib/ideologySystem';
+import {
+  IDEOLOGY_CHANGE_COST_MONEY,
+  IDEOLOGY_CHANGE_REAL_MONEY_NOTE,
+  formatLoyaltyScore,
+} from '../lib/loyaltySystem';
+import { PROTECTION_DAYS } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
 
 export default function Profile() {
   const { logout, playerName } = useAuth();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [regimeConfirm, setRegimeConfirm] = useState(null);
 
   const playerMeta = useGameStore((s) => s.playerMeta);
   const developmentScore = useGameStore((s) => s.getDevelopmentScore());
   const canVipAscend = useGameStore((s) => s.canVipAscend());
   const performVipAscension = useGameStore((s) => s.performVipAscension);
   const playerCities = useGameStore((s) => s.playerCities);
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
+  const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
+  const canChangeIdeologyFree = useGameStore((s) => s.canChangeIdeology);
+  const canAffordIdeologyChange = useGameStore((s) => s.canAffordIdeologyChange);
+  const loyaltyScore = useGameStore((s) => s.loyaltyScore ?? 0);
+  const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
+
+  const freeWindow = canChangeIdeologyFree();
+  const paidChange = Boolean(playerIdeology) && !freeWindow;
 
   const vipTier = playerMeta?.vipTier ?? 0;
   const allBadges = useMemo(() => {
@@ -41,6 +63,22 @@ export default function Profile() {
     const ok = performVipAscension();
     setConfirmOpen(false);
     if (ok) navigate('/harita', { replace: false });
+  };
+
+  const handleIdeologyPick = (id) => {
+    if (id === playerIdeology) return;
+    if (paidChange && !canAffordIdeologyChange()) return;
+    if (playerIdeology && (paidChange || freeWindow)) {
+      setRegimeConfirm(id);
+      return;
+    }
+    setPlayerIdeology(id, { force: !playerIdeology });
+  };
+
+  const confirmRegimeChange = () => {
+    if (!regimeConfirm) return;
+    setPlayerIdeology(regimeConfirm);
+    setRegimeConfirm(null);
   };
 
   return (
@@ -69,6 +107,15 @@ export default function Profile() {
             <span className="font-hud-data">{developmentScore.toLocaleString('tr-TR')}</span> gelişim puanı
           </p>
           <p>
+            İdeoloji sadakati:{' '}
+            <span className="font-hud-data">{formatLoyaltyScore(loyaltyScore)}</span>
+            {' '}
+            ·{' '}
+            <button type="button" className="link-btn" onClick={() => navigate('/siralama')}>
+              Küresel sıralama
+            </button>
+          </p>
+          <p>
             Şehir: {playerCities.length} · İttifak: {profile.alliance}
             {vipTier > 0 && (
               <>
@@ -79,6 +126,73 @@ export default function Profile() {
           </p>
         </div>
       </div>
+
+      <section className="panel profile-ideology-panel">
+        <h3 className="panel-title">Siyasi İdeoloji</h3>
+        <p className="profile-ideology-current">
+          Aktif doktrin:{' '}
+          <strong>{playerIdeology ? formatIdeologyLabel(playerIdeology) : 'Seçilmedi'}</strong>
+        </p>
+        <p className="hint profile-ideology-window">
+          {freeWindow
+            ? `${PROTECTION_DAYS} gün yeni hesap koruması — ücretsiz ideoloji değişimi: ${formatIdeologyChangeDeadline(protectionEndsAt)}`
+            : `Koruma kapandı. Rejim değişimi maliyeti: ${IDEOLOGY_CHANGE_COST_MONEY.toLocaleString('tr-TR')} Bütçe. Mutluluk sert düşer; küresel haber duyurulur.`}
+        </p>
+        {!freeWindow && (
+          <p className="hint profile-ideology-paid-note">{IDEOLOGY_CHANGE_REAL_MONEY_NOTE}</p>
+        )}
+        <div className="profile-ideology-grid">
+          {IDEOLOGY_IDS.map((id) => {
+            const p = IDEOLOGY_PROFILES[id];
+            const active = playerIdeology === id;
+            const disabled = paidChange && !canAffordIdeologyChange() && !active;
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`profile-ideology-btn${active ? ' is-active' : ''}${disabled ? ' is-disabled' : ''}`}
+                style={{ '--ideology-color': p.color }}
+                disabled={disabled}
+                onClick={() => handleIdeologyPick(id)}
+              >
+                <span>{p.emoji} {p.label}</span>
+                <span className="profile-ideology-btn__sub">{p.subtitle}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {regimeConfirm && (
+        <div className="profile-regime-modal card" role="dialog" aria-labelledby="regime-title">
+          <h3 id="regime-title" className="panel-title">Rejim değişikliği</h3>
+          <p>
+            Doktrini{' '}
+            <strong>{formatIdeologyLabel(regimeConfirm)}</strong>
+            {' '}
+            olarak değiştirmek istiyor musunuz?
+          </p>
+          {paidChange && (
+            <p className="profile-regime-cost">
+              Maliyet:{' '}
+              <span className="font-hud-data">
+                {IDEOLOGY_CHANGE_COST_MONEY.toLocaleString('tr-TR')}
+              </span>
+              {' '}
+              Bütçe
+            </p>
+          )}
+          <p className="hint">Tüm şehirlerde mutluluk geçici olarak düşer; küresel haber akışına duyuru düşer.</p>
+          <div className="profile-vip-confirm-btns">
+            <button type="button" className="btn btn-danger" onClick={confirmRegimeChange}>
+              Doktrini ilan et
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => setRegimeConfirm(null)}>
+              İptal
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="panel profile-vip-panel">
         <h3 className="panel-title">VIP Atma (Prestige)</h3>

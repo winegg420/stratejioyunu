@@ -469,15 +469,20 @@ export const CYBER_VIRUS_DEBUFF_RATIO = 0.3;
  * Siber saldırı başarı ihtimali — saldıran cyber_ops vs savunan güvenlik duvarı.
  * Fark ≥3: kesin sızma; düşük/negatif fark: virüs temizlenme ihtimali yüksek.
  */
-export function calcCyberAttackSuccessChance(attackerLevel, defenderLevel) {
+export function calcCyberAttackSuccessChance(attackerLevel, defenderLevel, ideologyBonusPct = 0) {
   const diff = attackerLevel - defenderLevel;
-  if (diff >= 3) return 1;
-  if (diff === 2) return 0.92;
-  if (diff === 1) return 0.76;
-  if (diff === 0) return 0.52;
-  if (diff === -1) return 0.26;
-  if (diff === -2) return 0.1;
-  return 0.05;
+  let chance;
+  if (diff >= 3) chance = 1;
+  else if (diff === 2) chance = 0.92;
+  else if (diff === 1) chance = 0.76;
+  else if (diff === 0) chance = 0.52;
+  else if (diff === -1) chance = 0.26;
+  else if (diff === -2) chance = 0.1;
+  else chance = 0.05;
+  if (ideologyBonusPct > 0) {
+    chance = Math.min(0.99, chance + ideologyBonusPct / 100);
+  }
+  return chance;
 }
 
 export function rollCyberAttackSuccess(attackerLevel, defenderLevel) {

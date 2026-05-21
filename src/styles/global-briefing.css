@@ -157,10 +157,22 @@
   color: rgba(57, 255, 136, 0.7);
 }
 
-.global-briefing-governance__grid {
+.global-briefing-governance__grid,
+.global-briefing-ideology__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+}
+
+.global-briefing-ideology__hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: rgba(148, 200, 170, 0.75);
+}
+
+.global-briefing-ideology-btn.is-active {
+  border-color: var(--ideology-color, #39ff88);
 }
 
 .global-briefing-gov-btn {

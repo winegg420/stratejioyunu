@@ -1,6 +1,8 @@
 import { mapCities } from '../data/placeholder';
 import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { enrichCityModel } from './cityModel';
+import { normalizeIdeology } from './ideologySystem';
+import { loadPlayerIdeology, loadProtectionEndsAt } from './briefingStorage';
 import { computeCityHappiness } from './happinessSystem';
 import { createStarterBuildings, createStarterResearches, getStarterIdleTroops, getStarterResources } from '../lib/buildingUtils';
 import { pruneCyberEffects, pruneKbrnEffects } from './happinessSystem';
@@ -305,6 +307,9 @@ export async function saveGameState(state, options = {}) {
         : Promise.resolve({ error: null }),
       supabase.from('profiles').update({
         player_meta: meta,
+        ideology: state.playerIdeology ?? null,
+        protection_ends_at: state.protectionEndsAt ?? null,
+        loyalty_score: Math.max(0, Math.floor(state.loyaltyScore ?? 0)),
         updated_at: nowIso,
       }).eq('id', profileId),
     ];
@@ -396,7 +401,7 @@ export async function saveGameState(state, options = {}) {
       : Promise.resolve({ error: null }),
   ];
 
-  if (options.activeCityId !== false || options.savePlayerMeta) {
+  if (options.activeCityId !== false || options.savePlayerMeta || options.saveProfile) {
     const meta = {
       ...(state.playerMeta ?? {}),
       globalCbrnOutbreak: state.globalCbrnOutbreak ?? state.playerMeta?.globalCbrnOutbreak ?? null,
@@ -407,6 +412,9 @@ export async function saveGameState(state, options = {}) {
       supabase.from('profiles').update({
         active_city_id: state.activeCityId,
         player_meta: meta,
+        ideology: state.playerIdeology ?? null,
+        protection_ends_at: state.protectionEndsAt ?? null,
+        loyalty_score: Math.max(0, Math.floor(state.loyaltyScore ?? 0)),
         updated_at: nowIso,
       }).eq('id', profileId),
     );
@@ -535,6 +543,10 @@ export async function loadGameState(userId, { playerName } = {}) {
   const unitsByCity = groupBy(cityIds, unitRes.data ?? [], 'city_id');
 
   const displayName = profile.display_name ?? playerName ?? 'Oyuncu';
+  const playerIdeology = normalizeIdeology(profile.ideology)
+    ?? loadPlayerIdeology(displayName);
+  const protectionEndsAt = profile.protection_ends_at
+    ?? loadProtectionEndsAt(displayName);
   const vipMult = getVipProductionMultiplier(profile.player_meta?.vipTier ?? 0);
   const activeCityId = profile.active_city_id ?? cityRows[0].id;
 
@@ -604,6 +616,7 @@ export async function loadGameState(userId, { playerName } = {}) {
     mapCities.map((c) => ({ ...c })),
     playerCities,
     displayName,
+    playerIdeology,
   );
 
   const playerMeta = profile.player_meta ?? {};
@@ -619,6 +632,9 @@ export async function loadGameState(userId, { playerName } = {}) {
 
   return {
     activeCityId,
+    playerIdeology,
+    protectionEndsAt,
+    loyaltyScore: profile.loyalty_score ?? 0,
     playerMeta,
     globalCbrnOutbreak: playerMeta.globalCbrnOutbreak ?? null,
     newsLog: Array.isArray(playerMeta.newsLog) ? playerMeta.newsLog : [],

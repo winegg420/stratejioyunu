@@ -12,7 +12,7 @@ import { getDefaultIdlePopulation } from '../lib/populationUtils';
 import { loadPlayerMeta } from '../lib/playerMetaStorage';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
-import { loadPlayerGovernance } from '../lib/briefingStorage';
+import { loadPlayerIdeology, loadProtectionEndsAt } from '../lib/briefingStorage';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 
 export function createCityState(overrides = {}) {
@@ -92,6 +92,7 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
       mapCities.map((c) => ({ ...c })),
       playerCities,
       getCurrentPlayerName(),
+      loadPlayerIdeology(getCurrentPlayerName()),
     ),
     expeditions: [],
     intelOperations: [],
@@ -108,6 +109,8 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     newsLog: [],
     lastCbrnEventAt: 0,
     _cbrnTickCount: 0,
-    playerGovernance: loadPlayerGovernance(getCurrentPlayerName()),
+    playerIdeology: loadPlayerIdeology(getCurrentPlayerName()),
+    protectionEndsAt: loadProtectionEndsAt(getCurrentPlayerName()),
+    loyaltyScore: 0,
   };
 }

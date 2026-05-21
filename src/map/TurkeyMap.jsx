@@ -22,6 +22,7 @@ import CityTerritoryLayer from './CityTerritoryLayer';
 import NeighborCountriesLayer from './NeighborCountriesLayer';
 import TacticalSearchConsole from './TacticalSearchConsole';
 import { normalizeMapCities } from './botCityUtils';
+import { IDEOLOGY_PROFILES } from '../lib/ideologySystem';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 
@@ -135,6 +136,8 @@ export default function TurkeyMap() {
   const [hudCollapsed, setHudCollapsed] = useState(false);
   const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
   const [scanPulse, setScanPulse] = useState(false);
+  const [ideologyView, setIdeologyView] = useState(false);
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
 
   const interactionLocked = isMobile ? mapLocked : true;
 
@@ -301,6 +304,27 @@ export default function TurkeyMap() {
         </div>
       )}
 
+      <div className="map-ideology-toolbar" role="toolbar" aria-label="Harita ideoloji filtreleri">
+        <button
+          type="button"
+          className={`btn btn-secondary btn-sm map-ideology-toggle${ideologyView ? ' active' : ''}`}
+          onClick={() => setIdeologyView((v) => !v)}
+          aria-pressed={ideologyView}
+        >
+          [ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]
+        </button>
+        {ideologyView && (
+          <div className="map-ideology-legend" aria-hidden="true">
+            {Object.values(IDEOLOGY_PROFILES).map((p) => (
+              <span key={p.id} className="map-ideology-legend__item" style={{ color: p.color }}>
+                {p.emoji} {p.subtitle}
+              </span>
+            ))}
+            <span className="map-ideology-legend__ally">◈ Aynı ideoloji = Doğal Müttefik</span>
+          </div>
+        )}
+      </div>
+
       <div className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical">
         {(!isMobile || !mapLocked) && (
           <TacticalSearchConsole
@@ -367,6 +391,8 @@ export default function TurkeyMap() {
           <CityTerritoryLayer
             mapCities={filteredCities}
             playerCities={playerCities}
+            ideologyView={ideologyView}
+            playerIdeology={playerIdeology}
           />
           <MapBoundsReporter onViewportChange={setViewportStable} />
           <MapAnimatedLayers

@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
 import { Polygon } from 'react-leaflet';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
+import {
+  getIdeologyTerritoryStyle,
+  isNaturalAlly,
+  resolveCityIdeology,
+} from '../lib/ideologySystem';
 import { normalizeMapCity } from './botCityUtils';
 
 /** Tüm şehirler için eşit bölge yarıçapı (İstanbul/Trabzon büyük kutu sorunu) */
@@ -17,7 +23,7 @@ function circleRing(lat, lng, radiusDeg, points = 56) {
   return ring;
 }
 
-function getTerritoryStyle(city) {
+function getDefaultTerritoryStyle(city) {
   const isOwn = city.isOwn || city.status === 'own';
   if (isOwn) {
     return {
@@ -57,17 +63,26 @@ function getTerritoryStyle(city) {
   };
 }
 
-export default function CityTerritoryLayer({ mapCities, playerCities }) {
+export default function CityTerritoryLayer({
+  mapCities,
+  playerCities,
+  ideologyView = false,
+  playerIdeology = null,
+}) {
+  const playerName = getCurrentPlayerName();
+
   const cities = useMemo(() => {
     const byName = new Map();
     for (const city of mapCities) {
       const normalized = normalizeMapCity(city);
       const pc = playerCities.find((p) => p.name === normalized.name || p.name === city.name);
+      const ideology = resolveCityIdeology(normalized, playerName, playerIdeology);
       byName.set(normalized.name, {
         ...normalized,
         lat: pc?.lat ?? normalized.lat,
         lng: pc?.lng ?? normalized.lng,
         isOwn: Boolean(pc) || normalized.status === 'own',
+        ownerIdeology: ideology,
       });
     }
     for (const pc of playerCities) {
@@ -78,28 +93,38 @@ export default function CityTerritoryLayer({ mapCities, playerCities }) {
         lng: pc.lng,
         status: 'own',
         isOwn: true,
-        tier: 'town',
+        ownerIdeology: playerIdeology,
       });
     }
     return [...byName.values()];
-  }, [mapCities, playerCities]);
+  }, [mapCities, playerCities, playerName, playerIdeology]);
 
   return (
     <>
       {cities.map((city) => {
+        if (city.lat == null || city.lng == null) return null;
         const positions = circleRing(city.lat, city.lng, TERRITORY_RADIUS_DEG);
-        const style = getTerritoryStyle(city);
+        const isAlly = ideologyView
+          && playerIdeology
+          && !city.isOwn
+          && isNaturalAlly(playerIdeology, city.ownerIdeology);
+        const style = ideologyView && city.ownerIdeology
+          ? getIdeologyTerritoryStyle(city.ownerIdeology, {
+            isOwn: city.isOwn,
+            isAlly,
+          })
+          : getDefaultTerritoryStyle(city);
 
         return (
           <Polygon
             key={`territory-${city.name}`}
             positions={positions}
-            pathOptions={{
-              ...style,
-              lineJoin: 'round',
-              lineCap: 'round',
-            }}
-            smoothFactor={1.5}
+            pathOptions={style}
+            className={
+              ideologyView && city.ownerIdeology
+                ? `map-territory-ideology map-ideology--${city.ownerIdeology}${isAlly ? ' map-ideology--ally' : ''}`
+                : undefined
+            }
           />
         );
       })}

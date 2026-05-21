@@ -11,6 +11,7 @@ import {
 } from '../utils/spyEngine';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { isCityInOperationRange } from '../lib/mapRange';
+import { getCyberSuccessBonus, formatIdeologyLabel, isNaturalAlly } from '../lib/ideologySystem';
 import { getCityOwnerLabel } from './mapOwnership';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import TroopStockLabel from '../components/TroopStockLabel';
@@ -122,6 +123,7 @@ function MapCommandModal({ city, onClose }) {
   const getCyberCapabilities = useGameStore((s) => s.getCyberCapabilities);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const { locked: actionLocked, runLocked } = useActionLock();
 
   const display = live ?? {
@@ -134,6 +136,10 @@ function MapCommandModal({ city, onClose }) {
   };
 
   const mapCity = display.live;
+  const targetIdeology = mapCity.ownerIdeology ?? null;
+  const naturalAlly = playerIdeology && targetIdeology
+    && isNaturalAlly(playerIdeology, targetIdeology)
+    && mapCity.status !== 'own';
   const color = CITY_STATUS_COLORS[mapCity.status] || '#9ca3af';
   const inRadarRange = isCityInOperationRange(mapCity, activeCityId, playerCities, mapCities);
   const isAnyOwnCity = mapCity.status === 'own';
@@ -193,7 +199,11 @@ function MapCommandModal({ city, onClose }) {
     if (!originCity) return null;
     const attackerFw = getCyberOpsLevel(originCity);
     const defenderFw = resolveDefenderCyberOpsLevel({ mapCity, defenderCity: display.gameCity });
-    const chance = calcCyberAttackSuccessChance(attackerFw, defenderFw);
+    const chance = calcCyberAttackSuccessChance(
+      attackerFw,
+      defenderFw,
+      getCyberSuccessBonus(playerIdeology),
+    );
     return {
       attackerFw,
       defenderFw,
@@ -260,6 +270,14 @@ function MapCommandModal({ city, onClose }) {
             <span className="map-command-modal__status" style={{ borderColor: color, color }}>
               {STATUS_LABELS[mapCity.status] ?? mapCity.status}
             </span>
+            {targetIdeology && (
+              <span className="map-command-modal__ideology">
+                {formatIdeologyLabel(targetIdeology)}
+              </span>
+            )}
+            {naturalAlly && (
+              <span className="map-command-modal__natural-ally">◈ Doğal Müttefik</span>
+            )}
           </div>
           <button type="button" className="map-command-modal__close" onClick={onClose} aria-label="Kapat">
             ×

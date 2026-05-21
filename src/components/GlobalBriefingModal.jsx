@@ -9,17 +9,16 @@ import {
 } from '../data/globalBriefing';
 import { useTypewriter } from '../hooks/useTypewriter';
 import {
-  GOVERNANCE_LIBERAL,
-  GOVERNANCE_PROFILES,
-  GOVERNANCE_STATIST,
-} from '../lib/presidencySystem';
+  IDEOLOGY_IDS,
+  IDEOLOGY_PROFILES,
+} from '../lib/ideologySystem';
 
 export default function GlobalBriefingModal({
   open,
   onAccept,
-  onSelectGovernance,
-  selectedGovernance,
-  showGovernancePick = true,
+  onSelectIdeology,
+  selectedIdeology,
+  showIdeologyPick = true,
 }) {
   const [mounted, setMounted] = useState(false);
   const { visibleCompleted, currentPartial, done, isTyping } = useTypewriter(
@@ -33,7 +32,7 @@ export default function GlobalBriefingModal({
 
   if (!mounted || !open) return null;
 
-  const canAccept = done && (!showGovernancePick || selectedGovernance);
+  const canAccept = done && (!showIdeologyPick || selectedIdeology);
 
   return createPortal(
     <div className="global-briefing-overlay" role="dialog" aria-modal="true" aria-labelledby="global-briefing-title">
@@ -67,23 +66,27 @@ export default function GlobalBriefingModal({
           </div>
         </div>
 
-        {showGovernancePick && done && (
-          <div className="global-briefing-governance">
-            <p className="global-briefing-governance__label">[ YÖNETİM DOKTRİNİ / SEÇİM ZORUNLU ]</p>
-            <div className="global-briefing-governance__grid">
-              {[GOVERNANCE_LIBERAL, GOVERNANCE_STATIST].map((id) => {
-                const profile = GOVERNANCE_PROFILES[id];
-                const active = selectedGovernance === id;
+        {showIdeologyPick && done && (
+          <div className="global-briefing-governance global-briefing-ideology">
+            <p className="global-briefing-governance__label">[ SİYASİ İDEOLOJİ / ZORUNLU SEÇİM ]</p>
+            <p className="global-briefing-ideology__hint">
+              7 gün koruma süresince ideolojinizi değiştirebilirsiniz. Hiçbir yol kilitlenmez — uzmanlık çarpanları uygulanır.
+            </p>
+            <div className="global-briefing-governance__grid global-briefing-ideology__grid">
+              {IDEOLOGY_IDS.map((id) => {
+                const profile = IDEOLOGY_PROFILES[id];
+                const active = selectedIdeology === id;
                 return (
                   <button
                     key={id}
                     type="button"
-                    className={`global-briefing-gov-btn${active ? ' is-active' : ''}`}
-                    onClick={() => onSelectGovernance?.(id)}
+                    className={`global-briefing-gov-btn global-briefing-ideology-btn${active ? ' is-active' : ''}`}
+                    style={{ '--ideology-color': profile.color }}
+                    onClick={() => onSelectIdeology?.(id)}
                   >
                     <span className="global-briefing-gov-btn__tag">{profile.tag}</span>
-                    <strong>{profile.label}</strong>
-                    <span>{profile.ideology}</span>
+                    <strong>{profile.emoji} {profile.label}</strong>
+                    <span>{profile.subtitle}</span>
                     <span className="global-briefing-gov-btn__blurb">{profile.blurb}</span>
                   </button>
                 );

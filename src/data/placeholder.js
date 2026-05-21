@@ -7,7 +7,7 @@ export const CITY_TYPE = 'Kıyı Şehri';
 export const PLAYER_NAME = 'Komutan_Alpha';
 export const PLAYER_RANK = 'Teğmen';
 export const ALLIANCE = 'Ege Komutanlığı';
-export const PROTECTION_DAYS = 5;
+export const PROTECTION_DAYS = 7;
 
 export const resources = [
   { id: 'food', label: 'Nüfus', icon: '👥', current: 12450, max: 20000, rate: '+42/sa' },
@@ -266,10 +266,10 @@ export const profile = {
 export const mapCities = [
   { name: 'İzmir', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 12500, type: 'Kıyı', tier: 'metropolis', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.42, lng: 27.14 },
   { name: 'Çeşme', owner: 'Komutan_Alpha', rank: 'Teğmen', population: 4200, type: 'Kıyı', tier: 'town', alliance: 'Ege Komutanlığı', status: 'own', lat: 38.32, lng: 26.3 },
-  { name: 'İstanbul', owner: 'KaraKurt', rank: 'Albay', population: 48000, type: 'Başkent', tier: 'capital', alliance: 'Boğaz İmparatorluğu', status: 'enemy', lat: 41.01, lng: 28.97 },
-  { name: 'Ankara', owner: 'SteelWolf', rank: 'Yüzbaşı', population: 22000, type: 'Büyükşehir', tier: 'capital', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
+  { name: 'İstanbul', owner: 'KaraKurt', ownerIdeology: 'nationalist', rank: 'Albay', population: 48000, type: 'Başkent', tier: 'capital', alliance: 'Boğaz İmparatorluğu', status: 'enemy', lat: 41.01, lng: 28.97 },
+  { name: 'Ankara', owner: 'SteelWolf', ownerIdeology: 'socialist', rank: 'Yüzbaşı', population: 22000, type: 'Büyükşehir', tier: 'capital', alliance: '—', status: 'enemy', lat: 39.93, lng: 32.85 },
   { name: 'Manisa', owner: null, rank: null, population: 0, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'empty', lat: 38.62, lng: 27.43 },
-  { name: 'Trabzon', owner: 'Falcon99', rank: 'Çavuş', population: 8500, type: 'Kıyı', tier: 'town', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
+  { name: 'Trabzon', owner: 'Falcon99', ownerIdeology: 'technocrat', rank: 'Çavuş', population: 8500, type: 'Kıyı', tier: 'town', alliance: 'Karadeniz Birliği', status: 'enemy', lat: 41.00, lng: 39.72 },
   { name: 'Konya', botId: 'Bot_USS_03', owner: null, rank: 'Er', population: 3200, type: 'Küçükşehir', tier: 'town', alliance: null, status: 'bot', lat: 37.87, lng: 32.49 },
 ];
 
@@ -288,11 +288,24 @@ export const productionQueue = [
   { unit: 'Tank', count: 5, remaining: '02:15:00', queued: true },
 ];
 
+/** Demo / Supabase kapalı — ideoloji sadakat sıralaması */
+export const LOYALTY_LEADERBOARD_DEMO = [
+  { playerName: 'VatanSavunucu', displayName: 'VatanSavunucu', ideology: 'nationalist', loyaltyScore: 18420, alliance: 'Anadolu Hattı' },
+  { playerName: 'BorsaKrali', displayName: 'BorsaKrali', ideology: 'capitalist', loyaltyScore: 16250, alliance: 'Ege Ticaret' },
+  { playerName: 'Komutan_Alpha', displayName: 'Komutan_Alpha', ideology: 'technocrat', loyaltyScore: 12800, alliance: 'Ege Komutanlığı' },
+  { playerName: 'HalkKonvoyu', displayName: 'HalkKonvoyu', ideology: 'socialist', loyaltyScore: 11440, alliance: '—' },
+  { playerName: 'KuzeyTank', displayName: 'KuzeyTank', ideology: 'nationalist', loyaltyScore: 9870, alliance: 'Kuzey Blok' },
+  { playerName: 'TeknoArGe', displayName: 'TeknoArGe', ideology: 'technocrat', loyaltyScore: 9120, alliance: '—' },
+  { playerName: 'AltinKonvoy', displayName: 'AltinKonvoy', ideology: 'capitalist', loyaltyScore: 8010, alliance: 'Marmara Birliği' },
+  { playerName: 'KirmiziHat', displayName: 'KirmiziHat', ideology: 'socialist', loyaltyScore: 7650, alliance: 'Sol Cephe' },
+];
+
 export const MOBILE_NAV_ITEMS = [
   { path: '/harita', icon: '🗺️', label: 'Harita' },
   { path: '/', icon: '🏙️', label: 'Şehir' },
   { path: '/binalar', icon: '🏗️', label: 'Binalar' },
   { path: '/seferler', icon: '⚔️', label: 'Seferler' },
+  { path: '/siralama', icon: '🏆', label: 'Sıralama' },
   { path: '/profil', icon: '👤', label: 'Profil' },
 ];
 
@@ -309,6 +322,7 @@ export const NAV_ITEMS = [
   { path: '/diplomasi', icon: '🤝', label: 'Diplomasi' },
   { path: '/raporlar', icon: '📋', label: 'Raporlar' },
   { path: '/harita', icon: '🗺️', label: 'Harita' },
+  { path: '/siralama', icon: '🏆', label: 'Sıralama' },
   { path: '/profil', icon: '👤', label: 'Profil' },
   { path: '/mesajlar', icon: '🔐', label: 'State Mail' },
   { path: null, icon: '🤝', label: 'İttifak', locked: true },

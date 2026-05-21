@@ -1,0 +1,54 @@
+.rankings-page .rankings-self {
+  margin-bottom: 1rem;
+}
+
+.rankings-hint {
+  margin-bottom: 0.75rem;
+}
+
+.rankings-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rankings-table .rankings-score {
+  color: var(--accent-gold, #fbbf24);
+  font-weight: 600;
+}
+
+.rankings-table tr.is-me {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.rankings-player {
+  font-weight: 600;
+}
+
+.rankings-you-tag {
+  margin-left: 0.35rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--accent-blue, #60a5fa);
+  letter-spacing: 0.04em;
+}
+
+.rankings-ideology {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ideology-color, inherit);
+}
+
+.rankings-loading,
+.rankings-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted, #94a3b8);
+}
+
+@media (max-width: 640px) {
+  .rankings-table th:nth-child(5),
+  .rankings-table td:nth-child(5) {
+    display: none;
+  }
+}
