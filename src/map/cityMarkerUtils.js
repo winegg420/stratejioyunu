@@ -96,6 +96,16 @@ export function createOwnCityIcon(city, {
   });
 }
 
+/** Düşman/boş şehirler — tıklama alanı; görsel CityTargetReticleLayer'da */
+export function createMapHitIcon() {
+  return L.divIcon({
+    className: 'map-city-hit-marker',
+    html: '<span class="map-city-hit-marker__zone" aria-hidden="true"></span>',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
 export function createCityMarkerIcon(city, {
   underAttack = false,
   ownerLabel,

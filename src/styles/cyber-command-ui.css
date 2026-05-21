@@ -64,7 +64,8 @@ body::before {
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
 }
 
-.page-subtitle--typewriter {
+.page-subtitle--typewriter,
+.page-feed-line--ready {
   font-family: var(--cmd-font-mono) !important;
   font-size: 0.78rem !important;
   color: var(--cmd-green) !important;
@@ -72,6 +73,15 @@ body::before {
   text-shadow: 0 0 10px rgba(34, 255, 136, 0.45) !important;
   margin-top: 0.45rem !important;
   min-height: 1.25em;
+}
+
+.page-feed-line--pending {
+  font-family: var(--cmd-font-mono) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.45 !important;
+  color: rgba(148, 163, 184, 0.45) !important;
+  margin: 0.4rem 0 0 !important;
 }
 
 .page-subtitle--typewriter .page-subtitle__cursor {
@@ -134,33 +144,25 @@ body::before {
     0 12px 32px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* ── Bina kartı: X tamamen kapalı, kompakt kilit rozeti ── */
+/* ── Bina kartı: kırmızı X ve merkez kilit bandı tamamen kapalı ── */
+.building-blocked-overlay,
+.building-card--blocked .building-blocked-overlay,
+.building-card--progression-locked .building-blocked-overlay,
 .building-card--blocked .building-blocked-overlay::before,
 .building-card--blocked .building-blocked-overlay::after,
 .building-card--progression-locked .building-blocked-overlay::before,
 .building-card--progression-locked .building-blocked-overlay::after {
   display: none !important;
+  visibility: hidden !important;
   content: none !important;
   background: none !important;
+  pointer-events: none !important;
 }
 
 .building-card--blocked,
 .building-card--blocked:hover {
   filter: none !important;
   opacity: 1 !important;
-}
-
-.building-card--blocked .building-blocked-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(2, 8, 16, 0.15) 0%,
-    rgba(2, 8, 16, 0.45) 100%
-  ) !important;
-  backdrop-filter: none !important;
-  align-items: flex-end !important;
-  justify-content: flex-start !important;
-  padding: 0 !important;
-  pointer-events: none !important;
 }
 
 .building-lock-badge {

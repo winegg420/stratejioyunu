@@ -22,7 +22,7 @@ import CityIdeologyProvinceLayer from './CityIdeologyProvinceLayer';
 import CityMapLabelsLayer from './CityMapLabelsLayer';
 import CityTargetReticleLayer from './CityTargetReticleLayer';
 import ProvinceHighlightSync, { setActiveProvinceLayer } from './ProvinceHighlightSync';
-import { resolveCityProvinceName } from './cityProvinceMatch';
+import { enrichMapCityWithProvince, resolveCityProvinceName } from './cityProvinceMatch';
 import NeighborCountriesLayer from './NeighborCountriesLayer';
 import TacticalSearchConsole from './TacticalSearchConsole';
 import { normalizeMapCities } from './botCityUtils';
@@ -232,15 +232,16 @@ export default function TurkeyMap() {
   const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
 
   const handleSelectCity = useCallback((city) => {
+    const enriched = enrichMapCityWithProvince(city, playerCities);
     if (mapTargetPickRequest) {
       const own = new Set(playerCities.map((c) => c.name));
-      if (own.has(city.name)) return;
-      fulfillMapTargetPick(city.name);
+      if (own.has(enriched.name)) return;
+      fulfillMapTargetPick(enriched.name);
       navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
       return;
     }
-    setSelectedCity(city);
-    setActiveHighlightCity(city);
+    setSelectedCity(enriched);
+    setActiveHighlightCity(enriched);
   }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate]);
 
   const findCityForProvince = useCallback((feature) => {
@@ -272,7 +273,15 @@ export default function TurkeyMap() {
     });
     layer.on('click', () => {
       const city = findCityForProvince(feature);
-      if (city) handleSelectCity(city);
+      if (city) {
+        handleSelectCity(city);
+      } else {
+        setActiveHighlightCity({
+          name: feature.properties?.shapeName ?? 'Bölge',
+          provinceName: feature.properties?.shapeName,
+          province: feature.properties?.shapeISO,
+        });
+      }
       setActiveFeature(layer);
     });
   }, [findCityForProvince, handleSelectCity, setActiveFeature]);
@@ -401,7 +410,6 @@ export default function TurkeyMap() {
           zoom={TURKEY_ZOOM}
           minZoom={5}
           maxBounds={TURKEY_MAX_BOUNDS}
-          maxBoundsViscosity={0.35}
           className="turkey-map turkey-map--cyber"
           scrollWheelZoom={!isMobile}
           touchZoom

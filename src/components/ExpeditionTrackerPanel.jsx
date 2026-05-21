@@ -1,5 +1,4 @@
-﻿import QueueEmptyState from './QueueEmptyState';
-import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
+﻿import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 
 const DIRECTION_META = {
@@ -63,15 +62,26 @@ export default function ExpeditionTrackerPanel() {
 
   if (!expeditions.length) {
     return (
-      <section className="expedition-tracker-panel expedition-tracker-panel--empty">
-        <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
-        <QueueEmptyState
-          as="div"
-          tag="[ SEFER YOK ]"
-          title="Yolda aktif sefer yok"
-          hint="Harita sekmesinden hedef seçerek saldırı veya keşif seferi başlatın."
-          icon="⚔"
-        />
+      <section className="expedition-tracker-panel expedition-tracker-panel--empty panel">
+        <h3 className="expedition-tracker-title expedition-tracker-title--overlay">
+          Sefer Takip Paneli
+        </h3>
+        <div className="expedition-empty-radar">
+          <div className="expedition-empty-radar__scope" aria-hidden="true">
+            <span className="expedition-empty-radar__ring" />
+            <span className="expedition-empty-radar__ring expedition-empty-radar__ring--mid" />
+            <span className="expedition-empty-radar__ring expedition-empty-radar__ring--inner" />
+            <span className="expedition-empty-radar__sweep" />
+            <span className="expedition-empty-radar__blip" />
+          </div>
+          <div className="expedition-empty-radar__copy">
+            <span className="expedition-empty-radar__tag">[ SEFER YOK ]</span>
+            <p className="expedition-empty-radar__title">Yolda aktif sefer yok</p>
+            <p className="expedition-empty-radar__hint">
+              Harita sekmesinden hedef seçerek saldırı veya keşif seferi başlatın.
+            </p>
+          </div>
+        </div>
       </section>
     );
   }

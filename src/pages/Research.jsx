@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import PageHeader from '../components/PageHeader';
 import LockedFeatureGate from '../components/LockedFeatureGate';
+import ResearchRequirementTooltip from '../components/ResearchRequirementTooltip';
 import { resolveResearchInfoPayload } from '../lib/contentInfoResolver';
 import { RESEARCH_BUILDING_ID } from '../lib/buildingUtils';
 import {
@@ -15,7 +16,7 @@ import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 
 function ResearchCard({ item, kbrnLocked }) {
   const now = useGameStore((s) => s.now);
-  const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const city = useActiveCity();
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const enqueueResearch = useGameStore((s) => s.enqueueResearch);
@@ -62,11 +63,7 @@ function ResearchCard({ item, kbrnLocked }) {
           {item.queued && <span className="timer-badge">Sırada</span>}
         </div>
       </button>
-      {branchBlocked ? (
-        <p className="content-card__meta hint card-kbrn-lock">
-          Kilitli — Ar-Ge Sv.{KBRN_RESEARCH_CENTER_UNLOCK}+
-        </p>
-      ) : (
+      {!branchBlocked && (
         <p className="content-card__meta">
           Maliyet: <strong>{displayCost}</strong>
         </p>
@@ -103,9 +100,17 @@ function ResearchCard({ item, kbrnLocked }) {
     </article>
   );
 
-  return (
-    <LockedFeatureGate buildingId={RESEARCH_BUILDING_ID} featureName={item.name}>
+  const wrapped = branchBlocked && city ? (
+    <ResearchRequirementTooltip item={item} city={city} kbrnBranchLocked={kbrnLocked}>
       {card}
+    </ResearchRequirementTooltip>
+  ) : (
+    card
+  );
+
+  return (
+    <LockedFeatureGate buildingId={RESEARCH_BUILDING_ID} featureName={item.name} hideHint>
+      {wrapped}
     </LockedFeatureGate>
   );
 }

@@ -75,7 +75,7 @@ function BuildingResearchBody({ data }) {
   return (
     <>
       <p className="content-info-modal__lore">{data.lore}</p>
-      {data.kbrnLocked && (
+      {data.kbrnLocked && data.kbrnGate?.trim() && (
         <p className="content-info-modal__alert">{data.kbrnGate}</p>
       )}
       <LevelTable rows={data.levelRows} effectLabel={data.effectLabel} />
@@ -154,7 +154,7 @@ export default function ContentInfoModal() {
       onClick={closeContentInfo}
     >
       <div
-        className="content-info-modal hud-panel-border"
+        className={['content-info-modal', 'hud-panel-border', isUnit && 'content-info-modal--unit'].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby="content-info-title"

@@ -7,7 +7,6 @@ export default function MapMaxBounds() {
 
   useEffect(() => {
     map.setMaxBounds(TURKEY_MAX_BOUNDS);
-    map.setMaxBoundsViscosity(0.35);
     map.setMinZoom(5);
     if (map.getZoom() < 5) map.setZoom(5);
     const center = map.getCenter();

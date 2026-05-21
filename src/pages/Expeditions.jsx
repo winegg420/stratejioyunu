@@ -23,9 +23,11 @@ export default function Expeditions() {
   const hasPast = pastExpeditions.length > 0;
 
   return (
-    <div className="page page--console">
+    <div className="page page--console expeditions-page">
       <PageHeader
+        className="expeditions-page-header"
         title="Seferler"
+        hideStatus
         subtitle="> Sefer rotaları hesaplanıyor — kara max 5s · hava 3× hız · meydan savaşı protokolü aktif..."
         action={(
           <Link to="/harita" className="btn btn-primary">

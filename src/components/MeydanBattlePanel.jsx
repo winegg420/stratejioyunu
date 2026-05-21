@@ -78,7 +78,9 @@ export default function MeydanBattlePanel() {
             <p className="meydan-battle-timer">
               Savaşa kalan: <strong>{formatSeconds(prepRemaining)}</strong>
             </p>
-            <p className={`meydan-battle-lock-hint${canRecall ? '' : ' is-locked'}`}>{lockHint}</p>
+            {lockHint?.trim() && (
+              <p className={`meydan-battle-lock-hint${canRecall ? '' : ' is-locked'}`}>{lockHint}</p>
+            )}
           </div>
 
           {battle.contributions.length > 0 ? (

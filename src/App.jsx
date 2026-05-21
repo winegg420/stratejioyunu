@@ -14,6 +14,7 @@ import Shipyard from './pages/Shipyard';
 import Expeditions from './pages/Expeditions';
 import Intelligence from './pages/Intelligence';
 import Trade from './pages/Trade';
+import Market from './pages/Market';
 import Diplomacy from './pages/Diplomacy';
 import Reports from './pages/Reports';
 import MapPage from './pages/MapPage';
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="tersane" element={<PageSafe><Shipyard /></PageSafe>} />
             <Route path="seferler" element={<PageSafe><Expeditions /></PageSafe>} />
             <Route path="istihbarat" element={<PageSafe><Intelligence /></PageSafe>} />
+            <Route path="pazar" element={<PageSafe><Market /></PageSafe>} />
             <Route path="ticaret" element={<PageSafe><Trade /></PageSafe>} />
             <Route path="diplomasi" element={<PageSafe><Diplomacy /></PageSafe>} />
             <Route path="raporlar" element={<PageSafe><Reports /></PageSafe>} />

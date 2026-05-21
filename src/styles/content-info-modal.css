@@ -11,11 +11,13 @@
 }
 
 .content-info-modal {
-  width: min(720px, 100%);
+  width: min(680px, calc(100vw - 2rem));
+  max-width: 680px;
   max-height: min(88vh, 900px);
   display: flex;
   flex-direction: column;
-  background: rgba(5, 12, 22, 0.97);
+  background: rgba(5, 12, 22, 0.82);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 240, 255, 0.28);
   box-shadow:
     0 0 0 1px rgba(0, 240, 255, 0.08) inset,
@@ -146,20 +148,38 @@
 
 .content-info-modal__table-wrap {
   overflow-x: auto;
-  border: 1px solid rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  background: rgba(2, 8, 18, 0.55);
 }
 
 .content-info-modal__table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.7rem;
 }
 
 .content-info-modal__table th,
 .content-info-modal__table td {
-  padding: 0.4rem 0.5rem;
+  padding: 0.45rem 0.55rem;
   text-align: left;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.content-info-modal__table th:nth-child(1),
+.content-info-modal__table td:nth-child(1) {
+  width: 12%;
+}
+
+.content-info-modal__table th:nth-child(2),
+.content-info-modal__table td:nth-child(2) {
+  width: 28%;
+}
+
+.content-info-modal__table tbody tr + tr td {
+  border-top: 1px solid rgba(0, 240, 255, 0.06);
 }
 
 .content-info-modal__table th {

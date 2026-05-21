@@ -73,32 +73,9 @@
   filter: none !important;
 }
 
-.building-card--blocked .building-blocked-overlay {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  inset: 0;
-  z-index: 5;
-}
-
+.building-blocked-overlay,
 .building-blocked-label {
-  position: relative;
-  z-index: 2;
-  max-width: 92%;
-  text-align: center;
-  font-size: 0.78rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  line-height: 1.35 !important;
-  color: #ff5555 !important;
-  text-shadow:
-    0 0 12px rgba(255, 50, 50, 0.8),
-    0 0 24px rgba(255, 0, 0, 0.4) !important;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid rgba(255, 80, 80, 0.5);
-  background: rgba(8, 0, 0, 0.75);
+  display: none !important;
 }
 
 /* 7 — Bina ikon hücre dokusu */

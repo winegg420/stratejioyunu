@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import { findProvinceFeature } from './cityProvinceMatch';
+import { provinceCodesMatch } from './mapOwnership';
 import { getProvinceStyle } from './mapUtils';
 
 const ACTIVE_STYLE = {
@@ -40,9 +41,18 @@ export default function ProvinceHighlightSync({
     if (!feature) return undefined;
 
     const iso = feature.properties?.shapeISO;
+    const shapeName = feature.properties?.shapeName;
     let matched = null;
     group.eachLayer((layer) => {
-      if (layer.feature?.properties?.shapeISO === iso) matched = layer;
+      const layerIso = layer.feature?.properties?.shapeISO;
+      const layerName = layer.feature?.properties?.shapeName;
+      if (iso && provinceCodesMatch(layerIso, iso)) {
+        matched = layer;
+        return;
+      }
+      if (!matched && shapeName && layerName === shapeName) {
+        matched = layer;
+      }
     });
 
     if (matched) {

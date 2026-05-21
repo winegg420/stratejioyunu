@@ -345,6 +345,7 @@ export const NAV_ITEMS = [
   { path: '/tersane', icon: '⚓', label: 'Tersane', coastal: true },
   { path: '/seferler', icon: '⚔️', label: 'Seferler' },
   { path: '/istihbarat', icon: '🕵️', label: 'İstihbarat' },
+  { path: '/pazar', icon: '🏪', label: 'Pazar' },
   { path: '/ticaret', icon: '💰', label: 'Ticaret' },
   { path: '/diplomasi', icon: '🤝', label: 'Diplomasi' },
   { path: '/raporlar', icon: '📋', label: 'Raporlar' },

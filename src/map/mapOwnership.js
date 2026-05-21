@@ -9,6 +9,14 @@ export function normalizeProvinceCode(code) {
   return digits.length <= 2 ? digits.padStart(2, '0') : digits.slice(-2);
 }
 
+/** GeoJSON shapeISO (TR-35) ile oyuncu plaka kodunu (35) karşılaştır */
+export function provinceCodesMatch(a, b) {
+  const left = normalizeProvinceCode(a);
+  const right = normalizeProvinceCode(b);
+  if (!left || !right) return false;
+  return left === right;
+}
+
 export function getCityOwnerLabel(city, playerName) {
   if (city.isOwn || city.status === 'own') return playerName;
   if (city.status === 'bot') return null;

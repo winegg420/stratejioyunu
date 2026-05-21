@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { createFoundCityState, createInitialGameState } from '../data/gameInit';
-import { ensureCityResources } from '../data/resourceCatalog';
+import { ensureCityResources, getResourceDisplay } from '../data/resourceCatalog';
+import { buildMarketTradeCost } from '../lib/marketExchange';
+import { BUILDING_LABELS } from '../lib/buildingUtils';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   BUILDING_RESOURCE_MAP,
@@ -654,6 +656,69 @@ export const useGameStore = create((set, get) => ({
 
   closeContentInfo: () => set({ contentInfoPayload: null }),
 
+  executeMarketTrade: ({ resourceId, qty, mode }) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+    const market = city.buildings?.find((b) => b.id === 'market');
+    if (!market || market.level < 1) {
+      useNotificationStore.getState().addToast(
+        `Pazar işlemleri için önce ${BUILDING_LABELS.market} inşa edilmeli.`,
+        'warn',
+      );
+      return false;
+    }
+    const amount = Math.max(0, Math.floor(Number(qty) || 0));
+    if (!amount) return false;
+
+    const trade = buildMarketTradeCost(resourceId, amount, mode, state.centralBank);
+    if (!trade) return false;
+
+    let resources = city.resources.map((r) => ({ ...r }));
+    for (const [id, pay] of Object.entries(trade.pay)) {
+      const res = resources.find((r) => r.id === id);
+      if (!res || res.current < pay) {
+        useNotificationStore.getState().addToast('Yetersiz kaynak — işlem iptal.', 'warn');
+        return false;
+      }
+    }
+
+    resources = resources.map((r) => {
+      const pay = trade.pay[r.id];
+      if (pay) return { ...r, current: Math.max(0, Math.floor(r.current - pay)) };
+      const recv = trade.receive[r.id];
+      if (recv) {
+        const next = r.current + recv;
+        return { ...r, current: r.max != null ? Math.min(r.max, next) : next };
+      }
+      return r;
+    });
+
+    patchCity(set, get, cityId, { resources: ensureCityResources(resources) });
+    const { label } = getResourceDisplay(resourceId);
+    const verb = mode === 'buy' ? 'Alındı' : 'Satıldı';
+    useNotificationStore.getState().addToast(`${verb}: ${label} ×${amount}`, 'success');
+    return true;
+  },
+
+  postMarketOffer: ({ resourceId, qty, unitPrice }) => {
+    const amount = Math.max(0, Math.floor(Number(qty) || 0));
+    const price = Math.max(0, Math.floor(Number(unitPrice) || 0));
+    if (!amount || !price) return false;
+    const offer = {
+      id: genId(),
+      resourceId,
+      qty: amount,
+      unitPrice: price,
+      author: getCurrentPlayerName(),
+      at: Date.now(),
+    };
+    set({ marketOffers: [offer, ...(get().marketOffers ?? [])].slice(0, 32) });
+    useNotificationStore.getState().addToast('[ TEKLİF ] Pazar defterine kaydedildi.', 'success');
+    return true;
+  },
+
   getActiveCity: () => getActiveCity(get()),
 
   getDevelopmentScore: () => computeDevelopmentScore(get()),
@@ -730,18 +795,25 @@ export const useGameStore = create((set, get) => ({
     return item;
   },
 
+  gameHydrating: false,
+
   hydrateFromSupabase: async (userId, playerName) => {
-    const ok = await hydrateGameStore(userId, {
-      playerName,
-      getState: get,
-      setState: (patch) => set(patch),
-      completeExpedition: (id) => get()._completeExpedition(id),
-    });
-    if (ok) {
-      get().initWorldSystems();
-      await get().refreshServerBroadcast();
+    set({ gameHydrating: true });
+    try {
+      const ok = await hydrateGameStore(userId, {
+        playerName,
+        getState: get,
+        setState: (patch) => set(patch),
+        completeExpedition: (id) => get()._completeExpedition(id),
+      });
+      if (ok) {
+        get().initWorldSystems();
+        await get().refreshServerBroadcast();
+      }
+      return ok;
+    } finally {
+      set({ gameHydrating: false });
     }
-    return ok;
   },
 
   _runServerCleansing: (notify = true, source = 'tick') => {

@@ -7,7 +7,7 @@ import { useGameStore } from '../stores/gameStore';
 import { getCityOwnerLabel } from './mapOwnership';
 import {
   createActiveHqIcon,
-  createCityMarkerIcon,
+  createMapHitIcon,
   createOwnCityIcon,
 } from './cityMarkerUtils';
 
@@ -100,12 +100,7 @@ export default function CityMarkers({
               peaceShield,
               showLabels: showPinLabels,
             })
-            : createCityMarkerIcon(markerCity, {
-              underAttack: isUnderAttack,
-              ownerLabel,
-              cyberActive,
-              showLabels: showPinLabels,
-            });
+            : createMapHitIcon();
 
         return (
           <Marker

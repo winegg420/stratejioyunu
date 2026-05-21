@@ -1,0 +1,264 @@
+/* Pazar — kaynak borsası HUD */
+
+.market-page .market-exchange-panel,
+.market-page .market-offer-panel {
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(4, 12, 22, 0.72);
+}
+
+.market-exchange-hint,
+.market-page-warn {
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.9);
+  margin: 0 0 0.75rem;
+}
+
+.market-page-warn strong {
+  color: #22d3ee;
+}
+
+.market-exchange-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.market-exchange-row {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(0, 240, 255, 0.14);
+  background: rgba(2, 8, 18, 0.55);
+}
+
+.market-exchange-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  align-items: baseline;
+  margin-bottom: 0.65rem;
+}
+
+.market-exchange-row__label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.market-exchange-row__stock,
+.market-exchange-row__rates {
+  font-size: 0.72rem;
+  color: rgba(34, 255, 136, 0.85);
+}
+
+.market-exchange-row__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+@media (max-width: 520px) {
+  .market-exchange-row__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.market-exchange-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.market-exchange-field > span {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 240, 255, 0.65);
+  min-width: 3.2rem;
+}
+
+.market-offer-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.market-offer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(0, 240, 255, 0.6);
+}
+
+.market-offer-select {
+  min-width: 12rem;
+  padding: 0.4rem 0.5rem;
+  background: rgba(4, 12, 22, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  color: #22ff88;
+  font-family: var(--cmd-font-mono, var(--font-mono));
+}
+
+.market-offer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.market-offer-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  background: rgba(2, 10, 20, 0.5);
+}
+
+.market-offer-card__author {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+/* Siber parlamalı askeri HUD butonları */
+
+.market-page .btn-hud-primary,
+.market-page .btn-hud-secondary,
+.market-page .market-offer-submit {
+  font-family: var(--cmd-font-mono, var(--font-mono)) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  transition:
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    text-shadow 0.22s ease !important;
+}
+
+.market-page .btn-hud-primary,
+.market-page .market-offer-submit {
+  border: 1px solid rgba(34, 255, 136, 0.75) !important;
+  color: #22ff88 !important;
+  background: rgba(4, 20, 14, 0.65) !important;
+  box-shadow:
+    0 0 0 1px rgba(34, 255, 136, 0.12) inset,
+    0 0 18px rgba(34, 255, 136, 0.18),
+    0 0 32px rgba(0, 240, 255, 0.08) !important;
+  text-shadow: 0 0 10px rgba(34, 255, 136, 0.55) !important;
+}
+
+.market-page .btn-hud-primary:hover:not(:disabled),
+.market-page .market-offer-submit:hover:not(:disabled) {
+  background: rgba(34, 255, 136, 0.18) !important;
+  color: #e8fff4 !important;
+  box-shadow:
+    0 0 24px rgba(34, 255, 136, 0.45),
+    0 0 48px rgba(0, 240, 255, 0.12) !important;
+  text-shadow: 0 0 14px rgba(34, 255, 136, 0.85) !important;
+}
+
+.market-page .btn-hud-secondary {
+  border: 1px solid rgba(0, 240, 255, 0.55) !important;
+  color: rgba(0, 240, 255, 0.95) !important;
+  background: rgba(4, 14, 24, 0.65) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.1) inset,
+    0 0 16px rgba(0, 240, 255, 0.15) !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.45) !important;
+}
+
+.market-page .btn-hud-secondary:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.14) !important;
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.35) !important;
+}
+
+.market-page .market-offer-submit {
+  align-self: flex-end;
+  padding: 0.55rem 1.1rem !important;
+  min-height: 2.35rem;
+}
+
+/* Gereksinimler tooltip — araştırma */
+
+.research-req-tooltip-wrap {
+  position: relative;
+}
+
+.research-req-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  z-index: 24;
+  width: min(280px, 90vw);
+  padding: 0.65rem 0.75rem;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+  background: rgba(4, 14, 10, 0.97);
+  border: 1px solid rgba(34, 255, 136, 0.45);
+  border-radius: 0;
+  box-shadow: 0 0 20px rgba(34, 255, 136, 0.15);
+}
+
+.research-req-tooltip-wrap:hover .research-req-tooltip,
+.research-req-tooltip-wrap:focus-within .research-req-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.research-req-tooltip__title {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-family: var(--cmd-font-mono, var(--font-mono));
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--cmd-green, #22ff88);
+}
+
+.research-req-tooltip__list {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  font-size: 0.78rem;
+}
+
+.research-req-tooltip__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.15rem 0;
+}
+
+.research-req-tooltip__list .is-met {
+  color: #86efac;
+}
+
+.research-req-tooltip__list .is-unmet {
+  color: #fca5a5;
+}
+
+.research-req-tooltip__summary {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.page--research .locked-feature-gate__hint {
+  display: none;
+}
+
+.page--research .card--kbrn-locked .content-card__meta.card-kbrn-lock {
+  display: none;
+}

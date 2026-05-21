@@ -1,4 +1,5 @@
 ﻿import { useAuth } from '../context/AuthContext';
+import { useGameDataReady } from '../hooks/useGameDataReady';
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
@@ -13,10 +14,19 @@ import NotificationBell from './NotificationBell';
 import ServerTimeClock from './ServerTimeClock';
 
 const DEPOT_WARN_PCT = 90;
+const DEPOT_BAR_IDS = new Set(['metal', 'fuel', 'money']);
+
+const FILL_CLASS = {
+  metal: 'res-fill--metal',
+  fuel: 'res-fill--fuel',
+  money: 'res-fill--money',
+};
 
 function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCrisis }) {
   const hasDepot = resource.max != null;
+  const showDepotBar = hasDepot || DEPOT_BAR_IDS.has(resource.id);
   const frozen = resource.productionFrozen || depotOverflow;
+  const fillClass = FILL_CLASS[resource.id] ?? 'res-fill--default';
   const workforceCut = resource.workforcePenalty && !frozen;
   const hourlyLabel = !frozen ? formatHourlyProduction(resource) : null;
 
@@ -25,7 +35,7 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
       className={[
         'resource-item',
         'resource-item--tactical',
-        hasDepot && 'has-depot',
+        showDepotBar && 'has-depot',
         flash && 'resource-flash',
         depotWarn && !depotOverflow && 'depot-warn',
         depotOverflow && 'depot-overflow',
@@ -42,19 +52,23 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
       <div className="res-body">
         <span className="res-label">{resource.label}</span>
         <span className="res-value">
-          {formatCompactNumber(resource.current)}
+          <span className="res-value__current">{formatCompactNumber(resource.current)}</span>
           {hasDepot && <span className="res-max"> / {formatCompactNumber(resource.max)}</span>}
           {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         </span>
-        {hasDepot && (
+        {showDepotBar && (
           <div
-            className="res-bar"
+            className="res-bar res-bar--command"
             role="progressbar"
             aria-valuenow={Math.min(100, pct)}
             aria-valuemin={0}
             aria-valuemax={100}
+            aria-label={`${resource.label} depo doluluk`}
           >
-            <div className="res-fill" style={{ width: `${Math.min(100, pct)}%` }} />
+            <div
+              className={`res-fill res-fill--command ${fillClass}${depotWarn ? ' warn' : ''}`}
+              style={{ width: `${Math.min(100, pct)}%` }}
+            />
           </div>
         )}
         {hourlyLabel ? (
@@ -70,6 +84,7 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
 }
 
 export default function ResourceBar() {
+  const gameReady = useGameDataReady();
   const { playerName } = useAuth();
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -89,11 +104,29 @@ export default function ResourceBar() {
   const energyRes = resources.find((r) => r.id === 'energy');
   const energyCrisis = energyRes != null && energyRes.current < 0;
 
+  if (!gameReady) {
+    return (
+      <header
+        className="resource-bar resource-bar--tactical resource-bar--command resource-bar--loading"
+        role="banner"
+        aria-busy="true"
+      >
+        <div className="resource-bar-inner resource-bar-inner--flush">
+          <div className="resource-bar-brand resource-bar-brand--loading">
+            <span className="game-title">{GAME_NAME}</span>
+            <span className="resource-bar-sync-line">[ SİSTEM BAĞLANTISI AKTİLLEŞTİRİLİYOR... ]</span>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header
       className={[
         'resource-bar',
         'resource-bar--tactical',
+        'resource-bar--command',
         workforceShortage && 'resource-bar--workforce-warn',
       ]
         .filter(Boolean)

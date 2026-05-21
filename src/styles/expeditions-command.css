@@ -1,0 +1,31 @@
+/* Seferler — nötr komuta başlığı (boş kırmızı uyarı şeridi yok) */
+
+.expeditions-page-header .page-header__status {
+  display: none !important;
+}
+
+.expeditions-page-header.page-header--alert .page-title,
+.expeditions-page-header .page-title {
+  color: #e8f8ff !important;
+  text-shadow:
+    0 0 20px var(--cmd-cyan-glow),
+    0 0 40px rgba(0, 240, 255, 0.15) !important;
+}
+
+.expeditions-page-header .page-header__status-dot {
+  background: var(--cmd-cyan) !important;
+  box-shadow: 0 0 10px var(--cmd-cyan-glow) !important;
+}
+
+.expeditions-page .page-header__status:empty,
+.expeditions-page .meydan-battle-lock-hint:empty,
+.expeditions-page .content-info-modal__alert:empty {
+  display: none !important;
+}
+
+.expeditions-page .meydan-battle-lock-hint:not(:empty).is-locked {
+  margin: 0.35rem 0 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(40, 8, 8, 0.35);
+}

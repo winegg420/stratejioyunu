@@ -1,0 +1,90 @@
+/* Kışla / Tersane / Pazar — üretim input HUD */
+
+.barracks-page--military .input-qty,
+.page--console .unit-card .input-qty,
+.page--console .qty-input-wrap .input-qty,
+.page--console .meydan-troop-row .input-qty,
+.market-page .market-input-qty {
+  background: rgba(4, 12, 22, 0.88) !important;
+  border: 1px solid rgba(0, 240, 255, 0.55) !important;
+  border-radius: 0 !important;
+  color: #22ff88 !important;
+  font-family: var(--cmd-font-mono, var(--font-mono)) !important;
+  text-align: center !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.08) inset,
+    0 0 12px rgba(0, 240, 255, 0.08);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.barracks-page--military .input-qty::-webkit-outer-spin-button,
+.barracks-page--military .input-qty::-webkit-inner-spin-button,
+.page--console .unit-card .input-qty::-webkit-outer-spin-button,
+.page--console .unit-card .input-qty::-webkit-inner-spin-button,
+.page--console .qty-input-wrap .input-qty::-webkit-outer-spin-button,
+.page--console .qty-input-wrap .input-qty::-webkit-inner-spin-button,
+.market-page .market-input-qty::-webkit-outer-spin-button,
+.market-page .market-input-qty::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.barracks-page--military .input-qty:focus,
+.page--console .unit-card .input-qty:focus,
+.page--console .qty-input-wrap .input-qty:focus,
+.market-page .market-input-qty:focus {
+  outline: none;
+  border-color: rgba(34, 255, 136, 0.75) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+}
+
+.barracks-page--military .input-qty::placeholder,
+.page--console .unit-card .input-qty::placeholder,
+.market-page .market-input-qty::placeholder {
+  color: rgba(34, 255, 136, 0.35);
+}
+
+/* Birim ansiklopedi — dikey nefes payı */
+
+.content-info-modal--unit .content-info-modal__head {
+  padding-top: 1.15rem;
+  padding-bottom: 1rem;
+}
+
+.content-info-modal--unit .content-info-modal__body {
+  padding-top: 1.1rem;
+  padding-bottom: 1.35rem;
+}
+
+.content-info-modal--unit .content-info-modal__section {
+  margin-bottom: 0.85rem;
+}
+
+.content-info-modal--unit .content-info-modal__section:last-child {
+  margin-bottom: 0;
+}
+
+/* Birim ansiklopedi — güçlü / zayıf etiketler */
+
+.content-info-modal__matchup--advantage .content-info-modal__matchup-title,
+.content-info-modal__matchup--advantage .content-info-modal__matchup-pct,
+.content-info-modal__matchup--advantage li {
+  color: #22ff88 !important;
+}
+
+.content-info-modal__matchup--advantage {
+  border-color: rgba(34, 255, 136, 0.45) !important;
+  background: rgba(6, 40, 22, 0.55) !important;
+}
+
+.content-info-modal__matchup--disadvantage .content-info-modal__matchup-title,
+.content-info-modal__matchup--disadvantage .content-info-modal__matchup-pct,
+.content-info-modal__matchup--disadvantage li {
+  color: #ff4466 !important;
+}
+
+.content-info-modal__matchup--disadvantage {
+  border-color: rgba(255, 68, 102, 0.45) !important;
+  background: rgba(40, 8, 14, 0.55) !important;
+}

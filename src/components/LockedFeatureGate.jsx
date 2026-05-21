@@ -6,7 +6,7 @@ import {
   isBuildingLocked,
 } from '../lib/buildingUtils';
 
-export default function LockedFeatureGate({ buildingId, children, featureName }) {
+export default function LockedFeatureGate({ buildingId, children, featureName, hideHint = false }) {
   const city = useActiveCity();
   const building = getBuildingById(city, buildingId);
   const locked = !building || isBuildingLocked(building);
@@ -22,14 +22,16 @@ export default function LockedFeatureGate({ buildingId, children, featureName })
         className="locked-feature-gate__overlay"
         aria-label={`${label} inşa et`}
       />
-      <p className="locked-feature-gate__hint">
-        <span className="locked-feature-gate__lock" aria-hidden="true">🔒</span>
-        <strong>{featureName}</strong> için önce{' '}
-        <Link to={`/binalar#${buildingId}`} className="locked-feature-gate__link">
-          {label}
-        </Link>{' '}
-        inşa edilmeli (Binalar → İnşa Et). Birlik bilgisi için görsele tıklayın.
-      </p>
+      {!hideHint && (
+        <p className="locked-feature-gate__hint">
+          <span className="locked-feature-gate__lock" aria-hidden="true">🔒</span>
+          <strong>{featureName}</strong> için önce{' '}
+          <Link to={`/binalar#${buildingId}`} className="locked-feature-gate__link">
+            {label}
+          </Link>{' '}
+          inşa edilmeli (Binalar → İnşa Et). Birlik bilgisi için görsele tıklayın.
+        </p>
+      )}
     </div>
   );
 }

@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "pdf:tanitim": "node scripts/generate-tanitim-pdf.mjs",
+    "html:tanitim": "node scripts/generate-tanitim-html.mjs",
+    "tanitim": "node scripts/generate-tanitim-html.mjs && node scripts/generate-tanitim-pdf.mjs",
+    "tanitim:kisa": "node scripts/generate-tanitim-kisa.mjs",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

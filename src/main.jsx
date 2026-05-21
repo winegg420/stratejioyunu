@@ -19,6 +19,11 @@ import './styles/crisis.css';
 import './styles/progression.css';
 import './styles/season-quests.css';
 import './styles/cyber-command-ui.css';
+import './styles/dashboard-command.css';
+import './styles/diplomacy-command.css';
+import './styles/expeditions-command.css';
+import './styles/production-input.css';
+import './styles/market-command.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {

@@ -127,7 +127,9 @@
 .tactical-console {
   position: absolute;
   z-index: 1200;
+  width: min(420px, calc(100vw - 24px));
   max-width: min(420px, calc(100vw - 24px));
+  overflow: hidden;
   margin: 0;
   touch-action: none;
   padding: 0.65rem 0.75rem 0.75rem !important;
@@ -233,9 +235,18 @@
   margin-bottom: 0.35rem;
 }
 
+.map-city-search {
+  width: 100%;
+  min-width: 0;
+}
+
 .map-search--console input,
 .map-search--console select,
 .map-toolbar--console .map-city-select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: #000 !important;
   border: 1px solid rgba(0, 240, 255, 0.45) !important;
   color: #22ff88 !important;
@@ -243,6 +254,15 @@
   font-size: 0.75rem !important;
   border-radius: 0 !important;
   padding: 0.45rem 0.55rem !important;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.map-toolbar--console .map-city-select option {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .map-search--console input::placeholder {
@@ -388,6 +408,29 @@
 
 .map-city-marker--bot {
   filter: saturate(0.55);
+}
+
+/* Eski kesikli menzil daireleri — tamamen kapalı */
+.leaflet-interactive.radar-range-circle,
+.leaflet-interactive[class*='range-circle'],
+.leaflet-overlay-pane svg path.radar-range-circle {
+  display: none !important;
+  visibility: hidden !important;
+  stroke: none !important;
+  fill: none !important;
+  pointer-events: none !important;
+}
+
+.map-city-hit-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-city-hit-marker__zone {
+  display: block;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
 }
 
 /* Sefer rotaları — animasyonlu noktalı çizgiler */

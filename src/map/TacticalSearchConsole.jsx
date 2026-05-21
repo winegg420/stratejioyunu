@@ -133,6 +133,7 @@ export default function TacticalSearchConsole({
               id="map-city-select"
               className="map-city-select"
               value={cityPick}
+              title={cityPick || 'Şehir seçin'}
               onChange={(e) => {
                 const name = e.target.value;
                 setCityPick(name);
@@ -141,11 +142,14 @@ export default function TacticalSearchConsole({
               }}
             >
               <option value="">Şehir seçin...</option>
-              {mapCities.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {formatCityOption(c)}
-                </option>
-              ))}
+              {mapCities.map((c) => {
+                const label = formatCityOption(c);
+                return (
+                  <option key={c.name} value={c.name} title={label}>
+                    {label}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <form className="map-search map-search--console" onSubmit={handleSearch}>

@@ -169,5 +169,6 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     centralBank: { ...DEFAULT_CENTRAL_BANK },
     regionalIncentive: null,
     adminPublicLogs: [],
+    marketOffers: [],
   };
 }

@@ -1,4 +1,4 @@
-import { normalizeProvinceCode } from './mapOwnership';
+import { normalizeProvinceCode, provinceCodesMatch } from './mapOwnership';
 
 /** Şehir adı → il (shapeName) — ilçe / alt üsler */
 const CITY_PROVINCE_ALIASES = {
@@ -21,11 +21,13 @@ export function findProvinceFeature(provinces, city, playerCities = []) {
 
   const provinceName = resolveCityProvinceName(city, playerCities);
   const pc = playerCities.find((p) => p.name === city.name);
-  const iso = pc?.province ? normalizeProvinceCode(pc.province) : null;
+  const iso = city.province
+    ? normalizeProvinceCode(city.province)
+    : (pc?.province ? normalizeProvinceCode(pc.province) : null);
 
   if (iso) {
-    const byIso = provinces.features.find(
-      (f) => normalizeProvinceCode(f.properties?.shapeISO) === iso,
+    const byIso = provinces.features.find((f) =>
+      provinceCodesMatch(f.properties?.shapeISO, iso),
     );
     if (byIso) return byIso;
   }
@@ -38,6 +40,17 @@ export function findProvinceFeature(provinces, city, playerCities = []) {
   }
 
   return provinces.features.find((f) => f.properties?.shapeName === city.name) ?? null;
+}
+
+/** Harita şehri + oyuncu kaydından il bilgisini birleştir (GeoJSON eşleşmesi için) */
+export function enrichMapCityWithProvince(mapCity, playerCities = []) {
+  if (!mapCity) return null;
+  const pc = playerCities.find((p) => p.name === mapCity.name);
+  return {
+    ...mapCity,
+    province: pc?.province ?? mapCity.province,
+    provinceName: pc?.provinceName ?? mapCity.provinceName ?? resolveCityProvinceName(mapCity, playerCities),
+  };
 }
 
 export function featureCollectionFromFeature(feature) {
