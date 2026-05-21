@@ -29,6 +29,13 @@ import {
 } from '../utils/spyEngine';
 import { resolveCityCoords } from '../lib/expeditionTravel';
 import { getProgressionState } from '../lib/progressionSystem';
+import {
+  getAiCenterLevel,
+  getAiCyberArmsRaceBonus,
+  getAiCyberPowerBonusPct,
+  isAiCenterOperational,
+  resolveDefenderAiLevel,
+} from '../lib/aiCenterEngine';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
 
 const AGENT_OPS = [
@@ -96,12 +103,22 @@ export default function Intelligence() {
   const successPreview = useMemo(() => {
     if (!selectedTarget || !city) return null;
     const defenderFw = resolveDefenderCyberOpsLevel({ mapCity: selectedTarget });
+    const atkAi = isAiCenterOperational(city) ? getAiCenterLevel(city) : 0;
+    const defAi = resolveDefenderAiLevel({ mapCity: selectedTarget });
+    const arms = getAiCyberArmsRaceBonus(atkAi, defAi);
+    const aiPct = getAiCyberPowerBonusPct(city) + arms.chanceBonusPct + arms.pierceBonusPct;
     const chance = calcCyberAttackSuccessChance(
       attackerFw,
       defenderFw,
       getCyberSuccessBonus(playerIdeology),
+      aiPct,
     );
-    return { defenderFw, chance: Math.round(chance * 100), diff: attackerFw - defenderFw };
+    return {
+      defenderFw,
+      chance: Math.round(chance * 100),
+      diff: attackerFw - defenderFw,
+      aiDelta: arms.levelDiff,
+    };
   }, [selectedTarget, city, attackerFw, playerIdeology]);
 
   const travelSeconds = useMemo(() => {

@@ -10,6 +10,11 @@ import {
   resolveDefenderCyberOpsLevel,
 } from '../utils/spyEngine';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import {
+  calcAttackerIntelPower,
+  calcDefenderIntelDefense,
+  WATCHLIST_AGENT_COST,
+} from '../lib/watchlistSystem';
 import { isCityInOperationRange } from '../lib/mapRange';
 import { getCyberSuccessBonus, formatIdeologyLabel, isNaturalAlly } from '../lib/ideologySystem';
 import { getCityOwnerLabel } from './mapOwnership';
@@ -124,6 +129,10 @@ function MapCommandModal({ city, onClose }) {
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
+  const researches = useGameStore((s) => s.researches);
+  const watchlist = useGameStore((s) => s.watchlist ?? []);
+  const addWatchTarget = useGameStore((s) => s.addWatchTarget);
+  const playerName = getCurrentPlayerName();
   const { locked: actionLocked, runLocked } = useActionLock();
 
   const display = live ?? {
@@ -218,6 +227,21 @@ function MapCommandModal({ city, onClose }) {
     && idleTroops.every((t) => (Number(troopQty[t.id]) || 0) <= t.available);
   const canStartSpy = spyQty >= 1 && spyQty <= idleSpies;
   const airRushAttack = isAirOnlyExpedition(troopQty);
+
+  const targetOwner = mapCity.owner && mapCity.owner !== playerName && mapCity.status !== 'empty'
+    ? mapCity.owner
+    : null;
+  const alreadyWatched = targetOwner && watchlist.some((w) => w.targetPlayer === targetOwner);
+  const intelAtk = originCity ? calcAttackerIntelPower(originCity, researches) : 0;
+  const intelDef = targetOwner
+    ? calcDefenderIntelDefense({ mapCity, defenderCity: display.gameCity })
+    : 0;
+  const canWatchIntel = Boolean(
+    targetOwner
+    && !alreadyWatched
+    && intelAtk > intelDef
+    && idleAgents >= WATCHLIST_AGENT_COST,
+  );
 
   const confirmAttack = () => {
     if (!canStartAttack || actionLocked) return;
@@ -334,6 +358,28 @@ function MapCommandModal({ city, onClose }) {
 
         {outOfRange && (
           <p className="map-command-modal__warn">Radar menzili dışı — taktiksel emirler kilitli.</p>
+        )}
+
+        {targetOwner && (
+          <div className="map-command-modal__watch">
+            <p className="hint">
+              İstihbarat: Siz {intelAtk} · Savunma {intelDef}
+              {alreadyWatched && ' · Zaten izleniyor'}
+            </p>
+            <button
+              type="button"
+              className="btn btn-secondary map-watch-intel-btn"
+              disabled={!canWatchIntel || actionLocked}
+              title={
+                !canWatchIntel
+                  ? `Casusluk+YZ &gt; hedef savunması ve ${WATCHLIST_AGENT_COST} ajan gerekli`
+                  : undefined
+              }
+              onClick={() => runLocked(() => addWatchTarget({ targetPlayer: targetOwner, mapCity }))}
+            >
+              [ İSTİHBARAT AĞINA AL ]
+            </button>
+          </div>
         )}
 
         {!actionMode && (

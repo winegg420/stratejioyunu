@@ -1,0 +1,83 @@
+.season-quests-page .season-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.season-block__score {
+  margin: 0.5rem 0;
+}
+
+.season-leaderboard {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+}
+
+.season-leaderboard__row--self {
+  color: #4ade80;
+}
+
+.season-leaderboard__pts {
+  float: right;
+  font-family: var(--font-mono, monospace);
+  opacity: 0.85;
+}
+
+.season-block__reward-note {
+  margin-bottom: 0.75rem;
+}
+
+.daily-quest-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.daily-quest-card {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.daily-quest-card--done {
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.daily-quest-card h4 {
+  margin: 0 0 0.35rem;
+}
+
+.watchlist-list,
+.cosmetic-title-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.watchlist-list li,
+.cosmetic-title-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+}
+
+.cosmetic-title-item {
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+}
+
+.map-watch-intel-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.map-watch-intel-btn:disabled {
+  opacity: 0.55;
+}

@@ -38,6 +38,15 @@ export const CYBER_ABILITIES = [
     productionDebuff: 0.3,
     cost: '1.600 metal · 1.000 enerji',
   },
+  {
+    id: 'neural_strike',
+    name: 'YZ Sinir Ağı Darbesi',
+    subtitle: 'AI Command Center sabotajı',
+    desc: 'Hedefin Yapay Zeka Merkezini geçici devre dışı bırakır — algoritmik bonuslar durur.',
+    effectType: 'ai_sabotage',
+    minLevel: 3,
+    cost: '2.400 metal · 1.800 enerji',
+  },
 ];
 
 export function getCyberOpsLevel(city) {
@@ -79,6 +88,9 @@ export function createCyberEffect(ability, { sourceCityName, sourcePlayer }) {
     endsAt,
   };
 
+  if (ability.effectType === 'ai_sabotage' || ability.aiCenterOffline) {
+    return { ...base, aiCenterOffline: true };
+  }
   if (ability.effectType === 'happiness' || ability.happinessDebuffPercent) {
     return { ...base, happinessDebuffPercent: ability.happinessDebuffPercent ?? 0.3 };
   }

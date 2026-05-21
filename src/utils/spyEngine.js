@@ -12,6 +12,15 @@ import {
   getCyberAbilityById,
   getCyberOpsLevel,
 } from '../lib/cyberOps';
+import {
+  getAiCenterLevel,
+  getAiCombatTacticalMult,
+  getAiCyberArmsRaceBonus,
+  getAiCyberPowerBonusPct,
+  getAiSpyTechBonus,
+  isAiCenterOperational,
+  resolveDefenderAiLevel,
+} from '../lib/aiCenterEngine';
 import { formatCbrnProtocolFields } from './cbrnEngine';
 import {
   getExpeditionDistanceKm,
@@ -38,6 +47,7 @@ const BUILDING_LABELS = {
   shipyard: 'Tersane',
   intel: 'İstihbarat Merkezi',
   cyber_ops: 'Siber Operasyon Merkezi',
+  ai_center: 'Yapay Zeka Merkezi',
   farm: 'Çiftlik',
   refinery: 'Rafineri',
   factory: 'Maden',
@@ -230,10 +240,15 @@ export function resolveSpyMission({
   const target = expedition.target;
   const mapCity = defenderContext.mapCity;
 
+  const attackerCity = attackerContext.city ?? {
+    buildings: attackerContext.buildings,
+    resources: attackerContext.resources,
+    cyberEffects: attackerContext.cyberEffects,
+  };
   const attackerLevel = getSpyTechnologyLevel({
     researches: attackerContext.researches,
     buildings: attackerContext.buildings,
-  });
+  }) + getAiSpyTechBonus(attackerCity);
   const defenderLevel = resolveDefenderSpyLevel({
     mapCity,
     defenderCity: defenderContext.city,
@@ -256,6 +271,7 @@ export function resolveSpyMission({
     const combat = runCombat(
       spiesToCombatPayload(spyCount),
       defenderTroops,
+      { attackerTacticalMult: getAiCombatTacticalMult(attackerCity) },
     );
     const battleReport = buildCombatReport({
       expedition: {
@@ -458,6 +474,11 @@ export function generateDefenderBuildings(mapCity) {
     { id: 'intel', name: 'İstihbarat Merkezi', level: Math.floor(4 * scale) },
     { id: CYBER_OPS_BUILDING_ID, name: 'Siber Operasyon Merkezi', level: Math.floor(3 * scale) },
     { id: 'research', name: 'Araştırma Merkezi', level: Math.floor(4 * scale) },
+    {
+      id: 'ai_center',
+      name: 'Yapay Zeka Merkezi',
+      level: tier === 'capital' ? Math.floor(6 * scale) : Math.floor(2 * scale),
+    },
   ];
 }
 
@@ -469,7 +490,12 @@ export const CYBER_VIRUS_DEBUFF_RATIO = 0.3;
  * Siber saldırı başarı ihtimali — saldıran cyber_ops vs savunan güvenlik duvarı.
  * Fark ≥3: kesin sızma; düşük/negatif fark: virüs temizlenme ihtimali yüksek.
  */
-export function calcCyberAttackSuccessChance(attackerLevel, defenderLevel, ideologyBonusPct = 0) {
+export function calcCyberAttackSuccessChance(
+  attackerLevel,
+  defenderLevel,
+  ideologyBonusPct = 0,
+  extraBonusPct = 0,
+) {
   const diff = attackerLevel - defenderLevel;
   let chance;
   if (diff >= 3) chance = 1;
@@ -479,15 +505,26 @@ export function calcCyberAttackSuccessChance(attackerLevel, defenderLevel, ideol
   else if (diff === -1) chance = 0.26;
   else if (diff === -2) chance = 0.1;
   else chance = 0.05;
-  if (ideologyBonusPct > 0) {
-    chance = Math.min(0.99, chance + ideologyBonusPct / 100);
+  const bonus = ideologyBonusPct + extraBonusPct;
+  if (bonus > 0) {
+    chance = Math.min(0.99, chance + bonus / 100);
   }
   return chance;
 }
 
-export function rollCyberAttackSuccess(attackerLevel, defenderLevel) {
+export function rollCyberAttackSuccess(
+  attackerLevel,
+  defenderLevel,
+  ideologyBonusPct = 0,
+  extraBonusPct = 0,
+) {
   const diff = attackerLevel - defenderLevel;
-  const chance = calcCyberAttackSuccessChance(attackerLevel, defenderLevel);
+  const chance = calcCyberAttackSuccessChance(
+    attackerLevel,
+    defenderLevel,
+    ideologyBonusPct,
+    extraBonusPct,
+  );
   const guaranteed = diff >= 3;
   const success = guaranteed || Math.random() < chance;
   return {
@@ -644,7 +681,11 @@ export function resolveCyberVirusMission({
   const count = Math.max(1, Math.floor(Number(agentCount) || 1));
   const attackerLevel = getCyberOpsLevel(attackerCity);
   const defenderLevel = resolveDefenderCyberOpsLevel({ mapCity, defenderCity });
-  const roll = rollCyberAttackSuccess(attackerLevel, defenderLevel);
+  const atkAi = isAiCenterOperational(attackerCity) ? getAiCenterLevel(attackerCity) : 0;
+  const defAi = resolveDefenderAiLevel({ mapCity, defenderCity });
+  const armsRace = getAiCyberArmsRaceBonus(atkAi, defAi);
+  const aiCyberPct = getAiCyberPowerBonusPct(attackerCity) + armsRace.chanceBonusPct + armsRace.pierceBonusPct;
+  const roll = rollCyberAttackSuccess(attackerLevel, defenderLevel, 0, aiCyberPct);
   const target = expedition?.target ?? mapCity?.name;
 
   const report = buildCyberOpsReport({

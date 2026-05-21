@@ -14,7 +14,7 @@ import {
   recalculateResourceRates,
   remainingFromEndsAt,
 } from '../lib/gameUtils';
-import { landUnits } from '../data/placeholder';
+import { ALLIANCE, diplomacy, landUnits } from '../data/placeholder';
 import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
 import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
 import {
@@ -128,6 +128,70 @@ import {
 } from '../lib/progressionSystem';
 import { getMilAiRewardLabel, MIL_AI_QUESTS } from '../lib/milAiTutorial';
 import {
+  applyAiCenterEnergyDrain,
+  applyAiResourceAutoBalanceTick,
+  applyConstructionDurationSeconds,
+  applyExpeditionTravelSeconds,
+  applyMilitaryProductionDurationSeconds,
+  getAiCombatTacticalMult,
+} from '../lib/aiCenterEngine';
+import {
+  saveCosmeticTitles,
+  saveDailyQuestsState,
+  saveSeasonEngagement,
+  saveSeasonStats,
+  saveWatchlist,
+} from '../lib/engagementStorage';
+import {
+  applyQuestResourceReward,
+  buildDailyQuestContext,
+  claimDailyQuest,
+  evaluateDailyQuests,
+  markSocialistAidFlag,
+  markTradeVolume,
+  syncDailyQuestsState,
+} from '../lib/dailyQuests';
+import {
+  buildSeasonLeaderboard,
+  claimSeasonReward,
+  getPlayerSeasonRank,
+  getPlayerSeasonScore,
+  recordSeasonStat,
+  rolloverSeasonStats,
+  SEASON_PERIOD,
+  syncSeasonEngagement,
+} from '../lib/seasonChampionship';
+import {
+  buildIntelFeedEntry,
+  canAddToWatchlist,
+  createWatchlistEntry,
+  pruneIntelFeed,
+  WATCHLIST_AGENT_COST,
+} from '../lib/watchlistSystem';
+import {
+  appendChronicle,
+  buildBetrayalChronicle,
+  buildRegimeChronicle,
+  buildWarChronicleFromCombat,
+  createChronicleEntry,
+  CHRONICLE_TYPES,
+  createDefaultChronicleState,
+  findRecentTreatyBreak,
+  formatWarChronicle,
+  isMajorBattle,
+  normalizeDiplomaticTreaties,
+  syncSeasonChronicles,
+} from '../lib/historyBook';
+import {
+  loadDiplomaticTreaties,
+  loadSeasonChronicles,
+  loadTreatyBreaks,
+  saveDiplomaticTreaties,
+  saveSeasonChronicles,
+  saveTreatyBreaks,
+} from '../lib/historyBookStorage';
+import { persistChronicleToServer } from '../lib/historyBookApi';
+import {
   applyIdeologyTravelSeconds,
   canChangeIdeology,
   defaultProtectionEndsAt,
@@ -222,6 +286,38 @@ function patchCity(set, get, cityId, patch) {
       [cityId]: { ...cities[cityId], ...cityPatch },
     },
   });
+}
+
+function persistEngagement(get) {
+  const key = getCurrentPlayerName();
+  const s = get();
+  saveSeasonStats(key, s.seasonStats);
+  saveSeasonEngagement(key, s.seasonEngagement);
+  saveDailyQuestsState(key, s.dailyQuests);
+  saveWatchlist(key, s.watchlist);
+  saveCosmeticTitles(key, s.cosmeticTitles);
+  saveSeasonChronicles(key, s.seasonChronicles);
+  saveDiplomaticTreaties(key, s.diplomaticTreaties);
+  saveTreatyBreaks(key, s.treatyBreaks);
+}
+
+function persistChronicleState(get) {
+  const key = getCurrentPlayerName();
+  saveSeasonChronicles(key, get().seasonChronicles);
+}
+
+function refreshEngagementDerived(state) {
+  const now = Date.now();
+  const seasonStats = rolloverSeasonStats(state.seasonStats, now);
+  const seasonEngagement = syncSeasonEngagement(state.seasonEngagement, now);
+  let dailyQuests = syncDailyQuestsState(state.dailyQuests, state.playerIdeology, now);
+  dailyQuests = evaluateDailyQuests(
+    dailyQuests,
+    buildDailyQuestContext({ ...state, seasonStats }),
+  );
+  const intelFeed = pruneIntelFeed(state.intelFeed);
+  const seasonChronicles = syncSeasonChronicles(state.seasonChronicles, now);
+  return { seasonStats, seasonEngagement, dailyQuests, intelFeed, seasonChronicles };
 }
 
 function applyPeaceForceGate(get, targetCity, mode) {
@@ -1000,6 +1096,251 @@ export const useGameStore = create((set, get) => ({
     cloudSync(get, { saveProfile: true, savePlayerMeta: true });
   },
 
+  bumpSeasonStat: (key, amount = 1) => {
+    const state = get();
+    const seasonStats = recordSeasonStat(state.seasonStats, key, amount);
+    const derived = refreshEngagementDerived({ ...state, seasonStats });
+    set({ seasonStats, ...derived });
+    persistEngagement(get);
+  },
+
+  refreshEngagement: () => {
+    const state = get();
+    const derived = refreshEngagementDerived(state);
+    set(derived);
+    persistEngagement(get);
+  },
+
+  recordChronicle: (entry) => {
+    if (!entry?.text) return false;
+    const state = get();
+    const seasonChronicles = appendChronicle(state.seasonChronicles, entry);
+    set({ seasonChronicles });
+    persistChronicleState(get);
+    persistChronicleToServer(entry);
+    return true;
+  },
+
+  loadHistoryBookArchive: (archiveState) => {
+    if (!archiveState) return;
+    set({ seasonChronicles: syncSeasonChronicles(archiveState) });
+    persistChronicleState(get);
+  },
+
+  breakDiplomaticTreaty: (partner) => {
+    const state = get();
+    const treaties = state.diplomaticTreaties ?? [];
+    const treaty = treaties.find((t) => t.partner === partner && t.status === 'active');
+    if (!treaty) {
+      useNotificationStore.getState().addToast('Aktif anlaşma bulunamadı', 'warn');
+      return false;
+    }
+    const brokenAt = Date.now();
+    const diplomaticTreaties = treaties.map((t) => (
+      t.partner === partner
+        ? { ...t, status: 'broken', brokenAt }
+        : t
+    ));
+    const treatyBreaks = [
+      {
+        id: genId('brk'),
+        partner,
+        partnerAlliance: treaty.partnerAlliance,
+        playerAlliance: state.playerMeta?.allianceName ?? ALLIANCE,
+        brokenAt,
+        chronicleRecorded: false,
+      },
+      ...(state.treatyBreaks ?? []),
+    ].slice(0, 24);
+    set({ diplomaticTreaties, treatyBreaks });
+    const key = getCurrentPlayerName();
+    saveDiplomaticTreaties(key, diplomaticTreaties);
+    saveTreatyBreaks(key, treatyBreaks);
+    useNotificationStore.getState().addToast(
+      `${partner} ile ${treaty.type} anlaşması bozuldu`,
+      'warn',
+    );
+    return true;
+  },
+
+  _recordBetrayalChronicleIfNeeded: ({ partner, partnerAlliance }) => {
+    const state = get();
+    const playerName = getCurrentPlayerName();
+    const playerAlliance = state.playerMeta?.allianceName ?? ALLIANCE;
+    const entry = buildBetrayalChronicle({
+      allianceA: playerAlliance,
+      allianceB: partnerAlliance ?? '—',
+      attacker: playerName,
+      defender: partner,
+      partner,
+    });
+    get().recordChronicle(entry);
+    const treatyBreaks = (state.treatyBreaks ?? []).map((b) => (
+      b.partner === partner ? { ...b, chronicleRecorded: true } : b
+    ));
+    set({ treatyBreaks });
+    saveTreatyBreaks(getCurrentPlayerName(), treatyBreaks);
+  },
+
+  _breakTreatyAndBetray: ({ partner, partnerAlliance }) => {
+    const state = get();
+    const treaties = state.diplomaticTreaties ?? [];
+    const treaty = treaties.find((t) => t.partner === partner && t.status === 'active');
+    if (!treaty) return false;
+    get().breakDiplomaticTreaty(partner);
+    get()._recordBetrayalChronicleIfNeeded({ partner, partnerAlliance: partnerAlliance ?? treaty.partnerAlliance });
+    return true;
+  },
+
+  addWatchTarget: ({ targetPlayer, mapCity }) => {
+    const state = get();
+    const city = state.cities[state.activeCityId];
+    if (!city || !targetPlayer) return false;
+
+    const check = canAddToWatchlist({
+      attackerCity: city,
+      researches: state.researches,
+      mapCity,
+      defenderCity: null,
+      targetPlayerName: targetPlayer,
+      currentPlayerName: getCurrentPlayerName(),
+      idleAgents: city.idleAgents ?? 0,
+      watchlist: state.watchlist,
+    });
+    if (!check.ok) {
+      useNotificationStore.getState().addToast(check.reason, 'warn');
+      return false;
+    }
+
+    const entry = createWatchlistEntry(targetPlayer, mapCity?.name);
+    const watchlist = [...state.watchlist, entry];
+    patchCity(set, get, state.activeCityId, {
+      idleAgents: Math.max(0, (city.idleAgents ?? 0) - WATCHLIST_AGENT_COST),
+    });
+    set({ watchlist });
+    persistEngagement(get);
+    useNotificationStore.getState().addToast(
+      `${targetPlayer} istihbarat ağına alındı (−${WATCHLIST_AGENT_COST} ajan)`,
+      'intel',
+    );
+    cloudSync(get, { cityId: state.activeCityId });
+    return true;
+  },
+
+  removeWatchTarget: (targetPlayer) => {
+    const state = get();
+    const watchlist = state.watchlist.filter((w) => w.targetPlayer !== targetPlayer);
+    if (watchlist.length === state.watchlist.length) return false;
+    set({ watchlist });
+    persistEngagement(get);
+    return true;
+  },
+
+  claimDailyQuestReward: (questId) => {
+    const state = get();
+    const result = claimDailyQuest(state.dailyQuests, questId, state.loyaltyScore);
+    if (!result.ok) {
+      useNotificationStore.getState().addToast(result.reason, 'warn');
+      return false;
+    }
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    const resources = applyQuestResourceReward(city.resources, result.resourceReward);
+    patchCity(set, get, cityId, { resources });
+    const derived = refreshEngagementDerived({
+      ...state,
+      dailyQuests: result.questState,
+      loyaltyScore: result.loyaltyScore,
+    });
+    set({ dailyQuests: derived.dailyQuests, loyaltyScore: result.loyaltyScore });
+    persistEngagement(get);
+    useNotificationStore.getState().addToast(
+      `Günlük görev ödülü · +${result.loyaltyGain} sadakat`,
+      'success',
+    );
+    cloudSync(get, { cityId, saveProfile: true });
+    return true;
+  },
+
+  claimSeasonPrize: (period) => {
+    const state = get();
+    const block = period === SEASON_PERIOD.MONTHLY
+      ? state.seasonEngagement?.monthly
+      : state.seasonEngagement?.weekly;
+    const score = getPlayerSeasonScore(state.seasonStats, block?.competitionType);
+    const board = buildSeasonLeaderboard({
+      competitionType: block.competitionType,
+      playerName: getCurrentPlayerName(),
+      playerScore: score,
+    });
+    const rank = getPlayerSeasonRank(board, getCurrentPlayerName());
+    if (!rank || rank > 3) {
+      useNotificationStore.getState().addToast('İlk 3 derece gerekli', 'warn');
+      return false;
+    }
+    const result = claimSeasonReward({
+      engagement: state.seasonEngagement,
+      period,
+      rank,
+      loyaltyScore: state.loyaltyScore,
+      cosmeticTitles: state.cosmeticTitles,
+    });
+    if (!result.ok) {
+      useNotificationStore.getState().addToast(result.reason, 'warn');
+      return false;
+    }
+    const nextTitles = result.cosmetic && !state.cosmeticTitles.includes(result.cosmetic.label)
+      ? [...state.cosmeticTitles, result.cosmetic.label]
+      : state.cosmeticTitles;
+    const meta = {
+      ...state.playerMeta,
+      badges: [
+        ...(state.playerMeta?.badges ?? []),
+        ...(result.cosmetic ? [result.cosmetic.label] : []),
+      ],
+    };
+    set({
+      seasonEngagement: result.engagement,
+      loyaltyScore: result.loyaltyScore,
+      cosmeticTitles: nextTitles,
+      playerMeta: meta,
+    });
+    persistEngagement(get);
+    useNotificationStore.getState().addToast(
+      `Sezon ödülü: ${result.cosmetic?.badge ?? ''} ${result.cosmetic?.label ?? ''} · +${result.loyaltyGain} sadakat`,
+      'success',
+    );
+    cloudSync(get, { saveProfile: true, savePlayerMeta: true });
+    return true;
+  },
+
+  pushIntelFeed: (entry) => {
+    if (!entry) return;
+    const state = get();
+    const intelFeed = pruneIntelFeed([entry, ...(state.intelFeed ?? [])]);
+    set({ intelFeed });
+    persistEngagement(get);
+    useNotificationStore.getState().addToast(entry.text, 'intel');
+  },
+
+  simulateWatchedTargetActivity: () => {
+    const state = get();
+    if (!state.watchlist?.length) return;
+    const target = state.watchlist[Math.floor(Math.random() * state.watchlist.length)];
+    const cities = state.mapCities.filter(
+      (c) => c.owner === target.targetPlayer || (c.status === 'bot' && !c.owner),
+    );
+    const from = cities[0]?.name ?? target.primaryCity ?? 'Bilinmeyen Üs';
+    const entry = buildIntelFeedEntry({
+      targetPlayer: target.targetPlayer,
+      originCity: from,
+      targetCity: state.playerCities[0]?.name ?? 'Bölge',
+      mode: 'attack',
+      type: 'Konvoy / Sefer',
+    });
+    get().pushIntelFeed(entry);
+  },
+
   getIdeologyChangeCost: () => IDEOLOGY_CHANGE_COST_MONEY,
 
   revokePeaceForceProtection: () => {
@@ -1065,6 +1406,7 @@ export const useGameStore = create((set, get) => ({
     }
 
     const isRegimeChange = Boolean(state.playerIdeology) && !force;
+    const previousIdeology = state.playerIdeology;
     const freeWindow = canChangeIdeology(state.protectionEndsAt);
     const playerKey = getCurrentPlayerName();
 
@@ -1151,6 +1493,15 @@ export const useGameStore = create((set, get) => ({
       mapCities,
       newsLog,
     });
+    get().refreshEngagement();
+
+    if (isRegimeChange && previousIdeology) {
+      get().recordChronicle(buildRegimeChronicle({
+        player: playerKey,
+        oldIdeology: previousIdeology,
+        newIdeology: ideology,
+      }));
+    }
 
     if (isRegimeChange) {
       useNotificationStore.getState().addToast(
@@ -1442,7 +1793,8 @@ export const useGameStore = create((set, get) => ({
     if (!activeCity) return;
 
     const flashes = {};
-    const resources = activeCity.resources.map((r) => {
+    const tickElapsed = Math.max(0.5, (now - (state.lastTickAt ?? now)) / 1000);
+    let resources = activeCity.resources.map((r) => {
       const frozen = r.max != null && r.current > r.max;
       if (frozen) return r;
       const increment = ratePerSecond(r.rate);
@@ -1452,6 +1804,19 @@ export const useGameStore = create((set, get) => ({
       if (rounded > Math.floor(r.current)) flashes[r.id] = true;
       return { ...r, current: rounded };
     });
+    resources = applyAiCenterEnergyDrain(resources, activeCity, tickElapsed);
+    resources = applyAiResourceAutoBalanceTick(resources, activeCity, tickElapsed);
+    if (flashes.metal) {
+      const metalRate = activeCity.resources.find((r) => r.id === 'metal')?.rate ?? '+0/sa';
+      get().bumpSeasonStat('metalProduced', Math.max(1, Math.floor(ratePerSecond(metalRate) * tickElapsed)));
+    }
+
+    const engagementTick = (state._engagementTick ?? 0) + 1;
+    if (engagementTick % 45 === 0) get().refreshEngagement();
+    if (engagementTick % 280 === 0 && state.watchlist?.length) {
+      get().simulateWatchedTargetActivity();
+    }
+    set({ _engagementTick: engagementTick });
 
     const refreshed = refreshCityMorale(
       { ...state, cities: { ...state.cities, [activeCityId]: { ...activeCity, resources } } },
@@ -1597,6 +1962,7 @@ export const useGameStore = create((set, get) => ({
     });
     if (completedResearchIds.length > 0) {
       get().awardLoyalty(LOYALTY_ACTION.TECHNOCRAT_RESEARCH_COMPLETE);
+      get().bumpSeasonStat('researchCompleted', completedResearchIds.length);
     }
 
     const moneyAfterTick = sumPlayerMoney(get().cities);
@@ -1698,6 +2064,7 @@ export const useGameStore = create((set, get) => ({
     queue.splice(activeIdx, 1);
 
     patchCity(set, get, cityId, { idleTroops, productionQueue: queue });
+    get().bumpSeasonStat('unitsTrained', item.count ?? 1);
     useNotificationStore.getState().addToast(
       `Üretim Tamamlandı: ${item.count} ${item.unit}`,
       'success',
@@ -1988,6 +2355,7 @@ export const useGameStore = create((set, get) => ({
           : `[ CYBER OPS LEDGER ]: FAILED — virüs temizlendi`,
         cyberResult.success ? 'intel' : 'warn',
       );
+      if (cyberResult.success) get().bumpSeasonStat('cyberOpsCount', 1);
       syncExp({ reports: reportsToAdd });
       if (targetPc && cyberResult.effect) {
         cloudSync(get, { cityId: targetPc.id });
@@ -2001,8 +2369,11 @@ export const useGameStore = create((set, get) => ({
       const spyResult = resolveSpyMission({
         expedition: exp,
         attackerContext: {
+          city: originCity,
           researches: state.researches,
           buildings: originCity?.buildings ?? [],
+          resources: originCity?.resources,
+          cyberEffects: originCity?.cyberEffects,
         },
         defenderContext: {
           mapCity,
@@ -2055,7 +2426,10 @@ export const useGameStore = create((set, get) => ({
     const attackerCounts = exp.troopPayload && !exp.troopPayload.spies
       ? exp.troopPayload
       : {};
-    const combat = runCombat(attackerCounts, defenderCounts);
+    const originCity = state.cities[exp.originCityId];
+    const combat = runCombat(attackerCounts, defenderCounts, {
+      attackerTacticalMult: getAiCombatTacticalMult(originCity),
+    });
     const defenderResources = resolveDefenderDepot(mapCity);
     const loot = combat.attackerWon ? calcRaidLoot(defenderResources, LOOT_RATE) : [];
 
@@ -2069,6 +2443,17 @@ export const useGameStore = create((set, get) => ({
 
     if (combat.attackerWon) {
       get().awardLoyalty(LOYALTY_ACTION.NATIONALIST_EXPEDITION_WIN);
+      get().bumpSeasonStat('attackWins', 1);
+    }
+
+    if (isMajorBattle(combat, { attackerWon: combat.attackerWon })) {
+      get().recordChronicle(buildWarChronicleFromCombat({
+        combat,
+        expedition: exp,
+        attackerName: getCurrentPlayerName(),
+        defenderName: mapCity?.owner || exp.target,
+        decisive: combat.attackerWon,
+      }));
     }
 
     if (city && loot.length > 0) {
@@ -2094,6 +2479,7 @@ export const useGameStore = create((set, get) => ({
       mode: 'attack',
     });
     returnDuration = applyIdeologyTravelSeconds(returnDuration, state.playerIdeology);
+    returnDuration = applyExpeditionTravelSeconds(returnDuration, originCity);
     const returnTiming = createQueueTiming(returnDuration);
     const pseudoIdle = landUnits.map((u) => ({
       ...u,
@@ -2201,6 +2587,7 @@ export const useGameStore = create((set, get) => ({
       },
     });
 
+    get().bumpSeasonStat('citiesFounded', 1);
     useNotificationStore.getState().addToast(
       `${exp.target} kuruldu — şehir listenize eklendi`,
       'success',
@@ -2409,6 +2796,31 @@ export const useGameStore = create((set, get) => ({
       reports: [report, ...state.reports],
       navBadges: { ...state.navBadges, reports: true },
     });
+
+    if (totalUnits >= 40) {
+      const at = Date.now();
+      const attacker = getCurrentPlayerName();
+      get().recordChronicle(createChronicleEntry({
+        type: CHRONICLE_TYPES.WAR,
+        at,
+        text: formatWarChronicle({
+          at,
+          attacker,
+          defender: battle.targetName,
+          targetCity: battle.targetName,
+          casualties: totalUnits,
+          decisive: totalUnits > 0,
+          operationType: 'ordu',
+        }),
+        payload: {
+          attacker,
+          defender: battle.targetName,
+          casualties: totalUnits,
+          meydan: true,
+        },
+      }));
+    }
+
     useNotificationStore.getState().addToast(
       `Meydan Savaşı sonuçlandı: ${battle.targetName}`,
       'success',
@@ -2463,7 +2875,8 @@ export const useGameStore = create((set, get) => ({
 
     const hasActive = city.constructionQueue.some((q) => !q.queued);
     const queued = addToQueue || hasActive;
-    const duration = parseTimeToSeconds(spec.time) || 120;
+    const baseDuration = parseTimeToSeconds(spec.time) || 120;
+    const duration = applyConstructionDurationSeconds(baseDuration, city);
     const timing = queued
       ? { durationSeconds: duration, startedAt: null, endsAt: null }
       : createQueueTiming(duration);
@@ -2531,10 +2944,11 @@ export const useGameStore = create((set, get) => ({
       + getActiveCyberBarracksSlow(city.cyberEffects)
       + getActiveKbrnBarracksBlock(city.kbrnEffects);
     const ideologyMult = getProductionDurationMultiplier(state.playerIdeology);
-    const scaledDuration = Math.max(
+    const milBase = Math.max(
       5,
       Math.round((baseDuration * count * barracksSlow * ideologyMult) / Math.max(0.15, happyMult)),
     );
+    const scaledDuration = applyMilitaryProductionDurationSeconds(milBase, city);
     const timing = queued
       ? { durationSeconds: scaledDuration, startedAt: null, endsAt: null }
       : createQueueTiming(scaledDuration);
@@ -2642,6 +3056,7 @@ export const useGameStore = create((set, get) => ({
       });
     if (!isSpy) {
       duration = applyIdeologyTravelSeconds(duration, state.playerIdeology);
+      duration = applyExpeditionTravelSeconds(duration, city);
     }
     const distKm = getExpeditionDistanceKm(origin, targetCoords);
     const timing = createQueueTiming(duration);
@@ -2659,7 +3074,7 @@ export const useGameStore = create((set, get) => ({
       direction: 'outgoing',
       troops: isSpy ? `${spyCount} Casus` : troops,
       troopPayload: isSpy ? { spies: spyCount } : { ...troopQty },
-      player: 'Komutan_Alpha',
+      player: getCurrentPlayerName(),
       units: isSpy ? spyCount : Object.values(troopQty || {}).reduce((a, b) => a + (b || 0), 0),
       distance: formatDistanceKm(distKm),
       airRush: !isSpy && isAirOnlyExpedition(troopQty),
@@ -2674,6 +3089,31 @@ export const useGameStore = create((set, get) => ({
       expeditions: [...s.expeditions, expedition],
       navBadges: { ...s.navBadges, expeditions: true },
     }));
+
+    if (!isFound) {
+      get().bumpSeasonStat('expeditionsLaunched', 1);
+    }
+
+    if (expeditionMode === 'attack' && targetCity.owner) {
+      const defender = targetCity.owner;
+      const activeTreaty = (get().diplomaticTreaties ?? []).find(
+        (t) => t.partner === defender && t.status === 'active',
+      );
+      if (activeTreaty) {
+        get()._breakTreatyAndBetray({
+          partner: defender,
+          partnerAlliance: activeTreaty.partnerAlliance ?? targetCity.alliance,
+        });
+      } else {
+        const recentBreak = findRecentTreatyBreak(get().treatyBreaks, defender);
+        if (recentBreak && !recentBreak.chronicleRecorded) {
+          get()._recordBetrayalChronicleIfNeeded({
+            partner: defender,
+            partnerAlliance: recentBreak.partnerAlliance,
+          });
+        }
+      }
+    }
 
     useNotificationStore.getState().addToast(
       isFound
@@ -2738,6 +3178,7 @@ export const useGameStore = create((set, get) => ({
       mode: 'trade',
     });
     duration = applyIdeologyTravelSeconds(duration, state.playerIdeology);
+    duration = applyExpeditionTravelSeconds(duration, city);
     const distKm = getExpeditionDistanceKm(origin, targetCoords);
     const timing = createQueueTiming(duration);
 
@@ -2761,11 +3202,18 @@ export const useGameStore = create((set, get) => ({
       ...timing,
     };
 
+    const flags = markSocialistAidFlag(state.dailyQuestFlags ?? {}, sendAmounts);
+    const seasonStats = markTradeVolume(state.seasonStats, sendAmounts);
+
     set((s) => ({
       cities: { ...s.cities, [cityId]: { ...city, resources } },
       expeditions: [...s.expeditions, expedition],
       navBadges: { ...s.navBadges, expeditions: true },
+      dailyQuestFlags: flags,
+      seasonStats,
     }));
+    get().refreshEngagement();
+    persistEngagement(get);
 
     useNotificationStore.getState().addToast(
       `Ticaret konvoyu ${targetCityName} yolunda`,

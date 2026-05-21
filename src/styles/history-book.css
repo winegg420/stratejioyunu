@@ -1,0 +1,211 @@
+.history-book-panel {
+  --scroll-bg: linear-gradient(165deg, #1a1510 0%, #0f0d0a 45%, #12100e 100%);
+  --scroll-edge: #3d3228;
+  --scroll-ink: #e8dcc8;
+  --scroll-muted: #9a8b72;
+  --terminal-green: #5fe89a;
+  --terminal-dim: #2a4a38;
+  background: var(--scroll-bg);
+  border: 1px solid var(--scroll-edge);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.45),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.history-book-panel::before,
+.history-book-panel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--scroll-edge) 0,
+    #5c4a38 2px,
+    var(--scroll-edge) 6px
+  );
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.history-book-panel::before {
+  top: 0;
+}
+
+.history-book-panel::after {
+  bottom: 0;
+}
+
+.history-book-panel--terminal {
+  --scroll-bg: linear-gradient(180deg, #050a08 0%, #0a1410 100%);
+  --scroll-edge: #1a3d2e;
+  --scroll-ink: #b8f5d0;
+  --scroll-muted: #4a7a5c;
+}
+
+.history-book-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid rgba(93, 74, 56, 0.35);
+  position: relative;
+  z-index: 2;
+}
+
+.history-book-panel--terminal .history-book-toolbar {
+  border-bottom-color: var(--terminal-dim);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.history-book-season-select {
+  flex: 1;
+  min-width: 10rem;
+  max-width: 20rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--scroll-edge);
+  color: var(--scroll-ink);
+  border-radius: 2px;
+  font-size: 0.85rem;
+}
+
+.history-book-panel--terminal .history-book-season-select {
+  border-color: var(--terminal-dim);
+  color: var(--terminal-green);
+}
+
+.history-book-status {
+  font-size: 0.75rem;
+  color: var(--scroll-muted);
+  letter-spacing: 0.04em;
+}
+
+.history-book-scroll {
+  max-height: min(62vh, 520px);
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.history-book-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-book-scroll::-webkit-scrollbar-thumb {
+  background: var(--scroll-edge);
+  border-radius: 3px;
+}
+
+.history-book-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--scroll-muted);
+  font-style: italic;
+}
+
+.history-book-entry {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px dashed rgba(93, 74, 56, 0.4);
+}
+
+.history-book-panel--terminal .history-book-entry {
+  border-bottom-color: var(--terminal-dim);
+}
+
+.history-book-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.history-book-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--scroll-muted);
+}
+
+.history-book-panel--terminal .history-book-entry__meta {
+  color: var(--terminal-green);
+  opacity: 0.75;
+}
+
+.history-book-entry__type--war {
+  color: #c45c4a;
+}
+
+.history-book-entry__type--regime {
+  color: #c9a227;
+}
+
+.history-book-entry__type--betrayal {
+  color: #9b4dca;
+}
+
+.history-book-panel--terminal .history-book-entry__type--war {
+  color: #ff6b5a;
+}
+
+.history-book-panel--terminal .history-book-entry__type--regime {
+  color: #ffd54f;
+}
+
+.history-book-panel--terminal .history-book-entry__type--betrayal {
+  color: #c77dff;
+}
+
+.history-book-entry__text {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--scroll-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+}
+
+.history-book-panel--terminal .history-book-entry__text {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.history-book-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.history-book-tab {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border, #2a3540);
+  background: transparent;
+  color: inherit;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.history-book-tab.is-active {
+  opacity: 1;
+  border-color: var(--accent, #3d8bfd);
+  background: rgba(61, 139, 253, 0.12);
+}
+
+.history-book-theme-toggle {
+  margin-left: auto;
+  font-size: 0.75rem;
+}

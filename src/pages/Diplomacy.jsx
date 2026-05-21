@@ -1,6 +1,7 @@
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { diplomacy } from '../data/placeholder';
+import { useGameStore } from '../stores/gameStore';
 
 const TEMPLATES = [
   'İttifak teklif ediyorum',
@@ -11,7 +12,10 @@ const TEMPLATES = [
 ];
 
 export default function Diplomacy() {
-  const { alliance, treaties, votes } = diplomacy;
+  const { alliance, votes } = diplomacy;
+  const diplomaticTreaties = useGameStore((s) => s.diplomaticTreaties ?? []);
+  const breakDiplomaticTreaty = useGameStore((s) => s.breakDiplomaticTreaty);
+  const activeTreaties = diplomaticTreaties.filter((t) => t.status === 'active');
 
   return (
     <div className="page">
@@ -34,12 +38,26 @@ export default function Diplomacy() {
         </section>
         <section className="panel">
           <h3 className="panel-title">Aktif Anlaşmalar</h3>
-          {treaties.length > 0 ? (
+          <p className="hint">
+            Pakt bozulduktan sonra eski müttefike saldırı — Devlet Tarih Kitabı&apos;na İhanet Kroniği düşer.
+          </p>
+          {activeTreaties.length > 0 ? (
             <ul className="treaty-list">
-              {treaties.map((t) => (
-                <li key={t.partner}>
-                  <strong>{t.type}</strong> — {t.partner}
-                  <span className="badge">{t.status}</span>
+              {activeTreaties.map((t) => (
+                <li key={t.id ?? t.partner}>
+                  <strong>{t.type}</strong>
+                  {' '}
+                  — {t.partner}
+                  {t.partnerAlliance && t.partnerAlliance !== '—' && (
+                    <span className="hint"> ({t.partnerAlliance})</span>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => breakDiplomaticTreaty(t.partner)}
+                  >
+                    Paktı boz
+                  </button>
                 </li>
               ))}
             </ul>

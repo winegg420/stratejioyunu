@@ -131,3 +131,24 @@
 .intel-progression-lock {
   opacity: 0.9;
 }
+
+.ai-radar-panel {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(8, 47, 73, 0.45);
+}
+
+.ai-radar-panel__status {
+  margin-bottom: 0.5rem;
+}
+
+.ai-radar-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: #7dd3fc;
+}
+
+.ai-radar-list__item {
+  margin-bottom: 0.25rem;
+}

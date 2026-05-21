@@ -12,6 +12,7 @@ import {
   pruneCrisisEffects,
 } from './crisisEngine';
 import { getRegionalProductionMult } from './adminOverrideEngine';
+import { applyAiMineProductionMult } from './aiCenterEngine';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -136,6 +137,7 @@ export function applyProductionFreeze(
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
+    withRates = applyAiMineProductionMult(withRates, city);
     const crisisDebuff = city._peaceForceShield
       ? 0
       : getActiveCrisisProductionDebuff(

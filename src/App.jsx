@@ -19,6 +19,7 @@ import Reports from './pages/Reports';
 import MapPage from './pages/MapPage';
 import Profile from './pages/Profile';
 import Rankings from './pages/Rankings';
+import SeasonQuests from './pages/SeasonQuests';
 import FounderCrisis from './pages/FounderCrisis';
 import AdminLog from './pages/AdminLog';
 import Messages from './pages/Messages';
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="raporlar" element={<PageSafe><Reports /></PageSafe>} />
             <Route path="harita" element={<PageSafe><MapPage /></PageSafe>} />
             <Route path="siralama" element={<PageSafe><Rankings /></PageSafe>} />
+            <Route path="sezon-gorevler" element={<PageSafe><SeasonQuests /></PageSafe>} />
             <Route path="kurucu-kriz" element={<PageSafe><FounderCrisis /></PageSafe>} />
             <Route path="admin-log" element={<PageSafe><AdminLog /></PageSafe>} />
             <Route path="profil" element={<PageSafe><Profile /></PageSafe>} />

@@ -118,11 +118,12 @@ function resolvePenetratingDamage(attackPower, defensePower) {
   return Math.max(0, Math.round(attackPower * ROUND_ATTACK_FACTOR - absorbed));
 }
 
-function runSingleRound(roundIndex, attacker, defender, unitDefs) {
+function runSingleRound(roundIndex, attacker, defender, unitDefs, attackerTacticalMult = 1) {
   const atkSnap = armySnapshot(attacker, unitDefs);
   const defSnap = armySnapshot(defender, unitDefs);
 
-  const damageToDefender = resolvePenetratingDamage(atkSnap.attackPower, defSnap.defensePower);
+  const atkPower = Math.round(atkSnap.attackPower * Math.max(1, attackerTacticalMult));
+  const damageToDefender = resolvePenetratingDamage(atkPower, defSnap.defensePower);
   const damageToAttacker = resolvePenetratingDamage(defSnap.attackPower, atkSnap.defensePower);
 
   const defResult = distributeCasualties(defender, damageToDefender, unitDefs);
@@ -162,6 +163,7 @@ function pickWinner(attacker, defender, unitDefs) {
 export function runCombat(attackerCounts, defenderCounts, options = {}) {
   const unitDefs = options.unitDefs ?? UNIT_MAP;
   const roundsTotal = options.rounds ?? COMBAT_ROUNDS;
+  const attackerTacticalMult = options.attackerTacticalMult ?? 1;
 
   let attacker = normalizeCounts(attackerCounts);
   let defender = normalizeCounts(defenderCounts);
@@ -176,7 +178,7 @@ export function runCombat(attackerCounts, defenderCounts, options = {}) {
   for (let i = 0; i < roundsTotal; i += 1) {
     if (totalUnits(attacker) < 1 || totalUnits(defender) < 1) break;
 
-    const round = runSingleRound(i, attacker, defender, unitDefs);
+    const round = runSingleRound(i, attacker, defender, unitDefs, attackerTacticalMult);
     rounds.push(round);
 
     totalAttackerLosses = mergeLossMaps(totalAttackerLosses, round.attackerLosses);

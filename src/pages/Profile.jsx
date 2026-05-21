@@ -42,6 +42,7 @@ export default function Profile() {
   const canChangeIdeologyFree = useGameStore((s) => s.canChangeIdeology);
   const canAffordIdeologyChange = useGameStore((s) => s.canAffordIdeologyChange);
   const loyaltyScore = useGameStore((s) => s.loyaltyScore ?? 0);
+  const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? []);
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const ideologyUnlocked = getProgressionState(activeCity).ideologyUnlocked;
@@ -57,8 +58,12 @@ export default function Profile() {
     for (const b of fromMeta) {
       if (!merged.includes(b)) merged.push(b);
     }
+    for (const t of cosmeticTitles) {
+      const label = typeof t === 'string' ? t : t?.label;
+      if (label && !merged.includes(label)) merged.push(label);
+    }
     return merged;
-  }, [playerMeta?.badges]);
+  }, [playerMeta?.badges, cosmeticTitles]);
 
   const handleLogout = () => {
     logout();
@@ -287,7 +292,12 @@ export default function Profile() {
         <h3 className="panel-title">Rozetler</h3>
         <div className="badge-row">
           {allBadges.map((b) => (
-            <span key={b} className={`achievement-badge${b.includes('VIP') ? ' achievement-badge--vip' : ''}`}>
+            <span
+              key={b}
+              className={`achievement-badge${
+                b.includes('VIP') || b.includes('🏆') ? ' achievement-badge--vip' : ''
+              }`}
+            >
               {b}
             </span>
           ))}

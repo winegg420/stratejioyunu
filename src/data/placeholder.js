@@ -45,6 +45,18 @@ export const buildings = [
     time: '00:09:00',
     producing: false,
   },
+  {
+    id: 'ai_center',
+    name: 'Yapay Zeka Merkezi',
+    category: 'Teknoloji',
+    level: 0,
+    maxLevel: 15,
+    desc: 'Algoritmik komuta çekirdeği. İnşaat, üretim, casusluk ve siber operasyonlara kademeli bonus; yüksek enerji tüketir.',
+    image: '🧠',
+    cost: '95.000 metal · 62.000 bütçe · 22.000 enerji',
+    time: '28:00:00',
+    producing: false,
+  },
 ];
 
 export const researches = [
@@ -128,7 +140,20 @@ export const tradeOffers = [];
 
 export const diplomacy = {
   alliance: { name: 'Ege Komutanlığı', members: 24, mode: 'Liderli', leader: 'Komutan_Alpha' },
-  treaties: [],
+  treaties: [
+    {
+      partner: 'KaraKurt',
+      partnerAlliance: 'Boğaz İmparatorluğu',
+      type: 'NAP',
+      status: 'active',
+    },
+    {
+      partner: 'SteelWolf',
+      partnerAlliance: '—',
+      type: 'Ateşkes',
+      status: 'active',
+    },
+  ],
   votes: [],
 };
 
@@ -305,7 +330,8 @@ export const MOBILE_NAV_ITEMS = [
   { path: '/', icon: '🏙️', label: 'Şehir' },
   { path: '/binalar', icon: '🏗️', label: 'Binalar' },
   { path: '/seferler', icon: '⚔️', label: 'Seferler' },
-  { path: '/siralama', icon: '🏆', label: 'Sıralama' },
+  { path: '/sezon-gorevler', icon: '🏆', label: 'Sezon & Görevler' },
+  { path: '/siralama', icon: '📊', label: 'Sıralama' },
   { path: '/admin-log', icon: '📜', label: 'Admin Log' },
   { path: '/profil', icon: '👤', label: 'Profil' },
 ];
@@ -323,7 +349,8 @@ export const NAV_ITEMS = [
   { path: '/diplomasi', icon: '🤝', label: 'Diplomasi' },
   { path: '/raporlar', icon: '📋', label: 'Raporlar' },
   { path: '/harita', icon: '🗺️', label: 'Harita' },
-  { path: '/siralama', icon: '🏆', label: 'Sıralama' },
+  { path: '/sezon-gorevler', icon: '🏆', label: 'Sezon & Görevler' },
+  { path: '/siralama', icon: '📊', label: 'Sıralama' },
   { path: '/admin-log', icon: '📜', label: 'Admin Log' },
   { path: '/profil', icon: '👤', label: 'Profil' },
   { path: '/mesajlar', icon: '🔐', label: 'State Mail' },

@@ -11,6 +11,12 @@ import {
 } from '../lib/buildingUtils';
 import { getBuildingVisual } from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
+import {
+  AI_CENTER_BUILDING_ID,
+  formatAiCenterStatus,
+  getAiCenterEnergyDemandHourly,
+  getAiCenterLevel,
+} from '../lib/aiCenterEngine';
 import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
 import BuildCountdownHud from './BuildCountdownHud';
 
@@ -162,6 +168,11 @@ export default function BuildingCard({ building, progressionLock = null }) {
         </p>
       ) : (
         <p className="content-card__meta">Maliyet tanımlı değil</p>
+      )}
+      {building.id === AI_CENTER_BUILDING_ID && getAiCenterLevel(city) >= 1 && (
+        <p className="content-card__meta content-card__meta--ai">
+          ⚡ Tüketim: {getAiCenterEnergyDemandHourly(getAiCenterLevel(city))}/sa · {formatAiCenterStatus(city)}
+        </p>
       )}
       <div className="card-actions">
         {upgrading && queueEntry && (

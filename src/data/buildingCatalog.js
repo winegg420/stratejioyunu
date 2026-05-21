@@ -88,7 +88,19 @@ export const BUILDING_CATALOG = {
       1: { cost: '2.200 metal · 1.400 enerji', time: '00:09:00' },
     },
   },
+  ai_center: {
+    maxLevel: 15,
+    levels: {
+      1: {
+        cost: '95.000 metal · 62.000 bütçe · 22.000 enerji',
+        time: '28:00:00',
+      },
+    },
+  },
 };
+
+const AI_CENTER_COST_EXP = 1.78;
+const AI_CENTER_TIME_EXP = 1.62;
 
 function scaleCostString(costStr, multiplier) {
   const parts = parseUnitCost(costStr);
@@ -128,15 +140,24 @@ export function resolveNextConstructionSpec(building) {
     };
   }
 
+  const maxLevel = catalog?.maxLevel ?? null;
+  if (maxLevel != null && targetLevel > maxLevel) return null;
+
   const base = catalog?.levels?.[1];
   if (base?.cost && base.cost !== '—') {
     if (targetLevel === 1) {
       return { cost: base.cost, time: base.time ?? '00:02:00', targetLevel };
     }
-    const mult = 1 + (targetLevel - 1) * 0.4;
+    const isAi = building.id === 'ai_center';
+    const mult = isAi
+      ? Math.pow(AI_CENTER_COST_EXP, targetLevel - 1)
+      : 1 + (targetLevel - 1) * 0.4;
+    const timeMult = isAi
+      ? Math.pow(AI_CENTER_TIME_EXP, targetLevel - 1)
+      : mult;
     return {
       cost: scaleCostString(base.cost, mult),
-      time: scaleTimeString(base.time ?? '00:02:00', mult),
+      time: scaleTimeString(base.time ?? '00:02:00', timeMult),
       targetLevel,
     };
   }

@@ -1,4 +1,4 @@
-import { mapCities, reports } from './placeholder';
+import { diplomacy, mapCities, reports } from './placeholder';
 import { applyProductionFreeze } from '../lib/resourceProduction';
 import {
   createStarterBuildings,
@@ -18,9 +18,28 @@ import {
   loadProtectionEndsAt,
   saveProtectionEndsAt,
 } from '../lib/briefingStorage';
+import {
+  loadCosmeticTitles,
+  loadDailyQuestsState,
+  loadSeasonEngagement,
+  loadSeasonStats,
+  loadWatchlist,
+} from '../lib/engagementStorage';
 import { createInitialProtectionEndsAt } from '../lib/progressionSystem';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { DEFAULT_CENTRAL_BANK } from '../lib/adminOverrideEngine';
+import {
+  createDefaultSeasonStats,
+  createSeasonEngagementState,
+  syncSeasonEngagement,
+} from '../lib/seasonChampionship';
+import { syncDailyQuestsState } from '../lib/dailyQuests';
+import { createDefaultChronicleState, normalizeDiplomaticTreaties } from '../lib/historyBook';
+import {
+  loadDiplomaticTreaties,
+  loadSeasonChronicles,
+  loadTreatyBreaks,
+} from '../lib/historyBookStorage';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
@@ -122,6 +141,27 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     protectionEndsAt,
     milAiCompleted: loadMilAiCompleted(playerKey),
     loyaltyScore: 0,
+    seasonStats: loadSeasonStats(playerKey) ?? createDefaultSeasonStats(),
+    seasonEngagement: syncSeasonEngagement(
+      loadSeasonEngagement(playerKey) ?? createSeasonEngagementState(),
+    ),
+    dailyQuests: syncDailyQuestsState(
+      loadDailyQuestsState(playerKey),
+      loadPlayerIdeology(playerKey),
+    ),
+    dailyQuestFlags: {},
+    watchlist: loadWatchlist(playerKey),
+    intelFeed: [],
+    cosmeticTitles: loadCosmeticTitles(playerKey),
+    seasonChronicles: syncSeasonChronicles(
+      loadSeasonChronicles(playerKey) ?? createDefaultChronicleState(),
+    ),
+    diplomaticTreaties: normalizeDiplomaticTreaties(
+      loadDiplomaticTreaties(playerKey).length
+        ? loadDiplomaticTreaties(playerKey)
+        : diplomacy.treaties,
+    ),
+    treatyBreaks: loadTreatyBreaks(playerKey),
     centralBank: { ...DEFAULT_CENTRAL_BANK },
     regionalIncentive: null,
     adminPublicLogs: [],

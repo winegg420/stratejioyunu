@@ -18,6 +18,7 @@ export const BUILDING_LABELS = {
   factory: 'Endüstri Kompleksi',
   depot: 'Lojistik Depo',
   cyber_ops: 'Siber Operasyon Merkezi',
+  ai_center: 'Yapay Zeka Merkezi',
   wall: 'Çevre Savunma Hattı',
   intel: 'İstihbarat Merkezi',
   tax: 'Maliye Dairesi',
@@ -46,6 +47,12 @@ export const BUILDING_PREREQUISITES = {
   research: [{ id: 'factory', level: 3 }, { id: 'market', level: 1 }],
   depot: [{ id: 'factory', level: 2 }],
   cyber_ops: [{ id: 'intel', level: 2 }, { id: 'research', level: 2 }],
+  ai_center: [
+    { id: 'research', level: 5 },
+    { id: 'cyber_ops', level: 3 },
+    { id: 'plant', level: 6 },
+    { id: HQ_BUILDING_ID, level: 8 },
+  ],
 };
 
 export function getBuildingPrerequisites(buildingId) {

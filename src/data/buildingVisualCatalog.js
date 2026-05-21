@@ -28,6 +28,10 @@ export const BUILDING_VISUALS = {
     image: '/buildings/intel.jpg',
     designation: 'Cyber Operations Command',
   },
+  ai_center: {
+    image: '/buildings/intel.jpg',
+    designation: 'AI Command Center — Neural Warfare Core',
+  },
   market: {
     image: '/buildings/market.jpg',
     designation: 'Trade Exchange Terminal',

@@ -11,6 +11,21 @@ import { applyProductionFreeze } from '../lib/resourceProduction';
 import { ratePerSecond } from '../lib/gameUtils';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
+import {
+  loadCosmeticTitles,
+  loadDailyQuestsState,
+  loadSeasonEngagement,
+  loadSeasonStats,
+  loadWatchlist,
+} from './engagementStorage';
+import { createDefaultSeasonStats, syncSeasonEngagement } from './seasonChampionship';
+import { syncDailyQuestsState } from './dailyQuests';
+import { createDefaultChronicleState, normalizeDiplomaticTreaties, syncSeasonChronicles } from './historyBook';
+import {
+  loadDiplomaticTreaties,
+  loadSeasonChronicles,
+  loadTreatyBreaks,
+} from './historyBookStorage';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 const LAND_UNIT_IDS = new Set(landUnits.map((u) => u.id));
@@ -299,6 +314,16 @@ export async function saveGameState(state, options = {}) {
       newsLog: state.newsLog ?? [],
       lastCbrnEventAt: state.lastCbrnEventAt ?? 0,
       lastCrisisEventAt: state.lastCrisisEventAt ?? 0,
+      dailyQuests: state.dailyQuests ?? null,
+      dailyQuestFlags: state.dailyQuestFlags ?? {},
+      watchlist: state.watchlist ?? [],
+      seasonEngagement: state.seasonEngagement ?? null,
+      seasonStats: state.seasonStats ?? null,
+      cosmeticTitles: state.cosmeticTitles ?? [],
+      intelFeed: state.intelFeed ?? [],
+      seasonChronicles: state.seasonChronicles ?? null,
+      diplomaticTreaties: state.diplomaticTreaties ?? [],
+      treatyBreaks: state.treatyBreaks ?? [],
     };
     const tasks = [
       supabase.from('cities').upsert(rows, { onConflict: 'profile_id,id' }),
@@ -412,6 +437,16 @@ export async function saveGameState(state, options = {}) {
       newsLog: state.newsLog ?? state.playerMeta?.newsLog ?? [],
       lastCbrnEventAt: state.lastCbrnEventAt ?? state.playerMeta?.lastCbrnEventAt ?? 0,
       lastCrisisEventAt: state.lastCrisisEventAt ?? state.playerMeta?.lastCrisisEventAt ?? 0,
+      dailyQuests: state.dailyQuests ?? state.playerMeta?.dailyQuests ?? null,
+      dailyQuestFlags: state.dailyQuestFlags ?? state.playerMeta?.dailyQuestFlags ?? {},
+      watchlist: state.watchlist ?? state.playerMeta?.watchlist ?? [],
+      seasonEngagement: state.seasonEngagement ?? state.playerMeta?.seasonEngagement ?? null,
+      seasonStats: state.seasonStats ?? state.playerMeta?.seasonStats ?? null,
+      cosmeticTitles: state.cosmeticTitles ?? state.playerMeta?.cosmeticTitles ?? [],
+      intelFeed: state.intelFeed ?? state.playerMeta?.intelFeed ?? [],
+      seasonChronicles: state.seasonChronicles ?? state.playerMeta?.seasonChronicles ?? null,
+      diplomaticTreaties: state.diplomaticTreaties ?? state.playerMeta?.diplomaticTreaties ?? [],
+      treatyBreaks: state.treatyBreaks ?? state.playerMeta?.treatyBreaks ?? [],
     };
     tasks.push(
       supabase.from('profiles').update({
@@ -655,6 +690,25 @@ export async function loadGameState(userId, { playerName } = {}) {
     newsLog: Array.isArray(playerMeta.newsLog) ? playerMeta.newsLog : [],
     lastCbrnEventAt: playerMeta.lastCbrnEventAt ?? 0,
     lastCrisisEventAt: playerMeta.lastCrisisEventAt ?? 0,
+    seasonStats: playerMeta.seasonStats ?? loadSeasonStats(displayName) ?? createDefaultSeasonStats(),
+    seasonEngagement: syncSeasonEngagement(
+      playerMeta.seasonEngagement ?? loadSeasonEngagement(displayName),
+    ),
+    dailyQuests: syncDailyQuestsState(
+      playerMeta.dailyQuests ?? loadDailyQuestsState(displayName),
+      playerIdeology,
+    ),
+    dailyQuestFlags: playerMeta.dailyQuestFlags ?? {},
+    watchlist: playerMeta.watchlist ?? loadWatchlist(displayName),
+    intelFeed: playerMeta.intelFeed ?? [],
+    cosmeticTitles: playerMeta.cosmeticTitles ?? loadCosmeticTitles(displayName),
+    seasonChronicles: syncSeasonChronicles(
+      playerMeta.seasonChronicles ?? loadSeasonChronicles(displayName) ?? createDefaultChronicleState(),
+    ),
+    diplomaticTreaties: normalizeDiplomaticTreaties(
+      playerMeta.diplomaticTreaties ?? loadDiplomaticTreaties(displayName),
+    ),
+    treatyBreaks: playerMeta.treatyBreaks ?? loadTreatyBreaks(displayName),
     playerCities,
     cities,
     researches,

@@ -17,6 +17,7 @@ import { useGameStore } from '../stores/gameStore';
 import CrisisResponsePanel from '../components/CrisisResponsePanel';
 import PeaceForceBanner from '../components/PeaceForceBanner';
 import MilAiAdvisor from '../components/MilAiAdvisor';
+import AiRadarPanel from '../components/AiRadarPanel';
 import { getProgressionState } from '../lib/progressionSystem';
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
@@ -145,6 +146,7 @@ export default function Home() {
       />
       <PeaceForceBanner />
       <MilAiAdvisor />
+      <AiRadarPanel />
       <PageHeader
         title="Ana Merkez"
         subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}
