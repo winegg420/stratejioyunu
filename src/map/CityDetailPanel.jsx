@@ -1,5 +1,4 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { useActionLock } from '../hooks/useActionLock';
 import { formatHappinessLabel, pruneCyberEffects } from '../lib/happinessSystem';
 import { getTroopStock } from '../lib/troopStock';
@@ -75,29 +74,30 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
 
 function useLiveMapCity(mapCity) {
   const playerName = getCurrentPlayerName();
+  const mapCities = useGameStore((s) => s.mapCities);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const cities = useGameStore((s) => s.cities);
 
-  return useGameStore(
-    useShallow((s) => {
-      if (!mapCity?.name) return null;
-      const live = s.mapCities.find((c) => c.name === mapCity.name) ?? mapCity;
-      const pc = s.playerCities.find((p) => p.name === mapCity.name);
-      const gameCity = pc ? s.cities[pc.id] : null;
-      const owner = getCityOwnerLabel(live, playerName);
-      const cyberActive = pruneCyberEffects(gameCity?.cyberEffects ?? []).length > 0;
+  return useMemo(() => {
+    if (!mapCity?.name) return null;
+    const live = mapCities.find((c) => c.name === mapCity.name) ?? mapCity;
+    const pc = playerCities.find((p) => p.name === mapCity.name);
+    const gameCity = pc ? cities[pc.id] : null;
+    const owner = getCityOwnerLabel(live, playerName);
+    const cyberActive = pruneCyberEffects(gameCity?.cyberEffects ?? []).length > 0;
 
-      return {
-        live: { ...live, owner },
-        pc,
-        gameCity,
-        population: gameCity?.population ?? live.population ?? 0,
-        happiness: gameCity?.happiness ?? null,
-        taxRate: gameCity?.taxRate ?? null,
-        resources: gameCity?.resources ?? null,
-        cyberActive,
-        cyberEffects: gameCity?.cyberEffects ?? [],
-      };
-    }),
-  );
+    return {
+      live: { ...live, owner },
+      pc,
+      gameCity,
+      population: gameCity?.population ?? live.population ?? 0,
+      happiness: gameCity?.happiness ?? null,
+      taxRate: gameCity?.taxRate ?? null,
+      resources: gameCity?.resources ?? null,
+      cyberActive,
+      cyberEffects: gameCity?.cyberEffects ?? [],
+    };
+  }, [mapCity, mapCities, playerCities, cities, playerName]);
 }
 
 export default function CityDetailPanel({ city, onClose }) {
@@ -155,7 +155,7 @@ function MapCommandModal({ city, onClose }) {
   const canAttack = !isAnyOwnCity && mapCity.status !== 'empty' && inRadarRange;
   const canSpy = !isAnyOwnCity && (mapCity.status === 'enemy' || mapCity.status === 'bot') && inRadarRange;
   const outOfRange = mapCity.status !== 'own' && !inRadarRange;
-  const cyberCapabilities = getCyberCapabilities();
+  const cyberCapabilities = getCyberCapabilities() ?? [];
 
   useEffect(() => {
     setActionMode(null);

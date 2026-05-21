@@ -51,7 +51,15 @@ export default function HistoryBookPanel() {
       const local = useGameStore.getState().seasonChronicles;
       const result = await fetchSeasonChroniclesFromServer(selectedSeason, local);
       if (cancelled) return;
-      if (result.state) loadHistoryBookArchive(result.state);
+      if (result.state) {
+        const prevKey = JSON.stringify(local?.archives?.[selectedSeason] ?? local?.entries ?? []);
+        const nextKey = JSON.stringify(
+          result.state.archives?.[selectedSeason] ?? result.state.entries ?? [],
+        );
+        if (prevKey !== nextKey) {
+          loadHistoryBookArchive(result.state);
+        }
+      }
       setSource(result.source ?? 'local');
       setLoading(false);
     })();

@@ -223,7 +223,7 @@ export function syncSeasonChronicles(state, now = Date.now()) {
 }
 
 export function appendChronicle(state, entry) {
-  const synced = syncSeasonChronicles(state);
+  const synced = syncSeasonChronicles(state ?? createDefaultChronicleState(entry?.at));
   const exists = synced.entries.some(
     (e) => e.type === entry.type && e.text === entry.text && Math.abs(e.at - entry.at) < 60000,
   );

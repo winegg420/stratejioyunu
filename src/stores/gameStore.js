@@ -316,7 +316,10 @@ function refreshEngagementDerived(state) {
     buildDailyQuestContext({ ...state, seasonStats }),
   );
   const intelFeed = pruneIntelFeed(state.intelFeed);
-  const seasonChronicles = syncSeasonChronicles(state.seasonChronicles, now);
+  const seasonChronicles = syncSeasonChronicles(
+    state.seasonChronicles ?? createDefaultChronicleState(now),
+    now,
+  );
   return { seasonStats, seasonEngagement, dailyQuests, intelFeed, seasonChronicles };
 }
 
@@ -1114,7 +1117,10 @@ export const useGameStore = create((set, get) => ({
   recordChronicle: (entry) => {
     if (!entry?.text) return false;
     const state = get();
-    const seasonChronicles = appendChronicle(state.seasonChronicles, entry);
+    const seasonChronicles = appendChronicle(
+      state.seasonChronicles ?? createDefaultChronicleState(),
+      entry,
+    );
     set({ seasonChronicles });
     persistChronicleState(get);
     persistChronicleToServer(entry);
