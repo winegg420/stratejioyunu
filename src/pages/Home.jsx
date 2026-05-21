@@ -73,6 +73,13 @@ export default function Home() {
   const { playerName } = useAuth();
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const activeCity = playerCities.find((c) => c.id === activeCityId);
+  const progression = getProgressionState(city);
+  const showIdeologyBriefing = progression.ideologyUnlocked;
+
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [pendingIdeology, setPendingIdeology] = useState(playerIdeology);
 
@@ -121,12 +128,6 @@ export default function Home() {
     ...staticNewsFeed,
   ].slice(0, 24);
   const now = useGameStore((s) => s.now);
-  const activeCityId = useGameStore((s) => s.activeCityId);
-  const playerCities = useGameStore((s) => s.playerCities);
-  const city = useGameStore((s) => s.cities[activeCityId]);
-  const activeCity = playerCities.find((c) => c.id === activeCityId);
-  const progression = getProgressionState(city);
-  const showIdeologyBriefing = progression.ideologyUnlocked;
   const expeditions = useGameStore((s) => s.expeditions);
   const reports = useGameStore((s) => s.reports);
 

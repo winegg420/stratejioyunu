@@ -7,6 +7,7 @@ import ToastContainer from './ToastContainer';
 import PwaUpdateBanner from './PwaUpdateBanner';
 import RouteTransitionLoader from './RouteTransitionLoader';
 import ContentInfoModal from './ContentInfoModal';
+import ErrorBoundary from './ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
 import { startSyncPolling, stopSyncPolling } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
@@ -101,7 +102,9 @@ export default function Layout() {
       <div className="main-shell">
         <Sidebar />
         <main className="content-area" ref={contentRef}>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
       <BottomNav />

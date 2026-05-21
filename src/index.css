@@ -3512,7 +3512,9 @@ body.map-scroll-locked {
 }
 
 .app-error-fallback {
-  min-height: 100vh;
+  position: relative;
+  z-index: 100;
+  min-height: 60vh;
   display: flex;
   flex-direction: column;
   align-items: center;
