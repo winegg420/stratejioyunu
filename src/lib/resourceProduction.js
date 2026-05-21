@@ -11,6 +11,7 @@ import {
   getEconomicCrisisMoneyMult,
   pruneCrisisEffects,
 } from './crisisEngine';
+import { getRegionalProductionMult } from './adminOverrideEngine';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
@@ -168,6 +169,23 @@ export function applyProductionFreeze(
       withRates,
       playerIdeology ?? city._playerIdeology ?? null,
     );
+
+    const regionalIncentive = city._regionalIncentive ?? null;
+    const cityRegionId = city._cityRegionId ?? null;
+    if (regionalIncentive?.active && cityRegionId) {
+      withRates = withRates.map((r) => {
+        if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return r;
+        const regMult = getRegionalProductionMult(regionalIncentive, cityRegionId, r.id);
+        if (regMult <= 1) return r;
+        const hourly = parseHourlyRate(r.rate);
+        if (hourly <= 0) return r;
+        return {
+          ...r,
+          rate: formatRate(Math.max(0, Math.floor(hourly * regMult))),
+          regionalBonus: true,
+        };
+      });
+    }
   }
 
   return applyDepotFreeze(withRates);

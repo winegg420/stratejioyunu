@@ -27,6 +27,8 @@ export default function Trade() {
   const startTradeExpedition = useGameStore((s) => s.startTradeExpedition);
   const requestMapTradeFocus = useGameStore((s) => s.requestMapTradeFocus);
   const recallExpedition = useGameStore((s) => s.recallExpedition);
+  const centralBank = useGameStore((s) => s.centralBank);
+  const regionalIncentive = useGameStore((s) => s.regionalIncentive);
 
   const [targetName, setTargetName] = useState('');
   const [amounts, setAmounts] = useState({ ...EMPTY_AMOUNTS });
@@ -83,6 +85,25 @@ export default function Trade() {
           </Link>
         )}
       />
+
+      {(centralBank?.fuelBasePrice !== 1 || regionalIncentive?.active) && (
+        <section className="panel trade-market-panel">
+          <h3 className="panel-title">Pazar & Merkez Bankası</h3>
+          <p className="hint">
+            Petrol taban çarpanı: <strong className="font-hud-data">×{(centralBank?.fuelBasePrice ?? 1).toFixed(2)}</strong>
+            {regionalIncentive?.active && (
+              <>
+                {' '}
+                · Teşvik: {regionalIncentive.regionName} — {regionalIncentive.resourceId} üretim ×
+                {regionalIncentive.multiplier}
+              </>
+            )}
+          </p>
+          <p className="hint">
+            <a href="/admin-log">Admin müdahale kayıtları</a> (şeffaf log)
+          </p>
+        </section>
+      )}
 
       <section className="panel">
         <h3 className="panel-title">Yeni Ticaret Seferi</h3>

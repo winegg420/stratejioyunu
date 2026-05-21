@@ -41,6 +41,65 @@
   font-weight: 700;
 }
 
+.admin-bank-panel,
+.admin-incentive-panel {
+  margin-top: 1rem;
+}
+
+.admin-bank-field {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.admin-bank-field span {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-bank-parities {
+  margin-bottom: 0.75rem;
+}
+
+.admin-incentive-active {
+  color: #fbbf24;
+  margin-bottom: 0.75rem;
+}
+
+.admin-incentive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.founder-admin-hint {
+  margin-bottom: 1rem;
+}
+
+.founder-admin-hint a {
+  color: #f87171;
+}
+
+.admin-log-page .admin-log-intro {
+  margin-bottom: 1rem;
+}
+
+.admin-log-loading {
+  text-align: center;
+  color: var(--text-muted, #94a3b8);
+  padding: 2rem;
+}
+
+.news-admin-override {
+  border-left: 3px solid #dc2626;
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.news-admin-override .news-text {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
 .news-crisis-emergency,
 .news-crisis-alarm {
   border-left: 3px solid #ef4444;

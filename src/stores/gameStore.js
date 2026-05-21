@@ -54,9 +54,27 @@ import {
   canAffordTrade,
   deductTradeResources,
   formatTradeCargoSummary,
-  scaleTradeAmounts,
   sumTradeAmounts,
 } from '../lib/tradeUtils';
+import {
+  ADMIN_ACTION,
+  buildCentralBankLogText,
+  buildCrisisAdminLogText,
+  buildRegionalIncentiveLogText,
+  createAdminNewsEntry,
+  DEFAULT_CENTRAL_BANK,
+  mergeAdminLogsIntoNews,
+  normalizeCentralBank,
+  normalizeRegionalIncentive,
+  resolveCityRegionId,
+  scaleTradeWithCentralBank,
+} from '../lib/adminOverrideEngine';
+import {
+  fetchAdminLogs,
+  fetchServerBroadcast,
+  insertAdminLog,
+  saveServerBroadcast,
+} from '../lib/adminBroadcastSync';
 import {
   canAffordPopulation,
   deductPopulation,
@@ -198,10 +216,20 @@ function patchCity(set, get, cityId, patch) {
   });
 }
 
+function getCityAdminContext(state, cityId) {
+  const pc = state.playerCities?.find((c) => c.id === cityId);
+  return {
+    _regionalIncentive: normalizeRegionalIncentive(state.regionalIncentive),
+    _cityRegionId: resolveCityRegionId(pc, state.mapCities),
+    _centralBank: normalizeCentralBank(state.centralBank ?? DEFAULT_CENTRAL_BANK),
+  };
+}
+
 function refreshCityMorale(state, cityId) {
   const city = state.cities[cityId];
   if (!city) return city;
 
+  const adminCtx = getCityAdminContext(state, cityId);
   const cyberEffects = pruneCyberEffects(city.cyberEffects);
   const kbrnEffects = pruneKbrnEffects(city.kbrnEffects);
   const crisisEffects = pruneCrisisEffects(city.crisisEffects);
@@ -233,6 +261,7 @@ function refreshCityMorale(state, cityId) {
       _playerIdeology: state.playerIdeology,
       _activeCrisis: state.activeCrisis,
       crisisEffects,
+      ...adminCtx,
     },
     vipMult,
     state.playerIdeology,
@@ -528,6 +557,53 @@ export const useGameStore = create((set, get) => ({
     set({ mapCities });
     get()._runServerCleansing(false);
     get().touchPlayerActivity();
+    get().refreshServerBroadcast();
+  },
+
+  refreshServerBroadcast: async () => {
+    const [broadcast, logs] = await Promise.all([
+      fetchServerBroadcast(),
+      fetchAdminLogs(80),
+    ]);
+    const regionalIncentive = normalizeRegionalIncentive(broadcast.regionalIncentive);
+    const centralBank = normalizeCentralBank(broadcast.centralBank);
+    const state = get();
+    let cities = state.cities;
+    if (regionalIncentive || centralBank) {
+      cities = Object.fromEntries(
+        Object.entries(state.cities).map(([id]) => [
+          id,
+          refreshCityMorale(
+            { ...state, centralBank, regionalIncentive },
+            id,
+          ),
+        ]),
+      );
+    }
+    set({
+      centralBank,
+      regionalIncentive,
+      adminPublicLogs: logs,
+      cities,
+      newsLog: mergeAdminLogsIntoNews(state.newsLog, logs),
+    });
+  },
+
+  recordAdminOverride: async ({ actionType, logText, payload = {}, newsItem = null }) => {
+    const actor = getCurrentPlayerName();
+    const item = newsItem ?? createAdminNewsEntry(logText);
+    await insertAdminLog({
+      actorName: actor,
+      actionType,
+      logText,
+      payload,
+    });
+    const logs = await fetchAdminLogs(80);
+    set({
+      newsLog: mergeAdminLogsIntoNews([item, ...(get().newsLog ?? [])], logs),
+      adminPublicLogs: logs,
+    });
+    return item;
   },
 
   hydrateFromSupabase: async (userId, playerName) => {
@@ -537,7 +613,10 @@ export const useGameStore = create((set, get) => ({
       setState: (patch) => set(patch),
       completeExpedition: (id) => get()._completeExpedition(id),
     });
-    if (ok) get().initWorldSystems();
+    if (ok) {
+      get().initWorldSystems();
+      await get().refreshServerBroadcast();
+    }
     return ok;
   },
 
@@ -674,7 +753,7 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
-  adminTriggerCrisis: ({ type, catastrophic = false } = {}) => {
+  adminTriggerCrisis: async ({ type, catastrophic = false } = {}) => {
     const playerKey = getCurrentPlayerName();
     if (!isFounderPlayer(playerKey)) return false;
     const state = get();
@@ -694,10 +773,16 @@ export const useGameStore = create((set, get) => ({
         refreshCityMorale({ ...state, cities, activeCrisis: rolled.activeCrisis }, id),
       ]),
     );
+    const logText = buildCrisisAdminLogText({ type, catastrophic });
+    await get().recordAdminOverride({
+      actionType: ADMIN_ACTION.CRISIS,
+      logText,
+      payload: { type, catastrophic, severity },
+      newsItem: rolled.newsItem,
+    });
     set({
       activeCrisis: rolled.activeCrisis,
       cities,
-      newsLog: [rolled.newsItem, ...(state.newsLog ?? [])].slice(0, 48),
       lastCrisisEventAt: rolled.lastCrisisEventAt,
     });
     useNotificationStore.getState().addToast(
@@ -705,6 +790,98 @@ export const useGameStore = create((set, get) => ({
       'danger',
     );
     cloudSync(get, { saveAllCities: true, savePlayerMeta: true, saveProfile: true });
+    return true;
+  },
+
+  adminSetCentralBank: async ({ fuelBasePrice, parities } = {}) => {
+    const playerKey = getCurrentPlayerName();
+    if (!isFounderPlayer(playerKey)) return false;
+    const prev = normalizeCentralBank(get().centralBank);
+    const centralBank = normalizeCentralBank({
+      fuelBasePrice: fuelBasePrice ?? prev.fuelBasePrice,
+      parities: { ...prev.parities, ...parities },
+      updatedAt: Date.now(),
+    });
+    await saveServerBroadcast({
+      centralBank,
+      regionalIncentive: get().regionalIncentive,
+    });
+    const logText = buildCentralBankLogText(centralBank, prev);
+    await get().recordAdminOverride({
+      actionType: ADMIN_ACTION.CENTRAL_BANK,
+      logText,
+      payload: { centralBank },
+    });
+    let cities = Object.fromEntries(
+      Object.entries(get().cities).map(([id]) => [
+        id,
+        refreshCityMorale({ ...get(), centralBank }, id),
+      ]),
+    );
+    set({ centralBank, cities });
+    useNotificationStore.getState().addToast('Merkez Bankası ayarları yayımlandı.', 'warn');
+    return true;
+  },
+
+  adminSetRegionalIncentive: async ({
+    regionId,
+    resourceId = 'metal',
+    multiplier = 2,
+    durationHours = 168,
+  } = {}) => {
+    const playerKey = getCurrentPlayerName();
+    if (!isFounderPlayer(playerKey)) return false;
+    const endsAt = Date.now() + durationHours * 60 * 60 * 1000;
+    const regionalIncentive = normalizeRegionalIncentive({
+      active: true,
+      regionId,
+      resourceId,
+      multiplier,
+      endsAt,
+      announcedAt: Date.now(),
+    });
+    if (!regionalIncentive) return false;
+    await saveServerBroadcast({
+      centralBank: get().centralBank,
+      regionalIncentive,
+    });
+    const logText = buildRegionalIncentiveLogText(regionalIncentive);
+    await get().recordAdminOverride({
+      actionType: ADMIN_ACTION.REGIONAL_INCENTIVE,
+      logText,
+      payload: { regionalIncentive },
+    });
+    let cities = Object.fromEntries(
+      Object.entries(get().cities).map(([id]) => [
+        id,
+        refreshCityMorale({ ...get(), regionalIncentive }, id),
+      ]),
+    );
+    set({ regionalIncentive, cities });
+    useNotificationStore.getState().addToast(logText, 'success');
+    return true;
+  },
+
+  adminClearRegionalIncentive: async () => {
+    const playerKey = getCurrentPlayerName();
+    if (!isFounderPlayer(playerKey)) return false;
+    await saveServerBroadcast({
+      centralBank: get().centralBank,
+      regionalIncentive: null,
+    });
+    const logText = buildRegionalIncentiveLogText(null);
+    await get().recordAdminOverride({
+      actionType: ADMIN_ACTION.CLEAR_INCENTIVE,
+      logText,
+      payload: {},
+    });
+    const cities = Object.fromEntries(
+      Object.entries(get().cities).map(([id]) => [
+        id,
+        refreshCityMorale({ ...get(), regionalIncentive: null }, id),
+      ]),
+    );
+    set({ regionalIncentive: null, cities });
     return true;
   },
 
@@ -1540,7 +1717,11 @@ export const useGameStore = create((set, get) => ({
         const targetCity = state.cities[targetPc.id];
         if (targetCity) {
           const tradeMult = getTradeRevenueMultiplier(state.playerIdeology);
-          const scaledCargo = scaleTradeAmounts(exp.tradePayload.resources, tradeMult);
+          const scaledCargo = scaleTradeWithCentralBank(
+            exp.tradePayload.resources,
+            tradeMult,
+            state.centralBank,
+          );
           const delivered = applyTradeDelivery(targetCity.resources, scaledCargo);
           overflow = delivered.overflow;
           patchCity(set, get, targetPc.id, { resources: delivered.resources });

@@ -859,6 +859,16 @@ a {
   font-weight: 600;
 }
 
+.news-admin-override {
+  border-left: 3px solid #b91c1c;
+  background: rgba(127, 29, 29, 0.2);
+}
+
+.news-admin-override .news-text {
+  color: #fecaca;
+  font-weight: 600;
+}
+
 /* Two col */
 .two-col {
   display: grid;

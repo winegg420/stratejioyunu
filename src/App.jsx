@@ -20,6 +20,7 @@ import MapPage from './pages/MapPage';
 import Profile from './pages/Profile';
 import Rankings from './pages/Rankings';
 import FounderCrisis from './pages/FounderCrisis';
+import AdminLog from './pages/AdminLog';
 import Messages from './pages/Messages';
 
 export default function App() {
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="harita" element={<PageSafe><MapPage /></PageSafe>} />
             <Route path="siralama" element={<PageSafe><Rankings /></PageSafe>} />
             <Route path="kurucu-kriz" element={<PageSafe><FounderCrisis /></PageSafe>} />
+            <Route path="admin-log" element={<PageSafe><AdminLog /></PageSafe>} />
             <Route path="profil" element={<PageSafe><Profile /></PageSafe>} />
             <Route path="mesajlar" element={<PageSafe><Messages /></PageSafe>} />
           </Route>

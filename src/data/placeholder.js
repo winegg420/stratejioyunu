@@ -306,6 +306,7 @@ export const MOBILE_NAV_ITEMS = [
   { path: '/binalar', icon: '🏗️', label: 'Binalar' },
   { path: '/seferler', icon: '⚔️', label: 'Seferler' },
   { path: '/siralama', icon: '🏆', label: 'Sıralama' },
+  { path: '/admin-log', icon: '📜', label: 'Admin Log' },
   { path: '/profil', icon: '👤', label: 'Profil' },
 ];
 
@@ -323,6 +324,7 @@ export const NAV_ITEMS = [
   { path: '/raporlar', icon: '📋', label: 'Raporlar' },
   { path: '/harita', icon: '🗺️', label: 'Harita' },
   { path: '/siralama', icon: '🏆', label: 'Sıralama' },
+  { path: '/admin-log', icon: '📜', label: 'Admin Log' },
   { path: '/profil', icon: '👤', label: 'Profil' },
   { path: '/mesajlar', icon: '🔐', label: 'State Mail' },
   { path: null, icon: '🤝', label: 'İttifak', locked: true },

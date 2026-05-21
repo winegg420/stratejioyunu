@@ -61,6 +61,8 @@ export function restoreTradeCargo(resources, amounts) {
   return applyTradeDelivery(resources, amounts);
 }
 
+export { scaleTradeWithCentralBank } from './adminOverrideEngine';
+
 /** İdeoloji ticaret çarpanı (ör. milliyetçi −%15 teslimat). */
 export function scaleTradeAmounts(amounts = {}, multiplier = 1) {
   if (!amounts || multiplier === 1) return { ...amounts };

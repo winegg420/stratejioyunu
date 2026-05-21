@@ -14,6 +14,7 @@ import { getVipProductionMultiplier } from '../lib/vipPrestige';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { loadPlayerIdeology, loadProtectionEndsAt } from '../lib/briefingStorage';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
+import { DEFAULT_CENTRAL_BANK } from '../lib/adminOverrideEngine';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
@@ -115,5 +116,8 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     playerIdeology: loadPlayerIdeology(getCurrentPlayerName()),
     protectionEndsAt: loadProtectionEndsAt(getCurrentPlayerName()),
     loyaltyScore: 0,
+    centralBank: { ...DEFAULT_CENTRAL_BANK },
+    regionalIncentive: null,
+    adminPublicLogs: [],
   };
 }

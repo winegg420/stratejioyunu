@@ -16,6 +16,7 @@ import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
 import CrisisResponsePanel from '../components/CrisisResponsePanel';
 import { formatCrisisLabel } from '../lib/crisisEngine';
+import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
 
 function QueueItem({ name, detail, endsAt, queued, now }) {
   const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
@@ -88,6 +89,7 @@ export default function Home() {
   }, [pendingIdeology, playerName, playerIdeology, setPlayerIdeology]);
 
   const liveNews = useGameStore((s) => s.newsLog ?? []);
+  const adminPublicLogs = useGameStore((s) => s.adminPublicLogs ?? []);
   const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
   const activeCrisis = useGameStore((s) => s.activeCrisis);
   const newsItems = [
@@ -105,6 +107,7 @@ export default function Home() {
         time: 'CANLI',
       }]
       : []),
+    ...(adminPublicLogs ?? []).slice(0, 8).map(adminLogToNewsItem),
     ...liveNews,
     ...staticNewsFeed,
   ].slice(0, 24);

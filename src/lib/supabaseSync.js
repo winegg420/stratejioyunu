@@ -764,6 +764,9 @@ export function startSyncPolling(getState, setState, completeExpedition) {
     if (document.visibilityState === 'hidden') return;
     try {
       await syncExpeditionsFromServer(getState, setState, completeExpedition);
+      if (typeof getState().refreshServerBroadcast === 'function') {
+        await getState().refreshServerBroadcast();
+      }
     } catch (err) {
       console.warn('[supabaseSync] poll', err);
     }
