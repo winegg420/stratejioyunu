@@ -33,8 +33,37 @@ if (import.meta.env.PROD) {
   });
 }
 
-createRoot(document.getElementById('root')).render(
+const rootEl = document.getElementById('root');
+
+function showBootError(message) {
+  if (!rootEl) return;
+  rootEl.innerHTML = `
+    <div class="app-error-fallback" role="alert">
+      <h1>Oyun yüklenemedi</h1>
+      <p>${message}</p>
+      <button type="button" class="btn btn-primary" onclick="location.reload()">Sayfayı Yenile</button>
+      <p class="hint"><a href="/giris">Giriş sayfasına git</a></p>
+    </div>
+  `;
+}
+
+window.addEventListener('error', (ev) => {
+  console.error(ev.error ?? ev.message);
+  showBootError(ev.error?.message ?? ev.message ?? 'Bilinmeyen hata');
+});
+
+window.addEventListener('unhandledrejection', (ev) => {
+  console.error(ev.reason);
+  const msg = ev.reason?.message ?? String(ev.reason ?? 'Promise hatası');
+  showBootError(msg);
+});
+
+if (!rootEl) {
+  throw new Error('#root bulunamadı');
+}
+
+createRoot(rootEl).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);

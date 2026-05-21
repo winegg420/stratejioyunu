@@ -532,6 +532,7 @@ export function scheduleSaveGameState(state, options = {}) {
 export async function loadGameState(userId, { playerName } = {}) {
   if (!isSyncEnabled() || !userId) return null;
 
+  try {
   let { data: profile, error: profileErr } = await supabase
     .from('profiles')
     .select('*')
@@ -583,11 +584,12 @@ export async function loadGameState(userId, { playerName } = {}) {
   const unitsByCity = groupBy(cityIds, unitRes.data ?? [], 'city_id');
 
   const displayName = profile.display_name ?? playerName ?? 'Oyuncu';
+  const playerMeta = profile.player_meta ?? {};
   const playerIdeology = normalizeIdeology(profile.ideology)
     ?? loadPlayerIdeology(displayName);
   const protectionEndsAt = profile.protection_ends_at
     ?? loadProtectionEndsAt(displayName);
-  const vipMult = getVipProductionMultiplier(profile.player_meta?.vipTier ?? 0);
+  const vipMult = getVipProductionMultiplier(playerMeta.vipTier ?? 0);
   const activeCityId = profile.active_city_id ?? cityRows[0].id;
 
   const cities = {};
@@ -668,7 +670,6 @@ export async function loadGameState(userId, { playerName } = {}) {
     playerIdeology,
   );
 
-  const playerMeta = profile.player_meta ?? {};
   const outbreak = playerMeta.globalCbrnOutbreak;
   if (outbreak?.active && outbreak.affectedCityNames?.length) {
     const affected = new Set(outbreak.affectedCityNames);
@@ -723,6 +724,10 @@ export async function loadGameState(userId, { playerName } = {}) {
     },
     _supabaseHydrated: true,
   };
+  } catch (err) {
+    console.error('[supabaseSync] loadGameState failed', err);
+    return null;
+  }
 }
 
 function groupBy(cityIds, rows, key) {

@@ -57,6 +57,7 @@ export function AuthProvider({ children }) {
     let cancelled = false;
 
     async function init() {
+      let hydrateUser = null;
       try {
         if (isSupabaseConfigured) {
           const existing = await Promise.race([
@@ -70,7 +71,7 @@ export function AuthProvider({ children }) {
             setPlayerName(getDisplayName(existing.user));
             setIsDemo(false);
             clearDemoAuth();
-            await hydrateGameForUser(existing.user);
+            hydrateUser = existing.user;
           }
         } else if (!cancelled && isDemoAuthed()) {
           setIsDemo(true);
@@ -84,6 +85,12 @@ export function AuthProvider({ children }) {
         }
       } finally {
         if (!cancelled) setAuthReady(true);
+      }
+
+      if (!cancelled && hydrateUser) {
+        hydrateGameForUser(hydrateUser).catch((err) => {
+          console.warn('[auth] Supabase hydrate arka planda başarısız', err);
+        });
       }
     }
 

@@ -7,8 +7,9 @@ export default function RequireAuth({ children }) {
 
   if (!authReady) {
     return (
-      <div className="auth-loading" aria-live="polite">
-        Oturum kontrol ediliyor…
+      <div className="auth-loading-screen" aria-live="polite">
+        <p>Oturum kontrol ediliyor…</p>
+        <p className="hint">Bu ekran 10 saniyeden uzun sürerse sayfayı yenileyin veya Hızlı Giriş kullanın.</p>
       </div>
     );
   }
