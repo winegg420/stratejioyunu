@@ -228,6 +228,28 @@ export default function TurkeyMap() {
     ? mapCities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : mapCities;
 
+  const hasMapFilter = Boolean(
+    search.trim()
+    || searchCoord.trim()
+    || cityPick
+    || selectedCity
+    || activeHighlightCity,
+  );
+
+  const clearMapFilters = useCallback(() => {
+    setSearch('');
+    setSearchCoord('');
+    setCityPick('');
+    setSelectedCity(null);
+    setActiveHighlightCity(null);
+    setFlyTarget(null);
+    setFitBounds(TURKEY_MAX_BOUNDS);
+    if (activeProvinceLayerRef.current) {
+      activeProvinceLayerRef.current.setStyle(getProvinceStyle());
+      activeProvinceLayerRef.current = null;
+    }
+  }, []);
+
   const handleCityHover = useCallback((payload) => setHoverCoord(payload), []);
   const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
 
@@ -390,6 +412,8 @@ export default function TurkeyMap() {
             setSearchCoord={setSearchCoord}
             handleSearch={handleSearch}
             scanPulse={scanPulse}
+            onResetFilter={clearMapFilters}
+            hasActiveFilter={hasMapFilter}
           />
         )}
         <div className="map-tactical-overlay" aria-hidden="true">

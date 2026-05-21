@@ -29,6 +29,8 @@ export default function TacticalSearchConsole({
   setSearchCoord,
   handleSearch,
   scanPulse,
+  onResetFilter,
+  hasActiveFilter = false,
 }) {
   const [pos, setPos] = useState(readStoredPos);
   const [minimized, setMinimized] = useState(() => localStorage.getItem(MIN_KEY) === '1');
@@ -152,6 +154,17 @@ export default function TacticalSearchConsole({
               })}
             </select>
           </div>
+          {onResetFilter && (
+            <button
+              type="button"
+              className="tactical-console__reset-btn"
+              onClick={onResetFilter}
+              disabled={!hasActiveFilter}
+              title="Şehir filtresini temizle ve Türkiye genel görünümüne dön"
+            >
+              [ RESET / FİLTREYİ TEMİZLE ]
+            </button>
+          )}
           <form className="map-search map-search--console" onSubmit={handleSearch}>
             <input
               type="text"

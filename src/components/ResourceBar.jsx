@@ -1,5 +1,6 @@
 ﻿import { useAuth } from '../context/AuthContext';
 import { useGameDataReady } from '../hooks/useGameDataReady';
+import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
@@ -22,7 +23,7 @@ const FILL_CLASS = {
   money: 'res-fill--money',
 };
 
-function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCrisis }) {
+function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotOverflow, energyCrisis }) {
   const hasDepot = resource.max != null;
   const showDepotBar = hasDepot || DEPOT_BAR_IDS.has(resource.id);
   const frozen = resource.productionFrozen || depotOverflow;
@@ -36,7 +37,8 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
         'resource-item',
         'resource-item--tactical',
         showDepotBar && 'has-depot',
-        flash && 'resource-flash',
+        (flash || valueFlash) && 'resource-flash',
+        valueFlash && 'resource-flash--value',
         depotWarn && !depotOverflow && 'depot-warn',
         depotOverflow && 'depot-overflow',
         workforceCut && 'resource-item--workforce',
@@ -52,7 +54,9 @@ function ResourceItem({ resource, pct, flash, depotWarn, depotOverflow, energyCr
       <div className="res-body">
         <span className="res-label">{resource.label}</span>
         <span className="res-value">
-          <span className="res-value__current">{formatCompactNumber(resource.current)}</span>
+          <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
+            {formatCompactNumber(resource.current)}
+          </span>
           {hasDepot && <span className="res-max"> / {formatCompactNumber(resource.max)}</span>}
           {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         </span>
@@ -92,6 +96,7 @@ export default function ResourceBar() {
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const flashes = useGameStore((s) => s.flashes);
+  const valueFlashes = useResourceValueFlashes(resources);
   const workforceShortage = hasWorkforceShortage(activeCity);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
   const peaceActive = isPeaceForceProtected(protectionEndsAt);
@@ -168,6 +173,7 @@ export default function ResourceBar() {
                 resource={r}
                 pct={pct}
                 flash={Boolean(flashes[r.id])}
+                valueFlash={Boolean(valueFlashes[r.id])}
                 depotWarn={depotWarn}
                 depotOverflow={depotOverflow}
                 energyCrisis={r.id === 'energy' && energyCrisis}

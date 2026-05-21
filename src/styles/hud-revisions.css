@@ -124,9 +124,8 @@ button {
   font-size: clamp(10px, 1vw, 14px);
 }
 
-.resource-flash .res-value {
-  color: #ff3333 !important;
-  animation: none !important;
+.resource-flash--value .res-value__current--pulse {
+  animation: resource-value-pulse 0.42s ease-out;
 }
 
 .resource-item.depot-warn {

@@ -25,6 +25,7 @@ import './styles/expeditions-command.css';
 import './styles/production-input.css';
 import './styles/market-command.css';
 import './styles/hud-modal-close.css';
+import './styles/sidebar-active.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {
