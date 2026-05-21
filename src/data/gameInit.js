@@ -34,7 +34,11 @@ import {
   syncSeasonEngagement,
 } from '../lib/seasonChampionship';
 import { syncDailyQuestsState } from '../lib/dailyQuests';
-import { createDefaultChronicleState, normalizeDiplomaticTreaties } from '../lib/historyBook';
+import {
+  createDefaultChronicleState,
+  normalizeDiplomaticTreaties,
+  syncSeasonChronicles,
+} from '../lib/historyBook';
 import {
   loadDiplomaticTreaties,
   loadSeasonChronicles,
