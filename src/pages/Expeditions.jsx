@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
+import NewExpeditionModal from '../components/NewExpeditionModal';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 
 export default function Expeditions() {
+  const [launchOpen, setLaunchOpen] = useState(false);
   const now = useGameStore((s) => s.now);
   const expeditions = useGameStore((s) => s.expeditions);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -30,11 +33,22 @@ export default function Expeditions() {
         hideStatus
         subtitle="> Sefer rotaları hesaplanıyor — kara max 5s · hava 3× hız · meydan savaşı protokolü aktif..."
         action={(
-          <Link to="/harita" className="btn btn-primary">
-            Haritaya Git
-          </Link>
+          <>
+            <button
+              type="button"
+              className="btn btn-hud-primary"
+              onClick={() => setLaunchOpen(true)}
+            >
+              [ YENİ SEFERE ÇIK ]
+            </button>
+            <Link to="/harita" className="btn btn-hud-secondary">
+              Haritaya Git
+            </Link>
+          </>
         )}
       />
+
+      <NewExpeditionModal open={launchOpen} onClose={() => setLaunchOpen(false)} />
 
       <MeydanBattlePanel />
 

@@ -15,7 +15,10 @@ export default function CostBreakdown({ costStr, qty, resources }) {
       {lines.map((line) => (
         <li key={line.resourceId} className="cost-breakdown-row">
           <span className="cost-breakdown-label">
-            {line.icon} {line.label}
+            <span className="cost-breakdown-label__icon" aria-hidden="true">
+              {line.icon}
+            </span>
+            <span className="cost-breakdown-label__text">{line.label}</span>
           </span>
           <span className="cost-breakdown-values">
             <span className="cost-breakdown-needed">

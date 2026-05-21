@@ -4,7 +4,10 @@
 .page--console .unit-card .input-qty,
 .page--console .qty-input-wrap .input-qty,
 .page--console .meydan-troop-row .input-qty,
-.market-page .market-input-qty {
+.market-page .market-input-qty,
+.expedition-input-qty,
+.map-cmd-troop-row .input-qty,
+.map-cmd-troop-input .input-qty {
   background: rgba(4, 12, 22, 0.88) !important;
   border: 1px solid rgba(0, 240, 255, 0.55) !important;
   border-radius: 0 !important;
@@ -25,7 +28,13 @@
 .page--console .qty-input-wrap .input-qty::-webkit-outer-spin-button,
 .page--console .qty-input-wrap .input-qty::-webkit-inner-spin-button,
 .market-page .market-input-qty::-webkit-outer-spin-button,
-.market-page .market-input-qty::-webkit-inner-spin-button {
+.market-page .market-input-qty::-webkit-inner-spin-button,
+.expedition-input-qty::-webkit-outer-spin-button,
+.expedition-input-qty::-webkit-inner-spin-button,
+.map-cmd-troop-row .input-qty::-webkit-outer-spin-button,
+.map-cmd-troop-row .input-qty::-webkit-inner-spin-button,
+.map-cmd-troop-input .input-qty::-webkit-outer-spin-button,
+.map-cmd-troop-input .input-qty::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -33,7 +42,10 @@
 .barracks-page--military .input-qty:focus,
 .page--console .unit-card .input-qty:focus,
 .page--console .qty-input-wrap .input-qty:focus,
-.market-page .market-input-qty:focus {
+.market-page .market-input-qty:focus,
+.expedition-input-qty:focus,
+.map-cmd-troop-row .input-qty:focus,
+.map-cmd-troop-input .input-qty:focus {
   outline: none;
   border-color: rgba(34, 255, 136, 0.75) !important;
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);

@@ -596,16 +596,7 @@
   border: 1px solid;
 }
 
-.map-command-modal__close {
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: rgba(40, 8, 8, 0.5);
-  color: #f87171;
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
-}
+/* Kapatma — hud-modal-close.css */
 
 .map-command-modal__stats {
   display: grid;

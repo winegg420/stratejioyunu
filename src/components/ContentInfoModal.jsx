@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import CostParts from './CostParts';
 import { useGameStore } from '../stores/gameStore';
 
 function LevelTable({ rows, effectLabel }) {
@@ -24,7 +25,9 @@ function LevelTable({ rows, effectLabel }) {
               <tr key={row.level}>
                 <td>{row.level}</td>
                 <td className="content-info-modal__mono">{row.output}</td>
-                <td className="content-info-modal__mono content-info-modal__dim">{row.cost}</td>
+                <td className="content-info-modal__cost-cell">
+                  <CostParts costStr={row.cost} />
+                </td>
                 <td className="content-info-modal__mono content-info-modal__dim">{row.time}</td>
               </tr>
             ))}
@@ -180,7 +183,7 @@ export default function ContentInfoModal() {
           </div>
           <button
             type="button"
-            className="content-info-modal__close"
+            className="hud-modal-close content-info-modal__close"
             onClick={closeContentInfo}
             aria-label="Kapat"
           >

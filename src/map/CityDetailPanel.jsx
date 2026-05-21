@@ -58,13 +58,13 @@ function TroopDispatchRow({ troop, value, onChange, awayMap }) {
       <div className="map-cmd-troop-input">
         <input
           type="number"
-          className="input-qty"
+          className="input-qty expedition-input-qty"
           min={0}
           max={idleCap}
           value={value}
           onChange={(e) => onChange(Math.min(idleCap, Math.max(0, Number(e.target.value) || 0)))}
         />
-        <button type="button" className="btn btn-max" onClick={() => onChange(idleCap)}>
+        <button type="button" className="btn btn-hud-secondary btn-sm expedition-troop-max" onClick={() => onChange(idleCap)}>
           MAX
         </button>
       </div>
@@ -303,8 +303,8 @@ function MapCommandModal({ city, onClose }) {
               <span className="map-command-modal__natural-ally">◈ Doğal Müttefik</span>
             )}
           </div>
-          <button type="button" className="map-command-modal__close" onClick={onClose} aria-label="Kapat">
-            ×
+          <button type="button" className="hud-modal-close map-command-modal__close" onClick={onClose} aria-label="Kapat">
+            [ X ]
           </button>
         </header>
 
@@ -425,8 +425,8 @@ function MapCommandModal({ city, onClose }) {
               />
             ))}
             <div className="map-command-modal__panel-actions">
-              <button type="button" className="btn btn-danger" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
-                Seferi Başlat
+              <button type="button" className="btn btn-hud-primary" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
+                [ SEFERİ BAŞLAT ]
               </button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
                 Geri
