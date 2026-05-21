@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -18,7 +18,11 @@ import MapMiniMap from './MapMiniMap';
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
 import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
 import { getProvinceStyle, getHoverStyle } from './mapUtils';
-import CityTerritoryLayer from './CityTerritoryLayer';
+import CityIdeologyProvinceLayer from './CityIdeologyProvinceLayer';
+import CityMapLabelsLayer from './CityMapLabelsLayer';
+import CityTargetReticleLayer from './CityTargetReticleLayer';
+import ProvinceHighlightSync, { setActiveProvinceLayer } from './ProvinceHighlightSync';
+import { resolveCityProvinceName } from './cityProvinceMatch';
 import NeighborCountriesLayer from './NeighborCountriesLayer';
 import TacticalSearchConsole from './TacticalSearchConsole';
 import { normalizeMapCities } from './botCityUtils';
@@ -137,6 +141,9 @@ export default function TurkeyMap() {
   const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
   const [scanPulse, setScanPulse] = useState(false);
   const [ideologyView, setIdeologyView] = useState(false);
+  const [activeHighlightCity, setActiveHighlightCity] = useState(null);
+  const provinceLayerRef = useRef(null);
+  const activeProvinceLayerRef = useRef(null);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
 
   const interactionLocked = isMobile ? mapLocked : true;
@@ -192,15 +199,6 @@ export default function TurkeyMap() {
 
   const provinceStyle = useCallback(() => getProvinceStyle(), []);
 
-  const onEachProvince = useCallback((feature, layer) => {
-    const name = feature.properties?.shapeName;
-    if (name) {
-      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
-    }
-    layer.on('mouseover', () => layer.setStyle(getHoverStyle(getProvinceStyle())));
-    layer.on('mouseout', () => layer.setStyle(getProvinceStyle()));
-  }, []);
-
   const handleSearch = (e) => {
     e.preventDefault();
     setScanPulse(true);
@@ -221,6 +219,7 @@ export default function TurkeyMap() {
     const city = mapCities.find((c) => c.name.toLowerCase().includes(q));
     if (city) {
       setSelectedCity(city);
+      setActiveHighlightCity(city);
       setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
     }
   };
@@ -241,7 +240,44 @@ export default function TurkeyMap() {
       return;
     }
     setSelectedCity(city);
+    setActiveHighlightCity(city);
   }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate]);
+
+  const findCityForProvince = useCallback((feature) => {
+    const provinceName = feature.properties?.shapeName;
+    if (!provinceName) return null;
+    return mapCities.find(
+      (c) => resolveCityProvinceName(c, playerCities) === provinceName,
+    ) ?? mapCities.find((c) => c.name === provinceName) ?? null;
+  }, [mapCities, playerCities]);
+
+  const setActiveFeature = useCallback((layer) => {
+    setActiveProvinceLayer(layer, activeProvinceLayerRef, getProvinceStyle);
+  }, []);
+
+  const onEachProvince = useCallback((feature, layer) => {
+    const name = feature.properties?.shapeName;
+    if (name) {
+      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
+    }
+    layer.on('mouseover', () => {
+      if (activeProvinceLayerRef.current !== layer) {
+        layer.setStyle(getHoverStyle(getProvinceStyle()));
+      }
+    });
+    layer.on('mouseout', () => {
+      if (activeProvinceLayerRef.current !== layer) {
+        layer.setStyle(getProvinceStyle());
+      }
+    });
+    layer.on('click', () => {
+      const city = findCityForProvince(feature);
+      if (city) handleSelectCity(city);
+      setActiveFeature(layer);
+    });
+  }, [findCityForProvince, handleSelectCity, setActiveFeature]);
+
+  const mapZoom = viewport?.zoom ?? TURKEY_ZOOM;
 
   return (
     <div
@@ -365,7 +401,7 @@ export default function TurkeyMap() {
           zoom={TURKEY_ZOOM}
           minZoom={5}
           maxBounds={TURKEY_MAX_BOUNDS}
-          maxBoundsViscosity={1.0}
+          maxBoundsViscosity={0.35}
           className="turkey-map turkey-map--cyber"
           scrollWheelZoom={!isMobile}
           touchZoom
@@ -380,6 +416,7 @@ export default function TurkeyMap() {
           {provinces && (
             <GeoJSON
               key="provinces-radar"
+              ref={provinceLayerRef}
               data={provinces}
               className="map-province-layer"
               style={provinceStyle}
@@ -387,18 +424,34 @@ export default function TurkeyMap() {
               onEachFeature={onEachProvince}
             />
           )}
-          <MapPlayerDataLinks playerCities={playerCities} />
-          <CityTerritoryLayer
+          <CityIdeologyProvinceLayer
+            provinces={provinces}
             mapCities={filteredCities}
             playerCities={playerCities}
-            ideologyView={ideologyView}
             playerIdeology={playerIdeology}
+            enabled={ideologyView}
           />
+          <ProvinceHighlightSync
+            activeCity={activeHighlightCity}
+            provinces={provinces}
+            playerCities={playerCities}
+            layerRef={provinceLayerRef}
+          />
+          <MapPlayerDataLinks playerCities={playerCities} />
           <MapBoundsReporter onViewportChange={setViewportStable} />
           <MapAnimatedLayers
             expeditions={expeditions}
             mapCities={mapCities}
             playerCities={playerCities}
+          />
+          <CityTargetReticleLayer
+            mapCities={filteredCities}
+            playerCities={playerCities}
+          />
+          <CityMapLabelsLayer
+            mapCities={filteredCities}
+            playerCities={playerCities}
+            zoom={mapZoom}
           />
           <CityMarkers
             mapCities={filteredCities}
@@ -409,6 +462,7 @@ export default function TurkeyMap() {
             onSelectCity={handleSelectCity}
             onCityHover={handleCityHover}
             onCityHoverEnd={handleCityHoverEnd}
+            showPinLabels={mapZoom < 6}
           />
           <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
           {fitBounds && <FitBounds bounds={fitBounds} />}
@@ -446,7 +500,17 @@ export default function TurkeyMap() {
           <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
         </div>
         {selectedCity && (
-          <CityDetailPanel city={selectedCity} onClose={() => setSelectedCity(null)} />
+          <CityDetailPanel
+            city={selectedCity}
+            onClose={() => {
+              setSelectedCity(null);
+              setActiveHighlightCity(null);
+              if (activeProvinceLayerRef.current) {
+                activeProvinceLayerRef.current.setStyle(getProvinceStyle());
+                activeProvinceLayerRef.current = null;
+              }
+            }}
+          />
         )}
       </div>
     </div>

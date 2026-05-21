@@ -34,10 +34,10 @@ export default function Rankings() {
   );
 
   return (
-    <div className="page rankings-page">
+    <div className="page page--console rankings-page">
       <PageHeader
         title="İdeoloji Sıralaması"
-        subtitle="Sadakat puanına göre tüm oyuncular — rejimin doktrinine sadık kalanlar zirvede."
+        subtitle="> İdeoloji sadakat tablosu — doktrine bağlı komutanlar sıralanıyor..."
         status={source === 'live' ? '[ CANLI SUNUCU ]' : '[ DEMO LİSTE ]'}
       />
 

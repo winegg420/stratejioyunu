@@ -195,10 +195,10 @@ export default function Intelligence() {
   };
 
   return (
-    <div className="page page--intel">
+    <div className="page page--console page--intel">
       <PageHeader
         title="İstihbarat & Siber Operasyon"
-        subtitle="Ajan görevleri, siber virüs ve KBRN protokolleri."
+        subtitle="> İstihbarat ağı çevrimiçi — casus, siber saldırı ve KBRN modülleri hazır..."
       />
 
       <div className="intel-status-strip">

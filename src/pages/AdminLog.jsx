@@ -28,10 +28,10 @@ export default function AdminLog() {
   const newsItems = (logs.length ? logs : storeLogs).map(adminLogToNewsItem);
 
   return (
-    <div className="page admin-log-page">
+    <div className="page page--console admin-log-page">
       <PageHeader
         title="Admin Müdahale Kayıtları"
-        subtitle="Kurucu müdahaleleri şeffaf ve kalıcı — topluluk güveni için herkes okuyabilir."
+        subtitle="> Admin override log — tüm müdahaleler şeffaf ve kalıcı kayıt altında..."
         status={ADMIN_LOG_TAG}
       />
       <section className="panel admin-log-intro">

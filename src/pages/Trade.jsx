@@ -75,10 +75,10 @@ export default function Trade() {
   };
 
   return (
-    <div className="page">
+    <div className="page page--console">
       <PageHeader
         title="Ticaret"
-        subtitle="Şehirler arası kaynak konvoyları — neon rotalar haritada görünür."
+        subtitle="> Lojistik konvoyları — haritada neon ticaret rotaları canlı izlenir..."
         action={(
           <Link to="/harita" className="btn btn-primary">
             Haritayı Aç

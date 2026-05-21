@@ -222,7 +222,15 @@
 }
 
 .map-search--console {
-  gap: 0.4rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem !important;
+  margin-bottom: 0.5rem;
+}
+
+.map-search--console .map-search-btn {
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
 }
 
 .map-search--console input,
@@ -265,10 +273,11 @@
 }
 
 .map-toolbar--console .map-legend--cyber {
-  margin-top: 0.35rem;
-  padding-top: 0.35rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
   border-top: 1px solid rgba(0, 240, 255, 0.1);
   font-size: 0.65rem;
+  clear: both;
 }
 
 .map-focus-crosshair--neon {
@@ -789,6 +798,74 @@
   margin-top: 0.25rem;
   font-size: 0.72rem;
   color: rgba(180, 210, 240, 0.85);
+}
+
+/* Zoom ≥6 — şehir merkez etiketleri */
+.map-city-centroid-label {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-city-centroid-label__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.2rem 0.45rem;
+  background: rgba(4, 10, 20, 0.88);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.map-city-centroid-label__name {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #e8f4ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.map-city-centroid-label__status {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.map-city-centroid-label__status--own {
+  color: #22ff88;
+}
+
+.map-city-centroid-label__status--enemy {
+  color: #ff6b6b;
+}
+
+.map-city-centroid-label__status--bot {
+  color: #94a3b8;
+}
+
+.map-city-centroid-label__status--empty {
+  color: #64748b;
+}
+
+.map-marker-wrap--pin-only .map-marker-pin {
+  margin: 0 auto;
+}
+
+.map-neighbor-layer--mask path {
+  fill: #000 !important;
+  fill-opacity: 0.8 !important;
+}
+
+.map-active-city-highlight path,
+.map-province-layer .leaflet-interactive:focus {
+  outline: none;
 }
 
 .map-command-modal__natural-ally {

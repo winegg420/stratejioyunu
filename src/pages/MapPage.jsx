@@ -3,8 +3,11 @@ import TurkeyMap from '../map/TurkeyMap';
 
 export default function MapPage() {
   return (
-    <div className="page map-page-wrapper">
-      <PageHeader title="Harita" subtitle="Siber taktik harita — neon rotalar, savaş sisi ve HUD kontrol paneli." />
+    <div className="page page--console map-page-wrapper">
+      <PageHeader
+        title="Harita"
+        subtitle="> Taktik ızgara aktif — hedef nişangahları ve canlı üs verisi yükleniyor..."
+      />
       <TurkeyMap />
     </div>
   );

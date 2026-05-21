@@ -200,7 +200,7 @@ button {
 
 /* Bina kartları */
 .building-card--blocked {
-  filter: grayscale(100%) brightness(40%);
+  filter: none;
   pointer-events: auto;
 }
 

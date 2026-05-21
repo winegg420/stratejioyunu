@@ -182,7 +182,7 @@ export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = fa
     weight: isOwn || isAlly ? 3.2 : 2.6,
     opacity: 0.95,
     className: isAlly ? 'territory-ideology territory-ideology--ally' : 'territory-ideology',
-    dashArray: isOwn ? undefined : isAlly ? '4 6' : '6 8',
+    dashArray: undefined,
     _ideologyGlow: glow,
   };
 }

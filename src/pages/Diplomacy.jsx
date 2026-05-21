@@ -18,8 +18,11 @@ export default function Diplomacy() {
   const activeTreaties = diplomaticTreaties.filter((t) => t.status === 'active');
 
   return (
-    <div className="page">
-      <PageHeader title="Diplomasi" subtitle="İttifaklar, anlaşmalar, savaş ilanları ve oylamalar." />
+    <div className="page page--console">
+      <PageHeader
+        title="Diplomasi"
+        subtitle="> Müttefik kanalları taranıyor — anlaşma ve savaş ilanı modülleri bekliyor..."
+      />
       <div className="two-col">
         <section className="panel">
           <h3 className="panel-title">İttifak: {alliance.name}</h3>

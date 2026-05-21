@@ -13,10 +13,10 @@ export default function Shipyard() {
   const isCoastal = (activeCity?.type ?? '').includes('Kıyı');
 
   return (
-    <div className="page">
+    <div className="page page--console">
       <PageHeader
         title="Tersane"
-        subtitle="Deniz birlikleri — Tersane inşa edildikten sonra üretilir."
+        subtitle="> Deniz operasyonları — tersane inşa sonrası filo kuyruğu açılır..."
       />
       {!isCoastal ? (
         <MilitaryEmptyState

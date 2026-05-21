@@ -40,7 +40,7 @@ export default function Buildings() {
     <div className="page page-wrapper buildings-page page--console">
       <PageHeader
         title="Binalar"
-        subtitle="Aynı anda 1 bina yükseltilebilir. Diğerleri kuyruğa eklenebilir."
+        subtitle="> İnşaat protokolü: tek aktif yükseltme · kuyruk modülü hazır..."
       />
       <ActiveQueue
         title={`Aktif Kuyruk — ${cityName}`}

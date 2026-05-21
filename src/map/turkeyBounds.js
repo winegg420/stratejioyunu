@@ -1,11 +1,14 @@
 import L from 'leaflet';
 
-/** Türkiye ana harita ve mini-map sınır kutusu */
+/**
+ * Harita görünüm kutusu — Türkiye + komşu tampon (Yunanistan kıyısı – İran sınırı).
+ * Kamera bu alanda serbest kayar; Türkiye dışı maske ayrı katmanda.
+ */
 export const TURKEY_BOUNDS = {
-  south: 35.75,
-  north: 42.15,
-  west: 25.95,
-  east: 44.85,
+  south: 34.5,
+  north: 42.6,
+  west: 22.0,
+  east: 48.5,
 };
 
 export const TURKEY_MAX_BOUNDS = L.latLngBounds(

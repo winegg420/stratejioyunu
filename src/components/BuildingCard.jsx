@@ -110,16 +110,14 @@ export default function BuildingCard({ building, progressionLock = null }) {
         </span>
       )}
       {progressionBlocked && (
-        <div className="building-blocked-overlay" aria-hidden="true">
-          <span className="building-blocked-label building-card__progression-lock">
-            🔒 {progressionLock}
-          </span>
-        </div>
+        <span className="building-lock-badge building-lock-badge--progression" title={progressionLock}>
+          [ KİLİTLİ: {progressionLock} ]
+        </span>
       )}
       {isBlocked && !progressionBlocked && (
-        <div className="building-blocked-overlay" aria-hidden="true">
-          <span className="building-blocked-label">{blockedLabel}</span>
-        </div>
+        <span className="building-lock-badge" title={blockedLabel}>
+          [ KİLİTLİ: ÖN KOŞULLAR ]
+        </span>
       )}
       <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${building.name} ansiklopedi`}>
         <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>

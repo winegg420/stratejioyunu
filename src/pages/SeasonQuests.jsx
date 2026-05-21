@@ -93,7 +93,7 @@ export default function SeasonQuests() {
     <div className="page season-quests-page page--console">
       <PageHeader
         title="Sezon & Görevler"
-        subtitle="Dinamik yarışmalar, günlük görevler, istihbarat takibi ve Devlet Tarih Kitabı arşivi."
+        subtitle="> Sezon motoru aktif — görevler, sıralama ve Devlet Tarih Kitabı senkron..."
       />
 
       <div className="history-book-tabs" role="tablist">

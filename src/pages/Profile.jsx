@@ -93,7 +93,7 @@ export default function Profile() {
   };
 
   return (
-    <div className={`page profile-page${confirmOpen ? ' profile-page--vip-reset' : ''}`}>
+    <div className={`page page--console profile-page${confirmOpen ? ' profile-page--vip-reset' : ''}`}>
       {confirmOpen && (
         <div className="profile-vip-reset-overlay" aria-hidden="true">
           <p className="profile-vip-reset-msg">SERVER RESET INITIATED</p>
@@ -101,7 +101,7 @@ export default function Profile() {
       )}
       <PageHeader
         title="Profil"
-        subtitle="Rütbe, rozetler, VIP katmanı ve sezon geçmişi."
+        subtitle="> Personel dosyası — rütbe, rozetler, VIP ve sezon arşivi yükleniyor..."
         action={(
           <button type="button" className="btn btn-secondary" onClick={handleLogout}>
             Çıkış Yap

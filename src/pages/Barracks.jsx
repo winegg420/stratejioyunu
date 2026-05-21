@@ -31,7 +31,7 @@ export default function Barracks() {
       <PageHeader
         title="Kışla"
         status="[ STATUS: TACTICAL UNITS ]"
-        subtitle="Kara birlikleri — Kışla inşa edildikten sonra üretilir."
+        subtitle="> Kara birlik üretim hattı — kışla seviyesine göre kuyruk açık..."
         action={(
           <span className="barracks-agent-counter" title="İstihbarat ve siber virüs operasyonları">
             Mevcut / Boşta Ajan: <strong>{idleAgents}</strong>

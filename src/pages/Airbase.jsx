@@ -9,8 +9,11 @@ export default function Airbase() {
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === s.activeCityId)?.name);
 
   return (
-    <div className="page">
-      <PageHeader title="Hava Üssü" subtitle="Hava birlikleri — Havaalanı inşa edildikten sonra üretilir." />
+    <div className="page page--console">
+      <PageHeader
+        title="Hava Üssü"
+        subtitle="> Hava sahası kontrolü — üs aktif olduğunda üretim modülü devreye girer..."
+      />
       <ActiveQueue
         title={`Aktif Kuyruk — ${cityName ?? 'Şehir'}`}
         queueType="production"

@@ -16,10 +16,10 @@ export default function FounderCrisis() {
   }
 
   return (
-    <div className="page founder-crisis-page">
+    <div className="page page--console founder-crisis-page">
       <PageHeader
         title="Kurucu Komuta Merkezi"
-        subtitle="Kriz motoru, Merkez Bankası, bölgesel teşvik — tüm müdahaleler şeffaf loglanır."
+        subtitle="> Kurucu konsol — kriz motoru, merkez bankası ve bölgesel teşvik modülleri..."
         status="[ GOD MODE ]"
       />
       <p className="hint founder-admin-hint">

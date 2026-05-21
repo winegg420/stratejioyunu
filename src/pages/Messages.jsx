@@ -45,10 +45,10 @@ export default function Messages() {
   };
 
   return (
-    <div className="page state-mail-page">
+    <div className="page page--console state-mail-page">
       <PageHeader
         title="State Mail"
-        subtitle="Liderden lidere resmi, şifreli diplomatik yazışma — sıradan sohbet değildir."
+        subtitle="> State Mail kanalı şifreli — liderden lidere resmi yazışma protokolü..."
         status={playerIdeology ? formatIdeologyLabel(playerIdeology) : '[ OTORİTE BEKLENİYOR ]'}
       />
 

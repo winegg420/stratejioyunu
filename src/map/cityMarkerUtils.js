@@ -31,24 +31,27 @@ function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
 
 function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
   const pinH = options.pinHeight ?? MARKER_PIN_SIZE;
+  const showLabels = options.showLabels !== false;
   const hasOwner = ownerLabel && ownerLabel !== 'Boş' && city.status !== 'bot';
-  const labelH = city.status === 'bot' ? 22 : (hasOwner ? 30 : 18);
-  const totalH = pinH + labelH + 4;
+  const labelH = showLabels
+    ? (city.status === 'bot' ? 22 : (hasOwner ? 30 : 18))
+    : 0;
+  const totalH = pinH + labelH + (showLabels ? 4 : 0);
 
   return {
     html: `
-      <div class="map-marker-wrap">
+      <div class="map-marker-wrap${showLabels ? '' : ' map-marker-wrap--pin-only'}">
         <div class="map-marker-pin">${pinHtml}</div>
-        ${buildLabelStack(city, ownerLabel, options)}
+        ${showLabels ? buildLabelStack(city, ownerLabel, options) : ''}
       </div>
     `,
-    iconSize: [MARKER_LABEL_WIDTH, totalH],
-    iconAnchor: [MARKER_LABEL_WIDTH / 2, pinH / 2],
+    iconSize: [showLabels ? MARKER_LABEL_WIDTH : pinH, totalH],
+    iconAnchor: [showLabels ? MARKER_LABEL_WIDTH / 2 : pinH / 2, pinH / 2],
   };
 }
 
 /** Aktif üs — radar + etiket */
-export function createActiveHqIcon(city, ownerLabel) {
+export function createActiveHqIcon(city, ownerLabel, { showLabels = true } = {}) {
   const wrapped = wrapMarker(
     `
       <span class="active-hq-radar" aria-hidden="true">
@@ -60,7 +63,7 @@ export function createActiveHqIcon(city, ownerLabel) {
     `,
     city,
     ownerLabel,
-    { pinHeight: 30 },
+    { pinHeight: 30, showLabels },
   );
 
   return L.divIcon({
@@ -74,6 +77,7 @@ export function createOwnCityIcon(city, {
   ownerLabel,
   cyberActive = false,
   peaceShield = false,
+  showLabels = true,
 } = {}) {
   const color = underAttack ? '#ef4444' : peaceShield ? '#4ade80' : HQ_GREEN;
   const peaceRing = peaceShield
@@ -83,7 +87,7 @@ export function createOwnCityIcon(city, {
     `${peaceRing}<span class="own-city-marker__dot" style="background:${color}"></span>`,
     city,
     ownerLabel,
-    { pinHeight: 22, cyberActive },
+    { pinHeight: 22, cyberActive, showLabels },
   );
 
   return L.divIcon({
@@ -92,7 +96,12 @@ export function createOwnCityIcon(city, {
   });
 }
 
-export function createCityMarkerIcon(city, { underAttack = false, ownerLabel, cyberActive = false } = {}) {
+export function createCityMarkerIcon(city, {
+  underAttack = false,
+  ownerLabel,
+  cyberActive = false,
+  showLabels = true,
+} = {}) {
   const isBot = city.status === 'bot';
   const color = underAttack
     ? '#ef4444'
@@ -103,13 +112,13 @@ export function createCityMarkerIcon(city, { underAttack = false, ownerLabel, cy
   const wrapped = wrapMarker(
     `
       <svg viewBox="0 0 32 32" width="${size}" height="${size}" style="color:${color};opacity:${opacity}">
-        <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.9"/>
-        <circle cx="16" cy="16" r="4" fill="currentColor"/>
+        <circle cx="16" cy="16" r="3.5" fill="currentColor"/>
+        <circle cx="16" cy="16" r="6" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
       </svg>
     `,
     city,
     ownerLabel,
-    { pinHeight: size, cyberActive },
+    { pinHeight: size, cyberActive, showLabels },
   );
 
   return L.divIcon({

@@ -76,10 +76,10 @@ export default function Reports() {
   };
 
   return (
-    <div className="page">
+    <div className="page page--console">
       <PageHeader
         title="Raporlar"
-        subtitle="Savaş, keşif ve ticaret raporları."
+        subtitle="> İstihbarat akışı — savaş, keşif ve ticaret raporları sıraya alındı..."
         action={reports.length > 0 ? (
           <div className="report-toolbar-actions">
             <button

@@ -52,6 +52,7 @@ export default function CityMarkers({
   onSelectCity,
   onCityHover,
   onCityHoverEnd,
+  showPinLabels = true,
 }) {
   const storeCities = useGameStore((s) => s.cities);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
@@ -90,15 +91,21 @@ export default function CityMarkers({
         const peaceShield = city.isOwn && peaceActive;
 
         const icon = isActive
-          ? createActiveHqIcon(markerCity, ownerLabel)
+          ? createActiveHqIcon(markerCity, ownerLabel, { showLabels: showPinLabels })
           : city.isOwn
             ? createOwnCityIcon(markerCity, {
               underAttack: isUnderAttack,
               ownerLabel,
               cyberActive,
               peaceShield,
+              showLabels: showPinLabels,
             })
-            : createCityMarkerIcon(markerCity, { underAttack: isUnderAttack, ownerLabel, cyberActive });
+            : createCityMarkerIcon(markerCity, {
+              underAttack: isUnderAttack,
+              ownerLabel,
+              cyberActive,
+              showLabels: showPinLabels,
+            });
 
         return (
           <Marker

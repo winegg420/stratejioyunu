@@ -122,10 +122,10 @@ export default function Research() {
   }, [researches]);
 
   return (
-    <div className="page page--research">
+    <div className="page page--console page--research">
       <PageHeader
         title="Araştırma"
-        subtitle="Standart askeri teknolojiler ve ileri KBRN savunma/taktik dalı."
+        subtitle="> Ar-Ge modülleri taranıyor — askeri ve KBRN blueprint veritabanı hazır..."
       />
       <section className="research-section">
         <h2 className="panel-title">Askeri Teknolojiler</h2>

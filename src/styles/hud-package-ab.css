@@ -67,9 +67,9 @@
   text-shadow: 0 0 8px rgba(248, 113, 113, 0.35);
 }
 
-/* 4 — Sektör kilitli */
+/* 4 — Sektör kilitli (görsel solukluk img filtresinde; kart tam opak) */
 .building-card--blocked {
-  opacity: 0.3 !important;
+  opacity: 1 !important;
   filter: none !important;
 }
 
@@ -81,34 +81,6 @@
   justify-content: center;
   inset: 0;
   z-index: 5;
-}
-
-.building-card--blocked .building-blocked-overlay::before,
-.building-card--blocked .building-blocked-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.building-card--blocked .building-blocked-overlay::before {
-  background: linear-gradient(
-    135deg,
-    transparent 46%,
-    rgba(255, 0, 0, 0.4) 48%,
-    rgba(255, 0, 0, 0.4) 52%,
-    transparent 54%
-  );
-}
-
-.building-card--blocked .building-blocked-overlay::after {
-  background: linear-gradient(
-    -135deg,
-    transparent 46%,
-    rgba(255, 0, 0, 0.4) 48%,
-    rgba(255, 0, 0, 0.4) 52%,
-    transparent 54%
-  );
 }
 
 .building-blocked-label {

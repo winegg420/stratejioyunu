@@ -1,0 +1,333 @@
+/* ═══ Siber Komuta Terminali — elit UI katmanı (en son yüklenir) ═══ */
+
+:root {
+  --cmd-font-display: 'Rajdhani', 'Segoe UI', sans-serif;
+  --cmd-font-mono: 'Share Tech Mono', 'Courier New', monospace;
+  --cmd-cyan: #00f0ff;
+  --cmd-cyan-glow: rgba(0, 240, 255, 0.55);
+  --cmd-green: #22ff88;
+  --cmd-red: #ff3355;
+  --cmd-red-glow: rgba(255, 51, 85, 0.65);
+  --cmd-panel-bg: rgba(5, 12, 24, 0.82);
+  --cmd-clip: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
+}
+
+/* ── Arka plan: siber savaş odası ── */
+body {
+  background-color: #040810 !important;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(0, 80, 120, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 50%, rgba(80, 20, 40, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(20, 60, 100, 0.1) 0%, transparent 40%),
+    linear-gradient(165deg, #03060e 0%, #060c18 40%, #0a1020 100%) !important;
+}
+
+body::before {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.025) 1px, transparent 1px),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 48px,
+      rgba(0, 0, 0, 0.15) 48px,
+      rgba(0, 0, 0, 0.15) 49px
+    ) !important;
+  background-size: 40px 40px, 40px 40px, 100% 100% !important;
+  opacity: 0.9;
+}
+
+/* ── Sayfa başlıkları ── */
+.page-header--hud .page-title {
+  font-family: 'Titillium Web', var(--cmd-font-display) !important;
+  font-size: 1.85rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #e8f8ff !important;
+  text-shadow:
+    0 0 20px var(--cmd-cyan-glow),
+    0 0 40px rgba(0, 240, 255, 0.15),
+    0 2px 0 rgba(0, 0, 0, 0.8) !important;
+}
+
+.page-header--hud .page-header__status {
+  font-family: var(--cmd-font-mono) !important;
+  color: rgba(0, 240, 255, 0.55) !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+}
+
+.page-subtitle--typewriter {
+  font-family: var(--cmd-font-mono) !important;
+  font-size: 0.78rem !important;
+  color: var(--cmd-green) !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: 0 0 10px rgba(34, 255, 136, 0.45) !important;
+  margin-top: 0.45rem !important;
+  min-height: 1.25em;
+}
+
+.page-subtitle--typewriter .page-subtitle__cursor {
+  display: inline-block;
+  color: var(--cmd-cyan);
+  animation: cmd-cursor-blink 0.9s step-end infinite;
+  margin-left: 1px;
+}
+
+@keyframes cmd-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.page-header__status-dot {
+  background: var(--cmd-cyan) !important;
+  box-shadow: 0 0 10px var(--cmd-cyan-glow) !important;
+  animation: cmd-status-pulse 2s ease-in-out infinite !important;
+}
+
+@keyframes cmd-status-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 14px var(--cmd-cyan-glow); }
+}
+
+/* Diplomasi / tehlike sayfaları — kırmızı glow başlık varyantı */
+.page-header--alert .page-title {
+  color: #ffe8ec !important;
+  text-shadow:
+    0 0 18px var(--cmd-red-glow),
+    0 0 36px rgba(255, 51, 85, 0.2) !important;
+}
+
+/* ── Taktik paneller (kartlar) ── */
+.hud-shell .card,
+.app-shell.hud-shell .card,
+.hud-shell .panel,
+.app-shell.hud-shell .panel {
+  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  background-color: var(--cmd-panel-bg) !important;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(8, 16, 32, 0.95) 0%, rgba(3, 8, 16, 0.98) 100%) !important;
+  background-size: 18px 18px, 18px 18px, 100% 100% !important;
+  clip-path: var(--cmd-clip) !important;
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(0, 240, 255, 0.04) !important;
+}
+
+.hud-shell .card:hover:not(.building-card--blocked),
+.app-shell.hud-shell .card:hover:not(.building-card--blocked) {
+  border-color: rgba(0, 240, 255, 0.32) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.1) inset,
+    0 0 24px rgba(0, 240, 255, 0.12),
+    0 12px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Bina kartı: X tamamen kapalı, kompakt kilit rozeti ── */
+.building-card--blocked .building-blocked-overlay::before,
+.building-card--blocked .building-blocked-overlay::after,
+.building-card--progression-locked .building-blocked-overlay::before,
+.building-card--progression-locked .building-blocked-overlay::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.building-card--blocked,
+.building-card--blocked:hover {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.building-card--blocked .building-blocked-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(2, 8, 16, 0.15) 0%,
+    rgba(2, 8, 16, 0.45) 100%
+  ) !important;
+  backdrop-filter: none !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+.building-lock-badge {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  z-index: 12;
+  max-width: calc(100% - 2.5rem);
+  padding: 0.28rem 0.5rem;
+  font-family: var(--cmd-font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--cmd-green) !important;
+  background: rgba(4, 16, 12, 0.92) !important;
+  border: 1px solid rgba(34, 255, 136, 0.45) !important;
+  box-shadow:
+    0 0 12px rgba(34, 255, 136, 0.25),
+    inset 0 0 8px rgba(34, 255, 136, 0.06) !important;
+  text-shadow: 0 0 8px rgba(34, 255, 136, 0.5) !important;
+  pointer-events: none;
+}
+
+.building-lock-badge--progression {
+  color: #fbbf24 !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+  background: rgba(20, 14, 4, 0.92) !important;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.45) !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.2) !important;
+}
+
+.building-blocked-label {
+  display: none !important;
+}
+
+.building-card--blocked .card-visual::after,
+.building-card--unbuilt .card-visual::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Gereksinim tooltip — siber yeşil */
+.building-req-tooltip {
+  border: 1px solid rgba(34, 255, 136, 0.4) !important;
+  background: rgba(4, 14, 10, 0.96) !important;
+  box-shadow: 0 0 20px rgba(34, 255, 136, 0.15) !important;
+}
+
+.building-req-tooltip-title {
+  font-family: var(--cmd-font-mono) !important;
+  color: var(--cmd-green) !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* ── Butonlar & inputlar — neon glow ── */
+.hud-shell .btn,
+.app-shell.hud-shell .btn {
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08) inset !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.hud-shell .btn-primary,
+.hud-shell .btn-hud-primary,
+.app-shell.hud-shell .btn-primary {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+}
+
+.hud-shell .btn:hover:not(:disabled),
+.app-shell.hud-shell .btn:hover:not(:disabled) {
+  box-shadow:
+    0 0 16px rgba(0, 240, 255, 0.2),
+    0 0 0 1px rgba(0, 240, 255, 0.15) inset !important;
+}
+
+.hud-shell input,
+.hud-shell select,
+.hud-shell textarea,
+.app-shell.hud-shell input,
+.app-shell.hud-shell select {
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
+    0 0 12px rgba(0, 240, 255, 0.04) !important;
+}
+
+.hud-shell input:focus,
+.hud-shell select:focus,
+.app-shell.hud-shell input:focus {
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.35),
+    0 0 18px rgba(0, 240, 255, 0.15) !important;
+}
+
+.resource-bar--steel {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 240, 255, 0.08) !important;
+}
+
+/* ── Araştırma blueprint ── */
+.card-visual-research {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background:
+    linear-gradient(rgba(0, 240, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.08) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(6, 20, 36, 0.95) 0%, rgba(2, 8, 18, 0.98) 100%) !important;
+  background-size: 12px 12px, 12px 12px, 100% 100%, 100% 100% !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-visual-research::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px dashed rgba(0, 240, 255, 0.25);
+  pointer-events: none;
+}
+
+.card-visual-research::after {
+  content: 'BLUEPRINT';
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-family: var(--cmd-font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: rgba(0, 240, 255, 0.35);
+}
+
+.content-card--research .card-visual-research {
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.2));
+}
+
+/* ── Harita: kesikli daire yok, hedef nişangahı ── */
+.map-ideology-province-layer path,
+.leaflet-interactive.radar-range-circle,
+.leaflet-interactive[class*='range-circle'] {
+  stroke-dasharray: none !important;
+}
+
+.map-target-reticle {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-target-reticle__svg {
+  filter: drop-shadow(0 0 6px var(--cmd-red-glow));
+  animation: reticle-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes reticle-pulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+.map-city-marker .map-marker-pin svg circle:first-of-type {
+  display: none;
+}
+
+.map-city-marker .map-marker-pin svg line {
+  stroke-width: 1.2;
+}

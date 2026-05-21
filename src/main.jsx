@@ -18,6 +18,7 @@ import './styles/state-mail.css';
 import './styles/crisis.css';
 import './styles/progression.css';
 import './styles/season-quests.css';
+import './styles/cyber-command-ui.css';
 import App from './App.jsx';
 
 if (import.meta.env.PROD) {

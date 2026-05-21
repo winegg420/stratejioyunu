@@ -61,6 +61,13 @@ export default function Sidebar() {
                   <span className="nav-label">{item.label}</span>
                   <span
                     className="nav-badge nav-badge--hq-lock"
+                    title={
+                      item.label === 'İttifak'
+                        ? 'KİLİTLİ: HQ SV.1'
+                        : item.lockTag
+                          ? `KİLİTLİ: ${item.lockTag}`
+                          : 'KİLİTLİ'
+                    }
                   >
                     {item.label === 'İttifak'
                       ? '[ KİLİTLİ: HQ SV.1 ]'

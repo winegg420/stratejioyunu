@@ -150,7 +150,7 @@ export default function Home() {
       <AiRadarPanel />
       <PageHeader
         title="Ana Merkez"
-        subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}
+        subtitle={`> ${activeCity?.name ?? '—'} · ${activeCity?.type ?? 'Üs'} — komuta hattı senkronize...`}
         status={playerIdeology ? undefined : '[ ULUSAL BRİFİNG BEKLİYOR ]'}
       />
 
