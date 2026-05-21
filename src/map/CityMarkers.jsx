@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { isPeaceForceProtected } from '../lib/progressionSystem';
 import { pruneCyberEffects } from '../lib/happinessSystem';
 import { useGameStore } from '../stores/gameStore';
 import { getCityOwnerLabel } from './mapOwnership';
@@ -53,6 +54,8 @@ export default function CityMarkers({
   onCityHoverEnd,
 }) {
   const storeCities = useGameStore((s) => s.cities);
+  const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
+  const peaceActive = isPeaceForceProtected(protectionEndsAt);
   const playerName = getCurrentPlayerName();
 
   const markers = useMemo(
@@ -84,10 +87,17 @@ export default function CityMarkers({
           status: liveMap.status ?? city.status,
         };
 
+        const peaceShield = city.isOwn && peaceActive;
+
         const icon = isActive
           ? createActiveHqIcon(markerCity, ownerLabel)
           : city.isOwn
-            ? createOwnCityIcon(markerCity, { underAttack: isUnderAttack, ownerLabel, cyberActive })
+            ? createOwnCityIcon(markerCity, {
+              underAttack: isUnderAttack,
+              ownerLabel,
+              cyberActive,
+              peaceShield,
+            })
             : createCityMarkerIcon(markerCity, { underAttack: isUnderAttack, ownerLabel, cyberActive });
 
         return (

@@ -15,6 +15,9 @@ import { newsFeed as staticNewsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { useGameStore } from '../stores/gameStore';
 import CrisisResponsePanel from '../components/CrisisResponsePanel';
+import PeaceForceBanner from '../components/PeaceForceBanner';
+import MilAiAdvisor from '../components/MilAiAdvisor';
+import { getProgressionState } from '../lib/progressionSystem';
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
 
@@ -74,19 +77,24 @@ export default function Home() {
 
   useEffect(() => {
     if (!playerName) return;
-    if (!hasSeenGlobalBriefing(playerName) || !playerIdeology) {
+    if (!hasSeenGlobalBriefing(playerName)) {
+      setBriefingOpen(true);
+      setPendingIdeology(playerIdeology);
+      return;
+    }
+    if (showIdeologyBriefing && !playerIdeology) {
       setBriefingOpen(true);
       setPendingIdeology(playerIdeology);
     }
-  }, [playerName, playerIdeology]);
+  }, [playerName, playerIdeology, showIdeologyBriefing]);
 
   const handleBriefingAccept = useCallback(() => {
-    if (pendingIdeology) {
+    if (showIdeologyBriefing && pendingIdeology) {
       setPlayerIdeology(pendingIdeology, { force: !playerIdeology });
     }
     markGlobalBriefingSeen(playerName);
     setBriefingOpen(false);
-  }, [pendingIdeology, playerName, playerIdeology, setPlayerIdeology]);
+  }, [pendingIdeology, playerName, playerIdeology, setPlayerIdeology, showIdeologyBriefing]);
 
   const liveNews = useGameStore((s) => s.newsLog ?? []);
   const adminPublicLogs = useGameStore((s) => s.adminPublicLogs ?? []);
@@ -116,6 +124,8 @@ export default function Home() {
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => s.cities[activeCityId]);
   const activeCity = playerCities.find((c) => c.id === activeCityId);
+  const progression = getProgressionState(city);
+  const showIdeologyBriefing = progression.ideologyUnlocked;
   const expeditions = useGameStore((s) => s.expeditions);
   const reports = useGameStore((s) => s.reports);
 
@@ -131,7 +141,10 @@ export default function Home() {
         selectedIdeology={pendingIdeology}
         onSelectIdeology={setPendingIdeology}
         onAccept={handleBriefingAccept}
+        showIdeologyPick={showIdeologyBriefing}
       />
+      <PeaceForceBanner />
+      <MilAiAdvisor />
       <PageHeader
         title="Ana Merkez"
         subtitle={`${activeCity?.name ?? '—'} · ${activeCity?.type ?? ''} · Küresel Başkanlık Komuta Merkezi`}

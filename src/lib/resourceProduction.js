@@ -136,10 +136,12 @@ export function applyProductionFreeze(
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
-    const crisisDebuff = getActiveCrisisProductionDebuff(
-      crisisEffects,
-      city._activeCrisis ?? null,
-    );
+    const crisisDebuff = city._peaceForceShield
+      ? 0
+      : getActiveCrisisProductionDebuff(
+        crisisEffects,
+        city._activeCrisis ?? null,
+      );
     if (crisisDebuff > 0) {
       withRates = withRates.map((r) => {
         if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return r;

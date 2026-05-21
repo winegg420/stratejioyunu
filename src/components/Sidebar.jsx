@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS, SERVER_NAME } from '../data/placeholder';
+import { getProgressionState } from '../lib/progressionSystem';
 import { useGameStore } from '../stores/gameStore';
 import NavBadge from './NavBadge';
 import NavAttackAlert from './NavAttackAlert';
@@ -14,8 +15,27 @@ export default function Sidebar() {
   const reportsBadge = useReportsNavBadge();
   const underAttack = useUnderAttack();
   const expeditionCount = useActiveExpeditionCount();
+  const city = useGameStore((s) => s.cities[activeCityId]);
   const activeCity = playerCities.find((c) => c.id === activeCityId);
+  const progression = getProgressionState(city);
   const [lockedFeature, setLockedFeature] = useState(null);
+
+  const navItems = NAV_ITEMS.map((item) => {
+    if (item.label === 'Siber Operasyon') {
+      return {
+        ...item,
+        locked: !progression.cyberUnlocked,
+        lockTag: progression.locks.cyber ?? 'SİBER MERKEZ',
+      };
+    }
+    if (item.path === '/arastirma' && !progression.kbrnUnlocked) {
+      return {
+        ...item,
+        lockTag: progression.locks.kbrn ?? 'AR-GE SV.8',
+      };
+    }
+    return item;
+  });
 
   return (
     <>
@@ -26,7 +46,7 @@ export default function Sidebar() {
           <span className="city-type">{activeCity?.type}</span>
         </div>
         <ul className="nav-list">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <li key={item.path ?? item.label}>
               {item.locked ? (
                 <button

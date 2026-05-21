@@ -12,7 +12,13 @@ import { getDefaultIdlePopulation } from '../lib/populationUtils';
 import { loadPlayerMeta } from '../lib/playerMetaStorage';
 import { getVipProductionMultiplier } from '../lib/vipPrestige';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
-import { loadPlayerIdeology, loadProtectionEndsAt } from '../lib/briefingStorage';
+import {
+  loadMilAiCompleted,
+  loadPlayerIdeology,
+  loadProtectionEndsAt,
+  saveProtectionEndsAt,
+} from '../lib/briefingStorage';
+import { createInitialProtectionEndsAt } from '../lib/progressionSystem';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { DEFAULT_CENTRAL_BANK } from '../lib/adminOverrideEngine';
 
@@ -56,6 +62,13 @@ export function createFoundCityState(troopPayload = {}) {
 }
 
 export function createInitialGameState(playerMeta = loadPlayerMeta()) {
+  const playerKey = getCurrentPlayerName();
+  let protectionEndsAt = loadProtectionEndsAt(playerKey);
+  if (!protectionEndsAt) {
+    protectionEndsAt = createInitialProtectionEndsAt();
+    saveProtectionEndsAt(playerKey, protectionEndsAt);
+  }
+
   const playerCities = [
     { id: 'izmir', name: 'İzmir', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
     { id: 'cesme', name: 'Çeşme', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
@@ -73,19 +86,11 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     playerCities,
     cities: {
       izmir: createCityState({
-        buildings: createStarterBuildings({ useDemoLevels: true }),
-        population: 12500,
-        happiness: 78,
+        buildings: createStarterBuildings(),
+        happiness: 72,
         taxRate: 15,
-        idleAgents: 6,
-        idlePopulation: 2400,
-        idleTroops: getStarterIdleTroops().map((t) =>
-          t.id === 'colonist' ? { ...t, available: 3 } : { ...t, available: 40 },
-        ),
-        resources: getStarterResources().map((r) => ({
-          ...r,
-          current: Math.min(r.max ?? r.current * 2, Math.floor((r.current || 0) * 1.5)),
-        })),
+        idleAgents: 0,
+        idlePopulation: 1200,
       }),
       cesme: createCityState(),
     },
@@ -113,8 +118,9 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     newsLog: [],
     lastCbrnEventAt: 0,
     _cbrnTickCount: 0,
-    playerIdeology: loadPlayerIdeology(getCurrentPlayerName()),
-    protectionEndsAt: loadProtectionEndsAt(getCurrentPlayerName()),
+    playerIdeology: loadPlayerIdeology(playerKey),
+    protectionEndsAt,
+    milAiCompleted: loadMilAiCompleted(playerKey),
     loyaltyScore: 0,
     centralBank: { ...DEFAULT_CENTRAL_BANK },
     regionalIncentive: null,

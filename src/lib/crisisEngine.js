@@ -2,6 +2,7 @@
  * Doğal Afet ve Kriz Motoru — otomatik rastgele olaylar + kurucu müdahalesi.
  */
 import { genId } from './gameUtils';
+import { shouldShieldCityFromCrisis } from './progressionSystem';
 import { getRegionForCoords, CBNS_REGIONS, createNewsFeedEntry } from '../utils/cbrnEngine';
 import { getIdlePopulation } from './populationUtils';
 import { hasWorkforceShortage, isNewPlayerWorkforceProtected } from './resourceProduction';
@@ -212,6 +213,7 @@ function applyEarthquakeToCities(state, { regionId, regionName, severity, endsAt
   const affectedPc = getPlayerCitiesInRegion(state.playerCities, state.mapCities, regionId);
   const cityPatches = {};
   for (const pc of affectedPc) {
+    if (shouldShieldCityFromCrisis(state, pc.id)) continue;
     const city = state.cities[pc.id];
     if (!city) continue;
     const impact = calcEarthquakeImpact(city, severity);
@@ -237,6 +239,7 @@ function applyMigrationToCities(state, { endsAt, admin }) {
   const affectedPc = (state.playerCities ?? []).filter((pc) => borderNames.has(pc.name));
   const cityPatches = {};
   for (const pc of affectedPc) {
+    if (shouldShieldCityFromCrisis(state, pc.id)) continue;
     const city = state.cities[pc.id];
     if (!city) continue;
     const food = city.resources?.find((r) => r.id === 'food');
@@ -376,7 +379,7 @@ export function triggerCrisis(state, {
     activeCrisis.scope = 'city';
     activeCrisis.targetCityId = targetCityId;
     const city = state.cities[targetCityId];
-    if (city) {
+    if (city && !shouldShieldCityFromCrisis(state, targetCityId)) {
       cityPatches[targetCityId] = {
         ...city,
         crisisEffects: [

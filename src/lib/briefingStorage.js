@@ -3,6 +3,7 @@ import { normalizeIdeology } from './ideologySystem';
 const BRIEFING_PREFIX = 'strateji_ulusal_briefing_seen';
 const IDEOLOGY_PREFIX = 'strateji_player_ideology';
 const PROTECTION_PREFIX = 'strateji_protection_ends';
+const MIL_AI_PREFIX = 'strateji_mil_ai_completed';
 const LEGACY_GOVERNANCE_PREFIX = 'strateji_governance';
 
 function safeKey(prefix, playerKey) {
@@ -48,6 +49,28 @@ export function saveProtectionEndsAt(playerKey, iso) {
     return;
   }
   localStorage.setItem(safeKey(PROTECTION_PREFIX, playerKey), iso);
+}
+
+export function loadMilAiCompleted(playerKey) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(safeKey(MIL_AI_PREFIX, playerKey));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveMilAiCompleted(playerKey, ids) {
+  if (typeof window === 'undefined') return;
+  const list = Array.isArray(ids) ? ids : [];
+  if (!list.length) {
+    localStorage.removeItem(safeKey(MIL_AI_PREFIX, playerKey));
+    return;
+  }
+  localStorage.setItem(safeKey(MIL_AI_PREFIX, playerKey), JSON.stringify(list));
 }
 
 /** @deprecated loadPlayerIdeology kullanın */

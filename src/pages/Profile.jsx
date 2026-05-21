@@ -22,6 +22,7 @@ import {
   formatLoyaltyScore,
 } from '../lib/loyaltySystem';
 import { PROTECTION_DAYS } from '../data/placeholder';
+import { getProgressionState } from '../lib/progressionSystem';
 import { useGameStore } from '../stores/gameStore';
 
 export default function Profile() {
@@ -42,6 +43,9 @@ export default function Profile() {
   const canAffordIdeologyChange = useGameStore((s) => s.canAffordIdeologyChange);
   const loyaltyScore = useGameStore((s) => s.loyaltyScore ?? 0);
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
+  const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
+  const ideologyUnlocked = getProgressionState(activeCity).ideologyUnlocked;
+  const ideologyLockHint = getProgressionState(activeCity).locks.ideology;
 
   const freeWindow = canChangeIdeologyFree();
   const paidChange = Boolean(playerIdeology) && !freeWindow;
@@ -153,11 +157,16 @@ export default function Profile() {
         {!freeWindow && (
           <p className="hint profile-ideology-paid-note">{IDEOLOGY_CHANGE_REAL_MONEY_NOTE}</p>
         )}
-        <div className="profile-ideology-grid">
+        {!ideologyUnlocked && (
+          <p className="hint profile-ideology-lock">
+            🔒 {ideologyLockHint ?? 'İdeoloji politikaları henüz kilitli.'}
+          </p>
+        )}
+        <div className={`profile-ideology-grid${!ideologyUnlocked ? ' profile-ideology-grid--locked' : ''}`}>
           {IDEOLOGY_IDS.map((id) => {
             const p = IDEOLOGY_PROFILES[id];
             const active = playerIdeology === id;
-            const disabled = paidChange && !canAffordIdeologyChange() && !active;
+            const disabled = !ideologyUnlocked || (paidChange && !canAffordIdeologyChange() && !active);
             return (
               <button
                 key={id}
@@ -165,6 +174,7 @@ export default function Profile() {
                 className={`profile-ideology-btn${active ? ' is-active' : ''}${disabled ? ' is-disabled' : ''}`}
                 style={{ '--ideology-color': p.color }}
                 disabled={disabled}
+                title={!ideologyUnlocked ? ideologyLockHint ?? '' : undefined}
                 onClick={() => handleIdeologyPick(id)}
               >
                 <span>{p.emoji} {p.label}</span>

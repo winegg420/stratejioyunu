@@ -28,6 +28,7 @@ import {
   resolveDefenderCyberOpsLevel,
 } from '../utils/spyEngine';
 import { resolveCityCoords } from '../lib/expeditionTravel';
+import { getProgressionState } from '../lib/progressionSystem';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
 
 const AGENT_OPS = [
@@ -58,7 +59,8 @@ export default function Intelligence() {
   const clearMapTargetPickResult = useGameStore((s) => s.clearMapTargetPickResult);
 
   const counterPct = useMemo(() => getCounterIntelProtectionPct(city), [city]);
-  const kbrnBranchOk = isKbrnBranchUnlocked(city);
+  const progression = getProgressionState(city);
+  const kbrnBranchOk = progression.kbrnUnlocked && isKbrnBranchUnlocked(city);
   const chemUnlocked = canLaunchStealthCbrnOp(researches);
   const chemLevel = getWeaponDevelopmentLevel(researches);
   const deconLevel = getDecontaminationLevel(researches);
@@ -268,6 +270,12 @@ export default function Intelligence() {
         </IntelAccordion>
       </LockedFeatureGate>
 
+      {!progression.cyberUnlocked ? (
+        <section className="panel intel-progression-lock">
+          <h3 className="panel-title">Siber Operasyonlar</h3>
+          <p className="hint">🔒 {progression.locks.cyber}</p>
+        </section>
+      ) : (
       <LockedFeatureGate buildingId="cyber_ops" featureName="Siber operasyonlar">
         <IntelAccordion title="Siber Operasyonlar" icon="💻">
           <p className="hint">
@@ -365,7 +373,14 @@ export default function Intelligence() {
           )}
         </IntelAccordion>
       </LockedFeatureGate>
+      )}
 
+      {!progression.kbrnUnlocked ? (
+        <section className="panel intel-progression-lock">
+          <h3 className="panel-title">KBRN & Uranyum</h3>
+          <p className="hint">🔒 {progression.locks.kbrn}</p>
+        </section>
+      ) : (
       <LockedFeatureGate buildingId="research" featureName="KBRN operasyonu">
         <IntelAccordion title="KBRN Silahı" icon="☢️">
           <p className="hint">
@@ -434,6 +449,7 @@ export default function Intelligence() {
           )}
         </IntelAccordion>
       </LockedFeatureGate>
+      )}
 
       <p className="intel-footer-hint">
         <span aria-hidden="true">📋</span>

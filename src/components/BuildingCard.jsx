@@ -14,7 +14,7 @@ import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
 import BuildCountdownHud from './BuildCountdownHud';
 
-export default function BuildingCard({ building }) {
+export default function BuildingCard({ building, progressionLock = null }) {
   const now = useGameStore((s) => s.now);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
@@ -38,7 +38,8 @@ export default function BuildingCard({ building }) {
   const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
   const isUnbuilt = building.level < 1;
   const isBlocked = !prereqsMet;
-  const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet;
+  const progressionBlocked = Boolean(progressionLock);
+  const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet && !progressionBlocked;
   const blockedLabel = unmetPrereqs.length
     ? `[ SEKTÖR KİLİTLİ: ${unmetPrereqs
       .map((req) => `${(BUILDING_LABELS[req.id] ?? req.id).toUpperCase()} SV.${req.level} GEREKLİ`)
@@ -89,6 +90,7 @@ export default function BuildingCard({ building }) {
         isBlocked && 'building-card--blocked',
         isUnbuilt && 'building-card--unbuilt',
         isUnbuilt && prereqsMet && 'building-card--starter',
+        progressionBlocked && 'building-card--progression-locked',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -101,7 +103,14 @@ export default function BuildingCard({ building }) {
           {queueBadge}
         </span>
       )}
-      {isBlocked && (
+      {progressionBlocked && (
+        <div className="building-blocked-overlay" aria-hidden="true">
+          <span className="building-blocked-label building-card__progression-lock">
+            🔒 {progressionLock}
+          </span>
+        </div>
+      )}
+      {isBlocked && !progressionBlocked && (
         <div className="building-blocked-overlay" aria-hidden="true">
           <span className="building-blocked-label">{blockedLabel}</span>
         </div>

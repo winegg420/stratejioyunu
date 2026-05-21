@@ -115,10 +115,18 @@ import { canAffordCost, deductCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
 import {
+  loadMilAiCompleted,
   loadProtectionEndsAt,
+  saveMilAiCompleted,
   savePlayerIdeology,
   saveProtectionEndsAt,
 } from '../lib/briefingStorage';
+import {
+  evaluatePeaceForceForExpedition,
+  getProgressionState,
+  isPeaceForceProtected,
+} from '../lib/progressionSystem';
+import { getMilAiRewardLabel, MIL_AI_QUESTS } from '../lib/milAiTutorial';
 import {
   applyIdeologyTravelSeconds,
   canChangeIdeology,
@@ -216,6 +224,22 @@ function patchCity(set, get, cityId, patch) {
   });
 }
 
+function applyPeaceForceGate(get, targetCity, mode) {
+  const state = get();
+  const gate = evaluatePeaceForceForExpedition(state, targetCity, mode);
+  if (!gate.ok) {
+    useNotificationStore.getState().addToast(
+      gate.reason ?? 'Barış Gücü koruması bu operasyonu engelliyor.',
+      'warn',
+    );
+    return false;
+  }
+  if (gate.revokePeaceForce) {
+    get().revokePeaceForceProtection();
+  }
+  return true;
+}
+
 function getCityAdminContext(state, cityId) {
   const pc = state.playerCities?.find((c) => c.id === cityId);
   return {
@@ -260,6 +284,7 @@ function refreshCityMorale(state, cityId) {
       _expeditions: state.expeditions,
       _playerIdeology: state.playerIdeology,
       _activeCrisis: state.activeCrisis,
+      _peaceForceShield: isPeaceForceProtected(state.protectionEndsAt),
       crisisEffects,
       ...adminCtx,
     },
@@ -977,10 +1002,67 @@ export const useGameStore = create((set, get) => ({
 
   getIdeologyChangeCost: () => IDEOLOGY_CHANGE_COST_MONEY,
 
+  revokePeaceForceProtection: () => {
+    const key = getCurrentPlayerName();
+    saveProtectionEndsAt(key, null);
+    set({ protectionEndsAt: null });
+    useNotificationStore.getState().addToast(
+      '[ BARIŞ GÜCÜ ] Koruma kalkanı kaldırıldı — saldırgan politika ihlali.',
+      'warn',
+    );
+    cloudSync(get, { saveProfile: true });
+  },
+
+  completeMilAiQuest: (questId) => {
+    const state = get();
+    const quest = MIL_AI_QUESTS.find((q) => q.id === questId);
+    if (!quest) return false;
+    const done = new Set(state.milAiCompleted ?? []);
+    if (done.has(questId)) return false;
+    if (!quest.check(state)) {
+      useNotificationStore.getState().addToast('Görev henüz tamamlanmadı.', 'warn');
+      return false;
+    }
+
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+
+    const resources = (city.resources ?? []).map((r) => {
+      let add = 0;
+      if (r.id === 'metal' && quest.reward.metal) add = quest.reward.metal;
+      if (r.id === 'fuel' && quest.reward.fuel) add = quest.reward.fuel;
+      if (r.id === 'money' && quest.reward.money) add = quest.reward.money;
+      if (!add) return r;
+      const cap = r.max ?? Number.POSITIVE_INFINITY;
+      return { ...r, current: Math.min(cap, (r.current ?? 0) + add) };
+    });
+
+    patchCity(set, get, cityId, { resources });
+    const nextDone = [...(state.milAiCompleted ?? []), questId];
+    saveMilAiCompleted(getCurrentPlayerName(), nextDone);
+    set({ milAiCompleted: nextDone });
+    useNotificationStore.getState().addToast(
+      `MIL-AI ödülü: ${getMilAiRewardLabel(quest.reward)}`,
+      'success',
+    );
+    cloudSync(get, { cityId });
+    return true;
+  },
+
   setPlayerIdeology: (ideology, { force = false } = {}) => {
     if (!isValidIdeology(ideology)) return false;
     const state = get();
     if (state.playerIdeology === ideology) return false;
+
+    const progCity = state.cities[state.activeCityId];
+    if (!force && progCity && !getProgressionState(progCity).ideologyUnlocked) {
+      useNotificationStore.getState().addToast(
+        getProgressionState(progCity).locks.ideology ?? 'İdeoloji henüz kilitli.',
+        'warn',
+      );
+      return false;
+    }
 
     const isRegimeChange = Boolean(state.playerIdeology) && !force;
     const freeWindow = canChangeIdeology(state.protectionEndsAt);
@@ -1149,6 +1231,8 @@ export const useGameStore = create((set, get) => ({
       return false;
     }
 
+    if (!applyPeaceForceGate(get, targetCity, 'cyber')) return false;
+
     const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
     const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
     const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };
@@ -1256,6 +1340,8 @@ export const useGameStore = create((set, get) => ({
       useNotificationStore.getState().addToast('Kendi üssünüze KBRN saldırısı yapılamaz', 'warn');
       return false;
     }
+
+    if (!applyPeaceForceGate(get, targetCity, 'kbrn')) return false;
 
     const originCityName = state.playerCities.find((c) => c.id === cityId)?.name ?? cityId;
     const origin = resolveCityCoords(originCityName, state.playerCities, state.mapCities);
@@ -2497,6 +2583,11 @@ export const useGameStore = create((set, get) => ({
 
     const isOwnPlayerCity = state.playerCities.some((pc) => pc.name === targetCity.name);
     if (!isFound && isOwnPlayerCity && (isSpy || mode === 'attack')) return false;
+
+    if (!isFound) {
+      const peaceMode = isSpy ? 'spy' : mode === 'attack' ? 'attack' : mode;
+      if (!applyPeaceForceGate(get, targetCity, peaceMode)) return false;
+    }
 
     if (isFound) {
       if (targetCity.status !== 'empty') return false;

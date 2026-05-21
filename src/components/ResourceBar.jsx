@@ -3,7 +3,12 @@ import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../store
 import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
 import { formatHourlyProduction } from '../lib/hourlyProduction';
-import { GAME_NAME, PROTECTION_DAYS } from '../data/placeholder';
+import { GAME_NAME } from '../data/placeholder';
+import {
+  formatPeaceForceCountdown,
+  getProgressionState,
+  isPeaceForceProtected,
+} from '../lib/progressionSystem';
 import NotificationBell from './NotificationBell';
 import ServerTimeClock from './ServerTimeClock';
 
@@ -73,6 +78,13 @@ export default function ResourceBar() {
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const flashes = useGameStore((s) => s.flashes);
   const workforceShortage = hasWorkforceShortage(activeCity);
+  const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
+  const peaceActive = isPeaceForceProtected(protectionEndsAt);
+  const peaceCountdown = formatPeaceForceCountdown(protectionEndsAt);
+  const progression = activeCity ? getProgressionState(activeCity) : null;
+  const visibleResources = progression?.kbrnUnlocked
+    ? resources
+    : resources.filter((r) => r.id !== 'uranium');
 
   const energyRes = resources.find((r) => r.id === 'energy');
   const energyCrisis = energyRes != null && energyRes.current < 0;
@@ -113,7 +125,7 @@ export default function ResourceBar() {
         </div>
 
         <div className="resources-row resources-row--tactical" role="list" aria-label="Kaynaklar">
-          {resources.map((r) => {
+          {visibleResources.map((r) => {
             const pct = r.max ? (r.current / r.max) * 100 : 100;
             const depotOverflow = isDepotOverflow(r);
             const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotOverflow;
@@ -136,21 +148,24 @@ export default function ResourceBar() {
           <NotificationBell />
           <div className="player-block player-desktop">
             <span className="player-name">{playerName}</span>
-            <span
-              className="protection-badge protection-badge--active"
-              title={`Yeni komutan koruması: ${PROTECTION_DAYS} gün boyunca diğer oyuncular üssünüze saldıramaz. Süre bitince harita tam savaş moduna geçer.`}
-            >
-              <span className="protection-badge__icon" aria-hidden="true">
-                🛡️
+            {peaceActive && (
+              <span
+                className="protection-badge protection-badge--active"
+                title="Barış Gücü koruması — saldırı, siber ve KBRN size uygulanamaz. Saldırı başlatırsanız kalkan düşer."
+              >
+                <span className="protection-badge__icon" aria-hidden="true">
+                  🕊️
+                </span>
+                <span className="protection-badge__text">
+                  BARIŞ GÜCÜ
+                  {peaceCountdown ? ` · ${peaceCountdown}` : ''}
+                </span>
               </span>
-              <span className="protection-badge__text">
-                {PROTECTION_DAYS}G KORUMA AKTİF
-              </span>
-            </span>
+            )}
           </div>
         </div>
       </div>
     </header>
   );
 }
-
+

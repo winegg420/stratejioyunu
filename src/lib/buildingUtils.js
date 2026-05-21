@@ -72,16 +72,13 @@ export function formatPrerequisiteList(unmet) {
     .join(' · ');
 }
 
-export const STARTER_BUILT_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
-
 export function createStarterBuildings({ useDemoLevels = false } = {}) {
   return buildingDefs.map((b) => {
     const levelOne = getLevelOneSpec(b.id);
-    const preBuilt = STARTER_BUILT_BUILDING_IDS.includes(b.id);
     const demoLevel = useDemoLevels ? Math.max(0, b.level ?? 0) : 0;
     const level = useDemoLevels
       ? (b.id === HQ_BUILDING_ID ? Math.max(1, demoLevel) : demoLevel)
-      : (preBuilt ? 1 : 0);
+      : (b.id === HQ_BUILDING_ID ? 1 : 0);
     return {
       ...b,
       level,

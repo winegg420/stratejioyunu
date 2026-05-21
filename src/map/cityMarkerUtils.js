@@ -69,10 +69,18 @@ export function createActiveHqIcon(city, ownerLabel) {
   });
 }
 
-export function createOwnCityIcon(city, { underAttack = false, ownerLabel, cyberActive = false } = {}) {
-  const color = underAttack ? '#ef4444' : HQ_GREEN;
+export function createOwnCityIcon(city, {
+  underAttack = false,
+  ownerLabel,
+  cyberActive = false,
+  peaceShield = false,
+} = {}) {
+  const color = underAttack ? '#ef4444' : peaceShield ? '#4ade80' : HQ_GREEN;
+  const peaceRing = peaceShield
+    ? '<span class="map-peace-shield-ring" aria-hidden="true"></span>'
+    : '';
   const wrapped = wrapMarker(
-    `<span class="own-city-marker__dot" style="background:${color}"></span>`,
+    `${peaceRing}<span class="own-city-marker__dot" style="background:${color}"></span>`,
     city,
     ownerLabel,
     { pinHeight: 22, cyberActive },
