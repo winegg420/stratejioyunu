@@ -9,7 +9,11 @@ import {
   BUILDING_LABELS,
   getUnmetPrerequisites,
 } from '../lib/buildingUtils';
-import { BUILDING_IMAGE_PUBLIC_FALLBACK, getBuildingVisual } from '../data/buildingVisualCatalog';
+import {
+  BUILDING_IMAGE_PUBLIC_FALLBACK,
+  CUSTOM_BUILDING_IMAGE_IDS,
+  getBuildingVisual,
+} from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   AI_CENTER_BUILDING_ID,
@@ -81,6 +85,7 @@ export default function BuildingCard({ building, progressionLock = null }) {
 
   const imageUrl = visual?.image ?? '';
   const publicFallback = BUILDING_IMAGE_PUBLIC_FALLBACK[building.id];
+  const customImage = CUSTOM_BUILDING_IMAGE_IDS.includes(building.id);
 
   const handleImgError = (e) => {
     const img = e.currentTarget;
@@ -142,9 +147,7 @@ export default function BuildingCard({ building, progressionLock = null }) {
                 className={[
                   'building-img-wrap',
                   'building-img-wrap--cell-grid',
-                  building.id === 'barracks' && 'building-img-wrap--barracks',
-                  building.id === 'depot' && 'building-img-wrap--depot',
-                  building.id === 'shipyard' && 'building-img-wrap--shipyard',
+                  customImage && `building-img-wrap--${building.id}`,
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -158,11 +161,7 @@ export default function BuildingCard({ building, progressionLock = null }) {
                   src={imageUrl}
                   alt=""
                   className="building-card__img"
-                  loading={
-                    building.id === 'barracks' || building.id === 'depot' || building.id === 'shipyard'
-                      ? 'eager'
-                      : 'lazy'
-                  }
+                  loading={customImage ? 'eager' : 'lazy'}
                   decoding="async"
                   onError={handleImgError}
                 />

@@ -1,11 +1,15 @@
 /** Taktik bina kartı görselleri — canlıda public/buildings JPG yolları (deploy güvenli). */
-export const BUILDING_ASSET_VERSION = '20260523';
+export const BUILDING_ASSET_VERSION = '20260524';
+
+/** Özel PNG/JPG kart görselleri — cache kırıcı sürüm ile */
+export const CUSTOM_BUILDING_IMAGE_IDS = ['barracks', 'depot', 'shipyard', 'ai_center'];
 
 /** @deprecated Yedek yollar — public/buildings ile aynı dosya */
 export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
   barracks: '/buildings/barracks.jpg',
   depot: '/buildings/depot.jpg',
   shipyard: '/buildings/shipyard.jpg',
+  ai_center: '/buildings/ai-center.jpg',
 };
 
 const v = (path) => `${path}?v=${BUILDING_ASSET_VERSION}`;
@@ -40,7 +44,7 @@ export const BUILDING_VISUALS = {
     designation: 'Cyber Operations Command',
   },
   ai_center: {
-    image: '/buildings/intel.jpg',
+    image: v('/buildings/ai-center.jpg'),
     designation: 'AI Command Center — Neural Warfare Core',
   },
   market: {
