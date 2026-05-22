@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useActionLock } from '../hooks/useActionLock';
 import { remainingFromEndsAt } from '../lib/gameUtils';
 import { canAffordCost } from '../utils/resourceCosts';
@@ -73,8 +73,11 @@ export default function BuildingCard({ building, progressionLock = null }) {
   };
   const buildBusy = actionLocked || upgrading;
   const visual = getBuildingVisual(building.id);
-  const [imgSrc, setImgSrc] = useState(visual?.image ?? '');
   const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [building.id, visual?.image]);
 
   const handleImgError = () => {
     setImgFailed(true);
@@ -137,7 +140,7 @@ export default function BuildingCard({ building, progressionLock = null }) {
                   .join(' ')}
               >
                 <img
-                  src={imgSrc || visual.image}
+                  src={visual.image}
                   alt=""
                   className="building-card__img"
                   loading="lazy"

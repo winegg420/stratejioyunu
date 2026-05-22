@@ -1,4 +1,7 @@
 /** Taktik bina kartı görselleri ve İngilizce teknik tanımlamalar. */
+import kislaImg from '../assets/binalar/kısla.png';
+import lojistikDepoImg from '../assets/binalar/lojistik-depo.png';
+
 export const BUILDING_VISUALS = {
   hq: {
     image: '/buildings/hq.jpg',
@@ -41,7 +44,7 @@ export const BUILDING_VISUALS = {
     designation: 'Signals Intelligence Hub',
   },
   barracks: {
-    image: '/buildings/kisla.png',
+    image: kislaImg,
     designation: 'Reinforced Tactical Operations Center',
   },
   airport: {
@@ -61,7 +64,7 @@ export const BUILDING_VISUALS = {
     designation: 'Geothermal/Mineral Extractor',
   },
   depot: {
-    image: '/buildings/lojistik-depo.png',
+    image: lojistikDepoImg,
     designation: 'Secure Logistics Terminal',
   },
 };
