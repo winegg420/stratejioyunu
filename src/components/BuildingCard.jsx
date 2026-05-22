@@ -101,6 +101,9 @@ export default function BuildingCard({ building, progressionLock = null }) {
         .filter(Boolean)
         .join(' ')}
     >
+      <span className="building-lvl-rozet" aria-label={`Seviye ${currentLevel}`}>
+        [ LVL {currentLevel} ]
+      </span>
       <span className="content-card__intel-badge">[ i ]</span>
       {queueBadge && (
         <span
@@ -124,7 +127,14 @@ export default function BuildingCard({ building, progressionLock = null }) {
           {visual && !imgFailed ? (
             <>
               <div
-                className={`building-img-wrap building-img-wrap--cell-grid${building.id === 'barracks' ? ' building-img-wrap--barracks' : ''}`}
+                className={[
+                  'building-img-wrap',
+                  'building-img-wrap--cell-grid',
+                  building.id === 'barracks' && 'building-img-wrap--barracks',
+                  building.id === 'depot' && 'building-img-wrap--depot',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 <img
                   src={imgSrc || visual.image}

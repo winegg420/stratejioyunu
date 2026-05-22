@@ -41,7 +41,7 @@ export const BUILDING_VISUALS = {
     designation: 'Signals Intelligence Hub',
   },
   barracks: {
-    image: '/buildings/barracks.jpg',
+    image: '/buildings/kisla.png',
     designation: 'Reinforced Tactical Operations Center',
   },
   airport: {
@@ -61,7 +61,7 @@ export const BUILDING_VISUALS = {
     designation: 'Geothermal/Mineral Extractor',
   },
   depot: {
-    image: '/buildings/depot.jpg',
+    image: '/buildings/lojistik-depo.png',
     designation: 'Secure Logistics Terminal',
   },
 };
