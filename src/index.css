@@ -431,13 +431,32 @@ a {
 .app-shell:not(.route-map) .leaflet-container,
 .app-shell:not(.route-map) .leaflet-pane,
 .app-shell:not(.route-map) .leaflet-control-container,
+.app-shell:not(.route-map) .leaflet-overlay-pane,
+.app-shell:not(.route-map) .leaflet-marker-pane,
 .app-shell:not(.route-map) .map-hud-panel,
 .app-shell:not(.route-map) .map-focus-crosshair,
 .app-shell:not(.route-map) .map-minimap-wrap,
 .app-shell:not(.route-map) .cyber-fog-layer,
-.app-shell:not(.route-map) .map-container-wrap {
+.app-shell:not(.route-map) .map-container-wrap,
+.app-shell:not(.route-map) .map-command-modal-root,
+.app-shell:not(.route-map) .map-coord-tooltip,
+.app-shell:not(.route-map) .map-intel-sidebar,
+.app-shell:not(.route-map) .map-status-band,
+.app-shell:not(.route-map) .map-fs-exit-btn,
+.app-shell:not(.route-map) .map-fs-hero-btn,
+.app-shell:not(.route-map) .map-tactical-overlay {
   display: none !important;
   pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Tam ekran sınıfı harita dışında kaldıysa etkisiz olsun */
+html.map-fs-active:not(:has(.route-map)) .resource-bar,
+html.map-fs-active:not(:has(.route-map)) .sidebar-desktop,
+html.map-fs-active:not(:has(.route-map)) .bottom-nav {
+  display: revert !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .page-header {
@@ -987,12 +1006,36 @@ a {
   margin-bottom: 0.75rem;
 }
 
+.map-page-wrapper--tactical .page-header {
+  display: none;
+}
+
 .map-page {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   height: calc(100vh - var(--resource-bar-h) - 80px);
   min-height: 400px;
+}
+
+.route-map .map-page-wrapper--tactical {
+  height: calc(100vh - var(--resource-bar-h, 56px) - 0.5rem);
+}
+
+.route-map .map-page-wrapper--tactical .map-page {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  gap: 0.35rem;
+}
+
+.route-map .map-page-wrapper--tactical .map-container-wrap {
+  flex: 1;
+  min-height: 480px;
+}
+
+.route-map .map-page-wrapper--tactical .turkey-map {
+  min-height: 0;
 }
 
 .map-loading-placeholder {
@@ -3183,10 +3226,10 @@ body.map-scroll-locked {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  width: 48px !important;
-  height: 48px !important;
-  margin-left: -24px !important;
-  margin-top: -24px !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin-left: -14px !important;
+  margin-top: -14px !important;
   background: #22ff88 !important;
   border: 2px solid #b8ffe0 !important;
   border-radius: 50% !important;
@@ -3198,7 +3241,7 @@ body.map-scroll-locked {
 }
 
 .active-hq-marker__glyph {
-  font-size: 1.35rem;
+  font-size: 0.85rem;
   line-height: 1;
   color: #031a0f;
   text-shadow: 0 0 8px #fff;
@@ -3227,14 +3270,16 @@ body.map-scroll-locked {
 
 .own-city-marker__dot {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 2px solid #b8ffe0;
   box-shadow: 0 0 14px #22ff88;
 }
 
-.leaflet-div-icon.map-city-marker {
+.leaflet-div-icon.map-city-marker,
+.leaflet-div-icon.map-marker-icon,
+.leaflet-div-icon.map-city-centroid-label {
   background: transparent !important;
   border: none !important;
 }
@@ -3403,26 +3448,47 @@ body.map-scroll-locked {
   }
 }
 
-.cyber-route {
-  animation: cyber-route-flow 1.2s linear infinite;
+.cyber-route.tactical-route,
+.tactical-route {
+  stroke-linecap: round;
+  animation:
+    tactical-route-flow 2.8s linear infinite,
+    tactical-pulse 2.4s ease-in-out infinite;
 }
 
-.cyber-route--attack {
-  filter: drop-shadow(0 0 4px #ff3355);
+.cyber-route--attack,
+.tactical-route--attack {
+  filter: drop-shadow(0 0 6px #ff3355);
 }
 
-.cyber-route--spy {
-  filter: drop-shadow(0 0 4px #facc15);
+.cyber-route--spy,
+.tactical-route--spy {
+  filter: drop-shadow(0 0 6px #facc15);
 }
 
-.cyber-route--return {
-  filter: drop-shadow(0 0 4px #22ff88);
+.cyber-route--return,
+.tactical-route--return {
+  filter: drop-shadow(0 0 6px #22ff88);
 }
 
-@keyframes cyber-route-flow {
+@keyframes tactical-route-flow {
   to {
-    stroke-dashoffset: -24;
+    stroke-dashoffset: -32;
   }
+}
+
+@keyframes tactical-pulse {
+  0%,
+  100% {
+    stroke-opacity: 0.68;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.tactical-route-neon-dot path {
+  animation: tactical-neon-dot-pulse 1.8s ease-in-out infinite;
 }
 
 .cyber-fog-layer {
@@ -3625,6 +3691,133 @@ body.map-scroll-locked {
   margin: 0.35rem 0 0;
   font-size: 0.8rem;
   color: #fbbf24;
+}
+
+.map-command-modal__empire-hint {
+  margin: 0 0 0.65rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #a7f3d0;
+  background: rgba(34, 255, 136, 0.08);
+  border: 1px solid rgba(34, 255, 136, 0.28);
+  border-radius: 4px;
+}
+
+.map-cmd-btn--conquest {
+  border-color: rgba(251, 191, 36, 0.65);
+  color: #fcd34d;
+}
+
+.cargo-logistics-panel {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.cargo-logistics-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.82rem;
+}
+
+.cargo-logistics-qty-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cargo-logistics-modes {
+  border: none;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cargo-logistics-mode {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cargo-logistics-mode--active {
+  border-color: rgba(34, 255, 136, 0.55);
+  background: rgba(34, 255, 136, 0.06);
+}
+
+.cargo-logistics-mode--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cargo-logistics-mode input {
+  margin-top: 0.2rem;
+}
+
+.cargo-logistics-mode small {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.cargo-logistics-air-warn {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #fbbf24;
+}
+
+.cargo-logistics-inflight {
+  margin-top: 0.65rem;
+  font-size: 0.78rem;
+  color: #a7f3d0;
+}
+
+.cargo-logistics-inflight ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.res-empire-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #6ee7b7;
+  margin-left: 0.25rem;
+}
+
+.map-command-modal__hint--treasury {
+  color: #a7f3d0;
+}
+
+.main-hq-marker__glyph,
+.colony-marker__glyph {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(34, 255, 136, 0.9);
+}
+
+.colony-marker__glyph {
+  font-size: 0.95rem;
+}
+
+.leaflet-div-icon.own-city-marker--empire .own-city-marker__dot,
+.leaflet-div-icon.active-hq-marker .active-hq-marker__glyph {
+  box-shadow: 0 0 16px rgba(34, 255, 136, 0.85), 0 0 28px rgba(34, 255, 136, 0.35);
 }
 
 /* Bina ön koşul tooltip */
@@ -4171,4 +4364,102 @@ body.map-scroll-locked {
 .report-type--trade {
   background: rgba(34, 211, 238, 0.2);
   color: #22d3ee;
+}
+
+.market-spot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.market-spot-card {
+  padding: 0.65rem;
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.diplomacy-template-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.diplomacy-template-card {
+  padding: 1rem;
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+}
+
+.diplomacy-pending-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.diplomacy-pending-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.expedition-cargo-field {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px dashed rgba(34, 211, 238, 0.35);
+  border-radius: 4px;
+}
+
+.expedition-cargo-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expedition-cargo-tag {
+  color: #22d3ee;
+  font-size: 0.85em;
+}
+
+.black-market-list,
+.alliance-ops-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.black-market-card,
+.alliance-ops-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+}
+
+.black-market-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.alliance-ops-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 280px;
+  margin-bottom: 0.75rem;
 }

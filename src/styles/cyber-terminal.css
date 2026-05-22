@@ -1,0 +1,194 @@
+/* ── Siber-askeri terminal katmanı ── */
+
+:root {
+  --font-terminal: 'Major Mono Display', 'Share Tech Mono', 'Courier New', monospace;
+  --reticle-corner: rgba(0, 240, 255, 0.82);
+}
+
+/* [1] Glass paneller — nişangah köşeleri + agresif terminal fontu */
+.glass-panel {
+  position: relative;
+  font-family: var(--font-terminal) !important;
+  letter-spacing: 0.06em;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    linear-gradient(90deg, var(--reticle-corner), var(--reticle-corner)) 0 0 / 11px 2px,
+    linear-gradient(180deg, var(--reticle-corner), var(--reticle-corner)) 0 0 / 2px 11px,
+    linear-gradient(270deg, var(--reticle-corner), var(--reticle-corner)) 100% 0 / 11px 2px,
+    linear-gradient(180deg, var(--reticle-corner), var(--reticle-corner)) 100% 0 / 2px 11px,
+    linear-gradient(90deg, var(--reticle-corner), var(--reticle-corner)) 0 100% / 11px 2px,
+    linear-gradient(0deg, var(--reticle-corner), var(--reticle-corner)) 0 100% / 2px 11px,
+    linear-gradient(270deg, var(--reticle-corner), var(--reticle-corner)) 100% 100% / 11px 2px,
+    linear-gradient(0deg, var(--reticle-corner), var(--reticle-corner)) 100% 100% / 2px 11px;
+  background-repeat: no-repeat;
+  opacity: 0.92;
+}
+
+.glass-panel .panel-title,
+.glass-panel .home-cmd-widget__label,
+.glass-panel .home-cmd-widget__value,
+.glass-panel .market-exchange-row__label,
+.glass-panel .mil-ai-terminal__line,
+.glass-panel .strat-matrix__title {
+  font-family: var(--font-terminal) !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* [2] Harita — yukarıdan aşağı radar tarama çizgisi */
+.map-radar-scan-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.map-radar-scan-layer__beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  top: -4%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.08) 25%,
+    rgba(0, 240, 255, 0.42) 50%,
+    rgba(0, 240, 255, 0.08) 75%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 18px rgba(0, 240, 255, 0.45),
+    0 0 42px rgba(34, 255, 136, 0.18);
+  animation: map-radar-scan-beam 7.5s linear infinite;
+}
+
+.map-radar-scan-layer__glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  top: -24%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(0, 240, 255, 0.05) 55%,
+    transparent
+  );
+  animation: map-radar-scan-beam 7.5s linear infinite;
+  opacity: 0.55;
+}
+
+@keyframes map-radar-scan-beam {
+  0% {
+    top: -6%;
+    opacity: 0.35;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.75;
+  }
+  100% {
+    top: 106%;
+    opacity: 0.25;
+  }
+}
+
+/* [3] Ana aksiyon butonları — hover glitch (0.1s) */
+.btn-hud-primary:hover:not(:disabled),
+.market-hud-btn--buy:hover:not(:disabled),
+.expedition-launch-submit:hover:not(:disabled),
+.map-command-modal .btn-hud-primary:hover:not(:disabled) {
+  animation: btn-data-glitch 0.1s steps(2, end);
+}
+
+@keyframes btn-data-glitch {
+  0% {
+    transform: translate(0, 0);
+    filter: none;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+  }
+  25% {
+    transform: translate(-2px, 1px);
+    filter: hue-rotate(18deg) brightness(1.35);
+    text-shadow: 2px 0 #ff3355, -2px 0 #00f0ff;
+  }
+  50% {
+    transform: translate(2px, -1px);
+    filter: contrast(1.4);
+    text-shadow: -1px 0 #22ff88, 1px 0 #facc15;
+  }
+  75% {
+    transform: translate(-1px, 0);
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: translate(0, 0);
+    filter: none;
+    text-shadow: 0 0 10px rgba(34, 255, 136, 0.5);
+  }
+}
+
+/* [4] İstihbarat satırları — dönen şifre loader */
+.intel-list > li:not(.intel-list-row),
+.intel-cyber-log > li:not(.intel-list-row) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.intel-list > li:not(.intel-list-row)::before,
+.intel-cyber-log > li:not(.intel-list-row)::before,
+.map-intel-feed__item.intel-list-row::before,
+.ai-radar-list__item--intel.intel-list-row::before {
+  content: '';
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  margin-top: 0.2rem;
+  border: 2px solid rgba(0, 240, 255, 0.22);
+  border-top-color: rgba(0, 240, 255, 0.95);
+  border-right-color: rgba(34, 255, 136, 0.65);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
+  animation: cyber-cipher-spin 4s linear infinite;
+}
+
+@keyframes cyber-cipher-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* [5] Pazar ticker — yön okları */
+.market-ticker-tag__arrow {
+  display: inline-block;
+  margin-right: 0.2rem;
+  font-size: 0.62rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.market-ticker-tag--up .market-ticker-tag__arrow {
+  color: #4ade80;
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.65);
+}
+
+.market-ticker-tag--down .market-ticker-tag__arrow {
+  color: #f87171;
+  text-shadow: 0 0 6px rgba(248, 113, 113, 0.65);
+}
+
+.market-ticker-tag--flat .market-ticker-tag__arrow {
+  color: rgba(148, 163, 184, 0.55);
+}

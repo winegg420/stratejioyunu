@@ -1,15 +1,15 @@
 import { useId } from 'react';
 import {
   KBRN_RESEARCH_CENTER_UNLOCK,
-  KBRN_CATEGORY,
   getResearchCenterLevel,
 } from '../lib/kbrnResearch';
+import { ADVANCED_RESEARCH_CATEGORY } from '../data/researchCatalog';
 import { RESEARCH_PREREQUISITES } from '../data/contentEncyclopedia';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
 
 function buildRequirementLines(item, city, kbrnBranchLocked) {
   const lines = [];
-  if (item.category === KBRN_CATEGORY && kbrnBranchLocked) {
+  if (item.category === ADVANCED_RESEARCH_CATEGORY && kbrnBranchLocked) {
     const rcLevel = getResearchCenterLevel(city);
     const reqs = RESEARCH_PREREQUISITES[item.id] ?? [
       { label: 'Ar-Ge Merkezi', level: KBRN_RESEARCH_CENTER_UNLOCK },

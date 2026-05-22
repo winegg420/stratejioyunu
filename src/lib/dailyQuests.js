@@ -1,4 +1,4 @@
-/**
+﻿/**
  * İdeoloji tabanlı günlük görevler — gece yarısı sıfırlanır.
  */
 import { genId } from './gameUtils';
@@ -18,7 +18,7 @@ const QUEST_POOLS = {
       hint: 'Müttefik şehrine toplam 800+ kaynak gönder (ticaret seferi).',
       check: (ctx) => (ctx.seasonStats?.tradeVolume ?? 0) >= 800 && ctx.flags?.socialistAidSent,
       target: 800,
-      reward: { loyalty: 85, metal: 400, fuel: 300 },
+      reward: { loyalty: 85, hammadde: 400, fuel: 300 },
     },
     {
       id: 'soc_happy',
@@ -59,9 +59,9 @@ const QUEST_POOLS = {
     {
       id: 'cap_production',
       title: 'Sanayi Çıktısı',
-      hint: '500+ metal üret (haftalık sayaç).',
-      check: (ctx) => (ctx.seasonStats?.metalProduced ?? 0) >= 500,
-      reward: { loyalty: 65, metal: 700 },
+      hint: '500+ hammadde üret (haftalık sayaç).',
+      check: (ctx) => (ctx.seasonStats?.hammaddeProduced ?? 0) >= 500,
+      reward: { loyalty: 65, hammadde: 700 },
     },
   ],
   nationalist: [
@@ -70,7 +70,7 @@ const QUEST_POOLS = {
       title: 'Ordu Mobilizasyonu',
       hint: 'Toplam 40+ askeri birim üret.',
       check: (ctx) => (ctx.seasonStats?.unitsTrained ?? 0) >= 40,
-      reward: { loyalty: 95, metal: 600, fuel: 400 },
+      reward: { loyalty: 95, hammadde: 600, fuel: 400 },
     },
     {
       id: 'nat_attack',
@@ -100,7 +100,7 @@ const QUEST_POOLS = {
       title: 'YZ Çevrimiçi',
       hint: 'Yapay Zeka Merkezini çalışır durumda tut.',
       check: (ctx) => isAiCenterOperational(ctx.activeCity),
-      reward: { loyalty: 80, metal: 500 },
+      reward: { loyalty: 80, hammadde: 500 },
     },
     {
       id: 'tech_research',
@@ -197,7 +197,7 @@ export function applyQuestResourceReward(resources, reward) {
   if (!reward) return resources;
   return resources.map((r) => {
     let add = 0;
-    if (r.id === 'metal' && reward.metal) add = reward.metal;
+    if (r.id === 'hammadde' && reward.hammadde) add = reward.hammadde;
     if (r.id === 'fuel' && reward.fuel) add = reward.fuel;
     if (r.id === 'money' && reward.money) add = reward.money;
     if (r.id === 'food' && reward.food) add = reward.food;

@@ -78,6 +78,7 @@ export function calcExpeditionTravelSeconds({
   troopQty = {},
   mapCities = [],
   mode = 'attack',
+  empireTravelMult = 1,
 }) {
   if (!origin || !target) {
     if (mode === 'spy') return 35;
@@ -93,6 +94,9 @@ export function calcExpeditionTravelSeconds({
   let seconds = Math.round(MAX_LAND_EXPEDITION_SECONDS * ratio);
   if (mode === 'spy') seconds = Math.round(seconds * 0.45);
   if (mode === 'trade') seconds = Math.round(seconds * 0.65);
+  if (mode === 'found' && empireTravelMult > 1) {
+    seconds = Math.round(seconds * empireTravelMult);
+  }
 
   seconds = Math.max(MIN_EXPEDITION_SECONDS, seconds);
 

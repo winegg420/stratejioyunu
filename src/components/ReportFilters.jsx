@@ -1,10 +1,12 @@
 const FILTERS = [
   { id: 'all', label: 'Hepsi' },
+  { id: 'operations', label: 'Operasyon Geçmişi' },
   { id: 'battle', label: 'Savaş' },
   { id: 'spy', label: 'Casusluk' },
   { id: 'cyber', label: 'Siber Ops' },
   { id: 'kbrn', label: 'KBRN' },
-  { id: 'trade', label: 'Ticaret/Lojistik' },
+  { id: 'trade', label: 'Ticaret' },
+  { id: 'logistics', label: 'Lojistik' },
 ];
 
 export default function ReportFilters({ active, onChange, counts }) {

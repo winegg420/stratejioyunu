@@ -249,13 +249,7 @@ body::before {
     0 0 12px rgba(0, 240, 255, 0.04) !important;
 }
 
-.hud-shell input:focus,
-.hud-shell select:focus,
-.app-shell.hud-shell input:focus {
-  box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.35),
-    0 0 18px rgba(0, 240, 255, 0.15) !important;
-}
+/* input:focus — global-hud-polish.css */
 
 .resource-bar--steel {
   box-shadow:

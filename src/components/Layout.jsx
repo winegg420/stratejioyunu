@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import ResourceBar from './ResourceBar';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
-import ToastContainer from './ToastContainer';
+import TerminalBottomDock from './TerminalBottomDock';
+import RouteContentPanel from './RouteContentPanel';
 import PwaUpdateBanner from './PwaUpdateBanner';
 import RouteTransitionLoader from './RouteTransitionLoader';
 import ContentInfoModal from './ContentInfoModal';
@@ -14,6 +15,7 @@ import { useGameStore } from '../stores/gameStore';
 import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
+import { releaseMapSessionLocks } from '../map/mapRouteCleanup';
 
 const MOBILE_SHELL_CLASS = 'mobile-shell-active';
 
@@ -84,9 +86,14 @@ export default function Layout() {
   }, [isMobile]);
 
   useEffect(() => {
+    if (pathname !== '/harita') {
+      releaseMapSessionLocks();
+    }
     document.body.classList.remove('map-scroll-locked');
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
+      contentRef.current.style.overflow = '';
+      contentRef.current.style.pointerEvents = '';
     }
   }, [pathname]);
 
@@ -97,13 +104,13 @@ export default function Layout() {
       <ResourceBar />
       <PwaUpdateBanner />
       <RouteTransitionLoader />
-      <ToastContainer />
+      <TerminalBottomDock />
       <ContentInfoModal />
       <div className="main-shell">
         <Sidebar />
-        <main className="content-area" ref={contentRef}>
+        <main className="content-area content-area--terminal" ref={contentRef}>
           <ErrorBoundary>
-            <Outlet />
+            <RouteContentPanel />
           </ErrorBoundary>
         </main>
       </div>

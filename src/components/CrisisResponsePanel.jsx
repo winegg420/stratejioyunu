@@ -5,9 +5,10 @@ import {
 } from '../lib/crisisEngine';
 import { formatIdeologyLabel } from '../lib/ideologySystem';
 import { useGameStore } from '../stores/gameStore';
+import TerminalLogPanel from './TerminalLogPanel';
 
 const RESPONSE_LABELS = {
-  [CRISIS_LOYALTY_RESPONSE.socialist_aid]: 'Halka kaynak dağıt (800 nüfus · 500 metal)',
+  [CRISIS_LOYALTY_RESPONSE.socialist_aid]: 'Halka kaynak dağıt (800 nüfus · 500 hammadde)',
   [CRISIS_LOYALTY_RESPONSE.capitalist_fund]: 'Acil bütçe fonu (18.000 Bütçe)',
   [CRISIS_LOYALTY_RESPONSE.technocrat_shield]: 'Siber şebeke kalkanı (Siber Merkez Sv.1+ · 3000 enerji)',
   [CRISIS_LOYALTY_RESPONSE.nationalist_mobilize]: 'Genel seferberlik (120+ birlik hazır)',
@@ -24,6 +25,7 @@ export default function CrisisResponsePanel() {
   const label = RESPONSE_LABELS[expected];
 
   return (
+    <TerminalLogPanel title="Küresel acil durum" tag="ACİL" className="terminal-log-panel--crisis">
     <section className="panel crisis-response-panel">
       <h3 className="panel-title crisis-response-panel__title">
         [ KÜRESEL ACİL DURUM ]
@@ -56,5 +58,6 @@ export default function CrisisResponsePanel() {
         <p className="hint">İdeoloji seçilmeden kriz müdahale protokolü uygulanamaz.</p>
       )}
     </section>
+    </TerminalLogPanel>
   );
 }

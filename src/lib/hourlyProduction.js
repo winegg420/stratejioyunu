@@ -11,13 +11,15 @@ export function getHourlyAmount(resource) {
   return Number(match[1].replace(/\./g, '').replace(',', '.')) || 0;
 }
 
-/** Üst bar: +1.2K/saat veya enerji +300 E/saat */
+/** Üst bar: ikon + kaynak adı + üretim (+1.2K/saat) */
 export function formatHourlyProduction(resource) {
   const hourly = getHourlyAmount(resource);
   if (hourly <= 0) return null;
   const compact = formatCompactNumber(hourly);
+  const icon = resource.icon ? `${resource.icon} ` : '';
+  const label = resource.label ?? resource.id ?? '';
   if (resource.id === 'energy') {
-    return `+${compact} E/saat`;
+    return `${icon}${label} +${compact} E/saat`;
   }
-  return `+${compact}/saat`;
+  return `${icon}${label} +${compact}/saat`;
 }

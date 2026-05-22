@@ -5,6 +5,8 @@ import { extractCityFromReportTitle, findSpyReportForCity, getEnemyTroopsFromRep
 import { toRawInputNumber } from '../lib/formatNumber';
 import { getTroopStock } from '../lib/troopStock';
 import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import CyberDataInput from './CyberDataInput';
+import CyberToggle from './CyberToggle';
 
 function emptyCounts() {
   return Object.fromEntries(landUnits.map((u) => [u.id, '']));
@@ -17,28 +19,37 @@ function sanitizeQtyInput(raw) {
   return String(n);
 }
 
-function TroopInputGrid({ title, counts, onChange, readOnly = false }) {
+function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, side = 'u', readOnly = false }) {
   return (
     <fieldset className="battle-sim-fieldset">
       <legend>{title}</legend>
       <div className="battle-sim-grid">
-        {landUnits.map((u) => (
-          <label key={u.id} className="battle-sim-input-row">
-            <span>{u.image} {u.name}</span>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              className="input-qty"
-              value={counts[u.id] ?? ''}
-              readOnly={readOnly}
-              onKeyDown={(e) => {
-                if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
-              }}
-              onChange={(e) => onChange(u.id, sanitizeQtyInput(e.target.value))}
-            />
-          </label>
-        ))}
+        {landUnits.map((u) => {
+          const key = `${side}-${u.id}`;
+          const on = enabled[key] !== false;
+          return (
+            <div
+              key={key}
+              className={`battle-sim-input-row${on ? '' : ' battle-sim-input-row--off'}`}
+            >
+              <span>{u.image} {u.name}</span>
+              <CyberToggle
+                checked={on}
+                showX
+                activeLabel="DAHİL"
+                lockedLabel="KİLİTLİ"
+                aria-label={`${u.name} simülasyona dahil`}
+                onChange={(v) => onToggleEnabled?.(key, v)}
+              />
+              <CyberDataInput
+                value={counts[u.id] ?? ''}
+                min={0}
+                disabled={readOnly || !on}
+                onChange={(e) => onChange(u.id, sanitizeQtyInput(e.target.value))}
+              />
+            </div>
+          );
+        })}
       </div>
     </fieldset>
   );
@@ -56,6 +67,11 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
   const [simulated, setSimulated] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [resultKey, setResultKey] = useState(0);
+  const [unitEnabled, setUnitEnabled] = useState(() =>
+    Object.fromEntries(
+      landUnits.flatMap((u) => [[`atk-${u.id}`, true], [`def-${u.id}`, true]]),
+    ),
+  );
 
   const spyReport = useMemo(
     () => findSpyReportForCity(reports, targetCity.trim()),
@@ -91,18 +107,20 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
   const parsedAttacker = useMemo(() => {
     const o = {};
     landUnits.forEach((u) => {
+      if (unitEnabled[`atk-${u.id}`] === false) return;
       o[u.id] = Number(attacker[u.id]) || 0;
     });
     return o;
-  }, [attacker]);
+  }, [attacker, unitEnabled]);
 
   const parsedDefender = useMemo(() => {
     const o = {};
     landUnits.forEach((u) => {
+      if (unitEnabled[`def-${u.id}`] === false) return;
       o[u.id] = Number(defender[u.id]) || 0;
     });
     return o;
-  }, [defender]);
+  }, [defender, unitEnabled]);
 
   const totalAttacker = useMemo(
     () => Object.values(parsedAttacker).reduce((sum, n) => sum + n, 0),
@@ -180,8 +198,22 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
         )}
       </div>
 
-      <TroopInputGrid title="Saldıran (siz)" counts={attacker} onChange={setAttackerVal} />
-      <TroopInputGrid title="Savunan (düşman)" counts={defender} onChange={setDefenderVal} />
+      <TroopInputGrid
+        title="Saldıran (siz)"
+        side="atk"
+        counts={attacker}
+        enabled={unitEnabled}
+        onToggleEnabled={(id, v) => setUnitEnabled((prev) => ({ ...prev, [id]: v }))}
+        onChange={setAttackerVal}
+      />
+      <TroopInputGrid
+        title="Savunan (düşman)"
+        side="def"
+        counts={defender}
+        enabled={unitEnabled}
+        onToggleEnabled={(id, v) => setUnitEnabled((prev) => ({ ...prev, [id]: v }))}
+        onChange={setDefenderVal}
+      />
 
       <div className="battle-sim-actions-row">
         <button

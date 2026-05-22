@@ -2,12 +2,11 @@
 export const BUILDING_ASSET_VERSION = '20260524';
 
 /** Özel PNG/JPG kart görselleri — cache kırıcı sürüm ile */
-export const CUSTOM_BUILDING_IMAGE_IDS = ['barracks', 'depot', 'shipyard', 'ai_center'];
+export const CUSTOM_BUILDING_IMAGE_IDS = ['barracks', 'shipyard', 'ai_center'];
 
 /** @deprecated Yedek yollar — public/buildings ile aynı dosya */
 export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
   barracks: '/buildings/barracks.jpg',
-  depot: '/buildings/depot.jpg',
   shipyard: '/buildings/shipyard.jpg',
   ai_center: '/buildings/ai-center.jpg',
 };
@@ -19,25 +18,13 @@ export const BUILDING_VISUALS = {
     image: '/buildings/hq.jpg',
     designation: 'Strategic Command Center',
   },
-  farm: {
-    image: '/buildings/farm.jpg',
-    designation: 'Agricultural Production Complex',
-  },
   refinery: {
     image: '/buildings/refinery.jpg',
-    designation: 'Fuel Refinement Facility',
+    designation: 'Fuel & Raw Material Refinery',
   },
   plant: {
     image: '/buildings/plant.jpg',
     designation: 'Power Generation Grid',
-  },
-  tax: {
-    image: '/buildings/tax.jpg',
-    designation: 'Fiscal Revenue Bureau',
-  },
-  wall: {
-    image: '/buildings/wall.jpg',
-    designation: 'Perimeter Defense Line',
   },
   cyber_ops: {
     image: '/buildings/intel.jpg',
@@ -70,14 +57,6 @@ export const BUILDING_VISUALS = {
   research: {
     image: '/buildings/research.jpg',
     designation: 'Advanced Quantum Data Nexus',
-  },
-  factory: {
-    image: '/buildings/mine.jpg',
-    designation: 'Geothermal/Mineral Extractor',
-  },
-  depot: {
-    image: v('/buildings/depot.jpg'),
-    designation: 'Secure Logistics Terminal',
   },
 };
 

@@ -1,6 +1,6 @@
-import { BUILDING_PREREQUISITES, BUILDING_LABELS } from '../lib/buildingUtils';
+﻿import { BUILDING_PREREQUISITES, BUILDING_LABELS } from '../lib/buildingUtils';
 import { BUILDING_RESOURCE_MAP, BASE_HOURLY, HOURLY_PER_LEVEL } from '../lib/gameUtils';
-import { KBRN_RESEARCH_IDS } from '../lib/kbrnResearch';
+import { KBRN_RESEARCH_IDS, KBRN_RESEARCH_CENTER_UNLOCK } from '../lib/kbrnResearch';
 
 /** OGame tarzı birim taktik profilleri */
 export const UNIT_TACTICAL = {
@@ -185,111 +185,145 @@ export const UNIT_TACTICAL = {
 
 export const BUILDING_ENCYCLOPEDIA = {
   hq: {
-    lore: 'Bölge komuta merkezi. Radar menzili ve yeni üs koruması.',
+    lore: 'Ana üs mimarisi. Radar menzili ve yeni üs koruması.',
     effectLabel: 'Komuta menzili',
     perLevel: (lv) => `Radar +${lv * 8} km · Yeni üs koruması +${lv} gün`,
   },
-  farm: { lore: 'Gıda ve ikmal üretimi. Nüfus ve moral için kritik.', effectLabel: 'Saatlik nüfus' },
-  refinery: { lore: 'Yakıt rafinerisi. Motorlu birlikler ve konvoylar için.', effectLabel: 'Saatlik petrol' },
-  factory: { lore: 'Metal ve mühimmat hammaddesi.', effectLabel: 'Saatlik metal' },
-  plant: { lore: 'Elektrik üretimi. Endüstri hatları için zorunlu.', effectLabel: 'Saatlik enerji' },
-  tax: { lore: 'Vergi geliri. Yüksek oran moral kaybına yol açar.', effectLabel: 'Saatlik bütçe' },
-  depot: {
-    lore: 'Kaynak depolama ve sevkiyat terminali.',
-    effectLabel: 'Depo kapasitesi',
-    perLevel: (lv) => `+${(lv * 2500).toLocaleString('tr-TR')} depo üst sınırı`,
+  refinery: {
+    lore: 'Temel hammadde ve petrol üretimi.',
+    effectLabel: 'Petrol / hammadde',
+    perLevel: (lv) => `Petrol +${(12 + lv * 2.5).toFixed(0)}/sa · Hammadde +${(12 + lv * 2.5).toFixed(0)}/sa`,
+  },
+  plant: {
+    lore: 'Tüm üssün siber ve fiziksel güç çarpanı.',
+    effectLabel: 'Enerji / güç çarpanı',
+    perLevel: (lv) => `Enerji +${8 + lv * 1.5}/sa · Üretim gücü +${lv * 2}%`,
   },
   barracks: {
-    lore: 'Kara birliği üretimi ve eğitim.',
+    lore: 'Kara ordusu üretimi ve taktik simülatör.',
     effectLabel: 'Kışla verimi',
     perLevel: (lv) => `Üretim hızı +${lv * 4}%`,
   },
   airport: {
-    lore: 'Hava birliği üretimi ve üs operasyonları.',
+    lore: 'Hava filolarının konuşlandığı stratejik hat.',
     effectLabel: 'Hava üssü',
     perLevel: (lv) => `Hava üretim hızı +${lv * 5}%`,
   },
   shipyard: {
-    lore: 'Deniz birliği üretimi. Yalnızca kıyı şehirlerinde.',
-    effectLabel: 'Tersane',
+    lore: 'Devasa tersane kompleksi — deniz filosu üretimi.',
+    effectLabel: 'Deniz üssü',
     perLevel: (lv) => `Deniz üretim hızı +${lv * 5}%`,
   },
   intel: {
-    lore: 'Keşif, SIGINT ve karşı istihbarat.',
+    lore: 'Veri sızıntıları, ajan yönetimi ve karşı istihbarat.',
     effectLabel: 'Karşı istihbarat',
     perLevel: (lv) => `Koruma +${lv * 3}%`,
   },
-  wall: {
-    lore: 'Perimetre savunması ve eriş kontrolü.',
-    effectLabel: 'Savunma bonusu',
-    perLevel: (lv) => `Garnizon savunması +${lv * 2}%`,
-  },
   market: {
-    lore: 'Kaynak transferi ve konvoy ticareti.',
-    effectLabel: 'Ticaret',
-    perLevel: (lv) => `Konvoy kapasitesi +${lv * 6}%`,
+    lore: 'Pazar yerinin fiziksel operasyon üssü — konvoy ticareti.',
+    effectLabel: 'Ticaret / bütçe',
+    perLevel: (lv) => `Bütçe +${18 + lv * 3}/sa · Konvoy +${lv * 6}%`,
   },
   research: {
-    lore: 'Askeri teknoloji ve KBRN protokolleri. Sv.8+ düşük uranyum üretimi.',
+    lore: 'Teknoloji ağacının kilidini açan ana laboratuvar.',
     effectLabel: 'Uranyum / Ar-Ge',
     perLevel: (lv) => (lv >= 8
       ? `Uranyum +${(0.4 + lv * 0.12).toFixed(1)}/sa · Ar-Ge +${lv * 3}%`
       : `Ar-Ge +${lv * 3}% (Uranyum Sv.8+)`),
   },
   cyber_ops: {
-    lore: 'Siber virüs, dezenformasyon ve altyapı baskısı.',
+    lore: 'Siber saldırı ve defans / Lockdown yönetim paneli.',
     effectLabel: 'Siber FW',
     perLevel: (lv) => `Sızma / savunma FW Sv.${lv}`,
+  },
+  ai_center: {
+    lore: 'Devasa veri binası — tüm optimizasyonları hızlandırır.',
+    effectLabel: 'AI optimizasyon',
+    perLevel: (lv) => `İnşaat / üretim / casusluk +${lv * 2}%`,
   },
 };
 
 export const RESEARCH_ENCYCLOPEDIA = {
   r1: {
-    lore: 'Kara birliklerinin saldırı gücünü artırır.',
-    effectLabel: 'Kara saldırı bonusu',
-    perLevel: (lv) => (lv > 0 ? `+${lv * 3}% saldırı` : '—'),
+    lore: 'Kara muharebe doktrini ve birlik koordinasyonu.',
+    effectLabel: 'Kara savaş',
+    perLevel: (lv) => (lv > 0 ? `+${lv * 3}% kara saldırı` : '—'),
   },
   r2: {
-    lore: 'Tüm maden ve üretim hatlarına verim bonusu.',
-    effectLabel: 'Üretim hızı',
-    perLevel: (lv) => (lv > 0 ? `+${lv * 2}% saatlik üretim` : '—'),
+    lore: 'Hava üstünlüğü ve üs operasyonları.',
+    effectLabel: 'Hava kuvvetleri',
+    perLevel: (lv) => (lv > 0 ? `+${lv * 4}% hava üretim` : '—'),
   },
   r3: {
-    lore: 'Casusluk ve istihbarat operasyonlarında başarı.',
-    effectLabel: 'Casusluk',
-    perLevel: (lv) => (lv > 0 ? `+${lv} casus seviyesi` : '—'),
+    lore: 'Deniz ve amfibi çıkarma kapasitesi.',
+    effectLabel: 'Deniz harekat',
+    perLevel: (lv) => (lv > 0 ? `+${lv * 4}% deniz üretim` : '—'),
   },
   r4: {
-    lore: 'Hava saldırılarına karşı savunma.',
-    effectLabel: 'Hava savunma',
-    perLevel: (lv) => (lv > 0 ? `+${lv * 2}% hava savunma` : '—'),
+    lore: 'Stratejik savunma ve KBRN hasar azaltma (panzehir).',
+    effectLabel: 'Savunma kalkanı',
+    perLevel: (lv) => (lv > 0 ? `Savunma +${lv * 2}% · Hasar azaltma ${Math.min(92, lv * 9)}%` : '—'),
   },
-  [KBRN_RESEARCH_IDS.weapon]: {
-    lore: 'Kimyasal/biyolojik ajan geliştirme. Sinsi harita operasyonları.',
+  r5: {
+    lore: 'Elektronik harp ve radar karıştırma.',
+    effectLabel: 'EW',
+    perLevel: (lv) => (lv > 0 ? `Komuta baskısı +${lv * 2}%` : '—'),
+  },
+  r6: {
+    lore: 'Ajan ağı, casusluk ve KBRN protokol tespiti.',
+    effectLabel: 'İstihbarat',
+    perLevel: (lv) => (lv > 0 ? `Casus +${lv} · Tespit derinliği +${lv}` : '—'),
+  },
+  r7: {
+    lore: 'Siber operasyon matrisi ve Lockdown yönetimi.',
+    effectLabel: 'Siber',
+    perLevel: (lv) => (lv > 0 ? `Siber FW Sv.${lv}` : '—'),
+  },
+  r8: {
+    lore: 'Gelişmiş şifreleme ve karşı-istihbarat.',
+    effectLabel: 'Şifreleme',
+    perLevel: (lv) => (lv > 0 ? `SIGINT koruması +${lv * 3}%` : '—'),
+  },
+  r9: {
+    lore: 'KBRN silah programı — sinsi harita operasyonları.',
     effectLabel: 'KBRN silahı',
     perLevel: (lv) => (lv > 0 ? `Operasyon gücü Sv.${lv}` : 'Kilitli'),
   },
-  [KBRN_RESEARCH_IDS.decontamination]: {
-    lore: 'Panzehir ve dekontaminasyon. AI salgınlarına karşı koruma.',
-    effectLabel: 'Panzehir',
-    perLevel: (lv) => (lv > 0 ? `Hasar azaltma ${Math.min(92, lv * 9)}%` : '—'),
+  r10: {
+    lore: 'Ağır sanayi ve nükleer enerji hatları.',
+    effectLabel: 'Üretim',
+    perLevel: (lv) => (lv > 0 ? `+${lv * 2}% saatlik üretim` : '—'),
   },
-  [KBRN_RESEARCH_IDS.detection]: {
-    lore: 'Düşman KBRN protokollerini istihbarat raporlarında listeler.',
-    effectLabel: 'KBRN tespit',
-    perLevel: (lv) => (lv > 0 ? `Protokol derinliği +${lv}` : '—'),
+  r11: {
+    lore: 'Füze ve balistik sistemler.',
+    effectLabel: 'Stratejik vuruş',
+    perLevel: (lv) => (lv > 0 ? `Menzil +${lv * 5}%` : '—'),
+  },
+  r12: {
+    lore: 'Yapay zeka entegrasyonu — tüm optimizasyonlar.',
+    effectLabel: 'AI',
+    perLevel: (lv) => (lv > 0 ? `İnşaat / üretim / casusluk +${lv * 2}%` : '—'),
+  },
+  kbrn_weapon: {
+    lore: 'Eski kayıt — KBRN Silah Programı (r9).',
+    effectLabel: '—',
+    perLevel: () => '—',
   },
   kbrn_chem: {
-    lore: 'Eski kayıt — KBRN Silahı ile birleştirildi.',
+    lore: 'Eski kayıt — KBRN Silah Programı (r9).',
     effectLabel: '—',
     perLevel: () => '—',
   },
 };
 
+const ADVANCED_PREREQ = [{ label: 'Ar-Ge Merkezi', buildingId: 'research', level: KBRN_RESEARCH_CENTER_UNLOCK }];
+
 export const RESEARCH_PREREQUISITES = {
-  [KBRN_RESEARCH_IDS.weapon]: [{ label: 'Ar-Ge Merkezi', buildingId: 'research', level: 8 }],
-  [KBRN_RESEARCH_IDS.decontamination]: [{ label: 'Ar-Ge Merkezi', buildingId: 'research', level: 8 }],
-  [KBRN_RESEARCH_IDS.detection]: [{ label: 'Ar-Ge Merkezi', buildingId: 'research', level: 8 }],
+  r9: ADVANCED_PREREQ,
+  r10: ADVANCED_PREREQ,
+  r11: ADVANCED_PREREQ,
+  r12: ADVANCED_PREREQ,
+  [KBRN_RESEARCH_IDS.weapon]: ADVANCED_PREREQ,
 };
 
 export function getBuildingPrereqTree(buildingId) {

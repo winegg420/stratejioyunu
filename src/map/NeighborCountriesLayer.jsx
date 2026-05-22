@@ -59,11 +59,11 @@ const NEIGHBOR_GEO = {
 };
 
 const NEIGHBOR_STYLE = {
-  fillColor: '#000',
-  fillOpacity: 0.8,
-  color: 'rgba(0, 0, 0, 0.35)',
-  weight: 0.5,
-  opacity: 0.9,
+  fillColor: '#2a323c',
+  fillOpacity: 0.72,
+  color: 'rgba(55, 65, 81, 0.55)',
+  weight: 0.6,
+  opacity: 0.92,
 };
 
 export default function NeighborCountriesLayer() {

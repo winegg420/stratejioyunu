@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
@@ -10,9 +10,9 @@ import {
 import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
 
-const SENDABLE_IDS = ['food', 'fuel', 'metal', 'money'];
+const SENDABLE_IDS = ['food', 'fuel', 'hammadde', 'money'];
 
-const EMPTY_AMOUNTS = { food: 0, fuel: 0, metal: 0, money: 0 };
+const EMPTY_AMOUNTS = { food: 0, fuel: 0, hammadde: 0, money: 0 };
 
 export default function Trade() {
   const now = useGameStore((s) => s.now);

@@ -16,7 +16,7 @@ export default function RouteTransitionLoader() {
   useEffect(() => {
     setVisible(true);
     setLine(0);
-    const t1 = window.setTimeout(() => setVisible(false), 300);
+    const t1 = window.setTimeout(() => setVisible(false), 150);
     return () => window.clearTimeout(t1);
   }, [pathname]);
 

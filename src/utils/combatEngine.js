@@ -1,17 +1,17 @@
-import { landUnits } from '../data/placeholder';
+﻿import { landUnits } from '../data/placeholder';
 import { inferCityTier } from '../map/cyberMapConfig';
 import { genId, nowReportDate } from '../lib/gameUtils';
 
 export const COMBAT_ROUNDS = 3;
 export const LOOT_RATE = 0.3;
-export const LOOT_RESOURCE_IDS = ['food', 'fuel', 'metal', 'money'];
+export const LOOT_RESOURCE_IDS = ['food', 'fuel', 'hammadde', 'money'];
 
 const UNIT_MAP = Object.fromEntries(landUnits.map((u) => [u.id, u]));
 
 const RESOURCE_META = {
   food: { label: 'Nüfus', icon: '👥' },
   fuel: { label: 'Petrol', icon: '🛢️' },
-  metal: { label: 'Metal', icon: '🔩' },
+  hammadde: { label: 'Hammadde', icon: '🧱' },
   money: { label: 'Bütçe', icon: '💰' },
   energy: { label: 'Enerji', icon: '⚡' },
 };
@@ -308,7 +308,7 @@ export function resolveDefenderDepot(mapCity) {
   return [
     { id: 'food', label: 'Nüfus', icon: '👥', current: Math.floor(base * 0.35), max: null },
     { id: 'fuel', label: 'Petrol', icon: '🛢️', current: Math.floor(base * 0.2), max: null },
-    { id: 'metal', label: 'Metal', icon: '🔩', current: Math.floor(base * 0.28), max: null },
+    { id: 'hammadde', label: 'Hammadde', icon: '🧱', current: Math.floor(base * 0.28), max: null },
     { id: 'money', label: 'Bütçe', icon: '💰', current: Math.floor(base * 0.22), max: null },
     { id: 'energy', label: 'Enerji', icon: '⚡', current: Math.floor(base * 0.08), max: null },
   ];

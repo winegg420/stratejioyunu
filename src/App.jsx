@@ -24,6 +24,7 @@ import SeasonQuests from './pages/SeasonQuests';
 import FounderCrisis from './pages/FounderCrisis';
 import AdminLog from './pages/AdminLog';
 import Messages from './pages/Messages';
+import BlackMarket from './pages/BlackMarket';
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="admin-log" element={<PageSafe><AdminLog /></PageSafe>} />
             <Route path="profil" element={<PageSafe><Profile /></PageSafe>} />
             <Route path="mesajlar" element={<PageSafe><Messages /></PageSafe>} />
+            <Route path="kara-borsa" element={<PageSafe><BlackMarket /></PageSafe>} />
           </Route>
           <Route path="*" element={<Navigate to="/giris" replace />} />
         </Routes>

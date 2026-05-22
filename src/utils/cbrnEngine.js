@@ -1,4 +1,4 @@
-/**
+﻿/**
  * KBRN / CBRN — silah geliştirme, sinsi operasyonlar, AI global salgınlar.
  */
 import { genId, nowReportDate } from '../lib/gameUtils';
@@ -63,7 +63,7 @@ export function canRevealStealthAttacker({ detectionLevel, spyLevel }) {
 
 export function getCbrnChemOpCost(weaponLevel) {
   const mult = 1 + Math.max(0, weaponLevel - 1) * 0.14;
-  const base = '120.000 bütçe · 55.000 metal · 22.000 enerji · 15.000 nüfus · 8.000 reaktör';
+  const base = '120.000 bütçe · 55.000 hammadde · 22.000 enerji · 15.000 nüfus · 8.000 reaktör';
   return base
     .split('·')
     .map((part) => {
@@ -344,9 +344,9 @@ export function formatCbrnProtocolFields(researches) {
   const decon = getDecontaminationLevel(researches);
   const detect = getKbrnDetectionLevel(researches);
   return [
-    { key: 'kbrn_weapon', label: 'KBRN Silahı Geliştirme', value: weapon > 0 ? `Sv.${weapon}` : 'Yok', category: 'kbrn' },
-    { key: 'kbrn_decon', label: 'Dekontaminasyon / Panzehir', value: decon > 0 ? `Sv.${decon}` : 'Yok', category: 'kbrn' },
-    { key: 'kbrn_detect', label: 'Erken Uyarı & Tespit', value: detect > 0 ? `Sv.${detect}` : 'Yok', category: 'kbrn' },
+    { key: 'r9', label: 'KBRN Silah Programı', value: weapon > 0 ? `Sv.${weapon}` : 'Yok', category: 'kbrn' },
+    { key: 'r4', label: 'Stratejik Savunma Kalkanı', value: decon > 0 ? `Sv.${decon}` : 'Yok', category: 'kbrn' },
+    { key: 'r6', label: 'Ajan Ağı (tespit)', value: detect > 0 ? `Sv.${detect}` : 'Yok', category: 'kbrn' },
   ];
 }
 
@@ -417,14 +417,20 @@ export function buildKbrnOpsReport({
 
   return {
     id: genId('r'),
+    reportCategory: 'operation',
     filterType: 'kbrn',
-    type: stealth ? 'KBRN Sinsi Operasyon' : 'KBRN Kimyasal Baskı',
-    title: `${target ?? expedition?.target} — KBRN Operasyonu`,
+    type: stealth ? 'KBRN Sinsi Operasyon' : 'Kimyasal Baskı',
+    title: `${target ?? expedition?.target} — Kimyasal Baskı`,
     date: nowReportDate(),
-    preview: `[ KBRN OPS LEDGER ]: ${status}`,
+    preview: roll.success
+      ? 'Kimyasal baskı başarılı — hedef geçici felç.'
+      : 'Kimyasal baskı başarısız — panzehir veya savunma engelledi.',
     winner: roll.success ? attackerName : defenderName ?? target,
     targetCity: target ?? expedition?.target,
     kbrnSuccess: roll.success,
+    operationSuccess: roll.success,
+    agentCaptured: !roll.success && agentCount > 0,
+    agentsLost: roll.success ? 0 : agentCount,
     kbrnLedger,
     kbrnStealth: stealth,
     findings: roll.success

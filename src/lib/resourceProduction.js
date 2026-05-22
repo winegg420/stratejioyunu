@@ -1,7 +1,9 @@
 import { getHqLevel } from './buildingUtils';
+import { getEmpireBudgetIncomeMultiplier } from './empireExpansion';
 import {
   applyHappinessToResourceRates,
   computeCityHappiness,
+  hasActiveCyberEnergyHalt,
   pruneCyberEffects,
   pruneKbrnEffects,
 } from './happinessSystem';
@@ -137,6 +139,13 @@ export function applyProductionFreeze(
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
+    if (hasActiveCyberEnergyHalt(cyberEffects)) {
+      withRates = withRates.map((r) => (
+        r.id === 'energy'
+          ? { ...r, rate: '+0/saat', productionFrozen: true }
+          : r
+      ));
+    }
     withRates = applyAiMineProductionMult(withRates, city);
     const crisisDebuff = city._peaceForceShield
       ? 0
@@ -157,15 +166,18 @@ export function applyProductionFreeze(
       });
     }
     const moneyMult = getEconomicCrisisMoneyMult(city._activeCrisis ?? null);
-    if (moneyMult < 1) {
+    const empireBudgetMult = city._empireBudgetMult ?? 1;
+    const totalMoneyMult = moneyMult * empireBudgetMult;
+    if (totalMoneyMult < 1) {
       withRates = withRates.map((r) => {
         if (r.id !== 'money') return r;
         const hourly = parseHourlyRate(r.rate);
         if (hourly <= 0) return r;
         return {
           ...r,
-          rate: formatRate(Math.max(0, Math.floor(hourly * moneyMult))),
-          economicCrisis: true,
+          rate: formatRate(Math.max(0, Math.floor(hourly * totalMoneyMult))),
+          economicCrisis: moneyMult < 1,
+          empireBudgetPenalty: empireBudgetMult < 1,
         };
       });
     }

@@ -1,10 +1,11 @@
-import { canAffordCost } from '../utils/resourceCosts';
+﻿import { canAffordCost } from '../utils/resourceCosts';
+import { scaleResourceCostString } from './empireExpansion';
 import { EMPTY_AWAY_MAP, getTroopStock } from './troopStock';
 
 export const FOUND_CITY_COLONIST_ID = 'colonist';
 export const FOUND_CITY_UNIT_LABEL = 'Göçmen / İnşaat Aracı';
 export const FOUND_CITY_MIN_COLONISTS = 1;
-export const FOUND_CITY_COST = '2.000 metal · 1.500 nüfus · 500 bütçe';
+export const FOUND_CITY_COST = '2.000 hammadde · 1.500 nüfus · 500 bütçe';
 
 export const FOUND_CITY_DEFAULT_NAMES = ['Yeni Koloni', 'Siber Üs'];
 
@@ -33,10 +34,21 @@ export function getColonistIdleCount(idleTroops, awayMap = EMPTY_AWAY_MAP) {
   return getTroopStock(colonist, awayMap).idle;
 }
 
-export function getFoundCityReadiness({ idleTroops, resources, troopQty = {}, awayMap = EMPTY_AWAY_MAP }) {
+export function resolveFoundCityCost(costMultiplier = 1) {
+  return scaleResourceCostString(FOUND_CITY_COST, costMultiplier);
+}
+
+export function getFoundCityReadiness({
+  idleTroops,
+  resources,
+  troopQty = {},
+  awayMap = EMPTY_AWAY_MAP,
+  costMultiplier = 1,
+}) {
+  const costStr = resolveFoundCityCost(costMultiplier);
   const colonistIdle = getColonistIdleCount(idleTroops, awayMap);
   const colonistInPayload = troopQty[FOUND_CITY_COLONIST_ID] || 0;
-  const hasResources = canAffordCost(FOUND_CITY_COST, 1, resources);
+  const hasResources = canAffordCost(costStr, 1, resources);
   const hasColonistStock = colonistIdle >= FOUND_CITY_MIN_COLONISTS;
   const canOpenPanel = hasColonistStock && hasResources;
 
@@ -45,10 +57,12 @@ export function getFoundCityReadiness({ idleTroops, resources, troopQty = {}, aw
     reasons.push(`En az ${FOUND_CITY_MIN_COLONISTS} ${FOUND_CITY_UNIT_LABEL} (boşta)`);
   }
   if (!hasResources) {
-    reasons.push(`Kaynak: ${FOUND_CITY_COST}`);
+    reasons.push(`Kaynak: ${costStr}`);
   }
 
   return {
+    costStr,
+    costMultiplier,
     colonistIdle,
     colonistAvailable: colonistIdle,
     hasColonistStock,

@@ -1,3 +1,5 @@
+import { bypassWarLocksForDevTest } from './devTestMode';
+
 const RANGE_DEG = 2.0;
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -26,6 +28,7 @@ export function getActiveCityCoords(activeCityId, playerCities, mapCities) {
 
 export function isCityInOperationRange(targetCity, activeCityId, playerCities, mapCities) {
   if (!targetCity || targetCity.status === 'own') return true;
+  if (bypassWarLocksForDevTest()) return true;
   const origin = getActiveCityCoords(activeCityId, playerCities, mapCities);
   if (!origin) return false;
   const dist = haversineKm(origin.lat, origin.lng, targetCity.lat, targetCity.lng);

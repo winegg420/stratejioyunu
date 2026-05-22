@@ -1,0 +1,151 @@
+/* Global HUD — input focus parlaması & ince scrollbar */
+
+:root {
+  --hud-focus-glow: 0 0 8px rgba(57, 255, 20, 0.5);
+  --hud-focus-ring: 0 0 0 1px rgba(57, 255, 20, 0.35);
+  --scrollbar-thumb: rgba(0, 240, 255, 0.42);
+  --scrollbar-thumb-hover: rgba(57, 255, 20, 0.55);
+}
+
+/* Kaydırma çubukları — ince, şeffaf zemin */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
+}
+
+/* Kaynak şeridi yatay kaydırma gizli kalır */
+.resources-row,
+.resources-row--tactical {
+  scrollbar-width: none;
+}
+
+.resources-row::-webkit-scrollbar,
+.resources-row--tactical::-webkit-scrollbar {
+  display: none;
+}
+
+/* Metin / sayı girdileri — varsayılan outline yok, neon gölge */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']):not([type='color']):not([type='button']):not([type='submit']):not([type='reset']),
+select,
+textarea {
+  outline: none;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']):not([type='color']):not([type='button']):not([type='submit']):not([type='reset']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']):not([type='color']):not([type='button']):not([type='submit']):not([type='reset']):focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none !important;
+  box-shadow: var(--hud-focus-ring), var(--hud-focus-glow) !important;
+}
+
+/* Cyan temalı harita / konsol girdileri */
+.map-search--console input:focus,
+.map-search--console input:focus-visible,
+.map-search--console select:focus,
+.map-search--console select:focus-visible,
+.tactical-console .map-city-select:focus,
+.tactical-console .map-city-select:focus-visible,
+.expedition-launch-select:focus,
+.expedition-launch-select:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(0, 240, 255, 0.4),
+    0 0 8px rgba(0, 240, 255, 0.45) !important;
+}
+
+/* Depo kapasite — %90 siber-sarı, %100+ siber-kırmızı */
+@keyframes depot-cap-warn-glow {
+  0%,
+  100% {
+    color: #ffd24a;
+    text-shadow: 0 0 8px rgba(255, 210, 74, 0.55);
+  }
+  50% {
+    color: #ffe566;
+    text-shadow: 0 0 14px rgba(255, 230, 100, 0.85);
+  }
+}
+
+@keyframes depot-cap-full-glow {
+  0%,
+  100% {
+    color: #ff3366;
+    text-shadow: 0 0 10px rgba(255, 51, 102, 0.65);
+  }
+  50% {
+    color: #ff5c85;
+    text-shadow: 0 0 18px rgba(255, 51, 102, 0.95);
+  }
+}
+
+.resource-bar--command .resource-item.depot-warn {
+  border-color: rgba(255, 210, 74, 0.45);
+  box-shadow: 0 0 12px rgba(255, 210, 74, 0.2);
+}
+
+.resource-bar--command .resource-item.depot-warn .res-value__current {
+  color: #ffd24a;
+  animation: depot-cap-warn-glow 1.2s ease-in-out infinite;
+}
+
+.resource-bar--command .resource-item.depot-warn .res-fill--command {
+  background: linear-gradient(90deg, #5a4a10, #ffd24a) !important;
+  box-shadow: 0 0 10px rgba(255, 210, 74, 0.5) !important;
+}
+
+.resource-bar--command .resource-item.depot-full,
+.resource-bar--command .resource-item.depot-overflow {
+  border-color: rgba(255, 51, 102, 0.55);
+  box-shadow: 0 0 14px rgba(255, 51, 102, 0.28);
+}
+
+.resource-bar--command .resource-item.depot-full .res-value__current,
+.resource-bar--command .resource-item.depot-overflow .res-value__current {
+  color: #ff3366;
+  animation: depot-cap-full-glow 1s ease-in-out infinite;
+}
+
+.resource-bar--command .resource-item.depot-full .res-fill--command,
+.resource-bar--command .resource-item.depot-overflow .res-fill--command {
+  background: linear-gradient(90deg, #4a1018, #ff3366) !important;
+  box-shadow: 0 0 12px rgba(255, 51, 102, 0.65) !important;
+}
+
+/* Geliştirici test modu şeridi */
+.dev-test-mode-banner {
+  display: none !important;
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  padding: 0.35rem 0.75rem;
+  text-align: center;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: #ffb347;
+  background: linear-gradient(90deg, rgba(255, 80, 40, 0.12), rgba(0, 240, 255, 0.1), rgba(255, 80, 40, 0.12));
+  border-bottom: 1px solid rgba(255, 179, 71, 0.45);
+  text-shadow: 0 0 8px rgba(255, 140, 50, 0.35);
+  pointer-events: none;
+}

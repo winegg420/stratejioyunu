@@ -1,9 +1,13 @@
-/**
+﻿/**
  * Admin Müdahale Motoru — Merkez Bankası, bölgesel teşvik, şeffaf loglama.
  */
 import { genId } from './gameUtils';
 import { getRegionForCoords, CBNS_REGIONS, createNewsFeedEntry } from '../utils/cbrnEngine';
-import { RESOURCE_IDS, getResourceDisplay } from '../data/resourceCatalog';
+import {
+  RESOURCE_IDS,
+  getResourceDisplay,
+  migrateCentralBankParities,
+} from '../data/resourceCatalog';
 import { formatCrisisLabel, CRISIS_TYPE } from './crisisEngine';
 
 export const ADMIN_LOG_TAG = '[ ADMİN OVERRIDE LOG ]';
@@ -20,7 +24,7 @@ export const DEFAULT_SERVER_ID = 'turkiye-1';
 export const DEFAULT_PARITIES = {
   food: 1,
   fuel: 1,
-  metal: 1,
+  hammadde: 1,
   money: 1,
   energy: 1,
 };
@@ -36,11 +40,14 @@ export const PARITY_MAX = 3;
 export const FUEL_PRICE_MIN = 0.25;
 export const FUEL_PRICE_MAX = 3;
 
-export const REGION_RESOURCE_IDS = ['metal', 'food', 'fuel', 'money'];
+export const REGION_RESOURCE_IDS = ['hammadde', 'food', 'fuel', 'money'];
 
 export function normalizeCentralBank(raw) {
   const base = raw && typeof raw === 'object' ? raw : {};
-  const parities = { ...DEFAULT_PARITIES, ...(base.parities ?? {}) };
+  const parities = migrateCentralBankParities({
+    ...DEFAULT_PARITIES,
+    ...(base.parities ?? {}),
+  });
   for (const id of Object.keys(parities)) {
     parities[id] = clamp(Number(parities[id]) || 1, PARITY_MIN, PARITY_MAX);
   }
@@ -60,7 +67,7 @@ export function normalizeRegionalIncentive(raw, now = Date.now()) {
     active: true,
     regionId: region.id,
     regionName: region.name ?? raw.regionName,
-    resourceId: REGION_RESOURCE_IDS.includes(raw.resourceId) ? raw.resourceId : 'metal',
+    resourceId: REGION_RESOURCE_IDS.includes(raw.resourceId) ? raw.resourceId : 'hammadde',
     multiplier: clamp(Number(raw.multiplier) || 1, 1, 4),
     endsAt,
     announcedAt: raw.announcedAt ?? now,

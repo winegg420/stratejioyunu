@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { isCleansedGhostEndpoint } from './mapRouteUtils';
+import {
+  createRouteNeonDots,
+  removeRouteNeonDots,
+  tickRouteNeonDots,
+} from './routeNeonDots';
 
 function routePathOptions(route) {
   return {
@@ -24,6 +29,7 @@ function removeLayerFromMap(map, layer) {
 /** Leaflet polyline örneklerini map.removeLayer ile canlı senkronize eder. */
 export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 0) {
   const layersRef = useRef(new Map());
+  const dotsRef = useRef(new Map());
 
   useEffect(() => {
     if (!map || routeSyncRev === 0) return;
@@ -32,6 +38,11 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
       if (endpoint && isCleansedGhostEndpoint(mapCities, endpoint)) {
         removeLayerFromMap(map, layer);
         layersRef.current.delete(id);
+        const dots = dotsRef.current.get(id);
+        if (dots) {
+          removeRouteNeonDots(map, dots);
+          dotsRef.current.delete(id);
+        }
       }
     });
   }, [map, mapCities, routeSyncRev]);
@@ -45,6 +56,11 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
       if (!activeIds.has(id)) {
         removeLayerFromMap(map, layer);
         layersRef.current.delete(id);
+        const dots = dotsRef.current.get(id);
+        if (dots) {
+          removeRouteNeonDots(map, dots);
+          dotsRef.current.delete(id);
+        }
       }
     });
 
@@ -57,12 +73,27 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
         layer.__routeEndpoint = route.endpointName;
         layer.addTo(map);
         layersRef.current.set(route.id, layer);
+        dotsRef.current.set(route.id, createRouteNeonDots(map, route));
       } else {
         layer.setLatLngs(latlngs);
         layer.setStyle(routePathOptions(route));
         layer.__routeEndpoint = route.endpointName;
         if (!map.hasLayer(layer)) {
           layer.addTo(map);
+        }
+        let dots = dotsRef.current.get(route.id);
+        if (!dots?.length) {
+          dots = createRouteNeonDots(map, route);
+          dotsRef.current.set(route.id, dots);
+        } else {
+          for (const marker of dots) {
+            marker.__routePositions = route.positions;
+            marker.__routeColor = route.color;
+            marker.setStyle({
+              fillColor: route.color,
+              color: '#ffffff',
+            });
+          }
         }
       }
     }
@@ -71,10 +102,20 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
   }, [map, routes, mapCities]);
 
   useEffect(() => {
+    if (!map || routes.length === 0) return undefined;
+    const intervalId = window.setInterval(() => {
+      dotsRef.current.forEach((dots) => tickRouteNeonDots(dots));
+    }, 48);
+    return () => window.clearInterval(intervalId);
+  }, [map, routes.length]);
+
+  useEffect(() => {
     if (!map) return undefined;
     return () => {
       layersRef.current.forEach((layer) => removeLayerFromMap(map, layer));
       layersRef.current.clear();
+      dotsRef.current.forEach((dots) => removeRouteNeonDots(map, dots));
+      dotsRef.current.clear();
     };
   }, [map]);
 }

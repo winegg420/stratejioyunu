@@ -4,8 +4,8 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import {
   getIdeologyTerritoryStyle,
   isNaturalAlly,
-  resolveCityIdeology,
 } from '../lib/ideologySystem';
+import { resolveOwnerIdeology } from './mapOwnership';
 import { normalizeMapCity } from './botCityUtils';
 import { findProvinceFeature } from './cityProvinceMatch';
 
@@ -29,7 +29,7 @@ export default function CityIdeologyProvinceLayer({
       const entry = {
         ...normalized,
         isOwn: Boolean(pc) || normalized.status === 'own',
-        ownerIdeology: resolveCityIdeology(normalized, playerName, playerIdeology),
+        ownerIdeology: resolveOwnerIdeology(normalized, playerName, playerIdeology),
       };
       if (!entry.ownerIdeology) continue;
 

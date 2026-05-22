@@ -4,10 +4,28 @@ export default function IntelAccordion({
   title,
   icon = '◈',
   defaultOpen = false,
+  alwaysOpen = false,
   badge,
   children,
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(alwaysOpen || defaultOpen);
+
+  if (alwaysOpen) {
+    return (
+      <section className="intel-accordion intel-accordion--always-open">
+        <div className="intel-accordion__head intel-accordion__head--static" aria-hidden="false">
+          <span className="intel-accordion__icon" aria-hidden="true">
+            {icon}
+          </span>
+          <span className="intel-accordion__title">{title}</span>
+          {badge != null && badge !== '' && (
+            <span className="intel-accordion__badge">{badge}</span>
+          )}
+        </div>
+        <div className="intel-accordion__body">{children}</div>
+      </section>
+    );
+  }
 
   return (
     <section className={`intel-accordion${open ? ' intel-accordion--open' : ''}`}>

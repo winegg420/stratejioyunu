@@ -1,79 +1,26 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './map-tactical.css';
 import CityDetailPanel from './CityDetailPanel';
-import CityMarkers from './CityMarkers';
-import MapAnimatedLayers from './MapAnimatedLayers';
-import MapHudControls from './MapHudControls';
-import MapHudConnector from './MapHudConnector';
-import MapPlayerDataLinks from './MapPlayerDataLinks';
-import MapFocusCrosshair from './MapFocusCrosshair';
-import ActiveCityMapFocus from './ActiveCityMapFocus';
-import MapBoundsReporter from './MapBoundsReporter';
-import MapMaxBounds from './MapMaxBounds';
 import MapMiniMap from './MapMiniMap';
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
-import { CARTO_ATTRIBUTION, CARTO_DARK_MATTER_URL } from './cyberMapConfig';
-import { getProvinceStyle, getHoverStyle } from './mapUtils';
-import CityIdeologyProvinceLayer from './CityIdeologyProvinceLayer';
-import CityMapLabelsLayer from './CityMapLabelsLayer';
-import CityTargetReticleLayer from './CityTargetReticleLayer';
-import ProvinceHighlightSync, { setActiveProvinceLayer } from './ProvinceHighlightSync';
-import { enrichMapCityWithProvince, resolveCityProvinceName } from './cityProvinceMatch';
-import NeighborCountriesLayer from './NeighborCountriesLayer';
+import { getProvinceStyle } from './mapUtils';
 import TacticalSearchConsole from './TacticalSearchConsole';
+import MapTacticalCommandBar from './MapTacticalCommandBar';
+import MapIntelSidebar from './MapIntelSidebar';
+import MapStatusBand from './MapStatusBand';
+import TurkeyLeafletMap from './TurkeyLeafletMap';
 import { normalizeMapCities } from './botCityUtils';
-import { IDEOLOGY_PROFILES } from '../lib/ideologySystem';
+import { enrichMapCityWithProvince } from './cityProvinceMatch';
+import { buildBotProvinceNameSet } from '../lib/botProvincePulse';
+import { useMapFullscreen } from '../hooks/useMapFullscreen';
+import { useProvinceMapHandlers } from './useProvinceMapHandlers';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
-
-const TURKEY_CENTER = [39.0, 35.0];
-const TURKEY_ZOOM = 6;
-
-function FitBounds({ bounds }) {
-  const map = useMap();
-  useEffect(() => {
-    if (bounds) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
-  }, [map, bounds]);
-  return null;
-}
-
-function FlyToCity({ lat, lng, zoom = 9 }) {
-  const map = useMap();
-  useEffect(() => {
-    if (lat != null && lng != null) {
-      map.flyTo([lat, lng], zoom, { animate: true, duration: 1.5, easeLinearity: 0.25 });
-    }
-  }, [map, lat, lng, zoom]);
-  return null;
-}
-
-function MapInteractionController({ interactionLocked }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (interactionLocked) {
-      map.dragging.enable();
-      map.touchZoom.enable();
-      map.doubleClickZoom.enable();
-      map.scrollWheelZoom.disable();
-    } else {
-      map.dragging.disable();
-      map.touchZoom.disable();
-      map.doubleClickZoom.disable();
-      map.scrollWheelZoom.disable();
-    }
-  }, [map, interactionLocked]);
-
-  return null;
-}
-
-function HudBridge() {
-  return <MapHudControls />;
-}
+import { getMapCityDisplayName } from './mapCityDisplayName';
+import { releaseMapSessionLocks } from './mapRouteCleanup';
 
 function MapCoordTooltip({ hover }) {
   if (!hover) return null;
@@ -83,7 +30,9 @@ function MapCoordTooltip({ hover }) {
       style={{ left: hover.x, top: hover.y }}
       role="tooltip"
     >
-      {hover.name && <span className="map-coord-tooltip__city">{hover.name}</span>}
+      {hover.name && (
+        <span className="map-coord-tooltip__city">{getMapCityDisplayName(hover.name)}</span>
+      )}
       <span>
         COORD_X: {hover.lat.toFixed(2)} | Y: {hover.lng.toFixed(2)}
       </span>
@@ -93,7 +42,8 @@ function MapCoordTooltip({ hover }) {
 
 export default function TurkeyMap() {
   const navigate = useNavigate();
-  const [mapReady, setMapReady] = useState(false);
+  const { theaterRef, isFullscreen, exitFullscreen, toggleFullscreen } = useMapFullscreen();
+
   const mapCitiesRaw = useGameStore((s) => s.mapCities);
   const mapCities = useMemo(() => normalizeMapCities(mapCitiesRaw), [mapCitiesRaw]);
   const expeditions = useGameStore((s) => s.expeditions);
@@ -105,7 +55,10 @@ export default function TurkeyMap() {
   const playerCities = useGameStore((s) => s.playerCities);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks);
   const underAttack = useUnderAttack();
+  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const isMobile = useIsMobile();
+
+  const [mapReady, setMapReady] = useState(false);
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
@@ -116,37 +69,43 @@ export default function TurkeyMap() {
   const [cityPick, setCityPick] = useState('');
   const [viewport, setViewport] = useState(null);
   const [hoverCoord, setHoverCoord] = useState(null);
-  const setViewportStable = useCallback((next) => {
-    setViewport((prev) => {
-      if (!prev || !next) return next;
-      const pb = prev.bounds;
-      const nb = next.bounds;
-      const pc = prev.center;
-      const nc = next.center;
-      if (
-        prev.zoom === next.zoom
-        && pc.lat === nc.lat
-        && pc.lng === nc.lng
-        && pb.getNorth() === nb.getNorth()
-        && pb.getSouth() === nb.getSouth()
-        && pb.getEast() === nb.getEast()
-        && pb.getWest() === nb.getWest()
-      ) {
-        return prev;
-      }
-      return next;
-    });
-  }, []);
   const [hudCollapsed, setHudCollapsed] = useState(false);
   const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
   const [scanPulse, setScanPulse] = useState(false);
   const [ideologyView, setIdeologyView] = useState(false);
   const [activeHighlightCity, setActiveHighlightCity] = useState(null);
+  const [hexPulses, setHexPulses] = useState([]);
+
   const provinceLayerRef = useRef(null);
   const activeProvinceLayerRef = useRef(null);
-  const playerIdeology = useGameStore((s) => s.playerIdeology);
+  const botPulsePhaseRef = useRef(0);
+  const hexPulseTimersRef = useRef([]);
+
+  const handleMapClickPulse = useCallback((pulse) => {
+    setHexPulses((prev) => [...prev, pulse].slice(-12));
+    const timer = window.setTimeout(() => {
+      setHexPulses((prev) => prev.filter((p) => p.id !== pulse.id));
+    }, 520);
+    hexPulseTimersRef.current.push(timer);
+  }, []);
+
+  useEffect(() => () => {
+    hexPulseTimersRef.current.forEach((t) => window.clearTimeout(t));
+    hexPulseTimersRef.current = [];
+  }, []);
+  const botProvinceNamesRef = useRef(new Set());
 
   const interactionLocked = isMobile ? mapLocked : true;
+
+  const ensureMapBotProvinces = useGameStore((s) => s.ensureMapBotProvinces);
+
+  useEffect(() => () => releaseMapSessionLocks(), []);
+
+  const botProvinceNames = useMemo(
+    () => buildBotProvinceNameSet(mapCities, playerCities, provinces),
+    [mapCities, playerCities, provinces],
+  );
+  botProvinceNamesRef.current = botProvinceNames;
 
   const activePlayerCity = useMemo(
     () => playerCities.find((c) => c.id === activeCityId) ?? playerCities[0],
@@ -169,37 +128,83 @@ export default function TurkeyMap() {
     );
   }, [activePlayerCity, mapCities]);
 
-  useEffect(() => {
-    setMapReady(true);
-    return () => setMapReady(false);
+  const filteredCities = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return mapCities;
+    return mapCities.filter((c) => c.name.toLowerCase().includes(q));
+  }, [mapCities, search]);
+
+  const hasMapFilter = useMemo(
+    () => Boolean(
+      search.trim()
+      || searchCoord.trim()
+      || cityPick
+      || selectedCity
+      || activeHighlightCity,
+    ),
+    [search, searchCoord, cityPick, selectedCity, activeHighlightCity],
+  );
+
+  const mapZoom = viewport?.zoom ?? 6;
+
+  const mapLiveStats = useMemo(() => ({
+    botCities: mapCities.filter((c) => c.status === 'bot').length,
+    playerCities: playerCities.length,
+    activeExpeditions: (expeditions ?? []).filter((e) => e.direction === 'outgoing').length,
+  }), [mapCities, playerCities, expeditions]);
+
+  const setViewportStable = useCallback((next) => {
+    setViewport((prev) => {
+      if (!prev || !next) return next;
+      const pb = prev.bounds;
+      const nb = next.bounds;
+      const pc = prev.center;
+      const nc = next.center;
+      if (
+        prev.zoom === next.zoom
+        && pc.lat === nc.lat
+        && pc.lng === nc.lng
+        && pb.getNorth() === nb.getNorth()
+        && pb.getSouth() === nb.getSouth()
+        && pb.getEast() === nb.getEast()
+        && pb.getWest() === nb.getWest()
+      ) {
+        return prev;
+      }
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    fetch('/geo/provinces.json')
-      .then((r) => r.json())
-      .then(setProvinces)
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (!mapFocusRequest) return;
-    const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
-    const home = mapCities.find((c) => c.name === originPc?.name);
-    const target = mapCities.find((c) => c.name === mapFocusRequest.targetName);
-    if (home && target) {
-      const bounds = L.latLngBounds(
-        [home.lat, home.lng],
-        [target.lat, target.lng],
-      );
-      setFitBounds(bounds);
-      setFlyTarget(null);
+  const handleSelectCity = useCallback((city) => {
+    const enriched = enrichMapCityWithProvince(city, playerCities);
+    if (mapTargetPickRequest) {
+      const own = new Set(playerCities.map((c) => c.name));
+      if (own.has(enriched.name)) return;
+      fulfillMapTargetPick(enriched.name);
+      navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
+      return;
     }
-    clearMapFocusRequest();
-  }, [mapFocusRequest, playerCities, mapCities, clearMapFocusRequest]);
+    setSelectedCity(enriched);
+    setActiveHighlightCity(enriched);
+  }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate]);
 
-  const provinceStyle = useCallback(() => getProvinceStyle(), []);
+  const { onEachProvince } = useProvinceMapHandlers({
+    mapCities,
+    playerCities,
+    mapTargetPickRequest,
+    fulfillMapTargetPick,
+    navigate,
+    handleSelectCity,
+    setActiveHighlightCity,
+    activeProvinceLayerRef,
+    botProvinceNamesRef,
+    botPulsePhaseRef,
+  });
 
-  const handleSearch = (e) => {
+  const handleCityHover = useCallback((payload) => setHoverCoord(payload), []);
+  const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
+
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
     setScanPulse(true);
     window.setTimeout(() => setScanPulse(false), 480);
@@ -222,19 +227,7 @@ export default function TurkeyMap() {
       setActiveHighlightCity(city);
       setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
     }
-  };
-
-  const filteredCities = search
-    ? mapCities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : mapCities;
-
-  const hasMapFilter = Boolean(
-    search.trim()
-    || searchCoord.trim()
-    || cityPick
-    || selectedCity
-    || activeHighlightCity,
-  );
+  }, [search, searchCoord, mapCities]);
 
   const clearMapFilters = useCallback(() => {
     setSearch('');
@@ -250,77 +243,84 @@ export default function TurkeyMap() {
     }
   }, []);
 
-  const handleCityHover = useCallback((payload) => setHoverCoord(payload), []);
-  const handleCityHoverEnd = useCallback(() => setHoverCoord(null), []);
-
-  const handleSelectCity = useCallback((city) => {
-    const enriched = enrichMapCityWithProvince(city, playerCities);
-    if (mapTargetPickRequest) {
-      const own = new Set(playerCities.map((c) => c.name));
-      if (own.has(enriched.name)) return;
-      fulfillMapTargetPick(enriched.name);
-      navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
-      return;
+  const handleCloseCityPanel = useCallback(() => {
+    setSelectedCity(null);
+    setActiveHighlightCity(null);
+    if (activeProvinceLayerRef.current) {
+      activeProvinceLayerRef.current.setStyle(getProvinceStyle());
+      activeProvinceLayerRef.current = null;
     }
-    setSelectedCity(enriched);
-    setActiveHighlightCity(enriched);
-  }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate]);
-
-  const findCityForProvince = useCallback((feature) => {
-    const provinceName = feature.properties?.shapeName;
-    if (!provinceName) return null;
-    return mapCities.find(
-      (c) => resolveCityProvinceName(c, playerCities) === provinceName,
-    ) ?? mapCities.find((c) => c.name === provinceName) ?? null;
-  }, [mapCities, playerCities]);
-
-  const setActiveFeature = useCallback((layer) => {
-    setActiveProvinceLayer(layer, activeProvinceLayerRef, getProvinceStyle);
   }, []);
 
-  const onEachProvince = useCallback((feature, layer) => {
-    const name = feature.properties?.shapeName;
-    if (name) {
-      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
-    }
-    layer.on('mouseover', () => {
-      if (activeProvinceLayerRef.current !== layer) {
-        layer.setStyle(getHoverStyle(getProvinceStyle()));
-      }
-    });
-    layer.on('mouseout', () => {
-      if (activeProvinceLayerRef.current !== layer) {
-        layer.setStyle(getProvinceStyle());
-      }
-    });
-    layer.on('click', () => {
-      const city = findCityForProvince(feature);
-      if (city) {
-        handleSelectCity(city);
-      } else {
-        setActiveHighlightCity({
-          name: feature.properties?.shapeName ?? 'Bölge',
-          provinceName: feature.properties?.shapeName,
-          province: feature.properties?.shapeISO,
-        });
-      }
-      setActiveFeature(layer);
-    });
-  }, [findCityForProvince, handleSelectCity, setActiveFeature]);
+  const handleToggleIdeology = useCallback(() => {
+    setIdeologyView((v) => !v);
+  }, []);
 
-  const mapZoom = viewport?.zoom ?? TURKEY_ZOOM;
+  const handleConsoleCitySelect = useCallback((city) => {
+    setCityPick(city.name);
+    setFlyTarget({ lat: city.lat, lng: city.lng });
+    handleSelectCity(city);
+    if (!mapTargetPickRequest) {
+      setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
+    }
+  }, [handleSelectCity, mapTargetPickRequest]);
+
+  useEffect(() => {
+    setMapReady(true);
+    return () => setMapReady(false);
+  }, []);
+
+  useEffect(() => {
+    fetch('/geo/provinces.json')
+      .then((r) => r.json())
+      .then(setProvinces)
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!provinces) return;
+    ensureMapBotProvinces(provinces);
+  }, [provinces, ensureMapBotProvinces]);
+
+  useEffect(() => {
+    if (!mapFocusRequest) return;
+    const originPc = playerCities.find((p) => p.id === mapFocusRequest.originCityId);
+    const home = mapCities.find((c) => c.name === originPc?.name);
+    const target = mapCities.find((c) => c.name === mapFocusRequest.targetName);
+    if (home && target) {
+      setFitBounds(L.latLngBounds([[home.lat, home.lng], [target.lat, target.lng]]));
+      setFlyTarget(null);
+    }
+    clearMapFocusRequest();
+  }, [mapFocusRequest, playerCities, mapCities, clearMapFocusRequest]);
+
+  const pageClassName = useMemo(
+    () => [
+      'map-page',
+      'map-page--cyber',
+      'map-page--tactical',
+      'map-page--command-theater',
+      mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked',
+      mapTargetPickRequest && 'map-page--pick-target',
+      isFullscreen && 'map-page--fullscreen',
+    ].filter(Boolean).join(' '),
+    [mapLocked, isMobile, mapTargetPickRequest, isFullscreen],
+  );
 
   return (
-    <div
-      className={[
-        'map-page',
-        'map-page--cyber',
-        'map-page--tactical',
-        mapLocked && isMobile ? 'map-interaction-locked' : 'map-interaction-unlocked',
-        mapTargetPickRequest && 'map-page--pick-target',
-      ].filter(Boolean).join(' ')}
-    >
-      {isMobile && (
+    <div ref={theaterRef} className={pageClassName}>
+      {isFullscreen && (
+        <button
+          type="button"
+          className="map-fs-exit-btn"
+          onClick={exitFullscreen}
+          aria-label="Tam ekrandan çık"
+        >
+          [ TAM EKRANDAN ÇIK ]
+        </button>
+      )}
+
+      {isMobile && !isFullscreen && (
         <div className="map-mobile-controls map-mobile-controls--cyber">
           <button
             type="button"
@@ -338,13 +338,7 @@ export default function TurkeyMap() {
                 const name = e.target.value;
                 setCityPick(name);
                 const city = mapCities.find((c) => c.name === name);
-                if (city) {
-                  setFlyTarget({ lat: city.lat, lng: city.lng });
-                  handleSelectCity(city);
-                  if (!mapTargetPickRequest) {
-                    setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
-                  }
-                }
+                if (city) handleConsoleCitySelect(city);
               }}
             >
               <option value="">Şehir ara...</option>
@@ -371,26 +365,23 @@ export default function TurkeyMap() {
         </div>
       )}
 
-      <div className="map-ideology-toolbar" role="toolbar" aria-label="Harita ideoloji filtreleri">
-        <button
-          type="button"
-          className={`btn btn-secondary btn-sm map-ideology-toggle${ideologyView ? ' active' : ''}`}
-          onClick={() => setIdeologyView((v) => !v)}
-          aria-pressed={ideologyView}
-        >
-          [ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]
-        </button>
-        {ideologyView && (
-          <div className="map-ideology-legend" aria-hidden="true">
-            {Object.values(IDEOLOGY_PROFILES).map((p) => (
-              <span key={p.id} className="map-ideology-legend__item" style={{ color: p.color }}>
-                {p.emoji} {p.subtitle}
-              </span>
-            ))}
-            <span className="map-ideology-legend__ally">◈ Aynı ideoloji = Doğal Müttefik</span>
-          </div>
-        )}
-      </div>
+      {!isFullscreen && (
+        <div className="map-page-toolbar">
+          <MapTacticalCommandBar
+            ideologyView={ideologyView}
+            onToggleIdeology={handleToggleIdeology}
+            isFullscreen={isFullscreen}
+          />
+          <button
+            type="button"
+            className="map-fs-hero-btn map-fs-hero-btn--compact"
+            onClick={toggleFullscreen}
+            aria-label="Taktik harekat odası tam ekran modunu aç"
+          >
+            [ TAM EKRAN ]
+          </button>
+        </div>
+      )}
 
       <div className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical">
         {(!isMobile || !mapLocked) && (
@@ -398,14 +389,7 @@ export default function TurkeyMap() {
             mapCities={mapCities}
             cityPick={cityPick}
             setCityPick={setCityPick}
-            onCitySelect={(city) => {
-              setCityPick(city.name);
-              setFlyTarget({ lat: city.lat, lng: city.lng });
-              handleSelectCity(city);
-              if (!mapTargetPickRequest) {
-                setFitBounds(L.latLngBounds([[city.lat, city.lng]]));
-              }
-            }}
+            onCitySelect={handleConsoleCitySelect}
             search={search}
             setSearch={setSearch}
             searchCoord={searchCoord}
@@ -414,8 +398,24 @@ export default function TurkeyMap() {
             scanPulse={scanPulse}
             onResetFilter={clearMapFilters}
             hasActiveFilter={hasMapFilter}
+            liveStats={mapLiveStats}
           />
         )}
+
+        <MapIntelSidebar />
+
+        <div className="map-hex-pulse-layer" aria-hidden="true">
+          {hexPulses.map((pulse) => (
+            <div
+              key={pulse.id}
+              className="map-hex-pulse"
+              style={{ left: pulse.x, top: pulse.y }}
+            >
+              <span className="map-hex-pulse__shape" />
+            </div>
+          ))}
+        </div>
+
         <div className="map-tactical-overlay" aria-hidden="true">
           <div className="map-tactical-grid" />
           <div className="map-tactical-scanlines" />
@@ -427,122 +427,74 @@ export default function TurkeyMap() {
             Harita yükleniyor…
           </div>
         )}
+
         {mapReady && (
-        <MapContainer
-          key="turkey-main-map"
-          center={TURKEY_CENTER}
-          zoom={TURKEY_ZOOM}
-          minZoom={5}
-          maxBounds={TURKEY_MAX_BOUNDS}
-          className="turkey-map turkey-map--cyber"
-          scrollWheelZoom={!isMobile}
-          touchZoom
-          dragging
-          doubleClickZoom
-          zoomControl={false}
-        >
-          <MapMaxBounds />
-          {isMobile && <MapInteractionController interactionLocked={interactionLocked} />}
-          <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
-          <NeighborCountriesLayer />
-          {provinces && (
-            <GeoJSON
-              key="provinces-radar"
-              ref={provinceLayerRef}
-              data={provinces}
-              className="map-province-layer"
-              style={provinceStyle}
-              smoothFactor={1.5}
-              onEachFeature={onEachProvince}
-            />
-          )}
-          <CityIdeologyProvinceLayer
+          <TurkeyLeafletMap
             provinces={provinces}
-            mapCities={filteredCities}
-            playerCities={playerCities}
-            playerIdeology={playerIdeology}
-            enabled={ideologyView}
-          />
-          <ProvinceHighlightSync
-            activeCity={activeHighlightCity}
-            provinces={provinces}
-            playerCities={playerCities}
-            layerRef={provinceLayerRef}
-          />
-          <MapPlayerDataLinks playerCities={playerCities} />
-          <MapBoundsReporter onViewportChange={setViewportStable} />
-          <MapAnimatedLayers
-            expeditions={expeditions}
+            botProvinceNames={botProvinceNames}
+            botPulsePhaseRef={botPulsePhaseRef}
+            onEachProvince={onEachProvince}
+            ideologyView={ideologyView}
+            filteredCities={filteredCities}
             mapCities={mapCities}
             playerCities={playerCities}
-          />
-          <CityTargetReticleLayer
-            mapCities={filteredCities}
-            playerCities={playerCities}
-          />
-          <CityMapLabelsLayer
-            mapCities={filteredCities}
-            playerCities={playerCities}
-            zoom={mapZoom}
-          />
-          <CityMarkers
-            mapCities={filteredCities}
-            playerCities={playerCities}
+            playerIdeology={playerIdeology}
+            activeHighlightCity={activeHighlightCity}
+            provinceLayerRef={provinceLayerRef}
+            expeditions={expeditions}
             activeCityId={activeCityId}
             underAttack={underAttack}
             incomingAttacks={incomingAttacks}
             onSelectCity={handleSelectCity}
             onCityHover={handleCityHover}
             onCityHoverEnd={handleCityHoverEnd}
-            showPinLabels={mapZoom < 6}
+            mapZoom={mapZoom}
+            activeLat={activeLat}
+            activeLng={activeLng}
+            fitBounds={fitBounds}
+            flyTarget={flyTarget}
+            isMobile={isMobile}
+            interactionLocked={interactionLocked}
+            hudCollapsed={hudCollapsed}
+            onViewportChange={setViewportStable}
+            onMapClickPulse={handleMapClickPulse}
           />
-          <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
-          {fitBounds && <FitBounds bounds={fitBounds} />}
-          {flyTarget && (
-            <FlyToCity lat={flyTarget.lat} lng={flyTarget.lng} zoom={9} />
-          )}
-          {(!isMobile || !hudCollapsed) && <HudBridge />}
-          {activeLat != null && activeLng != null && (
-            <MapHudConnector lat={activeLat} lng={activeLng} />
-          )}
-          <MapFocusCrosshair lat={activeLat} lng={activeLng} />
-        </MapContainer>
         )}
-        {isMobile && (
-          <button
-            type="button"
-            className="map-collapse-toggle map-collapse-toggle--hud"
-            onClick={() => setHudCollapsed((v) => !v)}
-            aria-expanded={!hudCollapsed}
-          >
-            {hudCollapsed ? 'HUD Aç' : 'HUD Kapat'}
-          </button>
+
+        <div className="map-radar-scan-layer" aria-hidden="true">
+          <div className="map-radar-scan-layer__glow" />
+          <div className="map-radar-scan-layer__beam" />
+        </div>
+
+        {isMobile && !isFullscreen && (
+          <>
+            <button
+              type="button"
+              className="map-collapse-toggle map-collapse-toggle--hud"
+              onClick={() => setHudCollapsed((v) => !v)}
+              aria-expanded={!hudCollapsed}
+            >
+              {hudCollapsed ? 'HUD Aç' : 'HUD Kapat'}
+            </button>
+            <button
+              type="button"
+              className="map-collapse-toggle map-collapse-toggle--minimap"
+              onClick={() => setMiniMapCollapsed((v) => !v)}
+              aria-expanded={!miniMapCollapsed}
+            >
+              {miniMapCollapsed ? 'Mini Harita' : 'Mini Harita Kapat'}
+            </button>
+          </>
         )}
-        {isMobile && (
-          <button
-            type="button"
-            className="map-collapse-toggle map-collapse-toggle--minimap"
-            onClick={() => setMiniMapCollapsed((v) => !v)}
-            aria-expanded={!miniMapCollapsed}
-          >
-            {miniMapCollapsed ? 'Mini Harita' : 'Mini Harita Kapat'}
-          </button>
-        )}
+
         <div className={`map-minimap-wrap${miniMapCollapsed && isMobile ? ' map-minimap-wrap--collapsed' : ''}`}>
           <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
         </div>
+
+        <MapStatusBand />
+
         {selectedCity && (
-          <CityDetailPanel
-            city={selectedCity}
-            onClose={() => {
-              setSelectedCity(null);
-              setActiveHighlightCity(null);
-              if (activeProvinceLayerRef.current) {
-                activeProvinceLayerRef.current.setStyle(getProvinceStyle());
-                activeProvinceLayerRef.current = null;
-              }
-            }}
-          />
+          <CityDetailPanel city={selectedCity} onClose={handleCloseCityPanel} />
         )}
       </div>
     </div>

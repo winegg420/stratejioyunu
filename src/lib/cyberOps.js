@@ -1,51 +1,47 @@
-import { genId } from './gameUtils';
+﻿import { genId } from './gameUtils';
 
 export const CYBER_OPS_BUILDING_ID = 'cyber_ops';
 
-/**
- * Siber Operasyon Merkezi seviyesine göre açılan yetenekler.
- * Store: launchCyberAttack → hedef şehir cyberEffects + cyberOpsLog
- */
-/** Siber virüs / ajan operasyonları (Casusluk sekmesi + harita modal) */
+/** Siber Operasyon Merkezi — dört standart operasyon */
 export const CYBER_ABILITIES = [
   {
     id: 'infra_sabotage',
     name: 'Altyapı Sabotajı',
-    subtitle: 'İletişim kesme',
-    desc: 'Komuta haberleşmesi ve kışla hatlarına baskı — üretim hızı geçici düşer.',
-    effectType: 'comms',
+    mapCode: 'SABOTAJ_ENERJI[01]',
+    desc: 'Hedef üssün enerji üretimini geçici olarak durdurur.',
+    effectType: 'energy_halt',
+    energyHalt: true,
     minLevel: 1,
-    barracksSlow: 0.3,
-    cost: '1.200 metal · 800 enerji',
+    cost: '1.400 hammadde · 900 enerji',
+  },
+  {
+    id: 'comms_cut',
+    name: 'İletişim Kesme',
+    mapCode: 'COMMS_CUT[02]',
+    desc: 'Düşman komuta bildirimlerini geciktirir — %10 iletişim etkisi.',
+    effectType: 'comms_delay',
+    notificationDelayPct: 0.1,
+    minLevel: 1,
+    cost: '1.200 hammadde · 700 enerji',
   },
   {
     id: 'disinformation',
     name: 'Dezenformasyon',
-    subtitle: 'Mutluluk düşürme',
-    desc: 'Hedef üste psikolojik operasyon — halk moralini geçici baltalar.',
+    mapCode: 'DEZEN_OPS[03]',
+    desc: 'Hedef şehirde nüfus mutluluğunu düşürür.',
     effectType: 'happiness',
+    happinessDebuffPercent: 0.28,
     minLevel: 1,
-    happinessDebuffPercent: 0.3,
-    cost: '1.000 metal · 600 enerji',
+    cost: '1.000 hammadde · 600 enerji',
   },
   {
-    id: 'economic_paralysis',
-    name: 'Ekonomik Siber Felç',
-    subtitle: 'Üretim verimi azaltma',
-    desc: 'Sanayi ve kaynak hatlarına müdahale — saatlik üretim verimi düşer.',
-    effectType: 'production',
-    minLevel: 2,
-    productionDebuff: 0.3,
-    cost: '1.600 metal · 1.000 enerji',
-  },
-  {
-    id: 'neural_strike',
-    name: 'YZ Sinir Ağı Darbesi',
-    subtitle: 'AI Command Center sabotajı',
-    desc: 'Hedefin Yapay Zeka Merkezini geçici devre dışı bırakır — algoritmik bonuslar durur.',
-    effectType: 'ai_sabotage',
-    minLevel: 3,
-    cost: '2.400 metal · 1.800 enerji',
+    id: 'data_leak',
+    name: 'Veri Sızıntısı',
+    mapCode: 'DATA_LEAK[04]',
+    desc: 'Başarılı sızmadaki düşmanın tüm kaynak stoklarını görünür kılar.',
+    effectType: 'resource_intel',
+    minLevel: 1,
+    cost: '1.600 hammadde · 1.100 enerji',
   },
 ];
 
@@ -73,7 +69,6 @@ export function canLaunchCyberAbility(city, abilityId) {
   return { ok: true, ability };
 }
 
-/** Başarılı siber virüs debuff süresi (1 saat) */
 export const CYBER_VIRUS_DURATION_MS = 60 * 60 * 1000;
 
 export function createCyberEffect(ability, { sourceCityName, sourcePlayer }) {
@@ -88,18 +83,27 @@ export function createCyberEffect(ability, { sourceCityName, sourcePlayer }) {
     endsAt,
   };
 
-  if (ability.effectType === 'ai_sabotage' || ability.aiCenterOffline) {
-    return { ...base, aiCenterOffline: true };
+  if (ability.effectType === 'energy_halt' || ability.energyHalt) {
+    return { ...base, energyHalt: true };
+  }
+  if (ability.effectType === 'comms_delay' || ability.notificationDelayPct) {
+    return {
+      ...base,
+      notificationDelayPct: ability.notificationDelayPct ?? 0.1,
+    };
+  }
+  if (ability.effectType === 'resource_intel') {
+    return { ...base, resourceIntelLeak: true };
   }
   if (ability.effectType === 'happiness' || ability.happinessDebuffPercent) {
-    return { ...base, happinessDebuffPercent: ability.happinessDebuffPercent ?? 0.3 };
+    return { ...base, happinessDebuffPercent: ability.happinessDebuffPercent ?? 0.28 };
   }
-  if (ability.effectType === 'production' || (ability.productionDebuff && !ability.barracksSlow)) {
+  if (ability.effectType === 'production' || ability.productionDebuff) {
     return { ...base, productionDebuff: ability.productionDebuff ?? 0.3 };
   }
   return {
     ...base,
-    barracksSlow: ability.barracksSlow ?? 0.3,
+    barracksSlow: ability.barracksSlow ?? 0,
     productionDebuff: ability.productionDebuff ?? 0,
   };
 }

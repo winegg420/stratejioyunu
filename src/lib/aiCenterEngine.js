@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Yapay Zeka Merkezi (AI Command Center) — enerji tüketimi, seviye bonusları, siber yarış.
  */
 import { pruneCyberEffects } from './happinessSystem';
@@ -10,8 +10,8 @@ export const AI_CENTER_MAX_LEVEL = 15;
 export const AI_CENTER_ENERGY_PER_LEVEL_HOURLY = 50;
 export const AI_EARLY_WARNING_MS = 60 * 60 * 1000;
 
-const MINE_RESOURCE_IDS = new Set(['food', 'metal', 'fuel']);
-const DEPOT_RESOURCE_IDS = new Set(['food', 'metal', 'fuel', 'money', 'energy', 'uranium']);
+const MINE_RESOURCE_IDS = new Set(['food', 'hammadde', 'fuel']);
+const DEPOT_RESOURCE_IDS = new Set(['food', 'hammadde', 'fuel', 'money', 'energy', 'uranium']);
 
 export function getAiCenterLevel(city) {
   const b = getBuildingById(city, AI_CENTER_BUILDING_ID);

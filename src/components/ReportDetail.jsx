@@ -1,6 +1,25 @@
 import { extractCityFromReportTitle, getEnemyTroopsFromReport } from '../lib/spyIntel';
 import { buildLossRows, formatLossCell } from '../lib/reportLosses';
 import { landUnits } from '../data/placeholder';
+import { isOperationReport } from '../data/intelOperationsCatalog';
+
+function OperationOutcomeBanner({ report }) {
+  if (!isOperationReport(report)) return null;
+  const ok = report.operationSuccess ?? report.intelSuccess ?? report.cyberSuccess ?? report.kbrnSuccess;
+  const captured = report.agentCaptured || (report.agentsLost > 0);
+  return (
+    <div
+      className={`operation-outcome-banner${ok ? ' operation-outcome-banner--ok' : ' operation-outcome-banner--fail'}`}
+      role="status"
+    >
+      <span className="operation-outcome-banner__label">Operasyon sonucu</span>
+      <strong>{ok ? 'Başarılı' : 'Başarısız'}</strong>
+      <span className="operation-outcome-banner__meta">
+        {captured ? 'Ajan yakalandı / kayıp' : ok ? 'Hedef etkilendi' : 'Operasyon düşman tarafından engellendi'}
+      </span>
+    </div>
+  );
+}
 
 function LossBreakdownTable({ title, rows, fallbackText }) {
   const built = rows?.length
@@ -166,6 +185,7 @@ export default function ReportDetail({ report }) {
 
     return (
       <div className="report-detail report-detail--intel-ledger">
+        <OperationOutcomeBanner report={report} />
         {ledger && (
           <div className={`intel-ledger-banner intel-ledger-banner--${ledger.status.toLowerCase()}`}>
             <span className="intel-ledger-tag">
@@ -249,6 +269,7 @@ export default function ReportDetail({ report }) {
 
     return (
       <div className="report-detail report-detail--cyber-ledger">
+        <OperationOutcomeBanner report={report} />
         {ledger && (
           <div className={`cyber-ledger-banner cyber-ledger-banner--${ledger.status.toLowerCase()}`}>
             <span className="cyber-ledger-tag">
@@ -294,6 +315,7 @@ export default function ReportDetail({ report }) {
 
     return (
       <div className="report-detail report-detail--kbrn-ledger">
+        {!alert && <OperationOutcomeBanner report={report} />}
         {ledger && (
           <div className={`kbrn-ledger-banner kbrn-ledger-banner--${ledger.status.toLowerCase()}`}>
             <span className="kbrn-ledger-tag">
@@ -330,6 +352,36 @@ export default function ReportDetail({ report }) {
           <pre className="kbrn-ledger-terminal" aria-label="KBRN operasyon günlüğü">
             {ledger.lines.join('\n')}
           </pre>
+        )}
+      </div>
+    );
+  }
+
+  if (report.filterType === 'logistics') {
+    return (
+      <div className="report-detail">
+        <div className="report-winner-banner report-winner-banner--intel-ok">
+          <span className="report-winner-icon" aria-hidden="true">
+            {report.logisticsMode === 'air' ? '✈️' : '🚛'}
+          </span>
+          <div>
+            <strong>Hammadde Lojistiği</strong>
+            <span>{report.preview}</span>
+          </div>
+        </div>
+        <ul className="report-detail-meta">
+          <li><strong>Sevkiyat:</strong> {report.cargo}</li>
+          <li><strong>Taşıma:</strong> {report.logisticsLabel ?? report.logisticsMode}</li>
+          {report.distance && <li><strong>Mesafe:</strong> {report.distance}</li>}
+          {report.airCost > 0 && (
+            <li><strong>Havayolu ücreti:</strong> {report.airCost.toLocaleString('tr-TR')} bütçe (ortak kasa)</li>
+          )}
+        </ul>
+        {report.overflow?.length > 0 && (
+          <p className="trade-overflow-warn" role="status">
+            Depo taşması:{' '}
+            {report.overflow.map((o) => `${o.amount} ${o.label}`).join(', ')}
+          </p>
         )}
       </div>
     );

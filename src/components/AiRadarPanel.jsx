@@ -5,6 +5,7 @@ import {
   formatAiCenterStatus,
   getEarlyWarningIncomingAttacks,
 } from '../lib/aiCenterEngine';
+import IntelListRow from './IntelListRow';
 
 export default function AiRadarPanel() {
   const now = useGameStore((s) => s.now);
@@ -26,7 +27,7 @@ export default function AiRadarPanel() {
   const status = formatAiCenterStatus(city);
 
   return (
-    <section className="panel ai-radar-panel" role="status">
+    <section className="panel ai-radar-panel glass-panel" role="status">
       <h3 className="panel-title">
         <span className="panel-title__icon">📡</span>
         Komuta Radarı
@@ -38,9 +39,13 @@ export default function AiRadarPanel() {
           <h4 className="ai-radar-panel__sub">İstihbarat Ağı</h4>
           <ul className="ai-radar-list ai-radar-list--intel">
             {intelFeed.slice(0, 6).map((item) => (
-              <li key={item.id} className="ai-radar-list__item ai-radar-list__item--intel">
+              <IntelListRow
+                key={item.id}
+                seedKey={item.id}
+                className="ai-radar-list__item ai-radar-list__item--intel"
+              >
                 {item.text}
-              </li>
+              </IntelListRow>
             ))}
           </ul>
         </>
@@ -54,10 +59,10 @@ export default function AiRadarPanel() {
               const target = playerCities.find((c) => c.id === atk.targetCityId);
               const remaining = remainingFromEndsAt(atk.endsAt, now);
               return (
-                <li key={atk.id} className="ai-radar-list__item">
+                <IntelListRow key={atk.id} seedKey={atk.id} className="ai-radar-list__item">
                   <strong>{target?.name ?? atk.targetCityId}</strong>
                   <span> — düşman seferi ETA {formatSeconds(remaining)}</span>
-                </li>
+                </IntelListRow>
               );
             })}
           </ul>

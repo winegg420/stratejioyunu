@@ -15,9 +15,15 @@ import {
   WATCHLIST_AGENT_COST,
 } from '../lib/watchlistSystem';
 import { isCityInOperationRange } from '../lib/mapRange';
+import { bypassWarLocksForDevTest } from '../lib/devTestMode';
 import { getCyberSuccessBonus, formatIdeologyLabel, isNaturalAlly } from '../lib/ideologySystem';
 import { getCityOwnerLabel } from './mapOwnership';
-import { CITY_STATUS_COLORS } from './mapUtils';
+import {
+  formatMapOwnerDisplay,
+  formatMapStatusBadge,
+  formatResourceValue,
+} from './mapDisplayLabels';
+import { getMapCityDisplayColor } from './mapUtils';
 import TroopStockLabel from '../components/TroopStockLabel';
 import ExpeditionEtaStrip from '../components/ExpeditionEtaStrip';
 import {
@@ -25,6 +31,13 @@ import {
   isAirOnlyExpedition,
   resolveCityCoords,
 } from '../lib/expeditionTravel';
+import {
+  evaluateConquestAttempt,
+  getEmpireOverview,
+  getNearestEmpireOrigin,
+} from '../lib/empireExpansion';
+import { isConquerableMapTarget } from '../lib/worldCitySystem';
+import CargoLogisticsPanel from '../components/CargoLogisticsPanel';
 import { calcSpyProbeTravelSeconds } from '../utils/spyEngine';
 import {
   useActiveCityIdleTroops,
@@ -36,9 +49,9 @@ import {
 const STATUS_LABELS = {
   own: 'Kendi üssünüz',
   enemy: 'Düşman üssü',
-  empty: 'Boş — işgal edilebilir',
+  empty: '[ SAHİPSİZ BÖLGE ]',
   vassal: 'Vasal üs',
-  bot: 'Bot üssü',
+  bot: '[ OTOMATİK YÖNETİM ]',
   siege: 'Kuşatma altında',
 };
 
@@ -133,13 +146,18 @@ function MapCommandModal({ city, onClose }) {
   const watchlist = useGameStore((s) => s.watchlist ?? []);
   const addWatchTarget = useGameStore((s) => s.addWatchTarget);
   const playerName = getCurrentPlayerName();
+  const gameStateSlice = useGameStore((s) => ({
+    playerCities: s.playerCities,
+    cities: s.cities,
+    mapCities: s.mapCities,
+  }));
   const { locked: actionLocked, runLocked } = useActionLock();
 
   const display = live ?? {
     live: city,
     population: city.population ?? 0,
     happiness: null,
-    owner: city.owner || 'Boş',
+    owner: formatMapOwnerDisplay(city, playerName),
     cyberActive: false,
     resources: null,
   };
@@ -149,13 +167,30 @@ function MapCommandModal({ city, onClose }) {
   const naturalAlly = playerIdeology && targetIdeology
     && isNaturalAlly(playerIdeology, targetIdeology)
     && mapCity.status !== 'own';
-  const color = CITY_STATUS_COLORS[mapCity.status] || '#9ca3af';
+  const color = getMapCityDisplayColor(mapCity);
+  const devWarBypass = bypassWarLocksForDevTest();
   const inRadarRange = isCityInOperationRange(mapCity, activeCityId, playerCities, mapCities);
   const isAnyOwnCity = mapCity.status === 'own';
-  const canAttack = !isAnyOwnCity && mapCity.status !== 'empty' && inRadarRange;
-  const canSpy = !isAnyOwnCity && (mapCity.status === 'enemy' || mapCity.status === 'bot') && inRadarRange;
-  const outOfRange = mapCity.status !== 'own' && !inRadarRange;
+  const isHostileTarget = mapCity.status !== 'own' && mapCity.status !== 'empty';
+  const isConquerTarget = isConquerableMapTarget(mapCity, gameStateSlice);
+  const conquestEval = useMemo(
+    () => evaluateConquestAttempt(gameStateSlice, mapCity),
+    [gameStateSlice, mapCity],
+  );
+  const canAttack = !isAnyOwnCity && (
+    devWarBypass
+      ? (isHostileTarget || isConquerTarget)
+      : isConquerTarget || (mapCity.status !== 'empty' && inRadarRange)
+  );
+  const canSpy = !isAnyOwnCity && (
+    devWarBypass
+      ? isHostileTarget
+      : (mapCity.status === 'enemy' || mapCity.status === 'bot') && inRadarRange
+  );
+  const outOfRange = !devWarBypass && !isConquerTarget && mapCity.status !== 'own' && !inRadarRange;
   const cyberCapabilities = getCyberCapabilities() ?? [];
+
+  const [cargoDestId, setCargoDestId] = useState('');
 
   useEffect(() => {
     setActionMode(null);
@@ -168,20 +203,35 @@ function MapCommandModal({ city, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [city?.name, onClose]);
 
+  useEffect(() => {
+    const others = playerCities.filter((p) => p.id !== activeCityId);
+    setCargoDestId(others[0]?.id ?? '');
+  }, [city?.name, activeCityId, playerCities]);
+
   const originCoords = useMemo(
     () => resolveCityCoords(activeCityName, playerCities, mapCities),
     [activeCityName, playerCities, mapCities],
   );
 
+  const attackOrigin = useMemo(() => {
+    const nearest = getNearestEmpireOrigin(
+      { lat: mapCity.lat, lng: mapCity.lng },
+      playerCities,
+      mapCities,
+    );
+    return (conquestEval.ok && nearest.origin) ? nearest.origin : originCoords;
+  }, [mapCity.lat, mapCity.lng, playerCities, mapCities, conquestEval.ok, originCoords]);
+
   const attackDuration = useMemo(
     () => calcExpeditionTravelSeconds({
-      origin: originCoords,
+      origin: attackOrigin,
       target: { lat: mapCity.lat, lng: mapCity.lng },
       troopQty,
       mapCities,
       mode: 'attack',
+      empireTravelMult: conquestEval.ok ? conquestEval.travelMult : 1,
     }),
-    [originCoords, mapCity.lat, mapCity.lng, troopQty, mapCities],
+    [attackOrigin, mapCity.lat, mapCity.lng, troopQty, mapCities, conquestEval],
   );
 
   const spyDuration = useMemo(
@@ -243,6 +293,18 @@ function MapCommandModal({ city, onClose }) {
     && idleAgents >= WATCHLIST_AGENT_COST,
   );
 
+  const empireOverview = useMemo(
+    () => getEmpireOverview(gameStateSlice),
+    [gameStateSlice],
+  );
+
+  const targetPc = playerCities.find((p) => p.name === mapCity.name);
+  const cargoTargetPc = targetPc && targetPc.id !== activeCityId ? targetPc : null;
+  const otherColonies = playerCities.filter((p) => p.id !== activeCityId);
+  const showCargoToClicked = Boolean(cargoTargetPc);
+  const showCargoHub = isAnyOwnCity && mapCity.name === activeCityName && otherColonies.length > 0;
+  const cargoDestCity = playerCities.find((p) => p.id === cargoDestId);
+
   const confirmAttack = () => {
     if (!canStartAttack || actionLocked) return;
     runLocked(() => {
@@ -262,7 +324,7 @@ function MapCommandModal({ city, onClose }) {
   const resourceList = display.resources ?? [
     { id: 'food', label: 'Nüfus', icon: '👥' },
     { id: 'fuel', label: 'Petrol', icon: '🛢️' },
-    { id: 'metal', label: 'Metal', icon: '🔩' },
+    { id: 'hammadde', label: 'Hammadde', icon: '🧱' },
     { id: 'energy', label: 'Enerji', icon: '⚡' },
     { id: 'money', label: 'Bütçe', icon: '💰' },
     { id: 'uranium', label: 'Uranyum', icon: '☢️' },
@@ -292,7 +354,7 @@ function MapCommandModal({ city, onClose }) {
             <p className="map-command-modal__eyebrow">[ MERKEZİ KOMUTA MODALI ]</p>
             <h2 id="map-command-modal-title">{mapCity.name}</h2>
             <span className="map-command-modal__status" style={{ borderColor: color, color }}>
-              {STATUS_LABELS[mapCity.status] ?? mapCity.status}
+              {formatMapStatusBadge(mapCity) || (STATUS_LABELS[mapCity.status] ?? mapCity.status)}
             </span>
             {targetIdeology && (
               <span className="map-command-modal__ideology">
@@ -311,7 +373,7 @@ function MapCommandModal({ city, onClose }) {
         <div className="map-command-modal__stats">
           <div className="map-command-modal__stat">
             <span className="map-command-modal__stat-label">Sahip</span>
-            <strong>{display.live.owner || 'Boş'}</strong>
+            <strong>{formatMapOwnerDisplay(mapCity, playerName)}</strong>
           </div>
           <div className="map-command-modal__stat">
             <span className="map-command-modal__stat-label">Nüfus</span>
@@ -345,11 +407,8 @@ function MapCommandModal({ city, onClose }) {
             {resourceList.map((r) => (
               <li key={r.id}>
                 <span>{r.icon} {r.label}</span>
-                <strong>
-                  {typeof r.current === 'number'
-                    ? Math.floor(r.current).toLocaleString('tr-TR')
-                    : '—'}
-                  {r.max != null ? ` / ${Math.floor(r.max).toLocaleString('tr-TR')}` : ''}
+                <strong className={!display.resources && (mapCity.status === 'bot' || mapCity.status === 'empty') ? 'map-command-modal__resource-unknown' : ''}>
+                  {formatResourceValue(r, mapCity)}
                 </strong>
               </li>
             ))}
@@ -382,15 +441,65 @@ function MapCommandModal({ city, onClose }) {
           </div>
         )}
 
+        {showCargoToClicked && (
+          <CargoLogisticsPanel
+            originCityId={activeCityId}
+            originCityName={activeCityName}
+            targetCityId={cargoTargetPc.id}
+            targetCityName={cargoTargetPc.name}
+          />
+        )}
+
+        {showCargoHub && cargoDestCity && (
+          <div className="map-command-modal__cargo-hub">
+            <label className="cargo-logistics-field">
+              <span>Hedef koloni</span>
+              <select
+                className="expedition-launch-select"
+                value={cargoDestId}
+                onChange={(e) => setCargoDestId(e.target.value)}
+              >
+                {otherColonies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+            <CargoLogisticsPanel
+              originCityId={activeCityId}
+              originCityName={activeCityName}
+              targetCityId={cargoDestCity.id}
+              targetCityName={cargoDestCity.name}
+            />
+          </div>
+        )}
+
+        {!isAnyOwnCity && (
+          <p className="map-command-modal__empire-hint">
+            İmparatorluk: {empireOverview.owned}/{empireOverview.maxSlots}
+            {empireOverview.mainHqName && ` · Ana Merkez: ${empireOverview.mainHqName}`}
+            {' · '}{empireOverview.slotHint}
+            {conquestEval.ok && conquestEval.distanceKm > 0 && (
+              <> · Mesafe ~{Math.round(conquestEval.distanceKm)} km (sefer +{Math.round((conquestEval.travelMult - 1) * 100)}%)</>
+            )}
+            {conquestEval.ok === false && conquestEval.reason && isConquerTarget && (
+              <> · <span className="city-panel-found-warn">{conquestEval.reason}</span></>
+            )}
+            {conquestEval.raidOnly && (
+              <> · Ana Merkez: yalnızca yağma</>
+            )}
+          </p>
+        )}
+
         {!actionMode && (
           <div className="map-command-modal__actions">
             <button
               type="button"
-              className="map-cmd-btn map-cmd-btn--troops"
+              className={`map-cmd-btn map-cmd-btn--troops${isConquerTarget ? ' map-cmd-btn--conquest' : ''}`}
               disabled={!canAttack || outOfRange}
+              title={!conquestEval.ok && conquestEval.reason ? conquestEval.reason : undefined}
               onClick={() => setActionMode('troops')}
             >
-              [ ORDULARI KAYDIR ]
+              {isConquerTarget && conquestEval.ok ? '[ FETİH SEFERİ ]' : '[ ORDULARI KAYDIR ]'}
             </button>
             <button
               type="button"
@@ -413,7 +522,7 @@ function MapCommandModal({ city, onClose }) {
 
         {actionMode === 'troops' && (
           <section className="map-command-modal__panel">
-            <h3>Ordu kaydırma — {activeCityName}</h3>
+            <h3>{isConquerTarget && conquestEval.ok ? `Fetih seferi — ${mapCity.name}` : `Ordu kaydırma — ${activeCityName}`}</h3>
             <ExpeditionEtaStrip durationSeconds={attackDuration} airRush={airRushAttack} />
             {idleTroops.map((t) => (
               <TroopDispatchRow
@@ -426,7 +535,7 @@ function MapCommandModal({ city, onClose }) {
             ))}
             <div className="map-command-modal__panel-actions">
               <button type="button" className="btn btn-hud-primary" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
-                [ SEFERİ BAŞLAT ]
+                {isConquerTarget && conquestEval.ok ? '[ FETİH BAŞLAT ]' : '[ SEFERİ BAŞLAT ]'}
               </button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
                 Geri
@@ -452,8 +561,8 @@ function MapCommandModal({ city, onClose }) {
               />
             </div>
             <div className="map-command-modal__panel-actions">
-              <button type="button" className="btn btn-primary" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
-                Sonda Gönder
+              <button type="button" className="btn btn-primary map-command-modal__panel-btn" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
+                SONDA_TX
               </button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
                 Geri
@@ -492,15 +601,17 @@ function MapCommandModal({ city, onClose }) {
                 const selected = cyberAbilityId === ability.id;
                 return (
                   <li key={ability.id} className={selected ? 'map-cmd-cyber-selected' : ''}>
-                    <strong>{ability.name}</strong>
-                    <span>{ability.subtitle ?? ability.desc}</span>
+                    <strong className="map-command-modal__cyber-code" title={ability.name}>
+                      {ability.mapCode ?? ability.name}
+                    </strong>
+                    <span className="map-command-modal__cyber-desc">{ability.subtitle ?? ability.desc}</span>
                     <button
                       type="button"
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-secondary btn-sm map-command-modal__cyber-btn"
                       disabled={!unlocked}
                       onClick={() => setCyberAbilityId(ability.id)}
                     >
-                      {unlocked ? (selected ? 'Seçili' : 'Seç') : `Sv.${ability.minLevel}`}
+                      {unlocked ? (selected ? 'AKTİF' : 'SEÇ') : `SV${ability.minLevel}`}
                     </button>
                   </li>
                 );
@@ -524,7 +635,7 @@ function MapCommandModal({ city, onClose }) {
                   if (ok) onClose();
                 })}
               >
-                Virüs Gönder
+                VIRÜS_TX
               </button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
                 Geri

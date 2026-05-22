@@ -44,6 +44,10 @@ import {
   loadSeasonChronicles,
   loadTreatyBreaks,
 } from '../lib/historyBookStorage';
+import { applyDevTestModeToState } from '../lib/devTestMode';
+import { loadGameConfig } from '../lib/gameConfig';
+import { tickOpenMarket } from '../lib/openMarket';
+import { pickMainHqStarter, enrichMapCityWithWorld } from '../lib/worldCitySystem';
 
 export function createCityState(overrides = {}) {
   const bld = overrides.buildings ?? createStarterBuildings();
@@ -92,13 +96,13 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     saveProtectionEndsAt(playerKey, protectionEndsAt);
   }
 
-  const playerCities = [
-    { id: 'izmir', name: 'İzmir', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.42, lng: 27.14 },
-    { id: 'cesme', name: 'Çeşme', province: '35', provinceName: 'İzmir', type: 'Kıyı Şehri', lat: 38.32, lng: 26.3 },
-  ];
+  const mainHq = pickMainHqStarter(playerKey);
+  const gameConfig = loadGameConfig();
+  const playerCities = [mainHq];
 
-  return {
-    activeCityId: 'izmir',
+  const base = {
+    activeCityId: mainHq.id,
+    gameConfig,
     now: Date.now(),
     lastTickAt: Date.now(),
     playerMeta,
@@ -108,20 +112,19 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     researches: createStarterResearches().map((r) => ({ ...r })),
     playerCities,
     cities: {
-      izmir: createCityState({
+      [mainHq.id]: createCityState({
         buildings: createStarterBuildings(),
         happiness: 72,
         taxRate: 15,
         idleAgents: 0,
         idlePopulation: 1200,
       }),
-      cesme: createCityState(),
     },
     mapCities: syncMapCitiesForPlayer(
-      mapCities.map((c) => ({ ...c })),
+      mapCities.map((c) => enrichMapCityWithWorld({ ...c }, gameConfig)),
       playerCities,
-      getCurrentPlayerName(),
-      loadPlayerIdeology(getCurrentPlayerName()),
+      playerKey,
+      loadPlayerIdeology(playerKey),
     ),
     expeditions: [],
     intelOperations: [],
@@ -169,6 +172,41 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     centralBank: { ...DEFAULT_CENTRAL_BANK },
     regionalIncentive: null,
     adminPublicLogs: [],
-    marketOffers: [],
+    marketOffers: [
+      {
+        id: 'npc-offer-1',
+        resourceId: 'hammadde',
+        qty: 800,
+        unitPrice: 68,
+        side: 'sell',
+        status: 'open',
+        author: 'SteelWolf',
+        sellerCityId: null,
+        at: Date.now(),
+      },
+      {
+        id: 'npc-offer-2',
+        resourceId: 'food',
+        qty: 1200,
+        unitPrice: 11,
+        side: 'sell',
+        status: 'open',
+        author: 'KaraKurt',
+        sellerCityId: null,
+        at: Date.now(),
+      },
+    ],
+    openMarketPrices: {},
+    openMarketSupplyIndex: 0,
+    openMarketUpdatedAt: 0,
+    blackMarketListings: [],
+    allianceOperations: [],
+    diplomaticCrises: [],
   };
+
+  const withMarket = {
+    ...base,
+    ...tickOpenMarket(base),
+  };
+  return applyDevTestModeToState(withMarket);
 }

@@ -1,11 +1,11 @@
-import { normalizeCentralBank, DEFAULT_CENTRAL_BANK } from './adminOverrideEngine';
+﻿import { normalizeCentralBank, DEFAULT_CENTRAL_BANK } from './adminOverrideEngine';
 import { getResourceDisplay } from '../data/resourceCatalog';
 
 /** Pazar birim fiyatları (Bütçe cinsinden) — Merkez Bankası paritesi ile ölçeklenir */
-export const MARKET_TRADABLE_IDS = ['metal', 'food', 'fuel'];
+export const MARKET_TRADABLE_IDS = ['hammadde', 'food', 'fuel'];
 
 const BASE_UNIT_PRICES = {
-  metal: { buy: 85, sell: 58 },
+  hammadde: { buy: 85, sell: 58 },
   food: { buy: 14, sell: 9 },
   fuel: { buy: 28, sell: 18 },
 };

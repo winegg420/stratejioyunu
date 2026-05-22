@@ -1,10 +1,15 @@
 import L from 'leaflet';
+import { getMapCityDisplayName } from './mapCityDisplayName';
+import { PLAYER_CITY_ROLES } from '../data/worldCitiesCatalog';
 import { CITY_STATUS_COLORS } from './mapUtils';
 
+/** Tüm imparatorluk şehirleri — aynı neon yeşil parıltı */
 export const HQ_GREEN = '#22ff88';
+export const EMPIRE_CITY_GLOW = HQ_GREEN;
+export const BOT_MARKER_ORANGE = '#f97316';
 
-const MARKER_PIN_SIZE = 28;
-const MARKER_LABEL_WIDTH = 112;
+const MARKER_PIN_SIZE = 16;
+const MARKER_LABEL_WIDTH = 68;
 
 function escapeHtml(text) {
   return String(text ?? '')
@@ -16,14 +21,11 @@ function escapeHtml(text) {
 
 function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
   const isBot = city.status === 'bot';
-  const owner = !isBot && ownerLabel && ownerLabel !== 'Boş' ? ownerLabel : null;
-  const botBadge = isBot
-    ? '<span class="map-marker-label__bot">BOT</span>'
-    : '';
+  const owner = !isBot && ownerLabel ? ownerLabel : null;
+  const displayName = getMapCityDisplayName(city.name);
   return `
     <div class="map-marker-label-stack${cyberActive ? ' map-marker-label-stack--cyber' : ''}${isBot ? ' map-marker-label-stack--bot' : ''}">
-      ${botBadge}
-      <span class="map-marker-label__city">${escapeHtml(city.name)}</span>
+      <span class="map-marker-label__city">${escapeHtml(displayName)}</span>
       ${owner ? `<span class="map-marker-label__owner">${escapeHtml(owner)}</span>` : ''}
     </div>
   `;
@@ -32,10 +34,8 @@ function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
 function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
   const pinH = options.pinHeight ?? MARKER_PIN_SIZE;
   const showLabels = options.showLabels !== false;
-  const hasOwner = ownerLabel && ownerLabel !== 'Boş' && city.status !== 'bot';
-  const labelH = showLabels
-    ? (city.status === 'bot' ? 22 : (hasOwner ? 30 : 18))
-    : 0;
+  const hasOwner = ownerLabel && city.status !== 'bot';
+  const labelH = showLabels ? (hasOwner ? 22 : 14) : 0;
   const totalH = pinH + labelH + (showLabels ? 4 : 0);
 
   return {
@@ -50,8 +50,75 @@ function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
   };
 }
 
-/** Aktif üs — radar + etiket */
+/** Ana Merkez — parlak yeşil yıldız (aktif veya pasif) */
+export function createMainHqIcon(city, ownerLabel, { showLabels = true, isActive = false } = {}) {
+  const wrapped = wrapMarker(
+    `
+      <span class="active-hq-radar main-hq-radar" aria-hidden="true">
+        <span class="active-hq-radar__ring active-hq-radar__ring--1"></span>
+        <span class="active-hq-radar__ring active-hq-radar__ring--2"></span>
+        <span class="active-hq-radar__ring active-hq-radar__ring--3"></span>
+      </span>
+      <span class="main-hq-marker__glyph" aria-hidden="true">★</span>
+    `,
+    city,
+    ownerLabel,
+    { pinHeight: 20, showLabels },
+  );
+
+  return L.divIcon({
+    className: [
+      'main-hq-marker',
+      'active-hq-marker',
+      'map-marker-icon',
+      isActive ? 'main-hq-marker--active' : '',
+    ].filter(Boolean).join(' '),
+    ...wrapped,
+  });
+}
+
+/** Koloni — aynı imparatorluk yeşili, ◆ ikon */
+export function createColonyIcon(city, {
+  underAttack = false,
+  ownerLabel,
+  cyberActive = false,
+  peaceShield = false,
+  showLabels = true,
+  isActive = false,
+} = {}) {
+  const color = underAttack ? '#ef4444' : EMPIRE_CITY_GLOW;
+  const peaceRing = peaceShield
+    ? '<span class="map-peace-shield-ring" aria-hidden="true"></span>'
+    : '';
+  const wrapped = wrapMarker(
+    `
+      <span class="own-city-pulsar colony-pulsar" aria-hidden="true">
+        <span class="own-city-pulsar__ring own-city-pulsar__ring--1"></span>
+        <span class="own-city-pulsar__ring own-city-pulsar__ring--2"></span>
+      </span>
+      ${peaceRing}
+      <span class="colony-marker__glyph" style="color:${color}" aria-hidden="true">◆</span>
+    `,
+    city,
+    ownerLabel,
+    { pinHeight: 16, cyberActive, showLabels },
+  );
+
+  return L.divIcon({
+    className: [
+      'colony-marker',
+      'own-city-marker--empire',
+      'map-marker-icon',
+      isActive ? 'colony-marker--active' : '',
+      underAttack ? 'own-city-marker--attack' : '',
+    ].filter(Boolean).join(' '),
+    ...wrapped,
+  });
+}
+
+/** Aktif üs — radar + etiket (geriye uyumluluk) */
 export function createActiveHqIcon(city, ownerLabel, { showLabels = true } = {}) {
+  return createMainHqIcon(city, ownerLabel, { showLabels, isActive: true });
   const wrapped = wrapMarker(
     `
       <span class="active-hq-radar" aria-hidden="true">
@@ -63,7 +130,7 @@ export function createActiveHqIcon(city, ownerLabel, { showLabels = true } = {})
     `,
     city,
     ownerLabel,
-    { pinHeight: 30, showLabels },
+    { pinHeight: 20, showLabels },
   );
 
   return L.divIcon({
@@ -79,19 +146,33 @@ export function createOwnCityIcon(city, {
   peaceShield = false,
   showLabels = true,
 } = {}) {
-  const color = underAttack ? '#ef4444' : peaceShield ? '#4ade80' : HQ_GREEN;
+  const color = underAttack ? '#ef4444' : EMPIRE_CITY_GLOW;
   const peaceRing = peaceShield
     ? '<span class="map-peace-shield-ring" aria-hidden="true"></span>'
     : '';
   const wrapped = wrapMarker(
-    `${peaceRing}<span class="own-city-marker__dot" style="background:${color}"></span>`,
+    `
+      <span class="own-city-pulsar" aria-hidden="true">
+        <span class="own-city-pulsar__ring own-city-pulsar__ring--1"></span>
+        <span class="own-city-pulsar__ring own-city-pulsar__ring--2"></span>
+        <span class="own-city-pulsar__ring own-city-pulsar__ring--3"></span>
+      </span>
+      ${peaceRing}
+      <span class="own-city-marker__dot" style="background:${color}"></span>
+    `,
     city,
     ownerLabel,
-    { pinHeight: 22, cyberActive, showLabels },
+    { pinHeight: 14, cyberActive, showLabels },
   );
 
   return L.divIcon({
-    className: `own-city-marker map-marker-icon${underAttack ? ' own-city-marker--attack' : ''}`,
+    className: [
+      'own-city-marker',
+      'own-city-marker--empire',
+      'map-marker-icon',
+      underAttack ? 'own-city-marker--attack' : '',
+      peaceShield ? 'own-city-marker--peace' : '',
+    ].filter(Boolean).join(' '),
     ...wrapped,
   });
 }
@@ -101,8 +182,8 @@ export function createMapHitIcon() {
   return L.divIcon({
     className: 'map-city-hit-marker',
     html: '<span class="map-city-hit-marker__zone" aria-hidden="true"></span>',
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
   });
 }
 
@@ -115,9 +196,9 @@ export function createCityMarkerIcon(city, {
   const isBot = city.status === 'bot';
   const color = underAttack
     ? '#ef4444'
-    : (isBot ? CITY_STATUS_COLORS.bot : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy));
+    : (isBot ? BOT_MARKER_ORANGE : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy));
   const size = MARKER_PIN_SIZE;
-  const opacity = isBot ? 0.72 : 0.9;
+  const opacity = isBot ? 0.42 : 0.9;
 
   const wrapped = wrapMarker(
     `

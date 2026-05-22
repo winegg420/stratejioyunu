@@ -1,7 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+function sanitizeEnv(value) {
+  if (value == null) return '';
+  return String(value).trim().replace(/^["']|["']$/g, '');
+}
+
+const supabaseUrl = sanitizeEnv(import.meta.env.VITE_SUPABASE_URL);
+const supabaseAnonKey = sanitizeEnv(import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+if (supabaseAnonKey && !/^[\x00-\xff]*$/.test(supabaseAnonKey)) {
+  console.error(
+    '[supabase] VITE_SUPABASE_ANON_KEY gecersiz karakter iceriyor (Turkce harf/bosluk olmamali). .env dosyasini kontrol edin.',
+  );
+}
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 

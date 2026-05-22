@@ -1,6 +1,13 @@
 /** İl kodunu shapeISO / playerCities.province ile eşleştir */
+import {
+  DEMO_OWNER_IDEOLOGY,
+  ideologyForOwner,
+  resolveMapCityOwnerIdeology,
+} from '../lib/mapIdeologyDistribution';
 import { normalizeIdeology } from '../lib/ideologySystem';
 import { normalizeMapCity, normalizeMapCities } from './botCityUtils';
+
+export { DEMO_OWNER_IDEOLOGY };
 
 export function normalizeProvinceCode(code) {
   if (code == null || code === '') return '';
@@ -20,34 +27,22 @@ export function provinceCodesMatch(a, b) {
 export function getCityOwnerLabel(city, playerName) {
   if (city.isOwn || city.status === 'own') return playerName;
   if (city.status === 'bot') return null;
-  if (city.status === 'empty' || !city.owner) return 'Boş';
+  if (city.status === 'empty' || !city.owner) return null;
   return city.owner;
 }
-
-/** Demo / placeholder harita sahipleri için sabit ideoloji */
-export const DEMO_OWNER_IDEOLOGY = {
-  KaraKurt: 'nationalist',
-  SteelWolf: 'socialist',
-  Falcon99: 'technocrat',
-};
 
 export function resolveOwnerIdeology(city, playerName, playerIdeology) {
   if (city.isOwn || city.status === 'own' || city.owner === playerName) {
     return normalizeIdeology(playerIdeology);
   }
-  if (city.ownerIdeology) return normalizeIdeology(city.ownerIdeology);
-  if (city.owner && DEMO_OWNER_IDEOLOGY[city.owner]) {
-    return DEMO_OWNER_IDEOLOGY[city.owner];
-  }
-  if (city.status === 'bot') return 'nationalist';
-  return null;
+  return resolveMapCityOwnerIdeology(city);
 }
 
 export function syncMapCitiesForPlayer(mapCities, playerCities, playerName, playerIdeology = null) {
   const ownNames = new Set(playerCities.map((c) => c.name));
   const ideology = normalizeIdeology(playerIdeology);
   return normalizeMapCities(mapCities).map((c) => {
-    if (ownNames.has(c.name) || c.status === 'own') {
+    if (ownNames.has(c.name)) {
       return {
         ...c,
         owner: playerName,
@@ -57,12 +52,17 @@ export function syncMapCitiesForPlayer(mapCities, playerCities, playerName, play
       };
     }
     if (c.status === 'bot') {
-      return { ...c, owner: null, ownerIdeology: 'nationalist' };
+      return {
+        ...c,
+        owner: null,
+        ownerIdeology: resolveMapCityOwnerIdeology(c),
+      };
     }
     if (c.status === 'empty' || !c.owner) {
       return { ...c, owner: null, ownerIdeology: null };
     }
-    const ownerIdeology = DEMO_OWNER_IDEOLOGY[c.owner] ?? c.ownerIdeology ?? null;
+    const ownerIdeology = resolveMapCityOwnerIdeology(c)
+      ?? ideologyForOwner(c.owner, { lat: c.lat, lng: c.lng });
     return { ...c, ownerIdeology: normalizeIdeology(ownerIdeology) };
   });
 }

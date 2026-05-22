@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import './index.css';
+import './styles/global-hud-polish.css';
 import './styles/hud-shell.css';
 import './styles/hud-revisions.css';
 import './styles/hud-radical.css';
@@ -24,9 +25,16 @@ import './styles/diplomacy-command.css';
 import './styles/expeditions-command.css';
 import './styles/production-input.css';
 import './styles/market-command.css';
+import './styles/cyber-terminal.css';
+import './styles/c4isr-ui.css';
+import './styles/military-terminal-ui.css';
 import './styles/hud-modal-close.css';
 import './styles/sidebar-active.css';
+import './styles/operational-flow.css';
 import App from './App.jsx';
+import { disableDevTestModeLocal } from './lib/devTestMode';
+
+disableDevTestModeLocal();
 
 if (import.meta.env.PROD) {
   registerSW({

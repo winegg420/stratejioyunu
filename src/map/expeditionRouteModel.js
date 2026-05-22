@@ -16,6 +16,11 @@ function resolveCoords(name, mapCities, playerCities, originCityId) {
 }
 
 function getRouteStyle(exp) {
+  if (exp.mode === 'cargo') {
+    return exp.logisticsMode === 'air'
+      ? { ...ROUTE_STYLES.trade, color: '#fbbf24', className: 'cyber-route tactical-route tactical-route--cargo-air' }
+      : { ...ROUTE_STYLES.trade, color: '#a3e635', className: 'cyber-route tactical-route tactical-route--cargo-road' };
+  }
   if (exp.mode === 'trade') {
     return exp.direction === 'returning' || exp.recalled
       ? ROUTE_STYLES.return

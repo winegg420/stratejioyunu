@@ -1,3 +1,5 @@
+import { WORLD_ROLES } from '../data/worldCitiesCatalog';
+
 export const CITY_STATUS_COLORS = {
   own: '#22ff88',
   enemy: '#ef4444',
@@ -6,6 +8,24 @@ export const CITY_STATUS_COLORS = {
   bot: '#94a3b8',
   siege: '#f97316',
 };
+
+/** Bot kıyı / başkent ve açık iç Anadolu — harita lejantı */
+export const WORLD_ROLE_COLORS = {
+  [WORLD_ROLES.BOT_COASTAL]: '#fbbf24',
+  [WORLD_ROLES.BOT_CAPITAL]: '#f59e0b',
+  [WORLD_ROLES.OPEN_INLAND]: '#4ade80',
+  [WORLD_ROLES.WORLD_EMPTY]: '#64748b',
+};
+
+export function getMapCityDisplayColor(city) {
+  if (!city) return CITY_STATUS_COLORS.empty;
+  if (city.status === 'own') return CITY_STATUS_COLORS.own;
+  if (city.worldRole && WORLD_ROLE_COLORS[city.worldRole]) {
+    return WORLD_ROLE_COLORS[city.worldRole];
+  }
+  if (city.status === 'bot') return WORLD_ROLE_COLORS[WORLD_ROLES.BOT_COASTAL];
+  return CITY_STATUS_COLORS[city.status] ?? CITY_STATUS_COLORS.enemy;
+}
 
 export function getCityMarkerStyle(status) {
   if (status === 'own') {

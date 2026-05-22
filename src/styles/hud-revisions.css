@@ -18,30 +18,7 @@ button {
   letter-spacing: 0.05em;
 }
 
-/* Scrollbar */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #00ff66 #020205;
-}
-
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-*::-webkit-scrollbar-track {
-  background: #020205;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 102, 0.35);
-  border-radius: 3px;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: #00ff66;
-  box-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
-}
+/* Scrollbar — global-hud-polish.css */
 
 /* Buton mikro-etkileşim */
 .hud-button,
@@ -393,6 +370,84 @@ button {
     transform: scale(1.6);
     opacity: 0;
   }
+}
+
+/* Oyuncu şehirleri — sürekli pulsar (İzmir vb.) */
+.leaflet-div-icon.own-city-marker {
+  position: relative !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.own-city-pulsar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.own-city-pulsar__ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(34, 255, 136, 0.55);
+  border-radius: 50%;
+  animation: own-city-pulsar 2.4s ease-out infinite;
+}
+
+.own-city-pulsar__ring--2 {
+  animation-delay: 0.8s;
+}
+
+.own-city-pulsar__ring--3 {
+  animation-delay: 1.6s;
+}
+
+.own-city-marker__dot {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 1px auto 0;
+  border-radius: 50%;
+  border: 2px solid rgba(184, 255, 224, 0.85);
+  box-shadow: 0 0 14px rgba(34, 255, 136, 0.75);
+  animation: own-city-core-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes own-city-pulsar {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+@keyframes own-city-core-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(34, 255, 136, 0.6);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 18px rgba(34, 255, 136, 0.95);
+  }
+}
+
+/* Bot hedef nişangahları — sönük, statik */
+.map-target-reticle--bot {
+  opacity: 0.55;
+  filter: grayscale(0.35);
 }
 
 /* Leaflet popup HUD */

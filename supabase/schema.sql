@@ -1,11 +1,11 @@
 -- =============================================================================
--- Strateji Oyunu — Kalıcı oyun verisi (Supabase / PostgreSQL)
+-- Strateji Oyunu — Tüm Supabase tabloları (tek seferde kurulum)
 -- =============================================================================
--- Kaynak: src/data/gameInit.js, gameStore.js, combatEngine.js, spyEngine.js
--- Auth: src/lib/auth.js (auth.users + profiles)
+-- Supabase Dashboard → SQL Editor → New query → bu dosyanın TAMAMINI yapıştır → Run
 --
--- Uygulama: Dashboard SQL Editor veya:
---   supabase db reset   (config.toml → schema_paths)
+-- Oluşturur: profiles, cities, city_resources, city_buildings, city_units,
+--   player_researches, expeditions, game_reports, server_broadcast, admin_logs,
+--   season_chronicles + RLS + seed_starter_city()
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -28,7 +28,7 @@ $$;
 -- ---------------------------------------------------------------------------
 do $$ begin
   create type public.resource_id as enum (
-    'food', 'fuel', 'metal', 'energy', 'money'
+    'food', 'fuel', 'hammadde', 'energy', 'money', 'uranium'
   );
 exception when duplicate_object then null;
 end $$;
@@ -242,7 +242,10 @@ create table if not exists public.player_researches (
   meta jsonb not null default '{}'::jsonb,
   primary key (profile_id, research_id),
   constraint player_researches_id_check check (
-    research_id in ('r1', 'r2', 'r3', 'r4')
+    research_id in (
+      'r1', 'r2', 'r3', 'r4',
+      'kbrn_weapon', 'kbrn_decon', 'kbrn_detect', 'kbrn_chem'
+    )
   )
 );
 
@@ -279,6 +282,7 @@ create table if not exists public.expeditions (
   origin_city_id text not null,
   origin_city_name text,
   target_city_name text not null,
+  target_city_id text,
   source_map_city_name text,
   target_lat double precision,
   target_lng double precision,
@@ -372,10 +376,17 @@ $$;
 -- ---------------------------------------------------------------------------
 create table if not exists public.server_broadcast (
   server_id text primary key default 'turkiye-1',
-  central_bank jsonb not null default '{"fuelBasePrice":1,"parities":{"food":1,"fuel":1,"metal":1,"money":1,"energy":1}}'::jsonb,
+  central_bank jsonb not null default '{"fuelBasePrice":1,"parities":{"food":1,"fuel":1,"hammadde":1,"money":1,"energy":1,"uranium":1}}'::jsonb,
   regional_incentive jsonb,
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+insert into public.server_broadcast (server_id, central_bank)
+values (
+  'turkiye-1',
+  '{"fuelBasePrice":1,"parities":{"food":1,"fuel":1,"hammadde":1,"money":1,"energy":1,"uranium":1}}'::jsonb
+)
+on conflict (server_id) do nothing;
 
 create table if not exists public.admin_logs (
   id uuid primary key default gen_random_uuid(),
@@ -391,6 +402,33 @@ create index if not exists admin_logs_server_created_idx
   on public.admin_logs (server_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
+-- season_chronicles — Devlet Tarih Kitabı (küresel sezon arşivi)
+-- ---------------------------------------------------------------------------
+create table if not exists public.season_chronicles (
+  id uuid primary key default gen_random_uuid(),
+  server_id text not null default 'turkiye-1',
+  season_id text not null,
+  chronicle_type text not null check (
+    chronicle_type in ('war', 'regime', 'betrayal')
+  ),
+  occurred_at timestamptz not null,
+  headline text not null,
+  body text not null,
+  actors jsonb not null default '{}'::jsonb,
+  meta jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists season_chronicles_server_season_idx
+  on public.season_chronicles (server_id, season_id, occurred_at desc);
+
+create index if not exists season_chronicles_type_idx
+  on public.season_chronicles (chronicle_type, occurred_at desc);
+
+comment on table public.season_chronicles is
+  'Devlet Tarih Kitabı — savaş, rejim ve ihanet kronikleri (sunucu geneli)';
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
@@ -403,6 +441,7 @@ alter table public.player_researches enable row level security;
 alter table public.city_units enable row level security;
 alter table public.expeditions enable row level security;
 alter table public.game_reports enable row level security;
+alter table public.season_chronicles enable row level security;
 
 -- profiles
 drop policy if exists profiles_select_own on public.profiles;
@@ -491,6 +530,16 @@ create policy game_reports_all_own on public.game_reports
   using (profile_id = auth.uid())
   with check (profile_id = auth.uid());
 
+drop policy if exists season_chronicles_read on public.season_chronicles;
+create policy season_chronicles_read on public.season_chronicles
+  for select to authenticated
+  using (true);
+
+drop policy if exists season_chronicles_insert on public.season_chronicles;
+create policy season_chronicles_insert on public.season_chronicles
+  for insert to authenticated
+  with check (true);
+
 -- ---------------------------------------------------------------------------
 -- Grants
 -- ---------------------------------------------------------------------------
@@ -531,7 +580,7 @@ begin
   values
     (p_profile_id, p_city_id, 'food', 8000, 20000, '+42/sa'),
     (p_profile_id, p_city_id, 'fuel', 5000, 15000, '+28/sa'),
-    (p_profile_id, p_city_id, 'metal', 6000, 18000, '+35/sa'),
+    (p_profile_id, p_city_id, 'hammadde', 6000, 18000, '+35/sa'),
     (p_profile_id, p_city_id, 'energy', 3000, null, '+18/sa'),
     (p_profile_id, p_city_id, 'money', 12000, 50000, '+55/sa')
   on conflict do nothing;
@@ -562,8 +611,13 @@ begin
   on conflict do nothing;
 
   update public.profiles
-  set active_city_id = p_city_id
-  where id = p_profile_id and active_city_id is null;
+  set
+    active_city_id = coalesce(active_city_id, p_city_id),
+    protection_ends_at = coalesce(
+      protection_ends_at,
+      timezone('utc', now()) + interval '7 days'
+    )
+  where id = p_profile_id;
 end;
 $$;
 
@@ -575,7 +629,7 @@ comment on table public.profiles is
 comment on table public.cities is
   'Oyuncu üsleri. Koordinatlar harita ile uyumlu lat/lng. last_tick_at kaynak üretimi için.';
 comment on table public.city_resources is
-  'Üs depoları: food, fuel, metal, energy, money.';
+  'Üs depoları: food, fuel, hammadde, energy, money.';
 comment on table public.city_buildings is
   'Üs binaları: hq, farm, barracks, intel vb. seviye.';
 comment on table public.player_researches is

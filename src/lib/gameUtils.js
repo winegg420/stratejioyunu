@@ -1,4 +1,4 @@
-export function parseTimeToSeconds(str) {
+﻿export function parseTimeToSeconds(str) {
   if (!str || str === '—') return 0;
   const parts = String(str).split(':').map(Number);
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
@@ -29,30 +29,29 @@ export function genId(prefix = 'id') {
 }
 
 export const BUILDING_RESOURCE_MAP = {
-  farm: 'food',
   refinery: 'fuel',
-  factory: 'metal',
   plant: 'energy',
-  tax: 'money',
+  market: 'money',
   /** KBRN / ileri Ar-Ge — çok düşük saatlik uranyum (Ar-Ge Sv.8+) */
   research: 'uranium',
 };
 
+/** Birincil kaynak dışında ek saatlik üretim (ör. rafineri → hammadde). */
+export const BUILDING_EXTRA_RESOURCE_MAP = {
+  refinery: { resourceId: 'hammadde', base: 12, perLevel: 2.5 },
+};
+
 export const BASE_HOURLY = {
-  farm: 18,
   refinery: 12,
-  factory: 15,
   plant: 8,
-  tax: 22,
+  market: 18,
   research: 0.4,
 };
 
 export const HOURLY_PER_LEVEL = {
-  farm: 3,
   refinery: 2.5,
-  factory: 3,
   plant: 1.5,
-  tax: 4,
+  market: 3,
   research: 0.12,
 };
 
@@ -73,8 +72,14 @@ export function recalculateResourceRates(buildings, resources, productionMultipl
     if (lv < 1) continue;
     if (b.id === 'research' && lv < URANIUM_RESEARCH_UNLOCK_LEVEL) continue;
     const resId = BUILDING_RESOURCE_MAP[b.id];
-    if (!resId) continue;
-    hourlyByResource[resId] = (hourlyByResource[resId] || 0) + computeBuildingHourly(b.id, lv);
+    if (resId) {
+      hourlyByResource[resId] = (hourlyByResource[resId] || 0) + computeBuildingHourly(b.id, lv);
+    }
+    const extra = BUILDING_EXTRA_RESOURCE_MAP[b.id];
+    if (extra) {
+      const extraHourly = extra.base + lv * (extra.perLevel ?? 0);
+      hourlyByResource[extra.resourceId] = (hourlyByResource[extra.resourceId] || 0) + extraHourly;
+    }
   }
 
   return resources.map((r) => {

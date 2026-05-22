@@ -167,7 +167,7 @@ export default function Profile() {
             🔒 {ideologyLockHint ?? 'İdeoloji politikaları henüz kilitli.'}
           </p>
         )}
-        <div className={`profile-ideology-grid${!ideologyUnlocked ? ' profile-ideology-grid--locked' : ''}`}>
+        <div className={`profile-ideology-grid profile-ideology-grid--doctrine${!ideologyUnlocked ? ' profile-ideology-grid--locked' : ''}`}>
           {IDEOLOGY_IDS.map((id) => {
             const p = IDEOLOGY_PROFILES[id];
             const active = playerIdeology === id;
@@ -176,14 +176,19 @@ export default function Profile() {
               <button
                 key={id}
                 type="button"
-                className={`profile-ideology-btn${active ? ' is-active' : ''}${disabled ? ' is-disabled' : ''}`}
+                className={`doctrine-card${active ? ' is-active' : ''}${disabled ? ' is-disabled' : ''}`}
                 style={{ '--ideology-color': p.color }}
                 disabled={disabled}
                 title={!ideologyUnlocked ? ideologyLockHint ?? '' : undefined}
                 onClick={() => handleIdeologyPick(id)}
               >
-                <span>{p.emoji} {p.label}</span>
-                <span className="profile-ideology-btn__sub">{p.subtitle}</span>
+                <span className="doctrine-card__rank">{p.tag}</span>
+                <div className="doctrine-card__head">
+                  <span className="doctrine-card__emoji" aria-hidden="true">{p.emoji}</span>
+                  <span className="doctrine-card__title">{p.label}</span>
+                </div>
+                <span className="doctrine-card__subtitle">{p.subtitle}</span>
+                <p className="doctrine-card__blurb">{p.blurb}</p>
               </button>
             );
           })}

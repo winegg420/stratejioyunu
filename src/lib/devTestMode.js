@@ -1,0 +1,159 @@
+/**
+ * Geçici geliştirici / admin solo-test modu.
+ * - VITE_DEV_TEST_MODE=true veya local dev build (VITE_DEV_TEST_MODE !== 'false')
+ * - localStorage: strateji_dev_test=1
+ */
+import { buildings as buildingDefs, landUnits, airUnits, seaUnits } from '../data/placeholder';
+import { createStarterBuildings, createStarterResearches } from './buildingUtils';
+import { getUnitDisplayName } from '../data/unitCatalog';
+import { CYBER_ABILITIES } from './cyberOps';
+
+export const DEV_TEST_BUILDING_LEVEL = 15;
+export const DEV_TEST_RESEARCH_LEVEL = 15;
+export const DEV_TEST_UNIT_QTY = 100;
+export const DEV_TEST_SPY_QTY = 100;
+export const DEV_TEST_AGENT_QTY = 100;
+
+const DEV_LS_KEY = 'strateji_dev_test';
+
+const ALL_COMBAT_UNIT_DEFS = [...landUnits, ...airUnits, ...seaUnits];
+
+/** Varsayılan kapalı — yalnızca açıkça etkinleştirildiğinde (env veya localStorage). */
+export function isDevTestMode() {
+  if (import.meta.env.VITE_DEV_TEST_MODE === 'false') return false;
+  if (import.meta.env.VITE_DEV_TEST_MODE === 'true') return true;
+  try {
+    return localStorage.getItem(DEV_LS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Geliştirici test modunu kapatır (bir kerelik temizlik). */
+export function disableDevTestModeLocal() {
+  setDevTestModeLocal(false);
+}
+
+export function setDevTestModeLocal(enabled) {
+  try {
+    localStorage.setItem(DEV_LS_KEY, enabled ? '1' : '0');
+  } catch {
+    /* ignore */
+  }
+}
+
+export function bypassWarLocksForDevTest() {
+  return isDevTestMode();
+}
+
+function resolveDevBuildingLevel(template) {
+  const cap = template.maxLevel ?? DEV_TEST_BUILDING_LEVEL;
+  return Math.min(DEV_TEST_BUILDING_LEVEL, cap);
+}
+
+function boostBuildings(cityBuildings = []) {
+  return createStarterBuildings().map((template) => {
+    const prev = cityBuildings.find((b) => b.id === template.id);
+    const level = resolveDevBuildingLevel(template);
+    return {
+      ...(prev ?? template),
+      ...template,
+      level,
+      built: true,
+      locked: false,
+      upgrading: false,
+      producing: false,
+    };
+  });
+}
+
+function boostResearches(researches = []) {
+  const byId = Object.fromEntries((researches ?? []).map((r) => [r.id, r]));
+  return createStarterResearches().map((template) => {
+    const prev = byId[template.id];
+    const max = template.max ?? DEV_TEST_RESEARCH_LEVEL;
+    const level = Math.min(DEV_TEST_RESEARCH_LEVEL, max);
+    return {
+      ...template,
+      ...(prev ?? {}),
+      level,
+      active: false,
+      queued: false,
+      endsAt: null,
+    };
+  });
+}
+
+function buildDevIdleTroops(existing = []) {
+  const prevById = Object.fromEntries((existing ?? []).map((t) => [t.id, t]));
+  const seen = new Set();
+  const rows = [];
+
+  for (const def of ALL_COMBAT_UNIT_DEFS) {
+    if (seen.has(def.id)) continue;
+    seen.add(def.id);
+    const prev = prevById[def.id];
+    rows.push({
+      id: def.id,
+      name: prev?.name ?? getUnitDisplayName(def.id, def.name),
+      icon: prev?.icon ?? def.image ?? '🎖️',
+      available: DEV_TEST_UNIT_QTY,
+      ...prev,
+      available: DEV_TEST_UNIT_QTY,
+    });
+  }
+
+  for (const prev of existing ?? []) {
+    if (!seen.has(prev.id)) {
+      rows.push({ ...prev, available: DEV_TEST_UNIT_QTY });
+    }
+  }
+
+  return rows;
+}
+
+function boostCity(city) {
+  if (!city) return city;
+  return {
+    ...city,
+    buildings: boostBuildings(city.buildings),
+    idleTroops: buildDevIdleTroops(city.idleTroops),
+    idleSpies: DEV_TEST_SPY_QTY,
+    idleAgents: DEV_TEST_AGENT_QTY,
+    constructionQueue: [],
+    productionQueue: [],
+  };
+}
+
+/**
+ * Oyuncu state'ini solo-test için yükseltir (Supabase / yerel init sonrası).
+ */
+export function applyDevTestModeToState(state) {
+  if (!isDevTestMode() || !state) return state;
+
+  const cities = {};
+  for (const [cityId, city] of Object.entries(state.cities ?? {})) {
+    cities[cityId] = boostCity(city);
+  }
+
+  return {
+    ...state,
+    cities,
+    researches: boostResearches(state.researches),
+    protectionEndsAt: null,
+    devTestModeActive: true,
+  };
+}
+
+/** Siber modal — tüm yetenekler açık */
+export function getDevTestCyberCapabilities() {
+  return CYBER_ABILITIES.map((a) => ({
+    id: a.id,
+    name: a.name,
+    minLevel: 0,
+  }));
+}
+
+export function getDevTestModeBannerText() {
+  return `[ GELİŞTİRİCİ TEST ] Sv.${DEV_TEST_BUILDING_LEVEL} bina & araştırma · ${DEV_TEST_UNIT_QTY} birlik · savaş menzili/diplomasi bypass`;
+}

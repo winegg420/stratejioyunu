@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { CBNS_REGIONS } from '../utils/cbrnEngine';
 import { REGION_RESOURCE_IDS } from '../lib/adminOverrideEngine';
 import { getResourceDisplay } from '../data/resourceCatalog';
@@ -10,7 +10,7 @@ export default function AdminRegionalIncentivePanel() {
   const adminClearRegionalIncentive = useGameStore((s) => s.adminClearRegionalIncentive);
 
   const [regionId, setRegionId] = useState(CBNS_REGIONS[0]?.id ?? 'karadeniz');
-  const [resourceId, setResourceId] = useState('metal');
+  const [resourceId, setResourceId] = useState('hammadde');
   const [multiplier, setMultiplier] = useState(2);
   const [durationHours, setDurationHours] = useState(168);
   const [busy, setBusy] = useState(false);

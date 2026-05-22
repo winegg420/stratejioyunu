@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { formatHappinessLabel } from '../lib/happinessSystem';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
@@ -6,9 +6,9 @@ import { formatHourlyProduction, getHourlyAmount } from '../lib/hourlyProduction
 import { formatCompactNumber } from '../lib/formatNumber';
 import { RESOURCE_CATALOG } from '../data/resourceCatalog';
 import { PROTECTION_DAYS } from '../data/placeholder';
-import { useGameStore } from '../stores/gameStore';
+import { useGameStore, formatCitySubtitle } from '../stores/gameStore';
 
-const PRIMARY_PRODUCTION_IDS = ['metal', 'fuel', 'money'];
+const PRIMARY_PRODUCTION_IDS = ['hammadde', 'fuel', 'money'];
 
 function resolveProductionRate(resource, cityReady) {
   if (!cityReady || !resource) {
@@ -149,7 +149,7 @@ export default function StrategicManagementMatrix() {
   });
 
   return (
-    <section className="strat-matrix panel" aria-label="Stratejik yönetim matrisi">
+    <section className="strat-matrix panel glass-panel" aria-label="Stratejik yönetim matrisi">
       <header className="strat-matrix__header">
         <div>
           <h3 className="strat-matrix__title">
@@ -158,12 +158,7 @@ export default function StrategicManagementMatrix() {
             </span>
             Stratejik Yönetim Matrisi
           </h3>
-          <p className="strat-matrix__city">
-            <strong>{activeCity?.name ?? '—'}</strong>
-            {' · '}
-            {activeCity?.type ?? 'Üs'}
-            {activeCity?.provinceName ? ` · ${activeCity.provinceName}` : ''}
-          </p>
+          <p className="strat-matrix__city">{formatCitySubtitle(activeCity)}</p>
         </div>
         <span className="strat-matrix__badge">[ TAKTİKSEL ÖZET ]</span>
       </header>

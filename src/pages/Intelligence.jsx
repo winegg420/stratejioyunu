@@ -3,16 +3,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import IntelAccordion from '../components/IntelAccordion';
 import IntelTargetPicker from '../components/IntelTargetPicker';
+import IntelSummaryPanel from '../components/IntelSummaryPanel';
 import QueueEmptyState from '../components/QueueEmptyState';
+import IntelListRow from '../components/IntelListRow';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import LockedFeatureGate from '../components/LockedFeatureGate';
+import IntelOpActionButton from '../components/IntelOpActionButton';
+import {
+  AGENT_OPERATIONS,
+  KBRN_CHEM_PRESSURE_OP,
+} from '../data/intelOperationsCatalog';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
-import { CYBER_ABILITIES, getCyberOpsLevel } from '../lib/cyberOps';
+import { CYBER_ABILITIES } from '../lib/cyberOps';
 import {
   canLaunchStealthCbrnOp,
   getWeaponDevelopmentLevel,
-  getDecontaminationLevel,
   isKbrnBranchUnlocked,
 } from '../lib/kbrnResearch';
 import {
@@ -21,46 +27,25 @@ import {
   getCbrnChemOpCost,
   resolveDefenderDeconLevel,
 } from '../utils/cbrnEngine';
-import { getCyberSuccessBonus } from '../lib/ideologySystem';
-import {
-  calcCyberAttackSuccessChance,
-  calcCyberVirusTravelSeconds,
-  resolveDefenderCyberOpsLevel,
-} from '../utils/spyEngine';
-import { resolveCityCoords } from '../lib/expeditionTravel';
 import { getProgressionState } from '../lib/progressionSystem';
-import {
-  getAiCenterLevel,
-  getAiCyberArmsRaceBonus,
-  getAiCyberPowerBonusPct,
-  isAiCenterOperational,
-  resolveDefenderAiLevel,
-} from '../lib/aiCenterEngine';
+import { resolveCityCoords } from '../lib/expeditionTravel';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
-
-const AGENT_OPS = [
-  { id: 'scout', name: 'Keşif Ajanı', desc: 'Hedef üste askeri varlık tespiti' },
-  { id: 'sabotage', name: 'Sabotaj', desc: 'Üretim tesislerine müdahale' },
-  { id: 'infiltrate', name: 'Sızma Timi', desc: 'Komuta planı ve lojistik verisi' },
-];
 
 export default function Intelligence() {
   const navigate = useNavigate();
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const city = useActiveCity();
-  const playerIdeology = useGameStore((s) => s.playerIdeology);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
   const expeditions = useGameStore((s) => s.expeditions ?? STORE_EMPTY_ARRAY);
+  const reports = useGameStore((s) => s.reports ?? STORE_EMPTY_ARRAY);
+  const incomingAttacks = useGameStore((s) => s.incomingAttacks ?? STORE_EMPTY_ARRAY);
   const idleAgents = city?.idleAgents ?? 0;
   const intelOps = useGameStore((s) => s.intelOperations ?? STORE_EMPTY_ARRAY);
-  const cyberOpsLog = useGameStore((s) => s.cyberOpsLog ?? STORE_EMPTY_ARRAY);
   const sendIntelOperation = useGameStore((s) => s.sendIntelOperation);
   const startCyberVirusExpedition = useGameStore((s) => s.startCyberVirusExpedition);
   const startKbrnChemExpedition = useGameStore((s) => s.startKbrnChemExpedition);
-  const getCyberCapabilities = useGameStore((s) => s.getCyberCapabilities);
-  const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const requestMapTargetPick = useGameStore((s) => s.requestMapTargetPick);
   const mapTargetPickResult = useGameStore((s) => s.mapTargetPickResult);
   const clearMapTargetPickResult = useGameStore((s) => s.clearMapTargetPickResult);
@@ -68,9 +53,9 @@ export default function Intelligence() {
   const counterPct = useMemo(() => getCounterIntelProtectionPct(city), [city]);
   const progression = getProgressionState(city);
   const kbrnBranchOk = progression.kbrnUnlocked && isKbrnBranchUnlocked(city);
+  const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const chemUnlocked = canLaunchStealthCbrnOp(researches);
   const chemLevel = getWeaponDevelopmentLevel(researches);
-  const deconLevel = getDecontaminationLevel(researches);
 
   const cyberTargets = useMemo(() => {
     const own = new Set(playerCities.map((c) => c.name));
@@ -81,7 +66,6 @@ export default function Intelligence() {
 
   const [agentTargetName, setAgentTargetName] = useState('');
   const [cyberTargetName, setCyberTargetName] = useState('');
-  const [cyberAbilityId, setCyberAbilityId] = useState(CYBER_ABILITIES[0]?.id ?? '');
   const [agentCount, setAgentCount] = useState(1);
   const [kbrnTargetName, setKbrnTargetName] = useState('');
   const [kbrnAgents, setKbrnAgents] = useState(2);
@@ -89,49 +73,16 @@ export default function Intelligence() {
   useEffect(() => {
     if (!mapTargetPickResult) return;
     if (mapTargetPickResult.field === 'agent') setAgentTargetName(mapTargetPickResult.cityName);
-    if (mapTargetPickResult.field === 'cyber') setCyberTargetName(mapTargetPickResult.cityName);
-    if (mapTargetPickResult.field === 'kbrn') setKbrnTargetName(mapTargetPickResult.cityName);
+    if (mapTargetPickResult.field === 'cyber' || mapTargetPickResult.field === 'kbrn') {
+      setCyberTargetName(mapTargetPickResult.cityName);
+      if (mapTargetPickResult.field === 'kbrn') setKbrnTargetName(mapTargetPickResult.cityName);
+    }
     clearMapTargetPickResult();
   }, [mapTargetPickResult, clearMapTargetPickResult]);
 
   const resolvedCyberName = cyberTargetName || cyberTargets[0]?.name || '';
   const selectedTarget = cyberTargets.find((c) => c.name === resolvedCyberName) ?? cyberTargets[0];
   const resolvedAgentName = agentTargetName || resolvedCyberName;
-  const attackerFw = getCyberOpsLevel(city);
-  const cyberCapabilities = getCyberCapabilities();
-
-  const successPreview = useMemo(() => {
-    if (!selectedTarget || !city) return null;
-    const defenderFw = resolveDefenderCyberOpsLevel({ mapCity: selectedTarget });
-    const atkAi = isAiCenterOperational(city) ? getAiCenterLevel(city) : 0;
-    const defAi = resolveDefenderAiLevel({ mapCity: selectedTarget });
-    const arms = getAiCyberArmsRaceBonus(atkAi, defAi);
-    const aiPct = getAiCyberPowerBonusPct(city) + arms.chanceBonusPct + arms.pierceBonusPct;
-    const chance = calcCyberAttackSuccessChance(
-      attackerFw,
-      defenderFw,
-      getCyberSuccessBonus(playerIdeology),
-      aiPct,
-    );
-    return {
-      defenderFw,
-      chance: Math.round(chance * 100),
-      diff: attackerFw - defenderFw,
-      aiDelta: arms.levelDiff,
-    };
-  }, [selectedTarget, city, attackerFw, playerIdeology]);
-
-  const travelSeconds = useMemo(() => {
-    if (!selectedTarget || !city) return 0;
-    const originName = playerCities.find((c) => c.id === activeCityId)?.name;
-    const origin = resolveCityCoords(originName, playerCities, mapCities);
-    return calcCyberVirusTravelSeconds({
-      origin,
-      target: { lat: selectedTarget.lat, lng: selectedTarget.lng },
-      agentCount,
-      mapCities,
-    });
-  }, [selectedTarget, city, agentCount, mapCities, playerCities, activeCityId]);
 
   const activeCyberExpeditions = useMemo(
     () => expeditions.filter((e) => e.mode === 'cyber'),
@@ -145,19 +96,39 @@ export default function Intelligence() {
 
   const activeOpsCount = intelOps.length + activeCyberExpeditions.length + activeKbrnExpeditions.length;
 
+  const enemySpyWarning = useMemo(() => {
+    const ownNames = new Set(playerCities.map((c) => c.name));
+    const ownIds = new Set(playerCities.map((c) => c.id));
+    const lines = [];
+
+    for (const exp of expeditions) {
+      if (exp.direction !== 'outgoing') continue;
+      const hitsUs = ownNames.has(exp.target) || ownIds.has(exp.targetCityId);
+      if (!hitsUs) continue;
+      const label = exp.mode === 'cyber' ? 'Siber saldırı' : exp.type?.includes('Casus') ? 'Casus seferi' : 'Sefer';
+      lines.push(`${label}: ${exp.originCityName ?? 'Düşman'} → ${exp.target}`);
+    }
+
+    for (const atk of incomingAttacks ?? []) {
+      if (ownIds.has(atk.targetCityId)) {
+        lines.push(`Gelen saldırı: ${atk.originCityName ?? 'Düşman'} → ${atk.targetCityName ?? 'Üs'}`);
+      }
+    }
+
+    return lines.length ? lines.slice(0, 2).join(' · ') : null;
+  }, [expeditions, incomingAttacks, playerCities]);
+
   const kbrnResolvedTarget = cyberTargets.find(
     (c) => c.name === (kbrnTargetName || resolvedCyberName),
   ) ?? selectedTarget;
 
   const kbrnIntrusionPreview = useMemo(() => {
     if (!kbrnResolvedTarget) return null;
-    const attackerChem = chemLevel;
     const defenderDecon = resolveDefenderDeconLevel({ mapCity: kbrnResolvedTarget });
-    const chance = calcCbrnIntrusionChance(attackerChem, defenderDecon);
+    const chance = calcCbrnIntrusionChance(chemLevel, defenderDecon);
     return {
       defenderDecon,
       chance: Math.round(chance * 100),
-      diff: attackerChem - defenderDecon,
       cost: getCbrnChemOpCost(chemLevel),
     };
   }, [kbrnResolvedTarget, chemLevel]);
@@ -179,17 +150,17 @@ export default function Intelligence() {
     navigate('/harita');
   };
 
-  const handleAgentSend = (opType) => {
+  const handleAgentSend = (op) => {
     const target = resolvedAgentName || cyberTargets[0]?.name;
     if (!target) return;
-    sendIntelOperation({ target, opType, agentCount: 1 });
+    sendIntelOperation({ target, opType: op.name, opId: op.id, agentCount: 1 });
   };
 
-  const handleCyberLaunch = () => {
+  const handleCyberSend = (abilityId) => {
     if (!selectedTarget) return;
     startCyberVirusExpedition({
       targetCity: selectedTarget,
-      abilityId: cyberAbilityId,
+      abilityId,
       agentCount,
     });
   };
@@ -198,20 +169,16 @@ export default function Intelligence() {
     <div className="page page--console page--intel">
       <PageHeader
         title="İstihbarat & Siber Operasyon"
-        subtitle="> İstihbarat ağı çevrimiçi — casus, siber saldırı ve KBRN modülleri hazır..."
+        subtitle="> İstihbarat ağı çevrimiçi — ajan, siber ve KBRN operasyon modülleri..."
       />
 
-      <div className="intel-status-strip">
-        <span>
-          Boşta ajan: <strong>{idleAgents}</strong>
-        </span>
-        <span>
-          Karşı istihbarat: <strong>%{counterPct}</strong>
-        </span>
-        <span>
-          Aktif görev: <strong>{activeOpsCount}</strong>
-        </span>
-      </div>
+      <IntelSummaryPanel
+        totalAgents={idleAgents}
+        activeOpsCount={activeOpsCount}
+        counterIntelPct={counterPct}
+        reports={reports}
+        enemySpyWarning={enemySpyWarning}
+      />
 
       <IntelAccordion
         title="Aktif Operasyonlar"
@@ -222,28 +189,28 @@ export default function Intelligence() {
         {activeOpsCount > 0 ? (
           <ul className="intel-list">
             {intelOps.map((op) => (
-              <li key={op.id}>
+              <IntelListRow key={op.id} seedKey={op.id}>
                 <strong>{op.opType}</strong>
                 <span>{op.target}</span>
                 <span className="badge">Ajan</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(op.endsAt, now))}</span>
-              </li>
+              </IntelListRow>
             ))}
             {activeCyberExpeditions.map((exp) => (
-              <li key={exp.id}>
+              <IntelListRow key={exp.id} seedKey={exp.id}>
                 <strong>{exp.troopPayload?.cyberVirus?.abilityId ?? 'Siber'}</strong>
                 <span>{exp.originCityName} → {exp.target}</span>
                 <span className="badge">Siber</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(exp.endsAt, now))}</span>
-              </li>
+              </IntelListRow>
             ))}
             {activeKbrnExpeditions.map((exp) => (
-              <li key={exp.id}>
-                <strong>KBRN</strong>
+              <IntelListRow key={exp.id} seedKey={exp.id}>
+                <strong>Kimyasal Baskı</strong>
                 <span>{exp.originCityName} → {exp.target}</span>
                 <span className="badge badge--kbrn">KBRN</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(exp.endsAt, now))}</span>
-              </li>
+              </IntelListRow>
             ))}
           </ul>
         ) : (
@@ -251,9 +218,9 @@ export default function Intelligence() {
             <QueueEmptyState
               as="div"
               tag="[ OPERASYON YOK ]"
-            title="Aktif operasyon yok"
-            hint="İstihbarat merkezinden ajan veya siber operasyon başlatın."
-            icon="📡"
+              title="Aktif operasyon yok"
+              hint="Aşağıdan ajan, siber veya KBRN operasyonu başlatın."
+              icon="📡"
             />
           </div>
         )}
@@ -268,19 +235,21 @@ export default function Intelligence() {
             onMapPick={() => goMapPick('agent')}
             disabled={!cyberTargets.length}
           />
-          <ul className="ops-list">
-            {AGENT_OPS.map((op) => (
-              <li key={op.id}>
-                <strong>{op.name}</strong>
-                <span>{op.desc}</span>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  disabled={idleAgents < 1 || !resolvedAgentName}
-                  onClick={() => handleAgentSend(op.name)}
+          <ul className="ops-list ops-list--cards">
+            {AGENT_OPERATIONS.map((op) => (
+              <li key={op.id} className="intel-op-card">
+                <div className="intel-op-card__body">
+                  <strong className="intel-op-card__title">{op.name}</strong>
+                  <p className="intel-op-card__desc">{op.desc}</p>
+                  <span className="hint intel-op-card__cost">{op.cost}</span>
+                </div>
+                <IntelOpActionButton
+                  className="btn-sm"
+                  locked={idleAgents < 1 || !resolvedAgentName}
+                  onClick={() => handleAgentSend(op)}
                 >
                   Gönder
-                </button>
+                </IntelOpActionButton>
               </li>
             ))}
           </ul>
@@ -293,186 +262,139 @@ export default function Intelligence() {
           <p className="hint">🔒 {progression.locks.cyber}</p>
         </section>
       ) : (
-      <LockedFeatureGate buildingId="cyber_ops" featureName="Siber operasyonlar">
-        <IntelAccordion title="Siber Operasyonlar" icon="💻">
-          <p className="hint">
-            Siber ajan gönderimi — başarı FW seviyesine bağlı; başarıda 1 saat %30 debuff.
-          </p>
-
-          {cyberTargets.length === 0 ? (
-            <MilitaryEmptyState
-              variant="inline"
-              tag="[ HEDEF YOK ]"
-              icon="🛰️"
-              title="Saldırılabilir düşman üssü yok"
-              hint="Haritada keşfedilen bot veya oyuncu üsleri burada listelenir."
-            />
-          ) : (
-            <>
-              <IntelTargetPicker
-                value={resolvedCyberName}
-                onChange={setCyberTargetName}
-                targets={cyberTargets}
-                onMapPick={() => goMapPick('cyber')}
+        <LockedFeatureGate buildingId="cyber_ops" featureName="Siber operasyonlar">
+          <IntelAccordion title="Siber Operasyonlar" icon="💻" alwaysOpen>
+            {cyberTargets.length === 0 ? (
+              <MilitaryEmptyState
+                variant="inline"
+                tag="[ HEDEF YOK ]"
+                icon="🛰️"
+                title="Saldırılabilir düşman üssü yok"
+                hint="Haritada keşfedilen bot veya oyuncu üsleri burada listelenir."
               />
-
-              <div className="intel-cyber-preview">
-                <span>Saldıran FW: Lv.{attackerFw}</span>
-                {successPreview && (
-                  <>
-                    <span>Savunan FW: Lv.{successPreview.defenderFw}</span>
-                    <span>
-                      Δ {successPreview.diff >= 0 ? '+' : ''}
-                      {successPreview.diff}
-                    </span>
-                    <strong>Sızma: %{successPreview.chance}</strong>
-                    <span className="hint">ETA: {formatSeconds(travelSeconds)}</span>
-                  </>
-                )}
-              </div>
-
-              <label className="intel-cyber-target">
-                Siber ajan sayısı
-                <input
-                  type="number"
-                  className="input-qty"
-                  min={1}
-                  max={idleAgents}
-                  value={agentCount}
-                  onChange={(e) => setAgentCount(Math.min(idleAgents, Math.max(1, Number(e.target.value) || 1)))}
+            ) : (
+              <>
+                <IntelTargetPicker
+                  value={resolvedCyberName}
+                  onChange={setCyberTargetName}
+                  targets={cyberTargets}
+                  onMapPick={() => goMapPick('cyber')}
                 />
-              </label>
-
-              <ul className="ops-list ops-list--cyber">
-                {CYBER_ABILITIES.map((ability) => {
-                  const unlocked = cyberCapabilities.some((c) => c.id === ability.id);
-                  return (
-                    <li key={ability.id} className={unlocked ? '' : 'ops-list__locked'}>
-                      <strong>{ability.name}</strong>
-                      <span>{ability.subtitle ?? ability.desc}</span>
-                      <span className="hint">Sv.{ability.minLevel}+ · {ability.cost}</span>
-                      <button
-                        type="button"
-                        className={`btn btn-primary btn-sm${cyberAbilityId === ability.id ? ' active' : ''}`}
-                        disabled={!unlocked}
-                        onClick={() => setCyberAbilityId(ability.id)}
+                <label className="intel-cyber-target">
+                  Siber ajan sayısı
+                  <input
+                    type="number"
+                    className="input-qty"
+                    min={1}
+                    max={idleAgents}
+                    value={agentCount}
+                    onChange={(e) => setAgentCount(Math.min(idleAgents, Math.max(1, Number(e.target.value) || 1)))}
+                  />
+                </label>
+                <ul className="ops-list ops-list--cards">
+                  {CYBER_ABILITIES.map((ability) => (
+                    <li key={ability.id} className="intel-op-card intel-op-card--cyber">
+                      <div className="intel-op-card__body">
+                        <strong className="intel-op-card__title">{ability.name}</strong>
+                        <p className="intel-op-card__desc">{ability.desc}</p>
+                        <span className="hint intel-op-card__cost">{ability.cost}</span>
+                      </div>
+                      <IntelOpActionButton
+                        className="btn-sm"
+                        locked={idleAgents < agentCount || !selectedTarget}
+                        onClick={() => handleCyberSend(ability.id)}
                       >
-                        {unlocked ? 'Seç' : `Kilitli (Sv.${ability.minLevel})`}
-                      </button>
+                        Gönder
+                      </IntelOpActionButton>
                     </li>
-                  );
-                })}
-              </ul>
-
-              <button
-                type="button"
-                className="btn btn-danger"
-                disabled={!cyberCapabilities.length || idleAgents < agentCount || !selectedTarget}
-                onClick={handleCyberLaunch}
-              >
-                Siber Virüs Gönder
-              </button>
-            </>
-          )}
-
-          {cyberOpsLog.length > 0 && (
-            <ul className="intel-list intel-cyber-log">
-              {cyberOpsLog.slice(0, 4).map((log) => (
-                <li key={log.id}>
-                  <strong>{log.abilityName}</strong>
-                  <span>{log.originCityName} → {log.targetCityName}</span>
-                  <span className={log.success ? 'badge badge--ok' : 'badge'}>
-                    {log.success ? 'OK' : 'FAIL'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </IntelAccordion>
-      </LockedFeatureGate>
+                  ))}
+                </ul>
+              </>
+            )}
+          </IntelAccordion>
+        </LockedFeatureGate>
       )}
 
       {!progression.kbrnUnlocked ? (
         <section className="panel intel-progression-lock">
-          <h3 className="panel-title">KBRN & Uranyum</h3>
+          <h3 className="panel-title">KBRN Operasyonları</h3>
           <p className="hint">🔒 {progression.locks.kbrn}</p>
         </section>
       ) : (
-      <LockedFeatureGate buildingId="research" featureName="KBRN operasyonu">
-        <IntelAccordion title="KBRN Silahı" icon="☢️">
-          <p className="hint">
-            Sinsi kimyasal baskı — 1 saat felç. Panzehir Sv.{deconLevel}.
-            {!kbrnBranchOk && ' · Ar-Ge Sv.8+'}
-          </p>
-
-          {!chemUnlocked ? (
-            <MilitaryEmptyState
-              variant="inline"
-              tag="[ AR-GE GEREKLİ ]"
-              icon="☢️"
-              title="KBRN silahı kilitli"
-              hint="KBRN Silahı Geliştirme araştırmasını tamamlayın."
-              actionLabel="Ar-Ge"
-              actionTo="/ar-ge"
-            />
-          ) : cyberTargets.length === 0 ? (
-            <MilitaryEmptyState
-              variant="inline"
-              tag="[ HEDEF YOK ]"
-              icon="🎯"
-              title="Haritada hedef üs yok"
-              hint="Haritadan Seç ile veya keşif sonrası hedef belirleyin."
-            />
-          ) : (
-            <>
-              <IntelTargetPicker
-                value={kbrnTargetName || resolvedCyberName}
-                onChange={setKbrnTargetName}
-                targets={cyberTargets}
-                onMapPick={() => goMapPick('kbrn')}
+        <LockedFeatureGate buildingId="research" featureName="KBRN operasyonu">
+          <IntelAccordion title="KBRN Operasyonları" icon="☢️" alwaysOpen>
+            {!chemUnlocked ? (
+              <MilitaryEmptyState
+                variant="inline"
+                tag="[ AR-GE GEREKLİ ]"
+                icon="☢️"
+                title="Kimyasal Baskı kilitli"
+                hint={`${KBRN_CHEM_PRESSURE_OP.researchRequired} tamamlayın.`}
+                actionLabel="Ar-Ge"
+                actionTo="/ar-ge"
               />
-              {kbrnIntrusionPreview && (
-                <div className="intel-cyber-preview intel-kbrn-preview">
-                  <span>ATK Lv.{chemLevel}</span>
-                  <span>DEF Lv.{kbrnIntrusionPreview.defenderDecon}</span>
-                  <strong>Bulaşma: %{kbrnIntrusionPreview.chance}</strong>
-                  <span className="hint">{kbrnIntrusionPreview.cost}</span>
-                  <span className="hint">ETA: {formatSeconds(kbrnTravelSeconds)}</span>
-                </div>
-              )}
-              <label className="intel-cyber-target">
-                Operatör sayısı
-                <input
-                  type="number"
-                  className="input-qty"
-                  min={1}
-                  max={idleAgents}
-                  value={kbrnAgents}
-                  onChange={(e) => setKbrnAgents(Math.min(idleAgents, Math.max(1, Number(e.target.value) || 1)))}
+            ) : cyberTargets.length === 0 ? (
+              <MilitaryEmptyState
+                variant="inline"
+                tag="[ HEDEF YOK ]"
+                icon="🎯"
+                title="Haritada hedef üs yok"
+                hint="Haritadan hedef seçin."
+              />
+            ) : (
+              <>
+                <IntelTargetPicker
+                  value={kbrnTargetName || resolvedCyberName}
+                  onChange={setKbrnTargetName}
+                  targets={cyberTargets}
+                  onMapPick={() => goMapPick('kbrn')}
                 />
-              </label>
-              <button
-                type="button"
-                className="btn btn-danger"
-                disabled={!kbrnBranchOk || idleAgents < kbrnAgents || !kbrnResolvedTarget}
-                onClick={() => kbrnResolvedTarget && startKbrnChemExpedition({
-                  targetCity: kbrnResolvedTarget,
-                  agentCount: kbrnAgents,
-                })}
-              >
-                Sinsi KBRN Başlat
-              </button>
-            </>
-          )}
-        </IntelAccordion>
-      </LockedFeatureGate>
+                <article className="intel-op-card intel-op-card--kbrn">
+                  <div className="intel-op-card__body">
+                    <strong className="intel-op-card__title">{KBRN_CHEM_PRESSURE_OP.name}</strong>
+                    <p className="intel-op-card__desc">{KBRN_CHEM_PRESSURE_OP.desc}</p>
+                    {kbrnIntrusionPreview && (
+                      <p className="hint intel-op-card__meta">
+                        Bulaşma %{kbrnIntrusionPreview.chance} · DEF Lv.{kbrnIntrusionPreview.defenderDecon}
+                        {' · '}ETA {formatSeconds(kbrnTravelSeconds)}
+                      </p>
+                    )}
+                    <span className="hint intel-op-card__cost intel-op-card__cost--heavy">
+                      {kbrnIntrusionPreview?.cost ?? getCbrnChemOpCost(chemLevel)}
+                    </span>
+                  </div>
+                  <label className="intel-cyber-target intel-cyber-target--inline">
+                    Operatör
+                    <input
+                      type="number"
+                      className="input-qty"
+                      min={1}
+                      max={idleAgents}
+                      value={kbrnAgents}
+                      onChange={(e) => setKbrnAgents(Math.min(idleAgents, Math.max(1, Number(e.target.value) || 1)))}
+                    />
+                  </label>
+                  <IntelOpActionButton
+                    variant="danger"
+                    locked={!kbrnBranchOk || idleAgents < kbrnAgents || !kbrnResolvedTarget}
+                    onClick={() => kbrnResolvedTarget && startKbrnChemExpedition({
+                      targetCity: kbrnResolvedTarget,
+                      agentCount: kbrnAgents,
+                    })}
+                  >
+                    Gönder
+                  </IntelOpActionButton>
+                </article>
+              </>
+            )}
+          </IntelAccordion>
+        </LockedFeatureGate>
       )}
 
-      <p className="intel-footer-hint">
+      <p className="intel-footer-hint panel-hint">
         <span aria-hidden="true">📋</span>
-        <span>
-          Detaylar <Link to="/raporlar">Raporlar</Link> — CYBER OPS & KBRN LEDGER
-        </span>
+        Tamamlanan operasyonlar{' '}
+        <Link to="/raporlar">Raporlar → Operasyon Geçmişi</Link> sekmesinde arşivlenir.
       </p>
     </div>
   );

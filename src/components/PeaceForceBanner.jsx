@@ -4,6 +4,7 @@ import {
   isPeaceForceProtected,
   PEACE_FORCE_DAYS,
 } from '../lib/progressionSystem';
+import TerminalLogPanel from './TerminalLogPanel';
 
 export default function PeaceForceBanner() {
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
@@ -13,6 +14,7 @@ export default function PeaceForceBanner() {
   if (!active) return null;
 
   return (
+    <TerminalLogPanel title="Barış gücü" tag="DİPLOMATİ" className="terminal-log-panel--peace">
     <div className="peace-force-banner" role="status">
       <span className="peace-force-banner__icon" aria-hidden="true">
         🕊️
@@ -33,5 +35,6 @@ export default function PeaceForceBanner() {
         </p>
       </div>
     </div>
+    </TerminalLogPanel>
   );
 }

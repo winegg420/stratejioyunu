@@ -1,6 +1,7 @@
 /**
  * Sezon, günlük görev ve istihbarat takip — localStorage kalıcılığı.
  */
+import { migrateSeasonStats } from './seasonChampionship';
 const DAILY_QUESTS_PREFIX = 'strateji_daily_quests';
 const WATCHLIST_PREFIX = 'strateji_watchlist';
 const SEASON_PREFIX = 'strateji_season_engagement';
@@ -58,7 +59,9 @@ export function saveSeasonEngagement(playerKey, state) {
 }
 
 export function loadSeasonStats(playerKey) {
-  return readJson(safeKey(SEASON_STATS_PREFIX, playerKey), null);
+  const raw = readJson(safeKey(SEASON_STATS_PREFIX, playerKey), null);
+  if (!raw) return null;
+  return migrateSeasonStats(raw);
 }
 
 export function saveSeasonStats(playerKey, stats) {

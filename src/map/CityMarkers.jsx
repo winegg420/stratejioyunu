@@ -5,10 +5,11 @@ import { isPeaceForceProtected } from '../lib/progressionSystem';
 import { pruneCyberEffects } from '../lib/happinessSystem';
 import { useGameStore } from '../stores/gameStore';
 import { getCityOwnerLabel } from './mapOwnership';
+import { PLAYER_CITY_ROLES } from '../data/worldCitiesCatalog';
 import {
-  createActiveHqIcon,
+  createColonyIcon,
+  createMainHqIcon,
   createMapHitIcon,
-  createOwnCityIcon,
 } from './cityMarkerUtils';
 
 function buildMarkerList(mapCities, playerCities) {
@@ -21,6 +22,7 @@ function buildMarkerList(mapCities, playerCities) {
       lat: pc?.lat ?? city.lat,
       lng: pc?.lng ?? city.lng,
       playerId: pc?.id ?? null,
+      cityRole: pc?.cityRole ?? null,
       isOwn: Boolean(pc) || city.status === 'own',
     });
   }
@@ -33,6 +35,7 @@ function buildMarkerList(mapCities, playerCities) {
       lng: pc.lng,
       status: 'own',
       playerId: pc.id,
+      cityRole: pc.cityRole ?? PLAYER_CITY_ROLES.COLONY,
       isOwn: true,
       tier: 'town',
       type: pc.type,
@@ -90,17 +93,23 @@ export default function CityMarkers({
 
         const peaceShield = city.isOwn && peaceActive;
 
-        const icon = isActive
-          ? createActiveHqIcon(markerCity, ownerLabel, { showLabels: showPinLabels })
-          : city.isOwn
-            ? createOwnCityIcon(markerCity, {
+        const role = city.cityRole
+          ?? playerCity?.cityRole
+          ?? (city.isOwn ? PLAYER_CITY_ROLES.COLONY : null);
+        const isMainHq = role === PLAYER_CITY_ROLES.MAIN_HQ;
+
+        const icon = city.isOwn
+          ? (isMainHq
+            ? createMainHqIcon(markerCity, ownerLabel, { showLabels: showPinLabels, isActive })
+            : createColonyIcon(markerCity, {
               underAttack: isUnderAttack,
               ownerLabel,
               cyberActive,
               peaceShield,
               showLabels: showPinLabels,
-            })
-            : createMapHitIcon();
+              isActive,
+            }))
+          : createMapHitIcon();
 
         return (
           <Marker

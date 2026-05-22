@@ -1,0 +1,245 @@
+/* Operasyonel akış — route fade, aktif menü hattı, alt terminal dock */
+
+:root {
+  --terminal-dock-ticker-h: 2rem;
+  --terminal-dock-logs-h: 0px;
+}
+
+/* [1] Route transition — terminal koyuluğu + 0.15s fade */
+.content-area--terminal {
+  background: #030508;
+  background-image: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(0, 240, 255, 0.03), transparent 55%);
+}
+
+.route-content-panel {
+  position: relative;
+  min-height: 100%;
+  isolation: isolate;
+}
+
+.route-content-panel--enter {
+  animation: route-content-fade-in 0.15s ease-out forwards;
+}
+
+.route-content-panel--enter::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(3, 5, 8, 0.35) 40%,
+    transparent 100%
+  );
+  animation: route-cyber-darken 0.15s ease-out forwards;
+}
+
+@keyframes route-content-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes route-cyber-darken {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.route-transition-loader {
+  background: rgba(3, 5, 8, 0.78) !important;
+  animation: route-loader-fade 0.15s ease-out forwards;
+}
+
+@keyframes route-loader-fade {
+  0% {
+    opacity: 0.92;
+  }
+  70% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* [2] Sidebar — kayan aktif hat */
+.hud-shell .sidebar-hud .nav-list {
+  position: relative;
+}
+
+.sidebar-active-beam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, #00f0ff 0%, #39ff14 45%, #22ff88 100%);
+  box-shadow:
+    0 0 10px rgba(0, 240, 255, 0.85),
+    0 0 18px rgba(57, 255, 20, 0.65),
+    0 0 28px rgba(34, 255, 136, 0.35);
+  pointer-events: none;
+  z-index: 6;
+  transition:
+    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease;
+}
+
+.hud-shell .sidebar-hud .nav-link.active,
+.app-shell.hud-shell .sidebar-hud .nav-link.active {
+  border-left: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link.active::before,
+.app-shell.hud-shell .sidebar-hud .nav-link.active::before {
+  display: none;
+}
+
+/* [3] Sticky bottom terminal dock */
+.terminal-bottom-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.terminal-dock-logs {
+  width: 100%;
+  max-height: min(9.5rem, 28vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(2, 4, 8, 0.94);
+  border-top: 1px dashed rgba(0, 240, 255, 0.42);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.55);
+}
+
+.terminal-dock-logs--idle {
+  min-height: 2.25rem;
+}
+
+.terminal-dock-logs__portals:empty {
+  display: none;
+}
+
+.terminal-dock-logs__placeholder {
+  padding: 0.4rem 0.85rem;
+}
+
+.terminal-log-panel {
+  width: 100%;
+  border-bottom: 1px dashed rgba(0, 240, 255, 0.12);
+  font-family: var(--font-terminal, var(--font-mono));
+}
+
+.terminal-log-panel:last-child {
+  border-bottom: none;
+}
+
+.terminal-log-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(0, 240, 255, 0.05);
+  border-bottom: 1px dashed rgba(57, 255, 20, 0.18);
+}
+
+.terminal-log-panel__tag {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #22ff88;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 8px rgba(34, 255, 136, 0.45);
+}
+
+.terminal-log-panel__title {
+  font-size: 0.68rem;
+  color: rgba(226, 232, 240, 0.88);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.terminal-log-panel__body {
+  padding: 0.45rem 0.85rem 0.55rem;
+  pointer-events: auto;
+}
+
+.terminal-log-panel--queue .active-queue-panel {
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.terminal-log-panel--queue .active-queue-title {
+  display: none;
+}
+
+.terminal-log-panel--crisis .crisis-response-panel,
+.terminal-log-panel--peace .peace-force-banner {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.terminal-log-panel--intel .intel-status-strip {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.terminal-log-panel--hint .intel-footer-hint {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.terminal-bottom-dock .command-ticker {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  border-top: 1px dashed rgba(0, 240, 255, 0.35);
+}
+
+.app-shell.hud-shell {
+  padding-bottom: calc(
+    var(--terminal-dock-ticker-h) + var(--terminal-dock-logs-h) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.mobile-app .terminal-bottom-dock {
+  bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-app .terminal-bottom-dock .command-ticker {
+  bottom: auto;
+}
+
+.mobile-app.hud-shell.app-shell,
+.mobile-app .app-shell.hud-shell {
+  padding-bottom: calc(
+    var(--terminal-dock-ticker-h) + var(--terminal-dock-logs-h) + 3.25rem + env(safe-area-inset-bottom, 0px)
+  );
+}

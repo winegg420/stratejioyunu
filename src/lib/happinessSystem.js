@@ -88,6 +88,23 @@ export function getActiveCyberBarracksSlow(cyberEffects = []) {
   return Math.min(0.6, slow);
 }
 
+export function hasActiveCyberEnergyHalt(cyberEffects = []) {
+  const now = Date.now();
+  return (cyberEffects ?? []).some(
+    (fx) => (fx.endsAt == null || fx.endsAt > now) && fx.energyHalt,
+  );
+}
+
+export function getActiveCyberCommsDelayPct(cyberEffects = []) {
+  const now = Date.now();
+  let delay = 0;
+  for (const fx of cyberEffects ?? []) {
+    if (fx.endsAt != null && fx.endsAt <= now) continue;
+    delay = Math.max(delay, fx.notificationDelayPct ?? 0);
+  }
+  return Math.min(0.35, delay);
+}
+
 export function pruneCyberEffects(cyberEffects = []) {
   const now = Date.now();
   return (cyberEffects ?? []).filter((fx) => fx.endsAt == null || fx.endsAt > now);
@@ -154,11 +171,12 @@ export function computeCityHappiness(city, context = {}) {
   happiness -= getCrisisHappinessPenalty(crisisFx);
   happiness -= getSiegeHappinessPenalty(context.cityId ?? '', context);
   happiness -= getCyberHappinessPenalty(effects);
+  happiness -= context.empireHappinessPenalty ?? 0;
   happiness = Math.round(happiness * getCyberHappinessMultiplier(effects));
   happiness = Math.round(happiness * getKbrnHappinessMultiplier(kbrn));
 
-  const farm = city?.buildings?.find((b) => b.id === 'farm');
-  if ((farm?.level ?? 0) >= 5) happiness += 3;
+  const refinery = city?.buildings?.find((b) => b.id === 'refinery');
+  if ((refinery?.level ?? 0) >= 5) happiness += 3;
 
   return clampHappiness(happiness);
 }

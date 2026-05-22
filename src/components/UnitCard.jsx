@@ -6,6 +6,7 @@ import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
 import { resolveUnitInfoPayload } from '../lib/contentInfoResolver';
 import TroopStockLabel from './TroopStockLabel';
+import CyberDataInput from './CyberDataInput';
 
 export default function UnitCard({ unit, awayMap }) {
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
@@ -24,7 +25,9 @@ export default function UnitCard({ unit, awayMap }) {
 
   const handleMax = () => {
     const max = calcMaxAffordable(unit.cost, resources);
-    setQtyInput(toRawInputNumber(max));
+    const next = toRawInputNumber(max);
+    setQtyInput(next);
+    return next;
   };
 
   const handleQtyChange = (e) => {
@@ -74,18 +77,13 @@ export default function UnitCard({ unit, awayMap }) {
         {unit.time && unit.time !== '—' ? ` · ${unit.time}` : ''}
       </p>
       <div className="card-actions unit-card-actions">
-        <div className="qty-input-wrap">
-          <input
-            type="number"
-            className="input-qty"
-            value={qtyInput}
-            min={0}
-            onChange={handleQtyChange}
-          />
-          <button type="button" className="btn btn-max" onClick={handleMax} title="Mevcut kaynakla üretilebilecek en fazla">
-            MAX
-          </button>
-        </div>
+        <CyberDataInput
+          value={qtyInput}
+          min={0}
+          disabled={actionLocked}
+          onChange={handleQtyChange}
+          onMax={handleMax}
+        />
         <button
           type="button"
           className={`btn btn-primary${actionLocked ? ' btn-hud-loading' : ''}`}

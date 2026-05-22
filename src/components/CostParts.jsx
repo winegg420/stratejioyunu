@@ -1,4 +1,4 @@
-import { getResourceDisplay } from '../data/resourceCatalog';
+import { getResourceDisplay, sanitizeMetalWording } from '../data/resourceCatalog';
 import { parseUnitCost } from '../utils/resourceCosts';
 
 function formatCostAmount(amount) {
@@ -13,7 +13,7 @@ export default function CostParts({ costStr, className = '' }) {
 
   const parts = parseUnitCost(costStr);
   if (!parts.length) {
-    return <span className={`cost-parts ${className}`.trim()}>{costStr}</span>;
+    return <span className={`cost-parts ${className}`.trim()}>{sanitizeMetalWording(costStr)}</span>;
   }
 
   return (
@@ -22,6 +22,7 @@ export default function CostParts({ costStr, className = '' }) {
         const { icon, label } = getResourceDisplay(part.resourceId);
         return (
           <span key={`${part.resourceId}-${index}`} className="cost-parts__chip">
+            <span className="cost-parts__pixel" aria-hidden="true" />
             <span className="cost-parts__icon" aria-hidden="true">
               {icon}
             </span>

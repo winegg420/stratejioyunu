@@ -1,10 +1,10 @@
-import { parseUnitCost } from '../utils/resourceCosts';
+﻿import { parseUnitCost } from '../utils/resourceCosts';
 import { getResourceCostKeyword } from './resourceCatalog';
 import { formatSeconds, parseTimeToSeconds } from '../lib/gameUtils';
 
 const RESOURCE_LABELS = {
   food: getResourceCostKeyword('food'),
-  metal: getResourceCostKeyword('metal'),
+  hammadde: getResourceCostKeyword('hammadde'),
   fuel: getResourceCostKeyword('fuel'),
   money: getResourceCostKeyword('money'),
   energy: getResourceCostKeyword('energy'),
@@ -15,84 +15,59 @@ const RESOURCE_LABELS = {
 export const BUILDING_CATALOG = {
   hq: {
     levels: {
-      1: { cost: '500 metal · 500 bütçe', time: '00:08:00' },
-    },
-  },
-  farm: {
-    levels: {
-      1: { cost: '250 metal · 200 nüfus', time: '00:04:00' },
+      1: { cost: '500 hammadde · 500 bütçe', time: '00:08:00' },
     },
   },
   refinery: {
     levels: {
-      1: { cost: '350 metal · 150 petrol', time: '00:05:00' },
-    },
-  },
-  factory: {
-    levels: {
-      1: { cost: '400 metal · 200 nüfus', time: '00:06:00' },
-    },
-  },
-  depot: {
-    levels: {
-      1: { cost: '300 metal · 150 nüfus', time: '00:05:00' },
+      1: { cost: '350 hammadde · 150 petrol', time: '00:05:00' },
     },
   },
   plant: {
     levels: {
-      1: { cost: '450 metal · 200 enerji', time: '00:07:00' },
-    },
-  },
-  tax: {
-    levels: {
-      1: { cost: '200 metal · 150 bütçe', time: '00:04:00' },
+      1: { cost: '450 hammadde · 200 enerji', time: '00:07:00' },
     },
   },
   barracks: {
     levels: {
-      1: { cost: '450 metal · 250 nüfus', time: '00:08:00' },
+      1: { cost: '450 hammadde · 250 nüfus', time: '00:08:00' },
     },
   },
   airport: {
     levels: {
-      1: { cost: '800 metal · 350 petrol', time: '00:15:00' },
+      1: { cost: '800 hammadde · 350 petrol', time: '00:15:00' },
     },
   },
   shipyard: {
     levels: {
-      1: { cost: '650 metal · 300 petrol', time: '00:12:00' },
+      1: { cost: '650 hammadde · 300 petrol', time: '00:12:00' },
     },
   },
   intel: {
     levels: {
-      1: { cost: '400 metal · 250 bütçe', time: '00:07:00' },
-    },
-  },
-  wall: {
-    levels: {
-      1: { cost: '350 metal · 150 nüfus', time: '00:06:00' },
+      1: { cost: '400 hammadde · 250 bütçe', time: '00:07:00' },
     },
   },
   market: {
     levels: {
-      1: { cost: '280 metal · 200 bütçe', time: '00:05:00' },
+      1: { cost: '280 hammadde · 200 bütçe', time: '00:05:00' },
     },
   },
   research: {
     levels: {
-      1: { cost: '600 metal · 400 bütçe', time: '00:10:00' },
+      1: { cost: '600 hammadde · 400 bütçe', time: '00:10:00' },
     },
   },
   cyber_ops: {
     levels: {
-      1: { cost: '2.200 metal · 1.400 enerji', time: '00:09:00' },
+      1: { cost: '2.200 hammadde · 1.400 enerji', time: '00:09:00' },
     },
   },
   ai_center: {
     maxLevel: 15,
     levels: {
       1: {
-        cost: '95.000 metal · 62.000 bütçe · 22.000 enerji',
+        cost: '95.000 hammadde · 62.000 bütçe · 22.000 enerji',
         time: '28:00:00',
       },
     },

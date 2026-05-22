@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS, SERVER_NAME } from '../data/placeholder';
 import { getProgressionState } from '../lib/progressionSystem';
@@ -7,6 +7,7 @@ import NavBadge from './NavBadge';
 import NavAttackAlert from './NavAttackAlert';
 import NavExpeditionCount from './NavExpeditionCount';
 import SystemLockedModal from './SystemLockedModal';
+import SidebarActiveBeam from './SidebarActiveBeam';
 import { useActiveExpeditionCount, useReportsNavBadge, useUnderAttack } from '../stores/gameStore';
 
 export default function Sidebar() {
@@ -19,6 +20,7 @@ export default function Sidebar() {
   const activeCity = playerCities.find((c) => c.id === activeCityId);
   const progression = getProgressionState(city);
   const [lockedFeature, setLockedFeature] = useState(null);
+  const navListRef = useRef(null);
 
   const navItems = NAV_ITEMS.map((item) => {
     if (item.label === 'Siber Operasyon') {
@@ -45,7 +47,8 @@ export default function Sidebar() {
           <span className="server-name">{SERVER_NAME}</span>
           <span className="city-type">{activeCity?.type}</span>
         </div>
-        <ul className="nav-list">
+        <ul className="nav-list" ref={navListRef}>
+          <SidebarActiveBeam listRef={navListRef} />
           {navItems.map((item) => (
             <li key={item.path ?? item.label}>
               {item.locked ? (

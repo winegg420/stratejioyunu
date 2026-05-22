@@ -55,7 +55,6 @@
 
 /* Özel bina kartları — CSS arka plan yedek + terminal overlay */
 .building-img-wrap--barracks,
-.building-img-wrap--depot,
 .building-img-wrap--shipyard,
 .building-img-wrap--ai_center {
   background-image: var(--building-card-bg);
@@ -78,35 +77,6 @@
 }
 
 .building-img-wrap--barracks::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(
-    145deg,
-    rgba(0, 240, 255, 0.14) 0%,
-    rgba(57, 255, 20, 0.09) 38%,
-    rgba(3, 8, 16, 0.22) 72%,
-    rgba(0, 240, 255, 0.06) 100%
-  );
-  mix-blend-mode: screen;
-}
-
-/* Lojistik Depo — özel görsel + terminal gradyan overlay */
-.building-img-wrap--depot {
-  position: relative;
-  overflow: hidden;
-}
-
-.building-img-wrap--depot .building-card__img {
-  object-fit: cover;
-  object-position: center 42%;
-  width: 100%;
-  height: 100%;
-}
-
-.building-img-wrap--depot::after {
   content: '';
   position: absolute;
   inset: 0;

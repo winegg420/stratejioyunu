@@ -5,11 +5,31 @@ export const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
 export const ROUTE_STYLES = {
-  attack: { color: '#ff3355', dashArray: '10, 14', className: 'cyber-route cyber-route--attack' },
-  spy: { color: '#facc15', dashArray: '6, 10', className: 'cyber-route cyber-route--spy' },
-  return: { color: '#22ff88', dashArray: '12, 8', className: 'cyber-route cyber-route--return' },
-  found: { color: '#38bdf8', dashArray: '8, 12', className: 'cyber-route cyber-route--found' },
-  trade: { color: '#22d3ee', dashArray: '4, 8', className: 'cyber-route cyber-route--trade' },
+  attack: {
+    color: '#ff3355',
+    dashArray: '8, 14',
+    className: 'cyber-route tactical-route tactical-route-beam tactical-route--attack cyber-route--attack',
+  },
+  spy: {
+    color: '#facc15',
+    dashArray: '6, 12',
+    className: 'cyber-route tactical-route tactical-route-beam tactical-route--spy cyber-route--spy',
+  },
+  return: {
+    color: '#22ff88',
+    dashArray: '10, 12',
+    className: 'cyber-route tactical-route tactical-route-beam tactical-route--return cyber-route--return',
+  },
+  found: {
+    color: '#38bdf8',
+    dashArray: '8, 14',
+    className: 'cyber-route tactical-route tactical-route-beam tactical-route--found cyber-route--found',
+  },
+  trade: {
+    color: '#22d3ee',
+    dashArray: '5, 10',
+    className: 'cyber-route tactical-route tactical-route-beam tactical-route--trade cyber-route--trade',
+  },
 };
 
 export const FOG_FILL = { fillColor: '#020205', fillOpacity: 0.88, stroke: false };

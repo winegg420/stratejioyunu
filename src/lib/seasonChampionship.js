@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Sezon yarışmaları — haftalık/aylık dinamik tablolar, kozmetik unvan + sadakat ödülü.
  */
 import { genId } from './gameUtils';
@@ -11,7 +11,7 @@ export const SEASON_PERIOD = {
 };
 
 export const COMPETITION_TYPES = {
-  METAL_PRODUCTION: 'metal_production',
+  HAMMADDE_PRODUCTION: 'hammadde_production',
   CYBER_OPS: 'cyber_ops',
   CITIES_CONQUERED: 'cities_conquered',
   EXPEDITION_WINS: 'expedition_wins',
@@ -19,10 +19,10 @@ export const COMPETITION_TYPES = {
 };
 
 const COMPETITION_DEFS = {
-  [COMPETITION_TYPES.METAL_PRODUCTION]: {
-    id: COMPETITION_TYPES.METAL_PRODUCTION,
-    label: 'En çok Metal üreten',
-    statKey: 'metalProduced',
+  [COMPETITION_TYPES.HAMMADDE_PRODUCTION]: {
+    id: COMPETITION_TYPES.HAMMADDE_PRODUCTION,
+    label: 'En çok Hammadde üreten',
+    statKey: 'hammaddeProduced',
     period: SEASON_PERIOD.WEEKLY,
   },
   [COMPETITION_TYPES.CYBER_OPS]: {
@@ -52,7 +52,7 @@ const COMPETITION_DEFS = {
 };
 
 const WEEKLY_POOL = [
-  COMPETITION_TYPES.METAL_PRODUCTION,
+  COMPETITION_TYPES.HAMMADDE_PRODUCTION,
   COMPETITION_TYPES.CYBER_OPS,
   COMPETITION_TYPES.EXPEDITION_WINS,
 ];
@@ -60,7 +60,7 @@ const WEEKLY_POOL = [
 const MONTHLY_POOL = [
   COMPETITION_TYPES.CITIES_CONQUERED,
   COMPETITION_TYPES.TRADE_VOLUME,
-  COMPETITION_TYPES.METAL_PRODUCTION,
+  COMPETITION_TYPES.HAMMADDE_PRODUCTION,
 ];
 
 /** Kozmetik unvanlar — kaynak/ordu yok */
@@ -97,9 +97,19 @@ function pickCompetition(period, now = Date.now()) {
   return pool[hash % pool.length];
 }
 
+export function migrateSeasonStats(stats) {
+  if (!stats || typeof stats !== 'object') return createDefaultSeasonStats();
+  const next = { ...stats };
+  if (next.metalProduced != null && next.hammaddeProduced == null) {
+    next.hammaddeProduced = next.metalProduced;
+    delete next.metalProduced;
+  }
+  return next;
+}
+
 export function createDefaultSeasonStats() {
   return {
-    metalProduced: 0,
+    hammaddeProduced: 0,
     cyberOpsCount: 0,
     citiesFounded: 0,
     attackWins: 0,
@@ -117,7 +127,7 @@ export function rolloverSeasonStats(stats, now = Date.now()) {
   const wk = periodKey(SEASON_PERIOD.WEEKLY, now);
   const mo = periodKey(SEASON_PERIOD.MONTHLY, now);
   if (next.weekKey !== wk) {
-    next.metalProduced = 0;
+    next.hammaddeProduced = 0;
     next.cyberOpsCount = 0;
     next.attackWins = 0;
     next.expeditionsLaunched = 0;

@@ -1,29 +1,30 @@
-﻿import { useAuth } from '../context/AuthContext';
+﻿import { useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
 import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
 import { formatHourlyProduction } from '../lib/hourlyProduction';
+import { enrichResourcesWithEmpireTreasury } from '../lib/empireTreasury';
 import { GAME_NAME } from '../data/placeholder';
 import {
   formatPeaceForceCountdown,
   getProgressionState,
   isPeaceForceProtected,
 } from '../lib/progressionSystem';
-import NotificationBell from './NotificationBell';
 import ServerTimeClock from './ServerTimeClock';
 
 const DEPOT_WARN_PCT = 90;
-const DEPOT_BAR_IDS = new Set(['metal', 'fuel', 'money']);
+const DEPOT_BAR_IDS = new Set(['hammadde', 'fuel', 'money']);
 
 const FILL_CLASS = {
-  metal: 'res-fill--metal',
+  hammadde: 'res-fill--hammadde',
   fuel: 'res-fill--fuel',
   money: 'res-fill--money',
 };
 
-function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotOverflow, energyCrisis }) {
+function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, depotOverflow, energyCrisis }) {
   const hasDepot = resource.max != null;
   const showDepotBar = hasDepot || DEPOT_BAR_IDS.has(resource.id);
   const frozen = resource.productionFrozen || depotOverflow;
@@ -39,7 +40,8 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotOverfl
         showDepotBar && 'has-depot',
         (flash || valueFlash) && 'resource-flash',
         valueFlash && 'resource-flash--value',
-        depotWarn && !depotOverflow && 'depot-warn',
+        depotWarn && 'depot-warn',
+        depotFull && 'depot-full',
         depotOverflow && 'depot-overflow',
         workforceCut && 'resource-item--workforce',
         energyCrisis && 'resource-item--energy-crisis',
@@ -60,6 +62,16 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotOverfl
           {hasDepot && <span className="res-max"> / {formatCompactNumber(resource.max)}</span>}
           {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         </span>
+        {resource.empireShared && (
+          <span className="res-empire-badge" title="Tüm kolonilerin ortak dijital bütçesi">ORTAK</span>
+        )}
+        {hourlyLabel ? (
+          <span className="res-hourly-live">{hourlyLabel}</span>
+        ) : (
+          <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
+            {frozen ? 'DURDU' : '—'}
+          </span>
+        )}
         {showDepotBar && (
           <div
             className="res-bar res-bar--command"
@@ -74,13 +86,6 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotOverfl
               style={{ width: `${Math.min(100, pct)}%` }}
             />
           </div>
-        )}
-        {hourlyLabel ? (
-          <span className="res-hourly-live">{hourlyLabel}</span>
-        ) : (
-          <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
-            {frozen ? 'DURDU' : '—'}
-          </span>
         )}
       </div>
     </div>
@@ -166,7 +171,8 @@ export default function ResourceBar() {
           {visibleResources.map((r) => {
             const pct = r.max ? (r.current / r.max) * 100 : 100;
             const depotOverflow = isDepotOverflow(r);
-            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotOverflow;
+            const depotFull = r.max != null && r.current >= r.max;
+            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotFull;
             return (
               <ResourceItem
                 key={r.id}
@@ -175,6 +181,7 @@ export default function ResourceBar() {
                 flash={Boolean(flashes[r.id])}
                 valueFlash={Boolean(valueFlashes[r.id])}
                 depotWarn={depotWarn}
+                depotFull={depotFull}
                 depotOverflow={depotOverflow}
                 energyCrisis={r.id === 'energy' && energyCrisis}
               />
@@ -184,7 +191,6 @@ export default function ResourceBar() {
 
         <div className="resource-bar-actions resource-bar-actions--tactical">
           <ServerTimeClock />
-          <NotificationBell />
           <div className="player-block player-desktop">
             <span className="player-name">{playerName}</span>
             {peaceActive && (

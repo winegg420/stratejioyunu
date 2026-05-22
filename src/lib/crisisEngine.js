@@ -47,7 +47,7 @@ export const ECONOMIC_TAX_PENALTY_MULT = 2;
 /** Enerji krizi */
 export const ENERGY_PLANT_DEBUFF = 0.35;
 
-const PRODUCTION_BUILDING_IDS = ['factory', 'refinery', 'plant', 'farm'];
+const PRODUCTION_BUILDING_IDS = ['refinery', 'plant', 'market'];
 const BORDER_LAT = { south: 36.8, north: 41.6 };
 const BORDER_LNG = { west: 27.2, east: 41.5 };
 

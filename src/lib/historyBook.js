@@ -263,14 +263,24 @@ export function findRecentTreatyBreak(breaks, partner, now = Date.now()) {
 
 export function normalizeDiplomaticTreaties(treaties) {
   if (!Array.isArray(treaties)) return [];
-  return treaties.map((t) => ({
-    id: t.id ?? genId('tr'),
-    partner: t.partner,
-    partnerAlliance: t.partnerAlliance ?? t.alliance ?? '—',
-    type: t.type ?? 'NAP',
-    status: t.status ?? 'active',
-    brokenAt: t.brokenAt ?? null,
-  }));
+  return treaties.map((t) => {
+    const kind = t.kind
+      ?? (t.type === 'Ateşkes' || t.type === 'ceasefire' ? 'ceasefire' : 'nap');
+    return {
+      id: t.id ?? genId('tr'),
+      partner: t.partner,
+      partnerAlliance: t.partnerAlliance ?? t.alliance ?? '—',
+      kind,
+      type: t.type ?? (kind === 'ceasefire' ? 'Ateşkes' : 'Saldırmazlık Paktı'),
+      status: t.status ?? 'active',
+      proposer: t.proposer ?? null,
+      signedBy: t.signedBy ?? [],
+      endsAt: t.endsAt ?? null,
+      proposedAt: t.proposedAt ?? null,
+      acceptedAt: t.acceptedAt ?? null,
+      brokenAt: t.brokenAt ?? null,
+    };
+  });
 }
 
 /** Demo kronikler — çevrimdışı / boş arşiv */

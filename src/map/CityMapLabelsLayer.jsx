@@ -1,11 +1,9 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
-import { getCurrentPlayerName } from '../lib/playerIdentity';
-import { getCityOwnerLabel } from './mapOwnership';
 import { normalizeMapCity } from './botCityUtils';
-
-const ZOOM_LABEL_MIN = 6;
+import { getMapCityDisplayName } from './mapCityDisplayName';
+import { MAP_ZOOM_LABEL_MIN } from './mapZoomConfig';
 
 function escapeHtml(text) {
   return String(text ?? '')
@@ -15,33 +13,20 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;');
 }
 
-function statusLine(city, ownerLabel) {
-  if (city.status === 'bot') return 'BOT ÜSSÜ';
-  if (city.status === 'own' || city.isOwn) return ownerLabel || 'SİZ';
-  if (city.status === 'empty' || !ownerLabel || ownerLabel === 'Boş') return 'BOŞ';
-  return ownerLabel;
-}
-
-function createCityLabelIcon(city, ownerLabel) {
-  const status = statusLine(city, ownerLabel);
-  const statusClass = city.status === 'bot'
-    ? 'map-city-centroid-label__status--bot'
-    : city.status === 'empty'
-      ? 'map-city-centroid-label__status--empty'
-      : city.isOwn || city.status === 'own'
-        ? 'map-city-centroid-label__status--own'
-        : 'map-city-centroid-label__status--enemy';
+function createCityLabelIcon(city) {
+  const displayName = getMapCityDisplayName(city.name);
+  const isBot = city.status === 'bot';
 
   return L.divIcon({
-    className: 'map-city-centroid-label',
+    className: `map-city-centroid-label${isBot ? ' map-city-centroid-label--bot' : ''}`,
     html: `
       <div class="map-city-centroid-label__inner">
-        <span class="map-city-centroid-label__name">${escapeHtml(city.name)}</span>
-        <span class="map-city-centroid-label__status ${statusClass}">${escapeHtml(status)}</span>
+        <span class="map-city-centroid-label__dot" aria-hidden="true"></span>
+        <span class="map-city-centroid-label__name">${escapeHtml(displayName)}</span>
       </div>
     `,
-    iconSize: [128, 36],
-    iconAnchor: [64, 18],
+    iconSize: [80, 18],
+    iconAnchor: [40, 9],
   });
 }
 
@@ -75,8 +60,7 @@ export default function CityMapLabelsLayer({
   playerCities,
   zoom = 0,
 }) {
-  const playerName = getCurrentPlayerName();
-  const show = zoom >= ZOOM_LABEL_MIN;
+  const show = zoom >= MAP_ZOOM_LABEL_MIN;
 
   const cities = useMemo(
     () => buildCityList(mapCities, playerCities),
@@ -89,12 +73,11 @@ export default function CityMapLabelsLayer({
     <>
       {cities.map((city) => {
         if (city.lat == null || city.lng == null) return null;
-        const ownerLabel = getCityOwnerLabel(city, playerName);
         return (
           <Marker
             key={`centroid-label-${city.name}`}
             position={[city.lat, city.lng]}
-            icon={createCityLabelIcon(city, ownerLabel)}
+            icon={createCityLabelIcon(city)}
             interactive={false}
             zIndexOffset={600}
           />

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Jeopolitik İdeoloji — 4 blok; hiçbir işlem kilitlenmez, uzmanlık çarpanları uygulanır.
  */
 
@@ -25,8 +25,8 @@ export const IDEOLOGY_PROFILES = {
     emoji: '🔴',
     color: '#ef4444',
     colorGlow: 'rgba(239, 68, 68, 0.55)',
-    blurb: 'Üretim ve nüfus — metal +%30, nüfus +%30, bütçe −%15.',
-    metalProductionMult: 1.3,
+    blurb: 'Üretim ve nüfus — hammadde +%30, nüfus +%30, bütçe −%15.',
+    hammaddeProductionMult: 1.3,
     populationGrowthMult: 1.3,
     moneyProductionMult: 0.85,
     productionDurationMult: 1,
@@ -46,7 +46,7 @@ export const IDEOLOGY_PROFILES = {
     color: '#3b82f6',
     colorGlow: 'rgba(59, 130, 246, 0.55)',
     blurb: 'Finans ve ticaret — bütçe +%40, konvoy kapasitesi yüksek, eğitim +%15 yavaş.',
-    metalProductionMult: 1,
+    hammaddeProductionMult: 1,
     populationGrowthMult: 1,
     moneyProductionMult: 1.4,
     productionDurationMult: 1.15,
@@ -66,7 +66,7 @@ export const IDEOLOGY_PROFILES = {
     color: '#22c55e',
     colorGlow: 'rgba(34, 197, 94, 0.55)',
     blurb: 'Siber ve Ar-Ge — araştırma +%35 hız, siber/KBRN bonus, nüfus −%15.',
-    metalProductionMult: 1,
+    hammaddeProductionMult: 1,
     populationGrowthMult: 0.85,
     moneyProductionMult: 1,
     productionDurationMult: 1,
@@ -86,7 +86,7 @@ export const IDEOLOGY_PROFILES = {
     color: '#eab308',
     colorGlow: 'rgba(234, 179, 8, 0.55)',
     blurb: 'Ordu ve fetih — üretim ve sefer +%30 hız, ticaret −%15.',
-    metalProductionMult: 1,
+    hammaddeProductionMult: 1,
     populationGrowthMult: 1,
     moneyProductionMult: 1,
     productionDurationMult: 0.7,
@@ -131,7 +131,7 @@ export function formatIdeologyLabel(id) {
 export function getIdeologyResourceMultiplier(ideology, resourceId) {
   const p = getIdeologyProfile(ideology);
   if (!p) return 1;
-  if (resourceId === 'metal') return p.metalProductionMult;
+  if (resourceId === 'hammadde') return p.hammaddeProductionMult;
   if (resourceId === 'money') return p.moneyProductionMult;
   if (resourceId === 'food') return p.populationGrowthMult;
   return 1;
@@ -189,10 +189,10 @@ export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = fa
 
 export function resolveCityIdeology(city, playerName, playerIdeology) {
   if (!city) return null;
-  if (city.ownerIdeology) return normalizeIdeology(city.ownerIdeology);
   if (city.isOwn || city.status === 'own' || city.owner === playerName) {
     return normalizeIdeology(playerIdeology);
   }
+  if (city.ownerIdeology) return normalizeIdeology(city.ownerIdeology);
   if (city.status === 'bot') return IDEOLOGY_NATIONALIST;
   return normalizeIdeology(city.ownerIdeology) ?? null;
 }

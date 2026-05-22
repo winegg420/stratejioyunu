@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MIL-AI Askeri Danışman — adım adım görevler ve ödüller.
  */
 import { getHqLevel, getBuildingById } from './buildingUtils';
@@ -8,7 +8,7 @@ export const MIL_AI_QUESTS = [
     id: 'build_refinery',
     title: 'Rafineri kurun',
     hint: 'Başkanım, petrol için rafineri inşa edin (Binalar → Yakıt Rafinerisi).',
-    reward: { metal: 400, fuel: 600 },
+    reward: { hammadde: 400, fuel: 600 },
     check: (state) => {
       const city = state.cities?.[state.activeCityId];
       return (getBuildingById(city, 'refinery')?.level ?? 0) >= 1;
@@ -18,7 +18,7 @@ export const MIL_AI_QUESTS = [
     id: 'tax_balance',
     title: 'Vergiyi dengeleyin',
     hint: 'Bütçeyi dengelemek için vergi oranını %15 civarında tutun.',
-    reward: { metal: 300, fuel: 200, money: 500 },
+    reward: { hammadde: 300, fuel: 200, money: 500 },
     check: (state) => {
       const city = state.cities?.[state.activeCityId];
       const rate = city?.taxRate ?? 15;
@@ -29,15 +29,15 @@ export const MIL_AI_QUESTS = [
     id: 'upgrade_hq',
     title: 'Komuta merkezini yükseltin',
     hint: 'Üssü büyütmek için Komuta Merkezini Sv.2 yapın.',
-    reward: { metal: 800, fuel: 500 },
+    reward: { hammadde: 800, fuel: 500 },
     check: (state) => getHqLevel(state.cities?.[state.activeCityId]) >= 2,
   },
   {
-    id: 'build_farm',
-    title: 'Lojistik tarım tesisi',
-    hint: 'Nüfus üretimi için tarım tesisi kurun.',
-    reward: { metal: 500, fuel: 400, money: 800 },
-    check: (state) => (getBuildingById(state.cities?.[state.activeCityId], 'farm')?.level ?? 0) >= 1,
+    id: 'build_plant',
+    title: 'Enerji santrali kurun',
+    hint: 'Üssün güç çarpanı için Enerji Santrali inşa edin (Binalar → Enerji Santrali).',
+    reward: { hammadde: 500, fuel: 400, energy: 600 },
+    check: (state) => (getBuildingById(state.cities?.[state.activeCityId], 'plant')?.level ?? 0) >= 1,
   },
 ];
 
@@ -48,7 +48,7 @@ export function getActiveMilAiQuest(state) {
 
 export function getMilAiRewardLabel(reward) {
   const parts = [];
-  if (reward.metal) parts.push(`${reward.metal} metal`);
+  if (reward.hammadde) parts.push(`${reward.hammadde} hammadde`);
   if (reward.fuel) parts.push(`${reward.fuel} petrol`);
   if (reward.money) parts.push(`${reward.money} bütçe`);
   return parts.join(' · ') || 'Kaynak';

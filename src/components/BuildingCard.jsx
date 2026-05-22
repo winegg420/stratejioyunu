@@ -22,12 +22,18 @@ import {
   getAiCenterLevel,
 } from '../lib/aiCenterEngine';
 import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
+import { formatEmpireSlotHint } from '../lib/empireExpansion';
 import BuildCountdownHud from './BuildCountdownHud';
 
 export default function BuildingCard({ building, progressionLock = null }) {
   const now = useGameStore((s) => s.now);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const playerCities = useGameStore((s) => s.playerCities);
+  const cities = useGameStore((s) => s.cities);
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const empireSlotHint = building.id === 'hq'
+    ? formatEmpireSlotHint({ playerCities, cities })
+    : null;
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
   const cancelConstruction = useGameStore((s) => s.cancelConstruction);
@@ -201,6 +207,11 @@ export default function BuildingCard({ building, progressionLock = null }) {
       {building.id === AI_CENTER_BUILDING_ID && getAiCenterLevel(city) >= 1 && (
         <p className="content-card__meta content-card__meta--ai">
           ⚡ Tüketim: {getAiCenterEnergyDemandHourly(getAiCenterLevel(city))}/sa · {formatAiCenterStatus(city)}
+        </p>
+      )}
+      {empireSlotHint && (
+        <p className="content-card__meta content-card__meta--empire">
+          🏛️ {empireSlotHint}
         </p>
       )}
       <div className="card-actions">

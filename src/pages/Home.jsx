@@ -17,7 +17,9 @@ import CrisisResponsePanel from '../components/CrisisResponsePanel';
 import PeaceForceBanner from '../components/PeaceForceBanner';
 import MilAiAdvisor from '../components/MilAiAdvisor';
 import AiRadarPanel from '../components/AiRadarPanel';
+import AnimatedCounter from '../components/AnimatedCounter';
 import { useGameDataReady } from '../hooks/useGameDataReady';
+import { useHomeCommandStats } from '../hooks/useHomeCommandStats';
 import { getProgressionState } from '../lib/progressionSystem';
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
@@ -48,10 +50,12 @@ const STAT_ICONS = {
 function CommandWidget({ label, value, sub, active }) {
   const icon = STAT_ICONS[label] ?? '◈';
   const isActive = active ?? (typeof value === 'number' ? value > 0 : false);
+  const numeric = typeof value === 'number';
   return (
     <div
       className={[
         'home-cmd-widget',
+        'glass-panel',
         isActive && 'home-cmd-widget--active',
       ]
         .filter(Boolean)
@@ -62,7 +66,13 @@ function CommandWidget({ label, value, sub, active }) {
       </span>
       <div className="home-cmd-widget__body">
         <span className="home-cmd-widget__label">{label}</span>
-        <span className="home-cmd-widget__value">{value}</span>
+        <span className="home-cmd-widget__value">
+          {numeric ? (
+            <AnimatedCounter value={value} className="home-cmd-widget__counter" />
+          ) : (
+            value
+          )}
+        </span>
         {sub && <span className="home-cmd-widget__sub">{sub}</span>}
       </div>
     </div>
@@ -129,13 +139,7 @@ export default function Home() {
     ...staticNewsFeed,
   ].slice(0, 24);
   const now = useGameStore((s) => s.now);
-  const expeditions = useGameStore((s) => s.expeditions);
-  const reports = useGameStore((s) => s.reports);
-
-  const activeExpeditions = expeditions;
-  const unreadReports = reports.filter((r) => r.isNew).length;
-  const constructionCount = city?.constructionQueue?.length ?? 0;
-  const productionCount = city?.productionQueue?.length ?? 0;
+  const cmdStats = useHomeCommandStats();
 
   const sectorReady = gameReady && Boolean(activeCity?.name && city);
   const sectorFeedLine = sectorReady
@@ -199,27 +203,27 @@ export default function Home() {
         <div className="home-cmd-widgets" role="list" aria-label="Komuta özeti">
           <CommandWidget
             label="AKTİF SEFER"
-            value={activeExpeditions.length}
-            sub="operasyon"
-            active={activeExpeditions.length > 0}
+            value={cmdStats.activeExpeditions}
+            sub={cmdStats.live ? 'canlı · sefer' : 'operasyon'}
+            active={cmdStats.activeExpeditions > 0}
           />
           <CommandWidget
             label="İNŞAAT KUYRUĞU"
-            value={constructionCount}
-            sub="bina"
-            active={constructionCount > 0}
+            value={cmdStats.constructionCount}
+            sub={cmdStats.live ? 'canlı · bina' : 'bina'}
+            active={cmdStats.constructionCount > 0}
           />
           <CommandWidget
             label="ÜRETİM KUYRUĞU"
-            value={productionCount}
-            sub="birim"
-            active={productionCount > 0}
+            value={cmdStats.productionCount}
+            sub={cmdStats.live ? 'canlı · birim' : 'birim'}
+            active={cmdStats.productionCount > 0}
           />
           <CommandWidget
             label="OKUNMAYAN RAPOR"
-            value={unreadReports}
-            sub="rapor"
-            active={unreadReports > 0}
+            value={cmdStats.unreadReports}
+            sub={cmdStats.live ? 'canlı · rapor' : 'rapor'}
+            active={cmdStats.unreadReports > 0}
           />
           <CommandWidget
             label="ŞEHİR SAYISI"
@@ -235,7 +239,7 @@ export default function Home() {
         </div>
 
         <div className="home-grid">
-          <section className="panel home-panel">
+          <section className="panel home-panel glass-panel">
             <h3 className="panel-title">
               <span className="panel-title__icon">🏗️</span>
               Aktif İnşaatlar — {activeCity?.name}
@@ -263,7 +267,7 @@ export default function Home() {
             </ul>
           </section>
 
-          <section className="panel home-panel">
+          <section className="panel home-panel glass-panel">
             <h3 className="panel-title">
               <span className="panel-title__icon">⚔️</span>
               Asker Üretim Kuyruğu — {activeCity?.name}
@@ -291,28 +295,7 @@ export default function Home() {
             </ul>
           </section>
 
-          <section className="panel home-panel notifications-panel">
-            <h3 className="panel-title">
-              <span className="panel-title__icon">📡</span>
-              Sistem Bildirimleri
-            </h3>
-            <ul className="notif-list">
-              <li className="notif-item notif-item--warn">
-                <span className="notif-tag">KAYNAK</span>
-                Depo %92 dolu — Ambar yükseltmesi önerilir.
-              </li>
-              <li className="notif-item notif-item--info">
-                <span className="notif-tag">SEFER</span>
-                Gelen seferler için harita sayfasını kontrol et.
-              </li>
-              <li className="notif-item">
-                <span className="notif-tag">SİSTEM</span>
-                Sunucu: Türkiye-1 Sezon — Aktif
-              </li>
-            </ul>
-          </section>
-
-          <section className="panel home-panel span-2">
+          <section className="panel home-panel glass-panel span-2">
             <h3 className="panel-title">
               <span className="panel-title__icon">🌐</span>
               Sunucu Haberleri

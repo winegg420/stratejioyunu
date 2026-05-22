@@ -5,7 +5,9 @@ import { normalizeIdeology } from './ideologySystem';
 import { loadPlayerIdeology, loadProtectionEndsAt } from './briefingStorage';
 import { computeCityHappiness } from './happinessSystem';
 import { rehydrateCrisisCityEffects } from './crisisEngine';
-import { createStarterBuildings, createStarterResearches, getStarterIdleTroops, getStarterResources } from '../lib/buildingUtils';
+import { createStarterBuildings, syncCityBuildingsToCatalog, getStarterIdleTroops, getStarterResources } from '../lib/buildingUtils';
+import { mergeResearchProgress } from '../data/researchCatalog';
+import { resolveResourceId } from '../data/resourceCatalog';
 import { pruneCyberEffects, pruneKbrnEffects } from './happinessSystem';
 import { applyProductionFreeze } from '../lib/resourceProduction';
 import { ratePerSecond } from '../lib/gameUtils';
@@ -27,6 +29,21 @@ import {
   loadTreatyBreaks,
 } from './historyBookStorage';
 import { isSupabaseConfigured, supabase } from './supabase';
+
+/** Kayıt sonrası eski `metal` satırlarını temizler (enum hâlâ metal içeriyorsa). */
+async function purgeLegacyMetalResourceRows(profileId, cityIds) {
+  if (!supabase || !profileId || !cityIds?.length) return;
+  const { error } = await supabase
+    .from('city_resources')
+    .delete()
+    .eq('profile_id', profileId)
+    .in('city_id', cityIds)
+    .eq('resource_id', 'metal');
+  if (error && !error.message?.includes('invalid input value')) {
+    console.warn('[sync] legacy metal purge:', error.message);
+  }
+}
+import { applyDevTestModeToState } from './devTestMode';
 
 const LAND_UNIT_IDS = new Set(landUnits.map((u) => u.id));
 const AIR_UNIT_IDS = new Set(airUnits.map((u) => u.id));
@@ -77,7 +94,7 @@ function reportFilterToEnum(filterType) {
 
 function expeditionModeToEnum(mode) {
   if (mode === 'cyber' || mode === 'kbrn') return 'spy';
-  if (mode === 'attack' || mode === 'spy' || mode === 'found' || mode === 'trade' || mode === 'return') {
+  if (mode === 'attack' || mode === 'spy' || mode === 'found' || mode === 'trade' || mode === 'cargo' || mode === 'return') {
     return mode;
   }
   return 'attack';
@@ -106,8 +123,8 @@ function applyOfflineResourceTick(city, lastTickMs, vipMult) {
 
 function mergeBuildings(dbRows) {
   const levelById = Object.fromEntries((dbRows ?? []).map((r) => [r.building_id, r.level ?? 0]));
-  return createStarterBuildings().map((b) => {
-    const level = levelById[b.id] ?? b.level ?? 0;
+  const merged = createStarterBuildings().map((b) => {
+    const level = levelById[b.id] ?? 0;
     return {
       ...b,
       level,
@@ -116,10 +133,24 @@ function mergeBuildings(dbRows) {
       locked: b.locked && level < 1,
     };
   });
+  return syncCityBuildingsToCatalog(merged);
 }
 
 function mergeResources(dbRows, buildings, cityCtx, vipMult) {
-  const byId = Object.fromEntries((dbRows ?? []).map((r) => [r.resource_id, r]));
+  const byId = {};
+  for (const row of dbRows ?? []) {
+    const id = resolveResourceId(row.resource_id);
+    const prev = byId[id];
+    if (!prev) {
+      byId[id] = { ...row, resource_id: id };
+    } else {
+      byId[id] = {
+        ...prev,
+        current_amount: Number(prev.current_amount ?? 0) + Number(row.current_amount ?? 0),
+        max_amount: Math.max(Number(prev.max_amount ?? 0), Number(row.max_amount ?? 0)),
+      };
+    }
+  }
   let resources = getStarterResources().map((template) => {
     const row = byId[template.id];
     return {
@@ -146,18 +177,17 @@ function mergeResearches(dbRows) {
   if (byId.kbrn_chem && !byId.kbrn_weapon) {
     byId.kbrn_weapon = { ...byId.kbrn_chem, research_id: 'kbrn_weapon' };
   }
-  return createStarterResearches().map((template) => {
-    const row = byId[template.id];
-    if (!row) return { ...template };
-    return {
-      ...template,
+  const savedById = {};
+  for (const [id, row] of Object.entries(byId)) {
+    savedById[id] = {
       level: row.level ?? 0,
-      max: row.max_level ?? template.max,
-      active: row.is_active ?? false,
-      queued: row.is_queued ?? false,
-      endsAt: fromIso(row.ends_at),
+      max_level: row.max_level,
+      is_active: row.is_active,
+      is_queued: row.is_queued,
+      ends_at: fromIso(row.ends_at),
     };
-  });
+  }
+  return mergeResearchProgress(savedById);
 }
 
 function dbRowToExpedition(row) {
@@ -325,6 +355,7 @@ export async function saveGameState(state, options = {}) {
       diplomaticTreaties: state.diplomaticTreaties ?? [],
       treatyBreaks: state.treatyBreaks ?? [],
     };
+    const cityIds = Object.keys(state.cities ?? {});
     const tasks = [
       supabase.from('cities').upsert(rows, { onConflict: 'profile_id,id' }),
       resourceRows.length
@@ -357,6 +388,7 @@ export async function saveGameState(state, options = {}) {
     }
     const results = await Promise.all(tasks);
     const error = results.find((r) => r.error)?.error;
+    if (!error) await purgeLegacyMetalResourceRows(profileId, cityIds);
     return error ? { ok: false, error } : { ok: true };
   }
 
@@ -511,6 +543,7 @@ export async function saveGameState(state, options = {}) {
     console.warn('[supabaseSync] saveGameState failed', error);
     return { ok: false, error };
   }
+  await purgeLegacyMetalResourceRows(profileId, [cityId]);
   return { ok: true };
 }
 
@@ -859,7 +892,7 @@ export async function hydrateGameStore(userId, { playerName, getState, setState,
   const patch = await loadGameState(userId, { playerName });
   if (!patch) return false;
 
-  setState(patch);
+  setState((prev) => applyDevTestModeToState({ ...prev, ...patch }));
   if (typeof getState().tick === 'function') getState().tick();
 
   await syncExpeditionsFromServer(getState, setState, completeExpedition);

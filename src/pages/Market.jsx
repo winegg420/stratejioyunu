@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+﻿import { useState } from 'react';
 import PageHeader from '../components/PageHeader';
-import EmptyState from '../components/EmptyState';
+import MarketOffersEmptyState from '../components/MarketOffersEmptyState';
+import MarketPriceTag from '../components/MarketPriceTag';
+import { useMarketTicker } from '../hooks/useMarketTicker';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
 import {
@@ -8,7 +10,10 @@ import {
   formatMarketPriceLabel,
   getMarketUnitPrices,
 } from '../lib/marketExchange';
+import { formatSupplyTrend } from '../lib/openMarket';
 import { getResourceDisplay } from '../data/resourceCatalog';
+import CyberDataInput from '../components/CyberDataInput';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
 
 const EMPTY_QTY = Object.fromEntries(MARKET_TRADABLE_IDS.map((id) => [id, '']));
 
@@ -20,14 +25,19 @@ export default function Market() {
   const centralBank = useGameStore((s) => s.centralBank);
   const executeMarketTrade = useGameStore((s) => s.executeMarketTrade);
   const postMarketOffer = useGameStore((s) => s.postMarketOffer);
+  const acceptMarketOffer = useGameStore((s) => s.acceptMarketOffer);
+  const cancelMarketOffer = useGameStore((s) => s.cancelMarketOffer);
   const marketOffers = useGameStore((s) => s.marketOffers ?? []);
+  const openMarketPrices = useGameStore((s) => s.openMarketPrices ?? {});
+  const openMarketSupplyIndex = useGameStore((s) => s.openMarketSupplyIndex ?? 0);
+  const playerName = getCurrentPlayerName();
 
   const marketReady = (market?.level ?? 0) >= 1;
-  const unitPrices = useMemo(() => getMarketUnitPrices(centralBank), [centralBank]);
+  const ticker = useMarketTicker(centralBank);
 
   const [buyQty, setBuyQty] = useState({ ...EMPTY_QTY });
   const [sellQty, setSellQty] = useState({ ...EMPTY_QTY });
-  const [offerResource, setOfferResource] = useState('metal');
+  const [offerResource, setOfferResource] = useState('hammadde');
   const [offerQty, setOfferQty] = useState('');
   const [offerPrice, setOfferPrice] = useState('');
 
@@ -37,6 +47,14 @@ export default function Market() {
 
   const setSell = (id, val) => {
     setSellQty((prev) => ({ ...prev, [id]: val }));
+  };
+
+  const maxBuyQty = (id) => {
+    const prices = ticker[id];
+    const budget = resources.find((r) => r.id === 'money')?.current ?? 0;
+    const unitPrice = prices?.buy?.value ?? 0;
+    if (!unitPrice) return '0';
+    return String(Math.floor(budget / unitPrice));
   };
 
   const handleTrade = (resourceId, mode) => {
@@ -74,7 +92,31 @@ export default function Market() {
         </p>
       )}
 
-      <section className="panel market-exchange-panel">
+      <section className="panel market-spot-panel glass-panel">
+        <h3 className="panel-title">Açık Hammadde Pazarı</h3>
+        <p className="market-exchange-hint">
+          {formatSupplyTrend(openMarketSupplyIndex)}
+          {' '}
+          · Küresel arz endeksi: {openMarketSupplyIndex.toLocaleString('tr-TR')}
+        </p>
+        <div className="market-spot-grid">
+          {MARKET_TRADABLE_IDS.map((id) => {
+            const spot = openMarketPrices[id];
+            const { label, icon } = getResourceDisplay(id);
+            if (!spot) return null;
+            return (
+              <article key={id} className="market-spot-card">
+                <span className="market-spot-card__icon" aria-hidden="true">{icon}</span>
+                <strong>{label}</strong>
+                <span className="font-hud-data">Al {spot.buy} / Sat {spot.sell}</span>
+                <span className="market-spot-card__mult">×{spot.mult}</span>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="panel market-exchange-panel glass-panel">
         <h3 className="panel-title">Kaynak Alım / Satım</h3>
         <p className="market-exchange-hint">
           Fiyatlar Merkez Bankası paritelerine göre güncellenir. Miktar girin ve işlem yapın.
@@ -84,34 +126,51 @@ export default function Market() {
             const res = resources.find((r) => r.id === id);
             const { label, icon } = getResourceDisplay(id);
             const stock = res?.current ?? 0;
-            const prices = unitPrices[id];
+            const prices = openMarketPrices[id]
+              ? { buy: { value: openMarketPrices[id].buy }, sell: { value: openMarketPrices[id].sell } }
+              : ticker[id];
             return (
-              <article key={id} className="market-exchange-row">
+              <article key={id} className="market-exchange-row glass-panel">
                 <div className="market-exchange-row__head">
                   <span className="market-exchange-row__label">
-                    {icon} {label}
+                    <span className={`resource-icon--metallic resource-icon--metallic--${id}`} aria-hidden="true">
+                      {icon}
+                    </span>
+                    {label}
                   </span>
                   <span className="market-exchange-row__stock font-hud-data">
                     Stok: {stock.toLocaleString('tr-TR')}
                   </span>
-                  <span className="market-exchange-row__rates font-hud-data">
-                    Al {prices.buy} · Sat {prices.sell} Bütçe/birim
+                  <span className="market-exchange-row__rates">
+                    <MarketPriceTag label="Al" value={prices.buy.value} direction={prices.buy.dir} />
+                    <MarketPriceTag label="Sat" value={prices.sell.value} direction={prices.sell.dir} />
+                    <span className="market-exchange-row__unit">Bütçe/birim</span>
                   </span>
                 </div>
                 <div className="market-exchange-row__actions">
                   <label className="market-exchange-field">
                     <span>Alım</span>
-                    <input
-                      type="number"
-                      className="input-qty market-input-qty"
-                      min={0}
-                      disabled={!marketReady}
-                      value={buyQty[id]}
-                      onChange={(e) => setBuy(id, e.target.value)}
-                    />
+                    <div className="market-data-cell">
+                      <span className="market-data-cell__icon" aria-hidden="true">{icon}</span>
+                      <div className="market-data-cell__body">
+                        <CyberDataInput
+                          className="market-data-cell__input"
+                          inputClassName="market-input-qty"
+                          value={buyQty[id]}
+                          min={0}
+                          disabled={!marketReady}
+                          onChange={(e) => setBuy(id, e.target.value)}
+                          onMax={() => {
+                            const next = maxBuyQty(id);
+                            setBuy(id, next);
+                            return next;
+                          }}
+                        />
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      className="btn btn-hud-primary btn-sm"
+                      className="btn btn-hud-primary btn-sm market-hud-btn market-hud-btn--buy"
                       disabled={!marketReady}
                       onClick={() => handleTrade(id, 'buy')}
                     >
@@ -120,18 +179,27 @@ export default function Market() {
                   </label>
                   <label className="market-exchange-field">
                     <span>Satım</span>
-                    <input
-                      type="number"
-                      className="input-qty market-input-qty"
-                      min={0}
-                      max={stock}
-                      disabled={!marketReady}
-                      value={sellQty[id]}
-                      onChange={(e) => setSell(id, e.target.value)}
-                    />
+                    <div className="market-data-cell">
+                      <span className="market-data-cell__icon" aria-hidden="true">{icon}</span>
+                      <div className="market-data-cell__body">
+                        <CyberDataInput
+                          inputClassName="market-input-qty"
+                          value={sellQty[id]}
+                          min={0}
+                          max={stock}
+                          disabled={!marketReady}
+                          onChange={(e) => setSell(id, e.target.value)}
+                          onMax={() => {
+                            const next = String(stock);
+                            setSell(id, next);
+                            return next;
+                          }}
+                        />
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      className="btn btn-hud-secondary btn-sm"
+                      className="btn btn-hud-secondary btn-sm market-hud-btn market-hud-btn--sell"
                       disabled={!marketReady}
                       onClick={() => handleTrade(id, 'sell')}
                     >
@@ -145,53 +213,77 @@ export default function Market() {
         </div>
       </section>
 
-      <section className="panel market-offer-panel">
+      <section className="panel market-offer-panel glass-panel">
         <h3 className="panel-title">Teklif Defteri</h3>
-        <form className="market-offer-form" onSubmit={handleOffer}>
+        <form className="market-offer-form market-offer-form--terminal" onSubmit={handleOffer}>
           <label className="market-offer-field">
             <span>Kaynak</span>
-            <select
-              className="market-offer-select"
-              value={offerResource}
-              onChange={(e) => setOfferResource(e.target.value)}
-              disabled={!marketReady}
-            >
-              {MARKET_TRADABLE_IDS.map((id) => (
-                <option key={id} value={id}>
-                  {formatMarketPriceLabel(id, centralBank)}
-                </option>
-              ))}
-            </select>
+            <div className="market-data-cell market-data-cell--offer">
+              <span className="market-data-cell__icon" aria-hidden="true">
+                {getResourceDisplay(offerResource).icon}
+              </span>
+              <div className="market-data-cell__body">
+                <select
+                  className="market-offer-select market-terminal-select tactical-terminal-select"
+                  value={offerResource}
+                  onChange={(e) => setOfferResource(e.target.value)}
+                  disabled={!marketReady}
+                >
+                  {MARKET_TRADABLE_IDS.map((rid) => (
+                    <option key={rid} value={rid}>
+                      {formatMarketPriceLabel(rid, centralBank)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </label>
           <label className="market-offer-field">
             <span>Miktar</span>
-            <input
-              type="number"
-              className="input-qty market-input-qty"
-              min={1}
-              value={offerQty}
-              onChange={(e) => setOfferQty(e.target.value)}
-              disabled={!marketReady}
-            />
+            <div className="market-data-cell">
+              <span className="market-data-cell__icon" aria-hidden="true">
+                {getResourceDisplay(offerResource).icon}
+              </span>
+              <div className="market-data-cell__body">
+                <CyberDataInput
+                  inputClassName="market-input-qty"
+                  value={offerQty}
+                  min={1}
+                  disabled={!marketReady}
+                  onChange={(e) => setOfferQty(e.target.value)}
+                />
+              </div>
+            </div>
           </label>
           <label className="market-offer-field">
             <span>Birim fiyat (Bütçe)</span>
-            <input
-              type="number"
-              className="input-qty market-input-qty"
-              min={1}
-              value={offerPrice}
-              onChange={(e) => setOfferPrice(e.target.value)}
-              disabled={!marketReady}
-            />
+            <div className="market-data-cell">
+              <span className="market-data-cell__icon" aria-hidden="true">💰</span>
+              <div className="market-data-cell__body">
+                <CyberDataInput
+                  inputClassName="market-input-qty"
+                  value={offerPrice}
+                  min={1}
+                  disabled={!marketReady}
+                  onChange={(e) => setOfferPrice(e.target.value)}
+                />
+              </div>
+            </div>
           </label>
-          <button
-            type="submit"
-            className="btn btn-hud-primary market-offer-submit"
-            disabled={!marketReady}
-          >
-            [ TEKLİF VER ]
-          </button>
+          <div className="market-offer-submit-wrap">
+            <div className="market-data-cell">
+              <span className="market-data-cell__icon" aria-hidden="true">◆</span>
+              <div className="market-data-cell__body market-offer-submit-wrap__btn">
+                <button
+                  type="submit"
+                  className="btn btn-hud-primary market-hud-btn market-hud-btn--offer market-offer-submit"
+                  disabled={!marketReady}
+                >
+                  [ TEKLİF VER ]
+                </button>
+              </div>
+            </div>
+          </div>
         </form>
 
         {marketOffers.length > 0 ? (
@@ -201,23 +293,39 @@ export default function Market() {
               return (
                 <li key={o.id} className="market-offer-card">
                   <strong>
-                    {icon} {label} ×{o.qty.toLocaleString('tr-TR')}
+                    <span className={`resource-icon--metallic resource-icon--metallic--${o.resourceId}`} aria-hidden="true">
+                      {icon}
+                    </span>
+                    {label} ×{o.qty.toLocaleString('tr-TR')}
                   </strong>
                   <span className="font-hud-data">
                     {o.unitPrice.toLocaleString('tr-TR')} Bütçe / birim
                   </span>
                   <span className="market-offer-card__author">{o.author}</span>
+                  {o.author === playerName ? (
+                    <button
+                      type="button"
+                      className="btn btn-hud-secondary btn-sm"
+                      onClick={() => cancelMarketOffer(o.id)}
+                    >
+                      İptal
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-hud-primary btn-sm"
+                      disabled={!marketReady}
+                      onClick={() => acceptMarketOffer(o.id)}
+                    >
+                      [ ONAYLA · AL ]
+                    </button>
+                  )}
                 </li>
               );
             })}
           </ul>
         ) : (
-          <EmptyState
-            tag="[ DEFTER BOŞ ]"
-            icon="📒"
-            title="Açık teklif yok"
-            description="İlk teklifi siz verin — diğer komutanlar pazar defterinde görecek."
-          />
+          <MarketOffersEmptyState />
         )}
       </section>
     </div>

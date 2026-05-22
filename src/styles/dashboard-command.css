@@ -17,8 +17,26 @@
 }
 
 .resource-bar--command .resource-item--tactical {
+  position: relative;
   background: rgba(6, 14, 28, 0.55) !important;
-  border-right-color: rgba(0, 240, 255, 0.1) !important;
+  border-right: none !important;
+}
+
+.resource-bar--command .resources-row--tactical .resource-item--tactical:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 14%;
+  height: 72%;
+  width: 1px;
+  background: rgba(0, 240, 255, 0.32);
+  pointer-events: none;
+}
+
+.resource-bar--command .res-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
 }
 
 .resource-bar--command .res-value {
@@ -26,12 +44,19 @@
   color: #e2f4ff !important;
   text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
+  font-size: 1.28rem;
 }
 
 .resource-bar--command .res-value__current {
+  font-size: 1.28rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+  color: #f0f9ff !important;
+}
+
+.resource-bar--command .res-max {
+  font-size: 0.72rem;
 }
 
 .resource-bar--command .res-max {
@@ -55,6 +80,7 @@
   box-shadow: 0 0 8px currentColor;
 }
 
+.resource-bar--command .res-fill--hammadde,
 .resource-bar--command .res-fill--metal {
   background: linear-gradient(90deg, #0a3048, #00f0ff);
   color: rgba(0, 240, 255, 0.9);
@@ -88,10 +114,15 @@
 }
 
 .resource-bar--command .res-hourly-live {
+  display: block;
+  margin-top: 0.12rem;
   font-family: var(--cmd-font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.06em;
-  color: rgba(34, 255, 136, 0.85);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  color: rgba(34, 255, 136, 0.88);
+  text-shadow: 0 0 6px rgba(34, 255, 136, 0.25);
 }
 
 /* ── Ana Merkez düzeni ── */
@@ -185,6 +216,10 @@
   gap: 0.75rem;
 }
 
+.home-command-advisors .mil-ai-advisor.glass-panel {
+  background: rgba(4, 14, 10, 0.42) !important;
+}
+
 .home-command-advisors .mil-ai-advisor {
   margin-bottom: 0;
   padding: 1rem 1.1rem 1.2rem !important;
@@ -193,18 +228,12 @@
   clip-path: var(--cmd-clip);
 }
 
-.home-command-advisors .mil-ai-advisor__title {
-  font-size: 0.92rem !important;
-  line-height: 1.35 !important;
-  margin-bottom: 0.4rem !important;
+.home-command-advisors .mil-ai-terminal__screen {
+  max-height: 10.5rem !important;
 }
 
-.home-command-advisors .mil-ai-advisor__hint,
-.home-command-advisors .mil-ai-advisor__reward,
-.home-command-advisors .mil-ai-advisor--done p {
-  font-size: 0.78rem !important;
-  line-height: 1.5 !important;
-  margin-bottom: 0.55rem !important;
+.home-command-advisors .mil-ai-terminal__line {
+  font-size: 0.74rem !important;
 }
 
 .home-command-advisors .mil-ai-advisor__badge {
@@ -227,6 +256,26 @@
 
 .home-command-advisors .ai-radar-panel {
   margin: 0;
+}
+
+/* ── Glassmorphism paneller ── */
+.glass-panel {
+  background: rgba(8, 18, 36, 0.38) !important;
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+.home-cmd-widget.glass-panel {
+  background: rgba(6, 14, 28, 0.42) !important;
+}
+
+.home-cmd-widget__counter {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── 5'li komuta widget'ları ── */
@@ -265,11 +314,28 @@
 
 .home-cmd-widget--active {
   opacity: 1;
-  border-color: rgba(0, 240, 255, 0.38);
+  border-color: rgba(0, 240, 255, 0.45);
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
-    0 0 20px rgba(0, 240, 255, 0.12),
-    0 0 32px rgba(34, 255, 136, 0.08);
+    0 0 0 1px rgba(0, 240, 255, 0.1) inset,
+    0 0 22px rgba(0, 240, 255, 0.2),
+    0 0 36px rgba(34, 255, 136, 0.14);
+  animation: home-cmd-widget-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes home-cmd-widget-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.08) inset,
+      0 0 18px rgba(0, 240, 255, 0.16),
+      0 0 28px rgba(34, 255, 136, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.14) inset,
+      0 0 26px rgba(0, 240, 255, 0.28),
+      0 0 40px rgba(34, 255, 136, 0.18);
+  }
 }
 
 .home-cmd-widget__icon {
@@ -347,8 +413,8 @@
   flex-direction: column;
   gap: 0.85rem;
   padding: 1rem 1.1rem !important;
-  background: rgba(4, 12, 24, 0.88) !important;
-  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+  background: rgba(4, 12, 24, 0.38) !important;
+  border: 1px solid rgba(0, 240, 255, 0.22) !important;
   clip-path: var(--cmd-clip);
   box-shadow:
     0 0 0 1px rgba(0, 240, 255, 0.05) inset,
@@ -366,13 +432,14 @@
 .strat-matrix__title {
   margin: 0;
   font-family: var(--cmd-font-display);
-  font-size: 1rem;
-  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #e0f2fe;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  line-height: 1.2;
 }
 
 .strat-matrix__city {

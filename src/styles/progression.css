@@ -93,6 +93,135 @@
   color: #64748b;
 }
 
+/* MIL-AI — akan terminal konsolu */
+.mil-ai-terminal__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(57, 255, 136, 0.75);
+  text-shadow: 0 0 8px rgba(57, 255, 136, 0.35);
+}
+
+.mil-ai-terminal__status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #39ff88;
+  box-shadow: 0 0 8px #39ff88, 0 0 14px rgba(57, 255, 136, 0.55);
+  animation: mil-ai-status-blink 1.1s ease-in-out infinite;
+}
+
+.mil-ai-terminal__status-label {
+  color: #6dffb0;
+  text-shadow: 0 0 10px rgba(57, 255, 136, 0.45);
+}
+
+.mil-ai-terminal__status-hint {
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.75);
+  text-shadow: none;
+}
+
+@keyframes mil-ai-status-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(0.82);
+  }
+}
+
+.mil-ai-terminal__screen {
+  max-height: 9.5rem;
+  overflow-y: auto;
+  margin: 0.35rem 0 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px dashed rgba(57, 255, 136, 0.28);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 60, 36, 0.07) 2px,
+      rgba(0, 60, 36, 0.07) 4px
+    ),
+    rgba(2, 10, 8, 0.55);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(57, 255, 136, 0.35) transparent;
+}
+
+.mil-ai-terminal__body {
+  min-height: 4.5rem;
+}
+
+.mil-ai-terminal__line {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: rgba(57, 255, 136, 0.9);
+  text-shadow: 0 0 10px rgba(57, 255, 136, 0.22);
+}
+
+.mil-ai-terminal__line--done {
+  opacity: 0.82;
+}
+
+.mil-ai-terminal__line--active {
+  color: #6dffb0;
+}
+
+.mil-ai-terminal__line--complete {
+  color: #fde68a;
+  text-shadow: 0 0 10px rgba(253, 230, 138, 0.35);
+}
+
+.mil-ai-terminal__line--next {
+  color: #7dd3fc;
+  text-shadow: 0 0 10px rgba(125, 211, 252, 0.3);
+}
+
+.mil-ai-advisor__pending--guide {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.mil-ai-terminal__cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.95em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: rgba(57, 255, 136, 0.92);
+  animation: mil-ai-cursor-blink 0.85s step-end infinite;
+}
+
+@keyframes mil-ai-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.mil-ai-advisor--done .mil-ai-terminal__screen {
+  max-height: 6.5rem;
+}
+
 .building-card--progression-locked {
   opacity: 0.55;
   position: relative;

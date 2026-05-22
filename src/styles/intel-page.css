@@ -163,6 +163,203 @@
   font-size: 0.8rem;
 }
 
+/* Siber operasyon & sabotaj — 2 sütunlu grid */
+.page--intel .ops-list,
+.page--intel .ops-list--cyber {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.page--intel .ops-list li,
+.page--intel .ops-list--cyber li {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  margin: 0;
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  background: rgba(4, 12, 22, 0.65);
+  font-size: 0.82rem;
+}
+
+.page--intel .ops-list li strong,
+.page--intel .ops-list--cyber li strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: rgba(0, 240, 255, 0.9);
+}
+
+.page--intel .ops-list li .btn,
+.page--intel .ops-list--cyber li .btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+.page--intel .ops-list__locked,
+.page--intel .intel-op-btn-wrap--locked {
+  position: relative;
+  opacity: 0.4;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.page--intel .ops-list__locked::after,
+.page--intel .intel-op-btn-wrap--locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 240, 255, 0.07) 2px,
+    rgba(0, 240, 255, 0.07) 3px
+  );
+  opacity: 0.85;
+}
+
+.page--intel .ops-list__locked::before,
+.page--intel .intel-op-btn-wrap--locked::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.14) 42%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(0, 240, 255, 0.14) 58%,
+    transparent 100%
+  );
+  animation: intel-op-scanline 3.2s linear infinite;
+}
+
+@keyframes intel-op-scanline {
+  0% {
+    top: -35%;
+  }
+  100% {
+    top: 110%;
+  }
+}
+
+@media (max-width: 640px) {
+  .page--intel .ops-list,
+  .page--intel .ops-list--cyber {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Operasyon butonları — kilit hiyerarşisi + tooltip */
+
+.intel-op-btn-wrap {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+}
+
+.intel-op-btn {
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.intel-op-btn--primary {
+  border: 1px solid rgba(0, 240, 255, 0.55);
+  background: rgba(4, 14, 24, 0.85);
+  color: rgba(0, 240, 255, 0.95);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+.intel-op-btn--primary:hover:not(:disabled),
+.intel-op-btn--primary.active {
+  background: rgba(0, 240, 255, 0.14);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+}
+
+.intel-op-btn--danger {
+  border: 1px solid rgba(255, 51, 102, 0.55);
+  background: rgba(28, 4, 12, 0.75);
+  color: #ff3366;
+  box-shadow: 0 0 14px rgba(255, 51, 102, 0.2);
+}
+
+.intel-op-btn--danger:hover:not(:disabled) {
+  background: rgba(255, 51, 102, 0.18);
+  box-shadow: 0 0 22px rgba(255, 51, 102, 0.4);
+}
+
+.intel-op-btn-wrap--locked .intel-op-btn {
+  border-color: rgba(100, 116, 139, 0.45) !important;
+  background: rgba(30, 36, 48, 0.65) !important;
+  color: rgba(148, 163, 184, 0.55) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+.intel-op-btn__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  z-index: 40;
+  padding: 0.4rem 0.55rem;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: #ff3366;
+  background: rgba(24, 4, 10, 0.97);
+  border: 1px solid rgba(255, 51, 102, 0.55);
+  box-shadow: 0 0 16px rgba(255, 51, 102, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+}
+
+.intel-op-btn-wrap--locked:hover .intel-op-btn__tooltip,
+.intel-op-btn-wrap--locked:focus-within .intel-op-btn__tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.page--intel .ops-list li .intel-op-meta {
+  opacity: 0.65;
+  font-size: 0.68rem;
+}
+
+.page--intel .ops-list__locked .intel-op-meta {
+  display: none;
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.page--intel .ops-list__locked:hover .intel-op-meta {
+  display: block;
+}
+
 .intel-cyber-preview,
 .intel-kbrn-preview {
   display: flex;
@@ -209,4 +406,199 @@
   50% {
     opacity: 0.65;
   }
+}
+
+/* —— Özet panel —— */
+.intel-summary-panel {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  background: linear-gradient(145deg, rgba(4, 12, 24, 0.92) 0%, rgba(6, 14, 28, 0.85) 100%);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.intel-summary-panel__head {
+  margin-bottom: 0.75rem;
+}
+
+.intel-summary-panel__tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: rgba(0, 240, 255, 0.85);
+}
+
+.intel-summary-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.intel-summary-panel__stat {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.intel-summary-panel__stat--wide {
+  grid-column: 1 / -1;
+}
+
+.intel-summary-panel__stat--alert.intel-summary-panel__stat--warn {
+  border-color: rgba(255, 51, 85, 0.45);
+  background: rgba(60, 10, 20, 0.35);
+}
+
+.intel-summary-panel__label {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+  margin-bottom: 0.2rem;
+}
+
+.intel-summary-panel__value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #e0f2fe;
+  line-height: 1.1;
+}
+
+.intel-summary-panel__value--live {
+  color: #4ade80;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.35);
+}
+
+.intel-summary-panel__sub {
+  display: block;
+  font-size: 0.58rem;
+  color: rgba(148, 163, 184, 0.55);
+  margin-top: 0.15rem;
+}
+
+.intel-summary-panel__result {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(203, 213, 225, 0.9);
+}
+
+.intel-accordion--always-open .intel-accordion__head--static {
+  cursor: default;
+  pointer-events: none;
+}
+
+.intel-accordion--always-open .intel-accordion__head--static:hover {
+  background: rgba(0, 240, 255, 0.04);
+}
+
+/* —— Operasyon kartları —— */
+.ops-list--cards {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.intel-op-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(0, 240, 255, 0.16);
+  background: rgba(2, 8, 18, 0.65);
+}
+
+.intel-op-card--cyber {
+  border-color: rgba(57, 255, 20, 0.18);
+}
+
+.intel-op-card--kbrn {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(20, 14, 6, 0.4);
+}
+
+.intel-op-card__title {
+  display: block;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: #e8f4ff;
+  margin-bottom: 0.25rem;
+}
+
+.intel-op-card__desc {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(148, 163, 184, 0.88);
+}
+
+.intel-op-card__cost {
+  display: block;
+  font-size: 0.65rem;
+}
+
+.intel-op-card__cost--heavy {
+  color: rgba(250, 204, 21, 0.85);
+  font-weight: 600;
+}
+
+.intel-op-card__meta {
+  margin: 0 0 0.25rem;
+}
+
+.intel-footer-hint {
+  margin-top: 1rem;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 720px) {
+  .intel-summary-panel__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.operation-outcome-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.5);
+  font-size: 0.78rem;
+}
+
+.operation-outcome-banner--ok {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(6, 30, 18, 0.45);
+}
+
+.operation-outcome-banner--fail {
+  border-color: rgba(255, 51, 85, 0.35);
+  background: rgba(40, 10, 18, 0.4);
+}
+
+.operation-outcome-banner__label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.operation-outcome-banner strong {
+  color: #f0f9ff;
+}
+
+.operation-outcome-banner__meta {
+  color: rgba(148, 163, 184, 0.85);
 }

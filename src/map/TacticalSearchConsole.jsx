@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import { getCityOwnerLabel } from './mapOwnership';
+import { BOT_MANAGEMENT_LABEL, OWNER_UNCLAIMED_LABEL } from './mapDisplayLabels';
+import { getMapCityDisplayName } from './mapCityDisplayName';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 
 const POS_KEY = 'tactical-console-pos';
@@ -31,6 +33,7 @@ export default function TacticalSearchConsole({
   scanPulse,
   onResetFilter,
   hasActiveFilter = false,
+  liveStats = null,
 }) {
   const [pos, setPos] = useState(readStoredPos);
   const [minimized, setMinimized] = useState(() => localStorage.getItem(MIN_KEY) === '1');
@@ -77,8 +80,10 @@ export default function TacticalSearchConsole({
 
   const formatCityOption = (c) => {
     const owner = getCityOwnerLabel(c, playerName);
-    const suffix = c.status === 'bot' ? 'BOT' : (owner && owner !== 'Boş' ? owner : 'Boş');
-    return `${c.name} — ${suffix}`;
+    const suffix = c.status === 'bot'
+      ? BOT_MANAGEMENT_LABEL
+      : (owner || OWNER_UNCLAIMED_LABEL);
+    return `${getMapCityDisplayName(c.name)} — ${suffix}`;
   };
 
   return (
@@ -128,12 +133,13 @@ export default function TacticalSearchConsole({
       {!minimized && (
         <>
           <div className="map-city-search">
-            <label className="map-city-search-label" htmlFor="map-city-select">
+            <label className="map-city-search-label tactical-terminal-label" htmlFor="map-city-select">
               Şehir Ara
             </label>
+            <div className="tactical-terminal-field tactical-terminal-field--select">
             <select
               id="map-city-select"
-              className="map-city-select"
+              className="map-city-select tactical-terminal-select"
               value={cityPick}
               title={cityPick || 'Şehir seçin'}
               onChange={(e) => {
@@ -153,6 +159,7 @@ export default function TacticalSearchConsole({
                 );
               })}
             </select>
+            </div>
           </div>
           {onResetFilter && (
             <button
@@ -166,20 +173,24 @@ export default function TacticalSearchConsole({
             </button>
           )}
           <form className="map-search map-search--console" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="map-search-input"
-              placeholder="Şehir veya oyuncu ara..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <input
-              type="text"
-              className="map-search-coord"
-              placeholder="Koordinat: 38.42, 27.14"
-              value={searchCoord}
-              onChange={(e) => setSearchCoord(e.target.value)}
-            />
+            <div className="tactical-terminal-field">
+              <input
+                type="text"
+                className="map-search-input tactical-terminal-input"
+                placeholder="Şehir veya oyuncu ara..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="tactical-terminal-field">
+              <input
+                type="text"
+                className="map-search-coord tactical-terminal-input"
+                placeholder="Koordinat: 38.42, 27.14"
+                value={searchCoord}
+                onChange={(e) => setSearchCoord(e.target.value)}
+              />
+            </div>
             <button
               type="submit"
               className={`btn map-search-btn map-search-btn--scan${scanPulse ? ' is-scanning' : ''}`}
@@ -192,9 +203,18 @@ export default function TacticalSearchConsole({
             <span><i className="legend-dot legend-dot--spy" /> Casus rotası</span>
             <span><i className="legend-dot legend-dot--return" /> Geri dönüş</span>
             <span><i style={{ background: CITY_STATUS_COLORS.own }} /> Kendi</span>
-            <span><i style={{ background: CITY_STATUS_COLORS.bot }} /> Bot üssü</span>
+            <span><i style={{ background: '#f97316' }} /> Bot üssü</span>
             <span><i style={{ background: CITY_STATUS_COLORS.enemy }} /> Düşman / Boş</span>
           </div>
+          {liveStats && (
+            <p className="tactical-console__live-stats" role="status">
+              Toplam Bot Şehir: <strong>{liveStats.botCities}</strong>
+              {' | '}
+              Oyuncu Şehri: <strong>{liveStats.playerCities}</strong>
+              {' | '}
+              Aktif Sefer: <strong>{liveStats.activeExpeditions}</strong>
+            </p>
+          )}
         </>
       )}
     </div>

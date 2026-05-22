@@ -11,7 +11,7 @@ function LevelTable({ rows, effectLabel }) {
         Sv.1 — Sv.{rows.length}: {effectLabel}
       </p>
       <div className="content-info-modal__table-wrap">
-        <table className="content-info-modal__table">
+        <table className="content-info-modal__table content-info-modal__table--terminal">
           <thead>
             <tr>
               <th>Sv.</th>

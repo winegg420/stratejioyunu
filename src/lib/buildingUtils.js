@@ -1,9 +1,24 @@
-import { buildings as buildingDefs } from '../data/placeholder';
+﻿import { buildings as buildingDefs } from '../data/placeholder';
 import { getLevelOneSpec } from '../data/buildingCatalog';
 import { getUnitDisplayName } from '../data/unitCatalog';
-import { createKbrnResearchTemplates } from './kbrnResearch';
+import { createResearchTemplates } from '../data/researchCatalog';
 
 export const HQ_BUILDING_ID = 'hq';
+
+/** Oyundaki tek geçerli bina kimlikleri (11 adet). */
+export const CANONICAL_BUILDING_IDS = [
+  HQ_BUILDING_ID,
+  'refinery',
+  'plant',
+  'barracks',
+  'airport',
+  'shipyard',
+  'intel',
+  'cyber_ops',
+  'research',
+  'ai_center',
+  'market',
+];
 
 export const MILITARY_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
@@ -11,17 +26,16 @@ export const PANEL_LOCKED_BUILDING_IDS = ['barracks', 'airport', 'shipyard'];
 
 export const BUILDING_LABELS = {
   hq: 'Komuta Merkezi',
+  refinery: 'Yakıt Rafinerisi',
+  plant: 'Enerji Santrali',
   barracks: 'Kışla',
   airport: 'Hava Üssü',
   shipyard: 'Deniz Üssü',
   research: 'Ar-Ge Merkezi',
-  factory: 'Endüstri Kompleksi',
-  depot: 'Lojistik Depo',
   cyber_ops: 'Siber Operasyon Merkezi',
   ai_center: 'Yapay Zeka Merkezi',
-  wall: 'Çevre Savunma Hattı',
   intel: 'İstihbarat Merkezi',
-  tax: 'Maliye Dairesi',
+  market: 'Ticaret Terminali',
 };
 
 export const RESEARCH_BUILDING_ID = 'research';
@@ -33,19 +47,14 @@ export function getHqLevel(city) {
 }
 
 export const BUILDING_PREREQUISITES = {
-  farm: [{ id: HQ_BUILDING_ID, level: 1 }],
-  refinery: [{ id: 'farm', level: 1 }],
-  factory: [{ id: 'farm', level: 2 }],
-  plant: [{ id: 'factory', level: 1 }],
-  tax: [{ id: 'farm', level: 1 }],
-  barracks: [{ id: 'farm', level: 1 }, { id: 'factory', level: 1 }],
-  airport: [{ id: 'barracks', level: 3 }, { id: 'factory', level: 4 }],
-  shipyard: [{ id: 'barracks', level: 2 }, { id: 'factory', level: 2 }],
+  refinery: [{ id: HQ_BUILDING_ID, level: 1 }],
+  plant: [{ id: 'refinery', level: 1 }],
+  barracks: [{ id: 'refinery', level: 1 }],
+  airport: [{ id: 'barracks', level: 3 }, { id: 'plant', level: 2 }],
+  shipyard: [{ id: 'barracks', level: 2 }, { id: 'refinery', level: 2 }],
   intel: [{ id: 'barracks', level: 2 }],
-  wall: [{ id: 'barracks', level: 1 }],
-  market: [{ id: 'tax', level: 2 }],
-  research: [{ id: 'factory', level: 3 }, { id: 'market', level: 1 }],
-  depot: [{ id: 'factory', level: 2 }],
+  market: [{ id: 'refinery', level: 2 }, { id: 'plant', level: 1 }],
+  research: [{ id: 'refinery', level: 3 }, { id: 'market', level: 1 }],
   cyber_ops: [{ id: 'intel', level: 2 }, { id: 'research', level: 2 }],
   ai_center: [
     { id: 'research', level: 5 },
@@ -54,6 +63,41 @@ export const BUILDING_PREREQUISITES = {
     { id: HQ_BUILDING_ID, level: 8 },
   ],
 };
+
+const defsById = () => Object.fromEntries(buildingDefs.map((b) => [b.id, b]));
+
+/** Kayıtlı şehir binalarını 11’lik katalogla hizalar; kaldırılan ID’leri atar. */
+export function syncCityBuildingsToCatalog(buildings = [], { useDemoLevels = false } = {}) {
+  const allowed = new Set(CANONICAL_BUILDING_IDS);
+  const defs = defsById();
+  const existing = new Map();
+  for (const b of buildings) {
+    if (b?.id && allowed.has(b.id)) existing.set(b.id, b);
+  }
+  return CANONICAL_BUILDING_IDS.map((id) => {
+    const def = defs[id];
+    const prev = existing.get(id);
+    const levelOne = getLevelOneSpec(id);
+    const demoLevel = useDemoLevels ? Math.max(0, def?.level ?? 0) : 0;
+    const level = prev != null
+      ? (prev.level ?? 0)
+      : (useDemoLevels
+        ? (id === HQ_BUILDING_ID ? Math.max(1, demoLevel) : demoLevel)
+        : (id === HQ_BUILDING_ID ? 1 : 0));
+    const base = {
+      ...def,
+      level,
+      cost: levelOne?.cost ?? def?.cost,
+      time: levelOne?.time ?? def?.time,
+      upgrading: prev?.upgrading ?? false,
+      producing: prev?.producing ?? false,
+      locked: level < 1 && PANEL_LOCKED_BUILDING_IDS.includes(id),
+      built: level > 0,
+    };
+    if (!prev) return base;
+    return { ...base, ...prev, id, name: def.name, desc: def.desc, category: def.category, image: def.image };
+  });
+}
 
 export function getBuildingPrerequisites(buildingId) {
   return BUILDING_PREREQUISITES[buildingId] ?? [];
@@ -80,23 +124,7 @@ export function formatPrerequisiteList(unmet) {
 }
 
 export function createStarterBuildings({ useDemoLevels = false } = {}) {
-  return buildingDefs.map((b) => {
-    const levelOne = getLevelOneSpec(b.id);
-    const demoLevel = useDemoLevels ? Math.max(0, b.level ?? 0) : 0;
-    const level = useDemoLevels
-      ? (b.id === HQ_BUILDING_ID ? Math.max(1, demoLevel) : demoLevel)
-      : (b.id === HQ_BUILDING_ID ? 1 : 0);
-    return {
-      ...b,
-      level,
-      cost: levelOne?.cost ?? b.cost,
-      time: levelOne?.time ?? b.time,
-      upgrading: false,
-      producing: false,
-      locked: level < 1 && PANEL_LOCKED_BUILDING_IDS.includes(b.id),
-      built: level > 0,
-    };
-  });
+  return syncCityBuildingsToCatalog(buildingDefs, { useDemoLevels });
 }
 
 export function isBuildingBuilt(building) {
@@ -131,11 +159,18 @@ export function getStarterIdleTroops() {
 }
 
 export function createStarterResearches() {
-  const standard = [
-    { id: 'r1', category: 'standard', name: 'Kara Saldırı Teknolojisi', level: 0, max: 15, desc: 'Kara birliklerine +%3 saldırı bonusu', active: false, queued: false, time: '04:22:15', cost: '2.800 metal · 1.200 bütçe' },
-    { id: 'r2', category: 'standard', name: 'Üretim Hızı', level: 0, max: 15, desc: 'Tüm kaynak üretimine +%2 bonus', active: false, queued: false, time: '—', cost: '3.500 metal' },
-    { id: 'r3', category: 'standard', name: 'Casusluk Etkinliği', level: 0, max: 15, desc: 'Casus operasyonlarında başarı şansı', active: false, queued: false, time: '—', cost: '4.000 metal · 2.000 bütçe' },
-    { id: 'r4', category: 'standard', name: 'Hava Savunma', level: 0, max: 15, desc: 'Hava saldırılarına karşı savunma', active: false, queued: false, time: '—', cost: '5.200 metal' },
-  ];
-  return [...standard, ...createKbrnResearchTemplates()];
+  return createResearchTemplates();
+}
+
+/** Tüm şehirlerin bina listesini 11’lik katalogla hizalar */
+export function syncAllCityBuildings(cities = {}) {
+  return Object.fromEntries(
+    Object.entries(cities).map(([cityId, city]) => [
+      cityId,
+      {
+        ...city,
+        buildings: syncCityBuildingsToCatalog(city?.buildings ?? []),
+      },
+    ]),
+  );
 }

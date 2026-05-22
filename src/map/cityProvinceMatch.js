@@ -1,3 +1,4 @@
+import { stripBotCitySuffix } from '../lib/botProvinceAssignment';
 import { normalizeProvinceCode, provinceCodesMatch } from './mapOwnership';
 
 /** Şehir adı → il (shapeName) — ilçe / alt üsler */
@@ -7,12 +8,17 @@ const CITY_PROVINCE_ALIASES = {
 
 export function resolveCityProvinceName(city, playerCities = []) {
   if (!city) return null;
-  if (CITY_PROVINCE_ALIASES[city.name]) return CITY_PROVINCE_ALIASES[city.name];
+  const baseName = stripBotCitySuffix(city.name);
+  if (CITY_PROVINCE_ALIASES[city.name] || CITY_PROVINCE_ALIASES[baseName]) {
+    return CITY_PROVINCE_ALIASES[city.name] ?? CITY_PROVINCE_ALIASES[baseName];
+  }
+  if (city.provinceName) return city.provinceName;
+  if (/\[BOT\]\s*$/i.test(city.name ?? '')) return stripBotCitySuffix(city.name);
 
-  const pc = playerCities.find((p) => p.name === city.name);
+  const pc = playerCities.find((p) => p.name === city.name || p.name === baseName);
   if (pc?.provinceName) return pc.provinceName;
 
-  const direct = city.provinceName ?? city.name;
+  const direct = city.provinceName ?? baseName ?? city.name;
   return direct;
 }
 

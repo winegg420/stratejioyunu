@@ -4,12 +4,15 @@ const TOAST_MS = 3000;
 
 export const useNotificationStore = create((set, get) => ({
   toasts: [],
+  feedItems: [],
   unreadCount: 0,
 
   addToast: (message, type = 'info') => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const entry = { id, message, type, at: Date.now() };
     set((state) => ({
-      toasts: [...state.toasts, { id, message, type }],
+      toasts: [...state.toasts, entry],
+      feedItems: [entry, ...state.feedItems].slice(0, 40),
       unreadCount: state.unreadCount + 1,
     }));
 

@@ -6,6 +6,7 @@ import { getResearchCenterLevel, KBRN_RESEARCH_CENTER_UNLOCK } from './kbrnResea
 import { getCurrentPlayerName } from './playerIdentity';
 import { PROTECTION_DAYS } from '../data/placeholder';
 import { defaultProtectionEndsAt } from './ideologySystem';
+import { bypassWarLocksForDevTest } from './devTestMode';
 
 export const PEACE_FORCE_DAYS = PROTECTION_DAYS;
 
@@ -18,9 +19,7 @@ export const UNLOCK_HQ_CYBER_BUILDING = 'cyber_ops';
 export const STARTER_VISIBLE_BUILDING_IDS = new Set([
   HQ_BUILDING_ID,
   'refinery',
-  'factory',
   'plant',
-  'depot',
 ]);
 
 export const AGGRESSIVE_EXPEDITION_MODES = new Set(['attack', 'spy', 'cyber', 'kbrn']);
@@ -60,6 +59,7 @@ export function isHumanMapTarget(mapCity, playerName = getCurrentPlayerName()) {
  * @returns {{ ok: boolean, reason?: string, revokePeaceForce?: boolean }}
  */
 export function evaluatePeaceForceForExpedition(state, targetCity, mode) {
+  if (bypassWarLocksForDevTest()) return { ok: true };
   const playerName = getCurrentPlayerName();
   const isOwn = state.playerCities?.some((pc) => pc.name === targetCity?.name);
   if (isOwn) return { ok: true };

@@ -1,26 +1,28 @@
-import { RESEARCH_BUILDING_ID } from './buildingUtils';
+﻿import { RESEARCH_BUILDING_ID } from './buildingUtils';
+import {
+  ADVANCED_RESEARCH_CATEGORY,
+  ADVANCED_RESEARCH_UNLOCK,
+  KBRN_CATEGORY,
+  KBRN_RESEARCH_CENTER_UNLOCK,
+  normalizeResearchId,
+  RESEARCH_ID_ALIASES,
+} from '../data/researchCatalog';
 
-export const KBRN_CATEGORY = 'kbrn';
+export { ADVANCED_RESEARCH_CATEGORY, ADVANCED_RESEARCH_UNLOCK, KBRN_CATEGORY, KBRN_RESEARCH_CENTER_UNLOCK };
 
-/** KBRN dalı — Ar-Ge Merkezi bu seviyeye ulaşınca açılır */
-export const KBRN_RESEARCH_CENTER_UNLOCK = 8;
-
+/** Oyun mantığı sabitleri — doktrin ID eşlemesi */
 export const KBRN_RESEARCH_IDS = {
-  weapon: 'kbrn_weapon',
-  decontamination: 'kbrn_decon',
-  detection: 'kbrn_detect',
-  /** @deprecated DB uyumu */
-  chemPressure: 'kbrn_chem',
+  weapon: 'r9',
+  decontamination: 'r4',
+  detection: 'r6',
 };
 
-const RESEARCH_ID_ALIASES = {
-  kbrn_chem: 'kbrn_weapon',
-};
+export { RESEARCH_ID_ALIASES };
 
-/** En pahalı araştırma dalı */
+/** En pahalı ileri doktrin maliyet çarpanı */
 export const KBRN_COST_LEVEL_MULT = 1.22;
 
-/** Panzehir bu seviyede global salgından hasarsız */
+/** Panzehir bu seviyede global salgından hasarsız (Stratejik Savunma Kalkanı) */
 export const DECON_GLOBAL_IMMUNITY_LEVEL = 7;
 
 export function getResearchCenterLevel(city) {
@@ -32,50 +34,12 @@ export function isKbrnBranchUnlocked(city) {
   return getResearchCenterLevel(city) >= KBRN_RESEARCH_CENTER_UNLOCK;
 }
 
-export function normalizeResearchId(researchId) {
-  return RESEARCH_ID_ALIASES[researchId] ?? researchId;
+/** @deprecated */
+export function isAdvancedResearchUnlocked(city) {
+  return isKbrnBranchUnlocked(city);
 }
 
-export function createKbrnResearchTemplates() {
-  return [
-    {
-      id: KBRN_RESEARCH_IDS.weapon,
-      category: KBRN_CATEGORY,
-      name: 'KBRN Silahı Geliştirme',
-      level: 0,
-      max: 10,
-      desc: 'Kimyasal/biyolojik ajanlar — haritadan sinsi operasyon. Başarıda 1 saat nüfus/moral/üretim felci. Haber akışında kaynak gizli kalır.',
-      active: false,
-      queued: false,
-      time: '12:00:00',
-      cost: '28.000 metal · 15.000 bütçe · 8.000 enerji · 250 uranyum',
-    },
-    {
-      id: KBRN_RESEARCH_IDS.decontamination,
-      category: KBRN_CATEGORY,
-      name: 'Dekontaminasyon Protokolü (Panzehir)',
-      level: 0,
-      max: 10,
-      desc: 'Düşman sinsi saldırıları ve AI bölgesel salgınlarına karşı koruma. Yüksek seviye = hasar ve süre sıfıra yakın.',
-      active: false,
-      queued: false,
-      time: '14:00:00',
-      cost: '32.000 metal · 18.000 bütçe · 10.000 enerji · 180 uranyum',
-    },
-    {
-      id: KBRN_RESEARCH_IDS.detection,
-      category: KBRN_CATEGORY,
-      name: 'Erken Uyarı & Tespit Teknolojisi',
-      level: 0,
-      max: 10,
-      desc: 'Casus raporlarında düşman KBRN protokolleri. Çok yüksek istihbarat ile sinsi saldırgan kimliği.',
-      active: false,
-      queued: false,
-      time: '10:00:00',
-      cost: '24.000 metal · 12.000 bütçe · 6.000 enerji · 120 uranyum',
-    },
-  ];
-}
+export { normalizeResearchId };
 
 export function scaleKbrnResearchCost(baseCost, level = 0) {
   if (!baseCost || baseCost === '—') return baseCost;
@@ -92,17 +56,19 @@ export function scaleKbrnResearchCost(baseCost, level = 0) {
     .join(' · ');
 }
 
+export function scaleAdvancedResearchCost(baseCost, level = 0, category = '') {
+  if (category === ADVANCED_RESEARCH_CATEGORY || category === KBRN_CATEGORY) {
+    return scaleKbrnResearchCost(baseCost, level);
+  }
+  return baseCost;
+}
+
 export function getKbrnResearchLevel(researches, researchId) {
   const norm = normalizeResearchId(researchId);
   const r = (researches ?? []).find(
     (x) => x.id === norm || x.id === researchId,
   );
-  if (r) return r.level ?? 0;
-  if (researchId === KBRN_RESEARCH_IDS.weapon) {
-    const legacy = (researches ?? []).find((x) => x.id === 'kbrn_chem');
-    return legacy?.level ?? 0;
-  }
-  return 0;
+  return r?.level ?? 0;
 }
 
 export function getWeaponDevelopmentLevel(researches) {
@@ -147,4 +113,9 @@ export function shouldListKbrnProtocolsInIntel(detectionLevel, intelDepth) {
 export function canTraceKbrnAttacker({ detectionLevel, spyLevel }) {
   const score = detectionLevel + Math.floor((spyLevel ?? 0) / 2);
   return score >= 4;
+}
+
+/** @deprecated KBRN şablonları kaldırıldı — researchCatalog kullanın */
+export function createKbrnResearchTemplates() {
+  return [];
 }

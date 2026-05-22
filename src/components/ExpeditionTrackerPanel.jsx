@@ -62,7 +62,7 @@ export default function ExpeditionTrackerPanel() {
 
   if (!expeditions.length) {
     return (
-      <section className="expedition-tracker-panel expedition-tracker-panel--empty panel">
+      <section className="expedition-tracker-panel expedition-tracker-panel--empty panel glass-panel">
         <h3 className="expedition-tracker-title expedition-tracker-title--overlay">
           Sefer Takip Paneli
         </h3>
@@ -87,7 +87,7 @@ export default function ExpeditionTrackerPanel() {
   }
 
   return (
-    <section className="expedition-tracker-panel" aria-label="Sefer takip">
+    <section className="expedition-tracker-panel glass-panel" aria-label="Sefer takip">
       <div className="expedition-tracker-header">
         <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
         <span className="expedition-tracker-count">{expeditions.length} aktif</span>

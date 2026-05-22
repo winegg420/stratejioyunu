@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   DEFAULT_PARITIES,
   FUEL_PRICE_MAX,
@@ -8,7 +8,7 @@ import {
 } from '../lib/adminOverrideEngine';
 import { useGameStore } from '../stores/gameStore';
 
-const PARITY_KEYS = ['food', 'fuel', 'metal', 'money'];
+const PARITY_KEYS = ['food', 'fuel', 'hammadde', 'money'];
 
 export default function AdminCentralBankPanel() {
   const centralBank = useGameStore((s) => s.centralBank);

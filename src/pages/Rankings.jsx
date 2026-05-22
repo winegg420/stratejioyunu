@@ -23,7 +23,7 @@ export default function Rankings() {
       const result = await fetchLoyaltyLeaderboard();
       if (cancelled) return;
       setRows(result.rows ?? []);
-      setSource(result.source ?? 'demo');
+      setSource(result.source ?? 'empty');
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -69,10 +69,12 @@ export default function Rankings() {
         {loading ? (
           <p className="rankings-loading">Sıralama yükleniyor…</p>
         ) : rows.length === 0 ? (
-          <p className="rankings-empty">Henüz sıralama verisi yok.</p>
+          <p className="rankings-empty">
+            Henüz sıralama oluşmadı — ilk sezonu tamamlayan liderler burada görünecek
+          </p>
         ) : (
           <div className="rankings-table-wrap">
-            <table className="data-table rankings-table">
+            <table className="data-table rankings-table rankings-table--terminal">
               <thead>
                 <tr>
                   <th>#</th>

@@ -1,5 +1,7 @@
 /** Şehir sosyal / siber alanları — modern askeri strateji modeli */
 
+import { syncCityBuildingsToCatalog } from './buildingUtils';
+
 export const DEFAULT_POPULATION = 2400;
 export const DEFAULT_HAPPINESS = 72;
 export const DEFAULT_TAX_RATE = 15;
@@ -32,5 +34,8 @@ export function enrichCityModel(city, overrides = {}) {
     kbrnEffects: city?.kbrnEffects ?? overrides.kbrnEffects,
     quarantine: city?.quarantine ?? overrides.quarantine,
   });
-  return { ...city, ...vitality };
+  const buildings = city?.buildings
+    ? syncCityBuildingsToCatalog(city.buildings)
+    : city?.buildings;
+  return { ...city, ...vitality, ...(buildings ? { buildings } : {}) };
 }

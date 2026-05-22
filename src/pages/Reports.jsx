@@ -5,6 +5,8 @@ import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import ReportFilters from '../components/ReportFilters';
 import ReportDetail from '../components/ReportDetail';
 import BattleSimulator from '../components/BattleSimulator';
+import CyberToggle from '../components/CyberToggle';
+import { isOperationReport } from '../data/intelOperationsCatalog';
 import { useGameStore } from '../stores/gameStore';
 
 export default function Reports() {
@@ -18,17 +20,26 @@ export default function Reports() {
   const counts = useMemo(
     () => ({
       all: reports.length,
+      operations: reports.filter((r) => isOperationReport(r)).length,
       battle: reports.filter((r) => r.filterType === 'battle').length,
-      spy: reports.filter((r) => r.filterType === 'spy').length,
+      spy: reports.filter((r) => r.filterType === 'spy' && r.type === 'Casusluk Sondası').length,
       cyber: reports.filter((r) => r.filterType === 'cyber').length,
-      kbrn: reports.filter((r) => r.filterType === 'kbrn').length,
+      kbrn: reports.filter((r) => r.filterType === 'kbrn' && !r.kbrnAlert).length,
       trade: reports.filter((r) => r.filterType === 'trade').length,
+      logistics: reports.filter((r) => r.filterType === 'logistics').length,
     }),
     [reports],
   );
 
   const filtered = useMemo(() => {
     if (filter === 'all') return reports;
+    if (filter === 'operations') return reports.filter((r) => isOperationReport(r));
+    if (filter === 'spy') {
+      return reports.filter((r) => r.filterType === 'spy' && r.type !== 'Ajan Operasyonu');
+    }
+    if (filter === 'kbrn') {
+      return reports.filter((r) => r.filterType === 'kbrn' && !r.kbrnAlert);
+    }
     return reports.filter((r) => r.filterType === filter);
   }, [filter, reports]);
 
@@ -112,10 +123,12 @@ export default function Reports() {
         <>
           <ReportFilters active={filter} onChange={setFilter} counts={counts} />
           <label className="report-select-all">
-            <input
-              type="checkbox"
+            <CyberToggle
               checked={allFilteredSelected}
-              onChange={toggleSelectAll}
+              onChange={() => toggleSelectAll()}
+              activeLabel="TÜMÜ"
+              lockedLabel="SEÇ"
+              aria-label="Tümünü seç"
             />
             Tümünü Seç
             {selectedIds.size > 0 && (
@@ -129,10 +142,12 @@ export default function Reports() {
                 className={`report-item${expandedId === r.id ? ' report-item--open' : ''}${r.isNew ? ' report-item--new' : ''}`}
               >
                 <label className="report-select">
-                  <input
-                    type="checkbox"
+                  <CyberToggle
                     checked={selectedIds.has(r.id)}
                     onChange={() => toggleSelect(r.id)}
+                    showX
+                    activeLabel="SEÇİLİ"
+                    lockedLabel="—"
                     aria-label={`${r.title} seç`}
                   />
                 </label>

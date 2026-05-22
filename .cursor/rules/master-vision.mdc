@@ -95,6 +95,14 @@ Hiçbir ideoloji işlemi kilitlemez; uzmanlık çarpanları uygulanır (`playerI
 
 ---
 
+## Premium gelir — planlama notu (implementasyon yok)
+
+İleride eklenecek monetizasyon fikirleri: **Yayın Kredisi** (ittifak → `CommandTickerFeed` propaganda), **Operasyon Pasaportu** (sezonluk battle pass, kozmetik), **Kozmik Oda** (analitik SaaS aboneliği), **Lockdown Sigortası** (offline otomatik savunma). Detay: `docs/gelecek-premium-icerik.md`.
+
+**Native reklam:** Kenar banner yerine HUD’a gömülü AdSense/Adinplay — ticker’da her 5 haberde 1 metin slot, terminal köşesinde “Siber Güvenlik Sponsor Paneli”, ödüllü video (30 sn brifing → Ar-Ge %10 hız; istihbarat videosu → günlük uydu tarama). Detay: `docs/gelecek-reklam-native-ads.md`.
+
+---
+
 ## Uygulama notu (agent)
 
 Bu kural **kod yazma talimatı değildir**; vizyon referansıdır. Kullanıcı açıkça istemedikçe bu maddelerin tam UI/backend implementasyonuna atlanmaz; ancak **Diplomasi, İttifak, Harita, rapor ve haber** değişikliklerinde yukarıdaki ölçeklenebilirlik gözetilir.

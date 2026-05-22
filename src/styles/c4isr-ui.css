@@ -1,0 +1,212 @@
+/* ── C4ISR komuta-kontrol arayüzü ── */
+
+/* [1] Ana Merkez — siber grid arka plan */
+.home-page .glass-panel,
+.page--command .glass-panel {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px) !important;
+  background-size: 20px 20px, 20px 20px, 4px 4px, 4px 4px !important;
+  background-position: 0 0, 0 0, 0 0, 0 0 !important;
+}
+
+/* [2] İstihbarat satırı — hover sparkline */
+.intel-list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.intel-list-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+}
+
+.intel-sparkline {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  flex-shrink: 0;
+  pointer-events: none;
+  animation: intel-sparkline-in 0.18s ease-out;
+}
+
+.intel-sparkline__bar {
+  fill: rgba(0, 240, 255, 0.75);
+  filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.45));
+}
+
+@keyframes intel-sparkline-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleX(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1);
+  }
+}
+
+.intel-list > .intel-list-row,
+.intel-cyber-log > .intel-list-row,
+.map-intel-feed__item.intel-list-row,
+.ai-radar-list__item.intel-list-row {
+  padding-right: 3.25rem;
+}
+
+/* [3] Harita — hex tıklama pulse */
+.map-container-wrap--cyber,
+.map-container-wrap {
+  position: relative;
+}
+
+.map-hex-pulse-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.map-hex-pulse {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  animation: map-hex-pulse-fade 0.5s ease-out forwards;
+}
+
+.map-hex-pulse__shape {
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(
+    50% 0%,
+    93% 25%,
+    93% 75%,
+    50% 100%,
+    7% 75%,
+    7% 25%
+  );
+  border: 2px solid rgba(0, 240, 255, 0.9);
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow:
+    0 0 12px rgba(0, 240, 255, 0.55),
+    inset 0 0 8px rgba(34, 255, 136, 0.2);
+}
+
+@keyframes map-hex-pulse-fade {
+  0% {
+    opacity: 1;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* [4] Alt rolling ticker */
+.command-ticker {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  align-items: stretch;
+  min-height: 2rem;
+  background: rgba(0, 0, 0, 0.82);
+  border-top: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-terminal, var(--font-mono));
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+/* Mobil alt nav — dock konumu operational-flow.css içinde */
+
+.command-ticker__label {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 0.65rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #22ff88;
+  background: rgba(0, 240, 255, 0.08);
+  border-right: 1px solid rgba(0, 240, 255, 0.25);
+  text-shadow: 0 0 8px rgba(34, 255, 136, 0.4);
+}
+
+.command-ticker__viewport {
+  flex: 1;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 2%, #000 98%, transparent);
+}
+
+.command-ticker__track {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  width: max-content;
+  padding: 0.45rem 1rem;
+  animation: command-ticker-roll 48s linear infinite;
+  white-space: nowrap;
+}
+
+.command-ticker__item {
+  font-size: 0.68rem;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.command-ticker__tag {
+  margin-right: 0.45rem;
+  color: rgba(0, 240, 255, 0.85);
+  font-weight: 700;
+}
+
+@keyframes command-ticker-roll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Üst toast / zil gizle — akış altta */
+.toast-stack {
+  display: none !important;
+}
+
+.resource-bar-actions .notification-bell {
+  display: none !important;
+}
+
+.app-shell {
+  padding-bottom: 2.15rem;
+}
+
+.mobile-app.app-shell {
+  padding-bottom: calc(5.4rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* [5] Pazar — yumuşak fiyat geçişi */
+.market-ticker-tag {
+  transition: all 0.5s ease-in-out;
+}
+
+.market-ticker-tag__value {
+  display: inline-block;
+  transition: all 0.5s ease-in-out;
+  font-variant-numeric: tabular-nums;
+}

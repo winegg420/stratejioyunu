@@ -1,4 +1,4 @@
-import { landUnits } from '../data/placeholder';
+﻿import { landUnits } from '../data/placeholder';
 import { inferCityTier } from '../map/cyberMapConfig';
 import { genId, nowReportDate } from '../lib/gameUtils';
 import {
@@ -33,30 +33,25 @@ import {
   buildCombatReport,
 } from './combatEngine';
 
-export const SPY_RESEARCH_ID = 'r3';
+export const SPY_RESEARCH_ID = 'r6';
 export const SPY_PROBE_MIN_SECONDS = 45;
 export const SPY_PROBE_MAX_SECONDS = 4 * 3600;
 
 /** Savunma yapıları — derinlik +2 raporunda gösterilir */
-export const DEFENSE_BUILDING_IDS = ['wall', 'barracks', 'airport', 'shipyard', 'intel'];
+export const DEFENSE_BUILDING_IDS = ['barracks', 'airport', 'shipyard', 'intel', 'cyber_ops'];
 
 const BUILDING_LABELS = {
-  wall: 'Çevre Savunma Hattı',
   barracks: 'Kışla',
   airport: 'Hava Üssü',
-  shipyard: 'Tersane',
+  shipyard: 'Deniz Üssü',
   intel: 'İstihbarat Merkezi',
   cyber_ops: 'Siber Operasyon Merkezi',
   ai_center: 'Yapay Zeka Merkezi',
-  farm: 'Çiftlik',
-  refinery: 'Rafineri',
-  factory: 'Maden',
-  depot: 'Depo',
-  plant: 'Santral',
-  tax: 'Vergi Binası',
-  market: 'Pazar',
-  research: 'Araştırma Merkezi',
-  hq: 'Merkez Bina',
+  refinery: 'Yakıt Rafinerisi',
+  plant: 'Enerji Santrali',
+  market: 'Ticaret Terminali',
+  research: 'Ar-Ge Merkezi',
+  hq: 'Komuta Merkezi',
 };
 
 /**
@@ -89,7 +84,7 @@ export function calcSpyProbeTravelSeconds({
   );
 }
 
-/** Casusluk Teknolojisi (r3) + İstihbarat Merkezi katkısı */
+/** Ajan Ağı (r6) + İstihbarat Merkezi katkısı */
 export function getSpyTechnologyLevel({ researches = [], buildings = [] } = {}) {
   const research = researches.find((r) => r.id === SPY_RESEARCH_ID);
   const researchLevel = research?.level ?? 0;
@@ -127,7 +122,7 @@ export function resolveIntelDepth(techDiff) {
 
 function formatResourceFields(resources) {
   return (resources ?? [])
-    .filter((r) => ['food', 'fuel', 'metal', 'money', 'energy'].includes(r.id))
+    .filter((r) => ['food', 'fuel', 'hammadde', 'money', 'energy'].includes(r.id))
     .map((r) => ({
       key: `res-${r.id}`,
       label: `${r.label} Deposu`,
@@ -464,16 +459,16 @@ export function generateDefenderBuildings(mapCity) {
   const scale = tier === 'capital' ? 1.4 : tier === 'metropolis' ? 1.15 : 1;
 
   return [
-    { id: 'hq', name: 'Merkez Bina', level: Math.max(1, Math.floor(3 * scale)) },
-    { id: 'farm', name: 'Çiftlik', level: Math.floor(6 * scale) },
-    { id: 'factory', name: 'Maden', level: Math.floor(5 * scale) },
-    { id: 'depot', name: 'Depo', level: Math.floor(4 * scale) },
+    { id: 'hq', name: 'Komuta Merkezi', level: Math.max(1, Math.floor(3 * scale)) },
+    { id: 'refinery', name: 'Yakıt Rafinerisi', level: Math.floor(6 * scale) },
+    { id: 'plant', name: 'Enerji Santrali', level: Math.floor(5 * scale) },
     { id: 'barracks', name: 'Kışla', level: Math.floor(7 * scale) },
-    { id: 'wall', name: 'Kale Duvarı', level: Math.floor(5 * scale) },
     { id: 'airport', name: 'Hava Üssü', level: Math.floor(3 * scale) },
+    { id: 'shipyard', name: 'Deniz Üssü', level: Math.floor(3 * scale) },
     { id: 'intel', name: 'İstihbarat Merkezi', level: Math.floor(4 * scale) },
+    { id: 'market', name: 'Ticaret Terminali', level: Math.floor(4 * scale) },
     { id: CYBER_OPS_BUILDING_ID, name: 'Siber Operasyon Merkezi', level: Math.floor(3 * scale) },
-    { id: 'research', name: 'Araştırma Merkezi', level: Math.floor(4 * scale) },
+    { id: 'research', name: 'Ar-Ge Merkezi', level: Math.floor(4 * scale) },
     {
       id: 'ai_center',
       name: 'Yapay Zeka Merkezi',
@@ -646,16 +641,26 @@ export function buildCyberOpsReport({
       ? 'Güvenlik duvarı virüsü temizledi — ajan ağı geri çekildi'
       : 'Sızma engellendi — operasyon başarısız';
 
+  const agentsLost = roll.success ? 0 : Math.max(1, Math.floor(Number(agentCount) || 1));
+
   return {
     id: genId('r'),
+    reportCategory: 'operation',
     filterType: 'cyber',
-    type: 'Siber Virüs / Ajan',
+    type: 'Siber Operasyon',
     title: `${target ?? expedition?.target} — ${ability?.name ?? 'Siber Operasyon'}`,
     date: nowReportDate(),
-    preview,
+    preview: roll.success
+      ? 'Siber operasyon başarılı — hedefe debuff uygulandı.'
+      : agentsLost > 0
+        ? 'Sızma başarısız — siber ajanlar yakalandı.'
+        : 'Sızma başarısız — virüs temizlendi.',
     winner: roll.success ? attackerName : defenderName ?? target,
     targetCity: target ?? expedition?.target,
     cyberSuccess: roll.success,
+    operationSuccess: roll.success,
+    agentCaptured: !roll.success && agentsLost > 0,
+    agentsLost,
     cyberLedger,
     findings,
     attacker: attackerName,
@@ -698,6 +703,20 @@ export function resolveCyberVirusMission({
     target,
   });
 
+  if (
+    roll.success
+    && ability?.effectType === 'resource_intel'
+    && defenderCity?.resources?.length
+  ) {
+    report.intelFields = defenderCity.resources.map((r) => ({
+      key: `res-${r.id}`,
+      label: r.label ?? r.id,
+      value: `${Number(r.current ?? 0).toLocaleString('tr-TR')}${r.max != null ? ` / ${Number(r.max).toLocaleString('tr-TR')}` : ''}`,
+      hidden: false,
+    }));
+    report.findings = 'Veri sızıntısı — düşman kaynak envanteri ele geçirildi.';
+  }
+
   let effect = null;
   if (roll.success && ability) {
     effect = createCyberEffect(ability, {
@@ -719,23 +738,25 @@ export function resolveCyberVirusMission({
 export function generateBotResearches(mapCity) {
   const tier = mapCity ? inferCityTier(mapCity) : 'default';
   const base = tier === 'capital' ? 4 : tier === 'metropolis' ? 3 : 2;
+  const adv = tier === 'capital' ? 3 : tier === 'metropolis' ? 2 : 1;
 
   return [
-    { id: 'r1', name: 'Kara Saldırı Teknolojisi', level: base, max: 15 },
-    { id: 'r2', name: 'Üretim Hızı', level: base - 1, max: 15 },
-    { id: 'r3', name: 'Casusluk Etkinliği', level: base + 1, max: 15 },
-    { id: 'r4', name: 'Hava Savunma', level: base, max: 15 },
-    ...generateBotKbrnResearches(mapCity),
+    { id: 'r1', name: 'Kara Savaş Doktrini', level: base, max: 15 },
+    { id: 'r2', name: 'Hava Kuvvetleri Üstünlüğü', level: base - 1, max: 15 },
+    { id: 'r3', name: 'Deniz & Amfibi Harekat', level: base, max: 15 },
+    { id: 'r4', name: 'Stratejik Savunma Kalkanı', level: Math.max(0, base - 1), max: 15 },
+    { id: 'r5', name: 'Elektronik Harp', level: base - 1, max: 15 },
+    { id: 'r6', name: 'Ajan Ağı', level: base + 1, max: 15 },
+    { id: 'r7', name: 'Siber Operasyon Matrisi', level: base, max: 15 },
+    { id: 'r8', name: 'Gelişmiş Şifreleme', level: Math.max(0, base - 2), max: 15 },
+    { id: 'r9', name: 'KBRN Silah Programı', level: adv, max: 10 },
+    { id: 'r10', name: 'Ağır Sanayi & Nükleer Enerji', level: base, max: 15 },
+    { id: 'r11', name: 'Füze & Balistik Sistemler', level: adv, max: 12 },
+    { id: 'r12', name: 'Yapay Zeka Entegrasyonu', level: tier === 'capital' ? adv + 1 : adv, max: 10 },
   ];
 }
 
+/** @deprecated */
 export function generateBotKbrnResearches(mapCity) {
-  const tier = mapCity ? inferCityTier(mapCity) : 'default';
-  const base = tier === 'capital' ? 3 : tier === 'metropolis' ? 2 : 1;
-
-  return [
-    { id: 'kbrn_weapon', name: 'KBRN Silahı', level: base, max: 10 },
-    { id: 'kbrn_decon', name: 'Dekontaminasyon', level: Math.max(0, base - 1), max: 10 },
-    { id: 'kbrn_detect', name: 'KBRN Tespit', level: base, max: 10 },
-  ];
+  return generateBotResearches(mapCity).filter((r) => r.id === 'r9' || r.id === 'r4' || r.id === 'r6');
 }

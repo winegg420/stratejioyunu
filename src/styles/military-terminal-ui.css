@@ -1,0 +1,459 @@
+/* ── Siber-askeri terminal — bina detay, kışla, pazar, profil, harita konsolu ── */
+
+/* Siber boş durum satırları */
+.cyber-terminal-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.35rem 0;
+  font-family: var(--font-terminal, var(--font-mono));
+}
+
+.cyber-terminal-placeholder__icon {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  opacity: 0.28;
+  color: rgba(0, 240, 255, 0.9);
+  filter: drop-shadow(0 0 4px rgba(34, 255, 136, 0.25));
+}
+
+.cyber-terminal-placeholder__text {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.82);
+}
+
+.cyber-terminal-placeholder--standby .cyber-terminal-placeholder__text {
+  color: rgba(57, 255, 20, 0.55);
+}
+
+.command-ticker__placeholder {
+  padding: 0.35rem 0.75rem;
+}
+
+.command-ticker__placeholder .cyber-terminal-placeholder__text {
+  font-size: 0.6rem;
+}
+
+.active-queue-panel--placeholder .cyber-terminal-placeholder {
+  padding: 0.5rem 0.15rem;
+}
+
+/* [1] Upgrade / maliyet tabloları */
+.content-info-modal__table--terminal tbody tr:nth-child(odd) {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 240, 255, 0.06) 0%,
+    rgba(0, 240, 255, 0.02) 40%,
+    transparent 100%
+  );
+}
+
+.content-info-modal__table--terminal tbody tr:nth-child(even) {
+  background: linear-gradient(
+    90deg,
+    rgba(34, 255, 136, 0.04) 0%,
+    transparent 55%
+  );
+}
+
+.content-info-modal__table--terminal th,
+.content-info-modal__table--terminal td {
+  padding: 0.28rem 0.45rem !important;
+  font-size: 0.66rem !important;
+  line-height: 1.25;
+}
+
+.content-info-modal__table--terminal tbody tr {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+}
+
+.cost-parts__chip {
+  gap: 0.35rem !important;
+}
+
+.cost-parts__pixel {
+  display: inline-block;
+  width: 4px;
+  height: 10px;
+  margin-right: 2px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 240, 255, 0.9) 0 2px,
+    transparent 2px 4px
+  );
+  box-shadow: 0 0 4px rgba(0, 240, 255, 0.35);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.cost-parts__text::before {
+  content: none;
+}
+
+/* [2] Kışla — siber anahtar + veri girişi */
+.barracks-page--military input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cyber-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  background: rgba(2, 10, 18, 0.75);
+  cursor: pointer;
+  font-family: var(--font-terminal, var(--font-mono));
+  letter-spacing: 0.08em;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cyber-toggle--on {
+  border-color: rgba(34, 255, 136, 0.55);
+  box-shadow: 0 0 12px rgba(34, 255, 136, 0.25);
+}
+
+.cyber-toggle--x .cyber-toggle__glyph {
+  color: #f87171;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.65);
+}
+
+.cyber-toggle__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.cyber-toggle--on .cyber-toggle__frame {
+  border-color: #22ff88;
+  background: rgba(34, 255, 136, 0.12);
+  box-shadow: 0 0 10px rgba(34, 255, 136, 0.45);
+}
+
+.cyber-toggle__glyph {
+  font-size: 0.62rem;
+  color: rgba(0, 240, 255, 0.75);
+}
+
+.cyber-toggle--on .cyber-toggle__glyph {
+  color: #22ff88;
+}
+
+.cyber-toggle__state {
+  font-size: 0.58rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.cyber-toggle--on .cyber-toggle__state {
+  color: #4ade80;
+}
+
+.cyber-toggle--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cyber-data-input {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.cyber-data-input__field,
+.barracks-page--military .cyber-data-input__field,
+.market-page .cyber-data-input__field {
+  min-width: 4.5rem;
+  padding: 0.35rem 0.5rem !important;
+  font-family: var(--font-terminal, 'Share Tech Mono', monospace) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.06em;
+  color: #a7f3d0 !important;
+  background: rgba(2, 12, 22, 0.92) !important;
+  border: 1px solid rgba(0, 240, 255, 0.35) !important;
+  box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.06) !important;
+  border-radius: 0 !important;
+}
+
+.cyber-data-input__field:focus {
+  border-color: rgba(34, 255, 136, 0.55) !important;
+  outline: none;
+  box-shadow:
+    inset 0 0 10px rgba(34, 255, 136, 0.08),
+    0 0 10px rgba(34, 255, 136, 0.15) !important;
+}
+
+.cyber-data-input__max {
+  padding: 0.35rem 0.55rem;
+  font-family: var(--font-terminal, var(--font-mono));
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #22ff88;
+  background: rgba(4, 20, 14, 0.9);
+  border: 1px solid rgba(34, 255, 136, 0.45);
+  cursor: pointer;
+  text-shadow: 0 0 8px rgba(34, 255, 136, 0.35);
+}
+
+.cyber-data-input__max:hover:not(:disabled) {
+  background: rgba(34, 255, 136, 0.15);
+}
+
+.battle-sim-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.battle-sim-input-row--off .cyber-data-input__field {
+  opacity: 0.4;
+}
+
+/* [3] Pazar — siber veri hücresi */
+.market-data-cell {
+  display: inline-flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  background: rgba(2, 10, 20, 0.88);
+  box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.04);
+}
+
+.market-data-cell__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  border-right: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(0, 240, 255, 0.06);
+}
+
+.market-data-cell__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.market-data-cell__body .cyber-data-input,
+.market-data-cell__body .cyber-data-input__field {
+  width: 100%;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.market-data-cell--offer .market-data-cell__body select.market-terminal-select {
+  width: 100%;
+  border: none;
+  background: transparent;
+}
+
+.market-offer-form--terminal {
+  align-items: stretch;
+}
+
+.market-offer-submit-wrap {
+  display: flex;
+  align-items: stretch;
+}
+
+.market-offer-submit-wrap .market-data-cell {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.market-offer-submit-wrap__btn {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.market-offer-submit-wrap__btn .market-offer-submit {
+  flex: 1;
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* [4] Sıralama + doktrin kartları */
+.rankings-table--terminal th,
+.rankings-table--terminal td {
+  padding: 0.32rem 0.5rem !important;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.rankings-table--terminal tbody tr {
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+}
+
+.doctrine-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.85rem 0.75rem 0.75rem 2.4rem;
+  text-align: left;
+  font-family: var(--font-terminal, var(--font-mono));
+  background: rgba(4, 12, 24, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.doctrine-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1.35rem;
+  background: repeating-linear-gradient(
+    0deg,
+    var(--ideology-color, #00f0ff) 0 2px,
+    transparent 2px 5px
+  );
+  opacity: 0.55;
+}
+
+.doctrine-card.is-active {
+  border-color: var(--ideology-color, #22ff88);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ideology-color) 35%, transparent);
+}
+
+.doctrine-card.is-disabled,
+.doctrine-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.doctrine-card__rank {
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: rgba(0, 240, 255, 0.75);
+}
+
+.doctrine-card__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.doctrine-card__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-decoration-color: var(--ideology-color, #00f0ff);
+  text-underline-offset: 3px;
+  color: #e2e8f0;
+}
+
+.doctrine-card__emoji {
+  font-size: 1rem;
+}
+
+.doctrine-card__subtitle {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+  border-bottom: 1px dashed rgba(0, 240, 255, 0.25);
+  padding-bottom: 0.15rem;
+}
+
+.doctrine-card__blurb {
+  margin: 0;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: rgba(148, 163, 184, 0.85);
+  letter-spacing: 0.04em;
+}
+
+.profile-ideology-grid--doctrine {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.65rem;
+}
+
+/* [5] Taktik arama konsolu */
+.tactical-terminal-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tactical-terminal-field--select::after {
+  content: '▼';
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.45rem;
+  font-size: 0.5rem;
+  color: rgba(34, 255, 136, 0.85);
+  pointer-events: none;
+}
+
+.tactical-terminal-input,
+.tactical-terminal-select,
+.map-toolbar--console .map-city-select,
+.map-toolbar--console .map-search-input,
+.map-toolbar--console .map-search-coord {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  font-family: var(--font-terminal, 'Share Tech Mono', monospace) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em;
+  color: #6dffb0 !important;
+  background: rgba(2, 14, 10, 0.92) !important;
+  border: 1px solid rgba(34, 255, 136, 0.35) !important;
+  border-radius: 0 !important;
+  padding: 0.4rem 1.6rem 0.4rem 0.55rem !important;
+  box-shadow: inset 0 0 10px rgba(34, 255, 136, 0.06) !important;
+}
+
+.tactical-terminal-select,
+.map-toolbar--console .map-city-select {
+  cursor: pointer;
+  background-image: none !important;
+}
+
+.tactical-terminal-input::placeholder,
+.map-toolbar--console .map-search-input::placeholder {
+  color: rgba(34, 255, 136, 0.35) !important;
+}
+
+.tactical-terminal-input:focus,
+.tactical-terminal-select:focus,
+.map-toolbar--console .map-city-select:focus,
+.map-toolbar--console .map-search-input:focus {
+  outline: none !important;
+  border-color: rgba(0, 240, 255, 0.55) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+}
+
+.report-select .cyber-toggle {
+  flex-shrink: 0;
+}
+
+.report-select-all .cyber-toggle {
+  margin-right: 0.35rem;
+}

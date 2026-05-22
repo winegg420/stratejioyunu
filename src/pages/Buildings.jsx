@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import BuildingCard from '../components/BuildingCard';
 import ActiveQueue from '../components/ActiveQueue';
-import { getHqLevel } from '../lib/buildingUtils';
+import { getHqLevel, syncCityBuildingsToCatalog } from '../lib/buildingUtils';
 import {
   getProgressionState,
   isBuildingVisibleInStarterPhase,
@@ -24,8 +24,11 @@ function scrollToBuildingFromHash(hash) {
 
 export default function Buildings() {
   const { hash } = useLocation();
-  const buildings = useGameStore((s) => s.cities[s.activeCityId]?.buildings ?? STORE_EMPTY_ARRAY);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const buildings = useMemo(
+    () => syncCityBuildingsToCatalog(city?.buildings ?? STORE_EMPTY_ARRAY),
+    [city?.buildings],
+  );
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === s.activeCityId)?.name);
   const hqLevel = getHqLevel(city);
   const progression = getProgressionState(city);

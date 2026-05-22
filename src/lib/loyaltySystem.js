@@ -1,4 +1,4 @@
-/**
+﻿/**
  * İdeoloji Sadakat Puanı — doktrine uygun davranışları ödüllendirir.
  * Rejim değişimi: 7 gün ücretsiz, sonrası oyun içi Bütçe (ileride gerçek para).
  */
@@ -15,6 +15,7 @@ export const LOYALTY_ACTION = {
   TECHNOCRAT_CRISIS_SHIELD: 'technocrat_crisis_shield',
   NATIONALIST_CRISIS_MOBILIZE: 'nationalist_crisis_mobilize',
   CRISIS_WRONG_RESPONSE: 'crisis_wrong_response',
+  TREATY_VIOLATION: 'treaty_violation',
 };
 
 /** Koruma sonrası ideoloji değişim maliyeti (Bütçe / money) */
@@ -29,30 +30,36 @@ export const CAPITALIST_BUDGET_SURGE_THRESHOLD = 900;
 /** Sosyalist: kendi şehrine kaynak yardımı minimum toplam */
 export const SOCIALIST_AID_MIN_TOTAL = 400;
 
+const TREATY_VIOLATION_PENALTY = -45;
+
 const LOYALTY_BY_IDEOLOGY = {
   nationalist: {
     [LOYALTY_ACTION.NATIONALIST_EXPEDITION_WIN]: 140,
     [LOYALTY_ACTION.NATIONALIST_CRISIS_MOBILIZE]: 82,
     [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -12,
+    [LOYALTY_ACTION.TREATY_VIOLATION]: TREATY_VIOLATION_PENALTY,
   },
   capitalist: {
     [LOYALTY_ACTION.CAPITALIST_BUDGET_SURGE]: 75,
     [LOYALTY_ACTION.CAPITALIST_CRISIS_FUND]: 88,
     [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -16,
+    [LOYALTY_ACTION.TREATY_VIOLATION]: TREATY_VIOLATION_PENALTY,
   },
   socialist: {
     [LOYALTY_ACTION.SOCIALIST_RESOURCE_AID]: 110,
     [LOYALTY_ACTION.SOCIALIST_CRISIS_AID]: 95,
     [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -18,
+    [LOYALTY_ACTION.TREATY_VIOLATION]: TREATY_VIOLATION_PENALTY,
   },
   technocrat: {
     [LOYALTY_ACTION.TECHNOCRAT_RESEARCH_COMPLETE]: 95,
     [LOYALTY_ACTION.TECHNOCRAT_CRISIS_SHIELD]: 100,
     [LOYALTY_ACTION.CRISIS_WRONG_RESPONSE]: -22,
+    [LOYALTY_ACTION.TREATY_VIOLATION]: TREATY_VIOLATION_PENALTY,
   },
 };
 
-const AID_RESOURCE_IDS = new Set(['food', 'metal', 'fuel']);
+const AID_RESOURCE_IDS = new Set(['food', 'hammadde', 'fuel']);
 
 export function getLoyaltyPoints(ideology, action) {
   const id = normalizeIdeology(ideology);
