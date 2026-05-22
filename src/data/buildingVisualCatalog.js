@@ -1,10 +1,11 @@
 /** Taktik bina kartı görselleri — canlıda public/buildings JPG yolları (deploy güvenli). */
-export const BUILDING_ASSET_VERSION = '20260522';
+export const BUILDING_ASSET_VERSION = '20260523';
 
-/** @deprecated Yedek yollar — barracks.jpg / depot.jpg ile aynı dosya */
+/** @deprecated Yedek yollar — public/buildings ile aynı dosya */
 export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
   barracks: '/buildings/barracks.jpg',
   depot: '/buildings/depot.jpg',
+  shipyard: '/buildings/shipyard.jpg',
 };
 
 const v = (path) => `${path}?v=${BUILDING_ASSET_VERSION}`;
@@ -59,7 +60,7 @@ export const BUILDING_VISUALS = {
     designation: 'Hardened Aerial Dominance Complex',
   },
   shipyard: {
-    image: '/buildings/shipyard.jpg',
+    image: v('/buildings/shipyard.jpg'),
     designation: 'Naval Fabrication Yard',
   },
   research: {

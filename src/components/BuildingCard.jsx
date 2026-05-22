@@ -144,6 +144,7 @@ export default function BuildingCard({ building, progressionLock = null }) {
                   'building-img-wrap--cell-grid',
                   building.id === 'barracks' && 'building-img-wrap--barracks',
                   building.id === 'depot' && 'building-img-wrap--depot',
+                  building.id === 'shipyard' && 'building-img-wrap--shipyard',
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -157,7 +158,11 @@ export default function BuildingCard({ building, progressionLock = null }) {
                   src={imageUrl}
                   alt=""
                   className="building-card__img"
-                  loading={building.id === 'barracks' || building.id === 'depot' ? 'eager' : 'lazy'}
+                  loading={
+                    building.id === 'barracks' || building.id === 'depot' || building.id === 'shipyard'
+                      ? 'eager'
+                      : 'lazy'
+                  }
                   decoding="async"
                   onError={handleImgError}
                 />
