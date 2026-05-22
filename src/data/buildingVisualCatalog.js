@@ -1,6 +1,12 @@
 /** Taktik bina kartı görselleri ve İngilizce teknik tanımlamalar. */
-import kislaImg from '../assets/binalar/kısla.png';
+import kislaImg from '../assets/binalar/kisla.png';
 import lojistikDepoImg from '../assets/binalar/lojistik-depo.png';
+
+/** Vite bundle 404 olursa public statik yedek (ASCII yol). */
+export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
+  barracks: '/buildings/kisla.png',
+  depot: '/buildings/lojistik-depo.png',
+};
 
 export const BUILDING_VISUALS = {
   hq: {

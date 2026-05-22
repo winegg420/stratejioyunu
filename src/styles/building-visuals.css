@@ -53,6 +53,15 @@
   color: rgba(200, 230, 255, 0.75) !important;
 }
 
+/* Kışla / Lojistik Depo — CSS arka plan yedek + terminal overlay */
+.building-img-wrap--barracks,
+.building-img-wrap--depot {
+  background-image: var(--building-card-bg);
+  background-size: cover;
+  background-position: center 42%;
+  background-repeat: no-repeat;
+}
+
 /* Kışla — özel görsel + terminal gradyan overlay */
 .building-img-wrap--barracks {
   position: relative;

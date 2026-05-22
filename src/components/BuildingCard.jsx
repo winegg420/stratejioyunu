@@ -9,7 +9,7 @@ import {
   BUILDING_LABELS,
   getUnmetPrerequisites,
 } from '../lib/buildingUtils';
-import { getBuildingVisual } from '../data/buildingVisualCatalog';
+import { BUILDING_IMAGE_PUBLIC_FALLBACK, getBuildingVisual } from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   AI_CENTER_BUILDING_ID,
@@ -79,7 +79,16 @@ export default function BuildingCard({ building, progressionLock = null }) {
     setImgFailed(false);
   }, [building.id, visual?.image]);
 
-  const handleImgError = () => {
+  const imageUrl = visual?.image ?? '';
+  const publicFallback = BUILDING_IMAGE_PUBLIC_FALLBACK[building.id];
+
+  const handleImgError = (e) => {
+    const img = e.currentTarget;
+    if (publicFallback && img.dataset.fallback !== '1') {
+      img.dataset.fallback = '1';
+      img.src = publicFallback;
+      return;
+    }
     setImgFailed(true);
   };
 
@@ -138,12 +147,17 @@ export default function BuildingCard({ building, progressionLock = null }) {
                 ]
                   .filter(Boolean)
                   .join(' ')}
+                style={
+                  imageUrl
+                    ? { '--building-card-bg': `url("${imageUrl}")` }
+                    : undefined
+                }
               >
                 <img
-                  src={visual.image}
+                  src={imageUrl}
                   alt=""
                   className="building-card__img"
-                  loading="lazy"
+                  loading={building.id === 'barracks' || building.id === 'depot' ? 'eager' : 'lazy'}
                   decoding="async"
                   onError={handleImgError}
                 />
