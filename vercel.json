@@ -2,13 +2,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": "text/html"
-        }
-      ],
+      "missing": [{ "type": "filesystem" }],
       "destination": "/index.html"
     }
   ],
@@ -31,7 +25,7 @@
     },
     {
       "source": "/buildings/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
     }
   ]
 }

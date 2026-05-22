@@ -1,12 +1,13 @@
-/** Taktik bina kartı görselleri ve İngilizce teknik tanımlamalar. */
-import kislaImg from '../assets/binalar/kisla.png';
-import lojistikDepoImg from '../assets/binalar/lojistik-depo.png';
+/** Taktik bina kartı görselleri — canlıda public/buildings JPG yolları (deploy güvenli). */
+export const BUILDING_ASSET_VERSION = '20260522';
 
-/** Vite bundle 404 olursa public statik yedek (ASCII yol). */
+/** @deprecated Yedek yollar — barracks.jpg / depot.jpg ile aynı dosya */
 export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
-  barracks: '/buildings/kisla.png',
-  depot: '/buildings/lojistik-depo.png',
+  barracks: '/buildings/barracks.jpg',
+  depot: '/buildings/depot.jpg',
 };
+
+const v = (path) => `${path}?v=${BUILDING_ASSET_VERSION}`;
 
 export const BUILDING_VISUALS = {
   hq: {
@@ -50,7 +51,7 @@ export const BUILDING_VISUALS = {
     designation: 'Signals Intelligence Hub',
   },
   barracks: {
-    image: kislaImg,
+    image: v('/buildings/barracks.jpg'),
     designation: 'Reinforced Tactical Operations Center',
   },
   airport: {
@@ -70,7 +71,7 @@ export const BUILDING_VISUALS = {
     designation: 'Geothermal/Mineral Extractor',
   },
   depot: {
-    image: lojistikDepoImg,
+    image: v('/buildings/depot.jpg'),
     designation: 'Secure Logistics Terminal',
   },
 };
