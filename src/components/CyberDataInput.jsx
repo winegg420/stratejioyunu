@@ -20,6 +20,7 @@ export default function CyberDataInput({
   disabled = false,
   className = '',
   inputClassName = '',
+  placeholder = '',
 }) {
   const [draft, setDraft] = useState(() => toDisplayValue(value));
   const focusedRef = useRef(false);
@@ -77,12 +78,13 @@ export default function CyberDataInput({
   return (
     <div className={['cyber-data-input', className].filter(Boolean).join(' ')}>
       <input
-        type="number"
+        type={placeholder ? 'text' : 'number'}
         className={['cyber-data-input__field', 'input-qty', inputClassName].filter(Boolean).join(' ')}
         value={draft}
         min={min}
         max={max}
         disabled={disabled}
+        placeholder={placeholder}
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}

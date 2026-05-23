@@ -64,7 +64,7 @@ export const MAP_BORDER_STYLE = {
 
 export function getProvinceStyle() {
   return {
-    fillColor: '#060d18',
+    fillColor: '#0a0f0a',
     fillOpacity: 0.06,
     color: 'rgba(0, 240, 255, 0.4)',
     weight: 1.2,
@@ -76,7 +76,7 @@ export function getProvinceStyle() {
 
 export function getDistrictStyle() {
   return {
-    fillColor: '#0d1525',
+    fillColor: '#111a11',
     fillOpacity: 0.62,
     ...MAP_BORDER_STYLE,
   };

@@ -7,23 +7,12 @@
   align-items: stretch;
   gap: 0.65rem;
   padding: 0.65rem 0.75rem 0.7rem;
-  border: 1px solid rgba(0, 240, 255, 0.15) !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
   border-radius: 0 !important;
-  background: linear-gradient(180deg, #070c14 0%, #020408 100%) !important;
-  background-image:
-    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(180deg, #070c14 0%, #020408 100%) !important;
-  background-size: 12px 12px, 12px 12px, 100% 100% !important;
-  clip-path: polygon(
-    0 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% 100%,
-    8px 100%,
-    0 calc(100% - 8px)
-  );
-  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.04) inset !important;
+  background: #111a11 !important;
+  background-image: none !important;
+  clip-path: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   overflow: hidden;
 }
 
@@ -32,10 +21,8 @@
 }
 
 .home-stat-block--chassis.home-stat-block--accent {
-  border-color: rgba(74, 222, 128, 0.35) !important;
-  box-shadow:
-    0 0 0 1px rgba(74, 222, 128, 0.08) inset,
-    0 0 18px rgba(74, 222, 128, 0.12) !important;
+  border-color: rgba(201, 168, 76, 0.35) !important;
+  box-shadow: none !important;
 }
 
 .home-stat-icon {
@@ -46,15 +33,15 @@
   flex-shrink: 0;
   font-size: 1.1rem;
   line-height: 1;
-  color: rgba(0, 240, 255, 0.55);
-  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.25));
-  border-right: 1px solid rgba(0, 240, 255, 0.1);
+  color: rgba(74, 124, 89, 0.55);
+  filter: drop-shadow(0 0 6px rgba(74, 124, 89, 0.25));
+  border-right: 1px solid rgba(74, 124, 89, 0.1);
   padding-right: 0.5rem;
 }
 
 .home-stat-block--accent .home-stat-icon {
-  color: #4ade80;
-  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.45));
+  color: #c9a84c;
+  filter: none;
 }
 
 .home-stat-body {
@@ -72,10 +59,8 @@
 .home-stat-block--chassis .home-stat-value {
   font-size: 1.65rem;
   font-weight: 700;
-  color: #4ade80 !important;
-  text-shadow:
-    0 0 10px rgba(74, 222, 128, 0.55),
-    0 0 20px rgba(34, 197, 94, 0.2);
+  color: #d4d4aa !important;
+  text-shadow: none;
   line-height: 1.1;
 }
 
@@ -86,7 +71,7 @@
 /* Madde 9 — Telsiz durum başlığı */
 
 .page-header--hud {
-  border-bottom: 1px solid rgba(0, 240, 255, 0.18) !important;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.18) !important;
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
   position: relative;
@@ -102,8 +87,8 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(0, 240, 255, 0.35) 20%,
-    rgba(0, 240, 255, 0.15) 80%,
+    rgba(74, 124, 89, 0.35) 20%,
+    rgba(74, 124, 89, 0.15) 80%,
     transparent 100%
   );
   pointer-events: none;
@@ -114,7 +99,7 @@
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.08);
 }
 
 .page-title {
@@ -195,10 +180,10 @@
 
 .hud-shell .nav-link.active,
 .app-shell.hud-shell .nav-link.active {
-  border-left-color: #00f0ff !important;
-  background: linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(0, 240, 255, 0.04) 45%, transparent 100%) !important;
+  border-left-color: #4a7c59 !important;
+  background: linear-gradient(90deg, rgba(74, 124, 89, 0.16) 0%, rgba(74, 124, 89, 0.04) 45%, transparent 100%) !important;
   color: #e2e8f0 !important;
-  box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04);
+  box-shadow: inset 0 0 20px rgba(74, 124, 89, 0.04);
 }
 
 .hud-shell .nav-link.active .nav-label,

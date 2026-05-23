@@ -1,19 +1,28 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
-import { buildOperationalTickerMessages } from '../lib/mapStatusTicker';
+import { buildOperationalTickerMessages, dedupeTickerMessages } from '../lib/mapStatusTicker';
+import { mergeTickerWithPool } from '../lib/c4isrMessagePool';
 import CyberTerminalPlaceholder from './CyberTerminalPlaceholder';
+import { useLanguage } from '../context/LanguageContext';
 
-const TYPE_LABEL = {
-  info: 'SİSTEM',
-  success: 'OPERASYON',
-  warn: 'UYARI',
-  intel: 'İSTİHBARAT',
-  danger: 'ALARM',
+const TYPE_LABEL_KEYS = {
+  info: 'terminal.tags.system',
+  success: 'terminal.tags.operation',
+  warn: 'terminal.tags.warn',
+  intel: 'terminal.tags.intel',
+  danger: 'terminal.tags.danger',
 };
 
-function buildTickerItems(state) {
-  const fromOps = buildOperationalTickerMessages(state).map((m) => ({
+function isKbrnAlarmItem(item) {
+  const id = String(item?.id ?? '').toLowerCase();
+  const text = String(item?.text ?? '').toLowerCase();
+  return id.includes('kbrn') || id.includes('global-alarm') || id.includes('outbreak')
+    || text.includes('kbrn') || text.includes('biyolojik') || text.includes('kimyasal');
+}
+
+function buildTickerItems(state, lang, t) {
+  const fromOps = buildOperationalTickerMessages(state, lang).map((m) => ({
     id: m.id,
     tag: m.label,
     text: m.text,
@@ -22,9 +31,10 @@ function buildTickerItems(state) {
   const items = [];
 
   for (const row of state.feedItems ?? []) {
+    const key = TYPE_LABEL_KEYS[row.type] ?? 'terminal.tags.system';
     items.push({
       id: row.id,
-      tag: TYPE_LABEL[row.type] ?? 'SİSTEM',
+      tag: t(key),
       text: row.message,
     });
   }
@@ -33,18 +43,12 @@ function buildTickerItems(state) {
     if (!items.some((i) => i.id === m.id)) items.push(m);
   }
 
-  if (items.length === 0) {
-    items.push({
-      id: 'idle',
-      tag: 'SİSTEM STABIL',
-      text: 'Tüm üsler normal operasyon modunda',
-    });
-  }
-
-  return items.slice(0, 24);
+  const dynamic = dedupeTickerMessages(items);
+  return mergeTickerWithPool(dynamic, t, 10).slice(0, 24);
 }
 
 export default function CommandTickerFeed() {
+  const { lang, t } = useLanguage();
   const feedItems = useNotificationStore((s) => s.feedItems);
   const newsLog = useGameStore((s) => s.newsLog);
   const activeCrisis = useGameStore((s) => s.activeCrisis);
@@ -68,8 +72,10 @@ export default function CommandTickerFeed() {
       activeCityId,
       playerCities,
       incomingAttacks,
-    }),
+    }, lang, t),
     [
+      lang,
+      t,
       feedItems,
       newsLog,
       activeCrisis,
@@ -83,17 +89,34 @@ export default function CommandTickerFeed() {
     ],
   );
 
-  const track = [...items, ...items];
-  const hasFeed = items.length > 0;
+  const unique = dedupeTickerMessages(items);
+  const shouldScroll = unique.length > 1;
+  const track = shouldScroll ? [...unique, ...unique] : unique;
+  const hasFeed = unique.length > 0;
+  const scrollDurationSec = Math.min(
+    150,
+    Math.max(58, unique.length * 8),
+  );
 
   return (
-    <div className="command-ticker" role="marquee" aria-live="polite">
-      <span className="command-ticker__label">C4ISR</span>
+    <div
+      className={['command-ticker', !shouldScroll && 'command-ticker--static'].filter(Boolean).join(' ')}
+      role="marquee"
+      aria-live="polite"
+    >
+      <span className="command-ticker__label">{t('terminal.label')}</span>
+      <div className="command-ticker__ad-slot" aria-hidden="true" data-ad-slot="bottom-ticker" />
       <div className="command-ticker__viewport">
         {hasFeed ? (
-          <div className="command-ticker__track">
+          <div
+            className="command-ticker__track"
+            style={{ '--command-ticker-duration': `${scrollDurationSec}s` }}
+          >
             {track.map((item, idx) => (
-              <span key={`${item.id}-${idx}`} className="command-ticker__item">
+              <span
+                key={`${item.id}-${idx}`}
+                className={`command-ticker__item${isKbrnAlarmItem(item) ? ' command-ticker__item--kbrn-alarm' : ''}`}
+              >
                 <span className="command-ticker__tag">[{item.tag}]</span>
                 {item.text}
               </span>

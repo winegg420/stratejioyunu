@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
+import ProfileMedalIcon from '../components/ProfileMedalIcon';
 import { useAuth } from '../context/AuthContext';
-import { isFounderPlayer } from '../lib/adminAccess';
+import { isGameAdmin } from '../lib/adminAccess';
 import { profile } from '../data/placeholder';
 import {
   MIN_VIP_DEVELOPMENT_SCORE,
@@ -27,7 +28,15 @@ import { useGameStore } from '../stores/gameStore';
 
 export default function Profile() {
   const { logout, playerName, session } = useAuth();
-  const isFounder = isFounderPlayer(playerName, session?.user?.email);
+  const profileDisplayName = useGameStore((s) => s.profileDisplayName);
+  const isAdminUser = useGameStore((s) => s.isAdminUser);
+  const displayName = profileDisplayName || playerName;
+  const showAdminPanel = isGameAdmin({
+    playerName,
+    email: session?.user?.email,
+    session,
+    profileIsAdmin: isAdminUser,
+  });
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [regimeConfirm, setRegimeConfirm] = useState(null);
@@ -109,9 +118,11 @@ export default function Profile() {
       />
 
       <div className="profile-header card">
-        <div className="avatar">🎖️</div>
+        <div className="avatar" aria-hidden="true">
+          <ProfileMedalIcon size={72} />
+        </div>
         <div>
-          <h2>{playerName}</h2>
+          <h2>{displayName}</h2>
           <p>
             {profile.rank} ·{' '}
             <span className="font-hud-data">{developmentScore.toLocaleString('tr-TR')}</span> gelişim puanı
@@ -137,7 +148,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {isFounder && (
+      {showAdminPanel && (
         <section className="panel profile-founder-panel">
           <h3 className="panel-title">Kurucu Komuta</h3>
           <p className="hint">Gizli kriz müdahale paneli — God Mode.</p>

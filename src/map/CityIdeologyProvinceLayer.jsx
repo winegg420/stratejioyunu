@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { GeoJSON } from 'react-leaflet';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { ideologyForMapSeed } from '../lib/mapIdeologyDistribution';
 import {
   getIdeologyTerritoryStyle,
   isNaturalAlly,
 } from '../lib/ideologySystem';
 import { resolveOwnerIdeology } from './mapOwnership';
 import { normalizeMapCity } from './botCityUtils';
-import { findProvinceFeature } from './cityProvinceMatch';
+import { findProvinceFeature, resolveCityProvinceName } from './cityProvinceMatch';
+import { computeFeatureCentroid } from '../lib/botProvinceAssignment';
 
 export default function CityIdeologyProvinceLayer({
   provinces,
@@ -20,36 +22,53 @@ export default function CityIdeologyProvinceLayer({
 
   const collection = useMemo(() => {
     if (!enabled || !provinces?.features?.length) return null;
-    const seen = new Set();
-    const features = [];
+
+    const cityByIso = new Map();
+    const cityByProvince = new Map();
 
     for (const city of mapCities) {
       const normalized = normalizeMapCity(city);
-      const pc = playerCities.find((p) => p.name === normalized.name);
       const entry = {
         ...normalized,
-        isOwn: Boolean(pc) || normalized.status === 'own',
+        isOwn: Boolean(playerCities.find((p) => p.name === normalized.name))
+          || normalized.status === 'own',
         ownerIdeology: resolveOwnerIdeology(normalized, playerName, playerIdeology),
       };
-      if (!entry.ownerIdeology) continue;
-
       const feature = findProvinceFeature(provinces, entry, playerCities);
       const iso = feature?.properties?.shapeISO;
-      if (!feature || !iso || seen.has(iso)) continue;
-      seen.add(iso);
-      features.push({
+      const provinceName = resolveCityProvinceName(entry, playerCities);
+      if (iso) cityByIso.set(iso, entry);
+      if (provinceName) cityByProvince.set(provinceName, entry);
+    }
+
+    const features = provinces.features.map((feature) => {
+      const iso = feature.properties?.shapeISO;
+      const provinceName = feature.properties?.shapeName ?? '';
+      const matched = (iso && cityByIso.get(iso))
+        ?? cityByProvince.get(provinceName)
+        ?? null;
+
+      let ideology = matched?.ownerIdeology ?? null;
+      if (!ideology) {
+        const centroid = computeFeatureCentroid(feature);
+        ideology = ideologyForMapSeed(`province:${iso || provinceName}`, centroid ?? {});
+      }
+
+      const isOwn = matched?.isOwn ?? false;
+      const isAlly = isNaturalAlly(playerIdeology, ideology);
+
+      return {
         ...feature,
         properties: {
           ...feature.properties,
-          _cityName: entry.name,
-          _ideology: entry.ownerIdeology,
-          _isOwn: entry.isOwn,
-          _isAlly: isNaturalAlly(playerIdeology, entry.ownerIdeology),
+          _cityName: matched?.name ?? provinceName,
+          _ideology: ideology,
+          _isOwn: isOwn,
+          _isAlly: isAlly,
         },
-      });
-    }
+      };
+    });
 
-    if (!features.length) return null;
     return { type: 'FeatureCollection', features };
   }, [enabled, provinces, mapCities, playerCities, playerName, playerIdeology]);
 
@@ -57,7 +76,7 @@ export default function CityIdeologyProvinceLayer({
 
   return (
     <GeoJSON
-      key={`ideology-provinces-${collection.features.length}`}
+      key={`ideology-all-${collection.features.length}-${playerIdeology}`}
       data={collection}
       style={(feature) => {
         const ideology = feature.properties?._ideology;

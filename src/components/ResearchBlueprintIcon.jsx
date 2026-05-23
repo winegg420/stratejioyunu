@@ -1,7 +1,7 @@
 /** Araştırma kartları — neon mavi/yeşil askeri blueprint SVG ikonları */
 
-const STROKE = '#00f0ff';
-const ACCENT = '#39ff14';
+const STROKE = '#4a7c59';
+const ACCENT = '#c9a84c';
 const DIM = 'rgba(0, 240, 255, 0.35)';
 
 function BlueprintSvg({ children, viewBox = '0 0 64 64' }) {

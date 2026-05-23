@@ -1,20 +1,19 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 
-/** Harita sürükleme ve tekerlek zoom — açık/kapalı */
+/** Zoom / dokunma — sürükleme MapDragPanController'da */
 export default function MapPanZoomController({ enabled = true }) {
   const map = useMap();
 
   useEffect(() => {
+    map.dragging.disable();
     if (enabled) {
-      map.dragging.enable();
       map.touchZoom.enable();
-      map.doubleClickZoom.enable();
+      map.doubleClickZoom.disable();
       map.scrollWheelZoom.enable();
       map.boxZoom.enable();
       map.keyboard.enable();
     } else {
-      map.dragging.disable();
       map.touchZoom.disable();
       map.doubleClickZoom.disable();
       map.scrollWheelZoom.disable();

@@ -1,0 +1,90 @@
+/**
+ * Üst kaynak barı + alt komuta şeridi — çakışma düzeltmeleri (son katman).
+ */
+
+/* ── Kaynak barı: grid-final.css ile yönetiliyor; eski flex kuralları devre dışı ── */
+.resource-bar--stacked .resource-bar-inner {
+  gap: 0 !important;
+}
+
+.resource-bar--stacked .resource-bar-actions {
+  /* grid-final override */
+}
+
+/* ── Alt komuta şeridi — tam yükseklik ticker ── */
+.terminal-bottom-dock {
+  display: flex;
+  flex-direction: column;
+  background: #0a0f0a !important;
+  border-top: 1px solid rgba(74, 124, 89, 0.2) !important;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.45) !important;
+  pointer-events: auto;
+}
+
+.terminal-dock-logs--hidden {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) {
+  max-height: min(28vh, 220px);
+  overflow-y: auto;
+  background: #111a11;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.15);
+}
+
+.terminal-dock-logs__portals {
+  width: 100%;
+}
+
+.terminal-dock-ticker-shell {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 2.35rem;
+  background: #111a11;
+}
+
+.terminal-bottom-dock .command-ticker {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  min-height: 2.35rem !important;
+  border-top: none !important;
+  background: #111a11 !important;
+}
+
+.terminal-bottom-dock .command-ticker__label {
+  color: #c9a84c !important;
+  text-shadow: none !important;
+  background: rgba(26, 46, 26, 0.5) !important;
+  border-right-color: rgba(74, 124, 89, 0.25) !important;
+}
+
+.terminal-bottom-dock .command-ticker__track {
+  animation: command-ticker-roll var(--command-ticker-duration, 72s) linear infinite !important;
+}
+
+.terminal-bottom-dock .command-ticker__item {
+  color: #d4d4aa !important;
+  text-shadow: none !important;
+}
+
+.terminal-bottom-dock .command-ticker__tag {
+  color: #4a7c59 !important;
+}
+
+.app-shell.hud-shell {
+  padding-bottom: calc(
+    var(--terminal-dock-ticker-h, 2.35rem) + var(--terminal-dock-logs-h, 0px) + env(safe-area-inset-bottom, 0px)
+  ) !important;
+}
+
+@media (max-width: 1100px) {
+  /* grid-final medya sorguları geçerli */
+}

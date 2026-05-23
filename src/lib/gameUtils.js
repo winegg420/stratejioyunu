@@ -66,8 +66,10 @@ export function computeBuildingHourly(buildingId, level) {
 
 export function recalculateResourceRates(buildings, resources, productionMultiplier = 1) {
   const mult = productionMultiplier > 0 ? productionMultiplier : 1;
+  const safeBuildings = Array.isArray(buildings) ? buildings : [];
+  const safeResources = Array.isArray(resources) ? resources : [];
   const hourlyByResource = {};
-  for (const b of buildings) {
+  for (const b of safeBuildings) {
     const lv = b.level ?? 0;
     if (lv < 1) continue;
     if (b.id === 'research' && lv < URANIUM_RESEARCH_UNLOCK_LEVEL) continue;
@@ -82,7 +84,7 @@ export function recalculateResourceRates(buildings, resources, productionMultipl
     }
   }
 
-  return resources.map((r) => {
+  return safeResources.map((r) => {
     const hourly = hourlyByResource[r.id];
     if (hourly == null) return r;
     const scaled = Math.max(0, Math.floor(hourly * mult));

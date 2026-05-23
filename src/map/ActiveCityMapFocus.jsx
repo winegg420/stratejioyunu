@@ -1,13 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 
-/** Harita açılışında ve aktif şehir değişince kamerayı üsse kilitle. */
+/** Harita açılışında aktif üsse odaklan — mevcut zoom korunur. */
 export default function ActiveCityMapFocus({ lat, lng, activeCityId }) {
   const map = useMap();
+  const lastCityRef = useRef(null);
 
   useEffect(() => {
     if (lat == null || lng == null) return;
-    map.flyTo([lat, lng], 6, { animate: true, duration: 1.5, easeLinearity: 0.25 });
+    if (lastCityRef.current === activeCityId) return;
+    lastCityRef.current = activeCityId;
+    const zoom = Math.max(map.getZoom(), 6);
+    map.flyTo([lat, lng], zoom, { animate: true, duration: 0.9, easeLinearity: 0.25 });
   }, [map, activeCityId, lat, lng]);
 
   return null;

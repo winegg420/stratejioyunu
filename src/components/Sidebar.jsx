@@ -30,13 +30,13 @@ export default function Sidebar() {
       return {
         ...item,
         locked: !progression.cyberUnlocked,
-        lockTag: progression.locks.cyber ?? 'SİBER MERKEZ',
+        lockTag: progression.locks.cyber ?? t('sidebar.lockTags.cyber'),
       };
     }
     if (item.path === '/arastirma' && !progression.kbrnUnlocked) {
       return {
         ...item,
-        lockTag: progression.locks.kbrn ?? 'AR-GE SV.8',
+        lockTag: progression.locks.kbrn ?? t('sidebar.lockTags.kbrn'),
       };
     }
     return item;

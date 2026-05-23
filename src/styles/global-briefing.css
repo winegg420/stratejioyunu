@@ -18,7 +18,7 @@
   border: none;
   background:
     radial-gradient(ellipse at 50% 20%, rgba(0, 80, 40, 0.18) 0%, transparent 55%),
-    rgba(2, 6, 12, 0.92);
+    rgba(10, 15, 10, 0.92);
   backdrop-filter: blur(6px);
   cursor: pointer;
 }

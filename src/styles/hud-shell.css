@@ -1,21 +1,18 @@
 /* ═══ 2026 Premium Siber Askeri HUD — harita dışı arayüz ═══ */
 
 :root {
-  --hud-bg-deep: #0b0d1a;
-  --hud-bg-mid: #12152b;
-  --hud-bg-panel: rgba(18, 24, 48, 0.72);
-  --hud-bg-card: rgba(22, 32, 62, 0.55);
-  --hud-border: rgba(100, 140, 220, 0.22);
-  --hud-border-glow: rgba(74, 158, 255, 0.45);
-  --hud-accent: #5eb8ff;
-  --hud-accent-glow: rgba(94, 184, 255, 0.35);
-  --hud-alert-red: #ff6b5a;
-  --hud-alert-orange: #ff9f5a;
-  --hud-alert-glow-red: rgba(255, 90, 70, 0.45);
-  --hud-alert-glow-orange: rgba(255, 159, 90, 0.4);
-  --hud-lock-cyan: #22d3ee;
-  --hud-lock-glow: rgba(34, 211, 238, 0.55);
-  --hud-grid: rgba(120, 100, 200, 0.05);
+  --hud-bg-deep: #0a0f0a;
+  --hud-bg-mid: #111a11;
+  --hud-bg-panel: rgba(17, 26, 17, 0.72);
+  --hud-bg-card: rgba(17, 26, 17, 0.85);
+  --hud-border: rgba(74, 124, 89, 0.22);
+  --hud-border-glow: rgba(74, 124, 89, 0.35);
+  --hud-accent: #4a7c59;
+  --hud-accent-glow: rgba(74, 124, 89, 0.25);
+  --hud-alert-red: #8b1a1a;
+  --hud-alert-orange: #c9a84c;
+  --hud-lock-glow: rgba(74, 124, 89, 0.35);
+  --hud-grid: rgba(74, 124, 89, 0.04);
   --hud-clip: polygon(
     0 10px,
     10px 0,
@@ -31,38 +28,21 @@
 /* ── Fütüristik arka plan + radar ızgarası ── */
 body {
   background-color: var(--hud-bg-deep);
-  background-image:
-    linear-gradient(145deg, #0f0a1e 0%, #0b0d1a 35%, #0a1228 70%, #0d1020 100%),
-    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(88, 52, 180, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(40, 80, 180, 0.14) 0%, transparent 50%);
+  background-image: none;
 }
 
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--hud-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, black 20%, transparent 75%);
-}
-
-.app-shell.hud-shell {
-  position: relative;
-  z-index: 1;
+  display: none;
 }
 
 .app-shell.hud-shell .content-area {
-  background: transparent;
+  background: #0a0f0a;
 }
 
 .app-shell.hud-shell .sidebar {
-  background: linear-gradient(180deg, rgba(16, 22, 46, 0.92) 0%, rgba(12, 16, 36, 0.88) 100%);
-  border-right: 1px solid var(--hud-border);
-  backdrop-filter: blur(12px);
+  background: #0d150d;
+  border-right: 1px solid rgba(74, 124, 89, 0.12);
+  backdrop-filter: none;
 }
 
 .app-shell.hud-shell .panel {
@@ -70,7 +50,7 @@ body::before {
   border: 1px solid var(--hud-border);
   border-radius: 8px;
   box-shadow:
-    0 0 0 1px rgba(94, 184, 255, 0.06) inset,
+    0 0 0 1px rgba(74, 124, 89, 0.06) inset,
     0 12px 40px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(10px);
 }
@@ -88,21 +68,21 @@ body::before {
 
 .hud-shell .resource-bar,
 .app-shell.hud-shell .resource-bar {
-  background: linear-gradient(180deg, rgba(20, 26, 52, 0.95) 0%, rgba(12, 16, 34, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(17, 26, 17, 0.95) 0%, rgba(10, 15, 10, 0.98) 100%);
   border-bottom: 1px solid var(--hud-border);
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(74, 158, 255, 0.06);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(74, 124, 89, 0.06);
   backdrop-filter: blur(14px);
 }
 
 .hud-shell .resource-item,
 .app-shell.hud-shell .resource-item {
-  background: rgba(30, 40, 72, 0.45);
+  background: rgba(26, 46, 26, 0.45);
   border-color: var(--hud-border);
 }
 
 .hud-shell .bottom-nav,
 .app-shell.hud-shell .bottom-nav {
-  background: linear-gradient(0deg, rgba(12, 16, 34, 0.98) 0%, rgba(18, 24, 48, 0.92) 100%);
+  background: linear-gradient(0deg, rgba(10, 15, 10, 0.98) 0%, rgba(17, 26, 17, 0.92) 100%);
   border-top: 1px solid var(--hud-border);
   backdrop-filter: blur(14px);
 }
@@ -133,27 +113,7 @@ body::before {
 /* ── Neon alarm şeritleri (kaynak barı) ── */
 .hud-shell .resource-bar,
 .app-shell.hud-shell .resource-bar {
-  position: relative;
   isolation: isolate;
-}
-
-.hud-shell .resource-bar-inner,
-.app-shell.hud-shell .resource-bar-inner {
-  position: relative;
-  z-index: 10;
-}
-
-.hud-shell .resources-row,
-.hud-shell .resource-item,
-.hud-shell .res-body {
-  position: relative;
-  z-index: 10;
-}
-
-.hud-shell .res-value,
-.hud-shell .res-rate {
-  position: relative;
-  z-index: 11;
 }
 
 .resource-bar--workforce-warn {
@@ -203,9 +163,9 @@ body::before {
 }
 
 .resource-item.depot-warn .res-fill {
-  background: linear-gradient(90deg, #e85a4a, #ff8a7a);
-  box-shadow: 0 0 8px var(--hud-alert-glow-red);
-  animation: hud-depot-bar-pulse 1.4s ease-in-out infinite;
+  background: #4a7c59;
+  box-shadow: none;
+  animation: none;
 }
 
 @keyframes hud-depot-warn-pulse {
@@ -232,8 +192,8 @@ body::before {
 }
 
 .resource-item.depot-overflow .res-fill {
-  background: linear-gradient(90deg, #e86a2a, #ffb070);
-  box-shadow: 0 0 10px var(--hud-alert-glow-orange);
+  background: #4a7c59;
+  box-shadow: none;
 }
 
 @keyframes hud-depot-overflow-pulse {
@@ -265,7 +225,7 @@ body::before {
     rgba(22, 38, 72, 0.68) 45%,
     rgba(28, 48, 88, 0.64) 100%
   ) !important;
-  border: 1px solid rgba(94, 184, 255, 0.4) !important;
+  border: 1px solid rgba(74, 124, 89, 0.4) !important;
   box-shadow:
     0 0 0 1px rgba(34, 211, 238, 0.14) inset,
     0 0 24px rgba(34, 211, 238, 0.08),
@@ -315,7 +275,7 @@ body::before {
   background: rgba(12, 24, 48, 0.55);
   border: 1px solid rgba(100, 116, 139, 0.45);
   border-radius: 50%;
-  box-shadow: inset 0 0 8px rgba(15, 23, 42, 0.35);
+  box-shadow: inset 0 0 8px rgba(17, 26, 17, 0.35);
   text-shadow: none;
   animation: none;
 }
@@ -382,8 +342,8 @@ body::before {
 
 /* ── Cyberpunk HUD butonları ── */
 .btn {
-  --btn-edge: rgba(94, 184, 255, 0.75);
-  --btn-edge-glow: rgba(94, 184, 255, 0.45);
+  --btn-edge: rgba(74, 124, 89, 0.75);
+  --btn-edge-glow: rgba(74, 124, 89, 0.45);
   position: relative;
   isolation: isolate;
   display: inline-flex;
@@ -456,8 +416,8 @@ body::before {
 
 .btn-primary {
   --btn-edge: rgba(120, 200, 255, 0.9);
-  --btn-edge-glow: rgba(94, 184, 255, 0.55);
-  background-image: linear-gradient(180deg, rgba(74, 158, 255, 0.95) 0%, rgba(45, 108, 181, 0.95) 100%);
+  --btn-edge-glow: rgba(74, 124, 89, 0.55);
+  background-image: linear-gradient(180deg, rgba(74, 124, 89, 0.95) 0%, rgba(58, 99, 71, 0.95) 100%);
   background-size: 100% 100%;
   box-shadow:
     0 0 16px var(--hud-accent-glow),
@@ -466,17 +426,17 @@ body::before {
 
 .btn-primary:hover:not(:disabled) {
   box-shadow:
-    0 0 24px rgba(94, 184, 255, 0.5),
+    0 0 24px rgba(74, 124, 89, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   filter:
     drop-shadow(0 0 1px rgba(120, 200, 255, 1))
-    drop-shadow(0 0 10px rgba(94, 184, 255, 0.65))
+    drop-shadow(0 0 10px rgba(74, 124, 89, 0.65))
     brightness(1.08);
 }
 
 .btn-secondary {
   --btn-edge: rgba(100, 140, 200, 0.65);
-  --btn-edge-glow: rgba(74, 158, 255, 0.3);
+  --btn-edge-glow: rgba(74, 124, 89, 0.3);
   background-image: linear-gradient(180deg, rgba(35, 48, 78, 0.9) 0%, rgba(24, 32, 56, 0.95) 100%);
   background-size: 100% 100%;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
@@ -486,7 +446,7 @@ body::before {
   box-shadow: 0 0 18px var(--hud-accent-glow);
   filter:
     drop-shadow(0 0 0.5px rgba(120, 180, 255, 0.85))
-    drop-shadow(0 0 8px rgba(94, 184, 255, 0.4));
+    drop-shadow(0 0 8px rgba(74, 124, 89, 0.4));
 }
 
 .btn-danger {
@@ -505,12 +465,12 @@ body::before {
 }
 
 .btn-max {
-  --btn-edge: rgba(94, 184, 255, 0.55);
-  --btn-edge-glow: rgba(74, 158, 255, 0.25);
+  --btn-edge: rgba(74, 124, 89, 0.55);
+  --btn-edge-glow: rgba(74, 124, 89, 0.25);
   clip-path: var(--hud-clip);
   background-image: linear-gradient(180deg, rgba(40, 60, 100, 0.75) 0%, rgba(28, 44, 72, 0.85) 100%);
   background-size: 100% 100%;
-  box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.15);
 }
 
 /* Terminal tarama — Yükleniyor (köşe çerçevesi drop-shadow ile kalır) */
@@ -518,6 +478,25 @@ body::before {
   color: rgba(180, 220, 255, 0.9) !important;
   cursor: wait !important;
   overflow: hidden;
+}
+
+/* İstek işlenirken metin nabzı */
+.btn-hud-processing {
+  animation: hud-processing-pulse 0.85s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.45);
+}
+
+@keyframes hud-processing-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    filter: brightness(1.2);
+  }
 }
 
 .btn-hud-loading::after {
@@ -529,9 +508,9 @@ body::before {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(94, 184, 255, 0.35),
+    rgba(74, 124, 89, 0.35),
     rgba(34, 211, 238, 0.5),
-    rgba(94, 184, 255, 0.35),
+    rgba(74, 124, 89, 0.35),
     transparent
   );
   background-size: 45% 100%;
@@ -617,7 +596,7 @@ input[type='number'].input-qty::-webkit-inner-spin-button {
 
 /* Sekmeler & navigasyon */
 .hud-shell .nav-link.active {
-  background: linear-gradient(90deg, rgba(74, 158, 255, 0.18) 0%, transparent 100%);
+  background: linear-gradient(90deg, rgba(74, 124, 89, 0.18) 0%, transparent 100%);
   box-shadow: inset 3px 0 0 var(--hud-accent);
 }
 
@@ -627,7 +606,7 @@ input[type='number'].input-qty::-webkit-inner-spin-button {
 }
 
 .hud-shell .page-title {
-  text-shadow: 0 0 24px rgba(94, 184, 255, 0.15);
+  text-shadow: 0 0 24px rgba(74, 124, 89, 0.15);
 }
 
 .hud-shell .report-filters button.active,

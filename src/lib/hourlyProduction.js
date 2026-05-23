@@ -1,5 +1,9 @@
-import { formatCompactNumber } from './formatNumber';
 import { ratePerSecond } from './gameUtils';
+
+/** Saatlik üretim miktarı — tam sayı (K/M kısaltması yok). */
+export function formatHourlyAmount(n) {
+  return Number(n).toLocaleString('tr-TR');
+}
 
 /** Kaynak rate string'inden saatlik üretim (sayı). */
 export function getHourlyAmount(resource) {
@@ -11,15 +15,15 @@ export function getHourlyAmount(resource) {
   return Number(match[1].replace(/\./g, '').replace(',', '.')) || 0;
 }
 
-/** Üst bar: ikon + kaynak adı + üretim (+1.2K/saat) */
+/** Üst bar: ikon + kaynak adı + üretim (+1.234/saat) */
 export function formatHourlyProduction(resource) {
   const hourly = getHourlyAmount(resource);
   if (hourly <= 0) return null;
-  const compact = formatCompactNumber(hourly);
+  const formatted = formatHourlyAmount(hourly);
   const icon = resource.icon ? `${resource.icon} ` : '';
   const label = resource.label ?? resource.id ?? '';
   if (resource.id === 'energy') {
-    return `${icon}${label} +${compact} E/saat`;
+    return `${icon}${label} +${formatted} E/saat`;
   }
-  return `${icon}${label} +${compact}/saat`;
+  return `${icon}${label} +${formatted}/saat`;
 }

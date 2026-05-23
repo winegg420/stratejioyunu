@@ -2,7 +2,7 @@
 
 :root {
   --neon-glow: rgba(0, 255, 102, 0.45);
-  --hud-cyan: #00f0ff;
+  --hud-cyan: #4a7c59;
   --hud-stack-sidebar: 500;
   --hud-stack-bar: 1100;
   --hud-stack-toast: 1200;
@@ -63,7 +63,7 @@ button {
 }
 
 .route-map .leaflet-container {
-  z-index: 1 !important;
+  z-index: 3 !important;
 }
 
 .route-map .leaflet-pane {
@@ -80,7 +80,7 @@ button {
 }
 
 /* Kaynak barı grid */
-.resources-row {
+.resources-row:not(.resources-row--single) {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.35rem;
@@ -161,7 +161,7 @@ button {
   appearance: none;
   -webkit-appearance: none;
   background: #0a0f1d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300f0ff' d='M2 4l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
-  border: 1px solid rgba(0, 240, 255, 0.35);
+  border: 1px solid rgba(74, 124, 89, 0.35);
   border-radius: 2px;
   clip-path: polygon(0 4px, 4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
   color: var(--text);
@@ -207,7 +207,7 @@ button {
   color: #031a0f;
   background: linear-gradient(180deg, #22ff88 0%, #0d9f52 100%);
   border-color: #5dffb0;
-  box-shadow: 0 0 16px rgba(34, 255, 136, 0.45);
+  box-shadow: 0 0 16px rgba(74, 124, 89, 0.45);
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
 }
 
@@ -217,7 +217,7 @@ button {
   gap: 0.4rem;
   padding: 0.2rem 0.5rem;
   background: rgba(0, 20, 0, 0.8);
-  border: 1px solid rgba(34, 255, 136, 0.25);
+  border: 1px solid rgba(74, 124, 89, 0.25);
   border-radius: 3px;
 }
 
@@ -247,7 +247,7 @@ button {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-  color: rgba(0, 240, 255, 0.65);
+  color: rgba(74, 124, 89, 0.65);
   text-align: center;
 }
 
@@ -306,7 +306,7 @@ button {
   margin: 0.15rem 0 0;
   font-size: 11px;
   opacity: 0.6;
-  color: #22d3ee;
+  color: #4a7c59;
   text-align: center;
   font-family: var(--font-mono);
   letter-spacing: 0.08em;
@@ -334,7 +334,7 @@ button {
   width: 100%;
   height: 100%;
   margin: -50% 0 0 -50%;
-  border: 2px solid rgba(34, 255, 136, 0.55);
+  border: 2px solid rgba(74, 124, 89, 0.55);
   border-radius: 50%;
   animation: radar-pulse 2.2s ease-out infinite;
 }
@@ -395,7 +395,7 @@ button {
 .own-city-pulsar__ring {
   position: absolute;
   inset: 0;
-  border: 2px solid rgba(34, 255, 136, 0.55);
+  border: 2px solid rgba(74, 124, 89, 0.55);
   border-radius: 50%;
   animation: own-city-pulsar 2.4s ease-out infinite;
 }
@@ -417,7 +417,7 @@ button {
   margin: 1px auto 0;
   border-radius: 50%;
   border: 2px solid rgba(184, 255, 224, 0.85);
-  box-shadow: 0 0 14px rgba(34, 255, 136, 0.75);
+  box-shadow: 0 0 14px rgba(74, 124, 89, 0.75);
   animation: own-city-core-pulse 2.4s ease-in-out infinite;
 }
 
@@ -437,11 +437,11 @@ button {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 10px rgba(34, 255, 136, 0.6);
+    box-shadow: 0 0 10px rgba(74, 124, 89, 0.6);
   }
   50% {
     transform: scale(1.12);
-    box-shadow: 0 0 18px rgba(34, 255, 136, 0.95);
+    box-shadow: 0 0 18px rgba(74, 124, 89, 0.95);
   }
 }
 
@@ -455,9 +455,9 @@ button {
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
   background: rgba(5, 15, 25, 0.95) !important;
-  border: 1px solid #00f0ff !important;
+  border: 1px solid #4a7c59 !important;
   color: #fff !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
+  box-shadow: 0 0 20px rgba(74, 124, 89, 0.2) !important;
 }
 
 .leaflet-popup-content {
@@ -472,7 +472,7 @@ button {
 
 /* Giriş sayfası */
 .auth-screen {
-  background-color: #020205 !important;
+  background-color: #0a0f0a !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -486,7 +486,7 @@ button {
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
-  background: #020205;
+  background: #0a0f0a;
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
@@ -522,7 +522,7 @@ button {
   align-items: center;
   gap: 0.2rem;
   padding: 0.5rem;
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(74, 124, 89, 0.2);
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.25);
   font-family: var(--font-mono);
@@ -535,9 +535,9 @@ button {
   padding: 2rem 1rem;
   text-align: center;
   overflow: hidden;
-  border: 1px dashed rgba(0, 240, 255, 0.25);
+  border: 1px dashed rgba(74, 124, 89, 0.25);
   border-radius: 6px;
-  background: rgba(2, 8, 16, 0.6);
+  background: rgba(17, 26, 17, 0.6);
 }
 
 .expeditions-radar-empty__grid {
@@ -545,8 +545,8 @@ button {
   inset: 0;
   opacity: 0.35;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(74, 124, 89, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
 }
@@ -570,7 +570,7 @@ button {
 
 @keyframes radar-title-blink {
   0%, 100% { opacity: 0.45; text-shadow: none; }
-  50% { opacity: 1; text-shadow: 0 0 14px rgba(34, 255, 136, 0.65); }
+  50% { opacity: 1; text-shadow: 0 0 14px rgba(74, 124, 89, 0.65); }
 }
 
 /* VIP reset */
@@ -638,7 +638,7 @@ button {
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(2, 4, 8, 0.82);
+  background: rgba(10, 15, 10, 0.82);
   cursor: pointer;
 }
 
@@ -733,7 +733,7 @@ button {
   max-width: min(420px, calc(100vw - 1.5rem));
   padding: 0.55rem 0.75rem;
   background: rgba(6, 18, 12, 0.95);
-  border: 1px solid rgba(34, 255, 136, 0.45);
+  border: 1px solid rgba(74, 124, 89, 0.45);
   border-radius: 4px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   animation: pwa-slide-in 0.45s ease-out;
@@ -770,7 +770,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(2, 4, 8, 0.55);
+  background: rgba(10, 15, 10, 0.55);
 }
 
 .route-transition-loader__scanline {
@@ -790,7 +790,7 @@ button {
   margin: 0;
   font-size: 0.8rem;
   color: #22ff88;
-  text-shadow: 0 0 10px rgba(34, 255, 136, 0.5);
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.5);
 }
 
 @keyframes led-blink {
@@ -836,7 +836,7 @@ button {
 
 .home-stat-block--accent {
   border-color: var(--hud-accent);
-  box-shadow: 0 0 16px rgba(94, 184, 255, 0.15);
+  box-shadow: 0 0 16px rgba(74, 124, 89, 0.15);
 }
 
 .home-stat-block--accent::before {
@@ -885,7 +885,7 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(100, 140, 220, 0.08);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.08);
   gap: 8px;
 }
 
@@ -915,13 +915,13 @@ button {
 }
 
 .queue-item--queued .queue-item__dot {
-  background: rgba(100, 140, 220, 0.4);
+  background: rgba(74, 124, 89, 0.4);
   box-shadow: none;
 }
 
 .queue-item__detail {
   font-size: 11px;
-  color: rgba(150, 180, 230, 0.5);
+  color: rgba(212, 212, 170, 0.5);
   font-family: var(--font-mono);
 }
 
@@ -935,7 +935,7 @@ button {
 .queue-empty {
   padding: 16px 12px;
   font-size: 12px;
-  color: rgba(150, 180, 230, 0.35);
+  color: rgba(212, 212, 170, 0.35);
   font-family: var(--font-mono);
   letter-spacing: 0.05em;
   text-align: center;
@@ -952,23 +952,23 @@ button {
   margin: 0.25rem 0;
   list-style: none;
   text-align: center;
-  border: 1px dashed rgba(0, 240, 255, 0.22);
+  border: 1px dashed rgba(74, 124, 89, 0.22);
   background:
-    linear-gradient(180deg, rgba(6, 14, 28, 0.85) 0%, rgba(4, 10, 22, 0.95) 100%);
+    linear-gradient(180deg, rgba(17, 26, 17, 0.85) 0%, rgba(17, 26, 17, 0.95) 100%);
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
 
 .queue-empty-state__icon {
   font-size: 1.35rem;
   opacity: 0.75;
-  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.35));
+  filter: drop-shadow(0 0 6px rgba(74, 124, 89, 0.35));
 }
 
 .queue-empty-state__tag {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.14em;
-  color: rgba(0, 240, 255, 0.75);
+  color: rgba(74, 124, 89, 0.75);
 }
 
 .queue-empty-state__title {
@@ -988,7 +988,7 @@ button {
 .expedition-tracker-panel--empty .queue-empty-state {
   margin-top: 0.5rem;
   border-style: solid;
-  border-color: rgba(100, 140, 220, 0.15);
+  border-color: rgba(74, 124, 89, 0.15);
 }
 
 /* Ana merkez — üs istatistik kartı (mini harita yerine) */
@@ -1017,8 +1017,8 @@ button {
   font-size: 0.62rem;
   letter-spacing: 0.1em;
   padding: 0.2rem 0.45rem;
-  border: 1px solid rgba(0, 240, 255, 0.28);
-  color: rgba(0, 240, 255, 0.8);
+  border: 1px solid rgba(74, 124, 89, 0.28);
+  color: rgba(74, 124, 89, 0.8);
 }
 
 .home-city-stats__intro {
@@ -1028,7 +1028,7 @@ button {
 }
 
 .home-city-stats__intro strong {
-  color: rgba(0, 240, 255, 0.9);
+  color: rgba(74, 124, 89, 0.9);
 }
 
 .home-city-stats__grid {
@@ -1043,8 +1043,8 @@ button {
   gap: 0.5rem;
   align-items: flex-start;
   padding: 0.45rem 0.5rem;
-  border: 1px solid rgba(0, 240, 255, 0.1);
-  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(74, 124, 89, 0.1);
+  background: rgba(74, 124, 89, 0.03);
 }
 
 .home-city-stats__row--warn {
@@ -1085,7 +1085,7 @@ button {
   gap: 0.5rem;
   margin: 0.65rem 0 0;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(0, 240, 255, 0.12);
+  border-top: 1px solid rgba(74, 124, 89, 0.12);
   font-size: 0.72rem;
 }
 
@@ -1096,7 +1096,7 @@ button {
 }
 
 .home-city-stats__link {
-  color: rgba(0, 240, 255, 0.85);
+  color: rgba(74, 124, 89, 0.85);
   text-decoration: none;
   font-family: var(--font-mono);
   letter-spacing: 0.06em;
@@ -1164,7 +1164,7 @@ button {
   align-items: flex-start;
   gap: 10px;
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(100, 140, 220, 0.08);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.08);
   font-size: 13px;
   color: rgba(200, 220, 255, 0.75);
   list-style: none;
@@ -1179,7 +1179,7 @@ button {
 }
 
 .notif-item--info {
-  color: rgba(94, 184, 255, 0.85);
+  color: rgba(74, 124, 89, 0.85);
 }
 
 .notif-tag {
@@ -1187,12 +1187,12 @@ button {
   font-family: var(--font-mono);
   letter-spacing: 0.1em;
   padding: 2px 6px;
-  background: rgba(100, 140, 220, 0.15);
-  border: 1px solid rgba(100, 140, 220, 0.25);
+  background: rgba(74, 124, 89, 0.15);
+  border: 1px solid rgba(74, 124, 89, 0.25);
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
-  color: rgba(150, 190, 255, 0.7);
+  color: rgba(212, 212, 170, 0.7);
   margin-top: 1px;
 }
 
@@ -1216,7 +1216,7 @@ button {
   font-size: 9px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(150, 180, 230, 0.4);
+  color: rgba(212, 212, 170, 0.4);
   font-family: var(--font-mono);
 }
 
@@ -1231,7 +1231,7 @@ button {
 .hud-shell .city-type,
 .app-shell.hud-shell .city-type {
   font-size: 10px;
-  color: rgba(150, 180, 230, 0.45);
+  color: rgba(212, 212, 170, 0.45);
   font-family: var(--font-mono);
 }
 
@@ -1328,7 +1328,7 @@ button {
   max-width: 420px;
   backdrop-filter: blur(20px);
   box-shadow:
-    0 0 0 1px rgba(94, 184, 255, 0.08) inset,
+    0 0 0 1px rgba(74, 124, 89, 0.08) inset,
     0 24px 64px rgba(0, 0, 0, 0.5);
   position: relative;
   z-index: 1;
@@ -1349,7 +1349,7 @@ button {
 .auth-card__sub {
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: rgba(150, 180, 230, 0.45);
+  color: rgba(212, 212, 170, 0.45);
   font-family: var(--font-mono);
   text-align: center;
   margin-bottom: 28px;
@@ -1362,11 +1362,11 @@ button {
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(150, 190, 255, 0.6);
+  color: rgba(212, 212, 170, 0.6);
   font-family: var(--font-mono);
   margin: 0 0 12px 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(100, 140, 220, 0.12);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.12);
   display: flex;
   align-items: center;
 }
@@ -1383,9 +1383,9 @@ button {
   text-transform: uppercase;
   padding: 2px 7px;
   border-radius: 3px;
-  background: rgba(94, 184, 255, 0.12);
-  border: 1px solid rgba(94, 184, 255, 0.25);
-  color: rgba(150, 200, 255, 0.75);
+  background: rgba(74, 124, 89, 0.12);
+  border: 1px solid rgba(74, 124, 89, 0.25);
+  color: rgba(212, 212, 170, 0.75);
   font-family: var(--font-mono);
 }
 
@@ -1411,7 +1411,7 @@ button {
 .hud-shell .btn-primary:not(:disabled),
 .app-shell.hud-shell .btn-primary:not(:disabled) {
   background: rgba(40, 80, 200, 0.2);
-  border-color: rgba(94, 184, 255, 0.4);
+  border-color: rgba(74, 124, 89, 0.4);
   color: var(--hud-accent);
 }
 
@@ -1430,15 +1430,16 @@ button {
 
 .hud-shell .btn-secondary:not(:disabled),
 .app-shell.hud-shell .btn-secondary:not(:disabled) {
-  background: rgba(30, 40, 80, 0.3);
-  border-color: rgba(100, 140, 220, 0.25);
-  color: rgba(150, 180, 230, 0.65);
+  background: #1a2e1a;
+  border-color: rgba(74, 124, 89, 0.35);
+  color: #d4d4aa;
 }
 
 .hud-shell .btn-secondary:hover:not(:disabled),
 .app-shell.hud-shell .btn-secondary:hover:not(:disabled) {
-  border-color: rgba(100, 140, 220, 0.5);
-  color: rgba(180, 210, 255, 0.9);
+  border-color: #4a7c59;
+  color: #ffffff;
+  background: #111a11;
 }
 
 .hud-shell .btn-secondary:disabled,
@@ -1490,8 +1491,8 @@ button {
 
 /* Harita şehir etiketleri */
 .leaflet-tooltip.map-city-label-tooltip {
-  background: rgba(4, 12, 22, 0.92) !important;
-  border: 1px solid rgba(0, 240, 255, 0.35) !important;
+  background: rgba(17, 26, 17, 0.92) !important;
+  border: 1px solid rgba(74, 124, 89, 0.35) !important;
   border-radius: 4px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
   padding: 0.25rem 0.45rem !important;
@@ -1502,7 +1503,7 @@ button {
 }
 
 .leaflet-tooltip.map-city-label-tooltip::before {
-  border-top-color: rgba(0, 240, 255, 0.35) !important;
+  border-top-color: rgba(74, 124, 89, 0.35) !important;
 }
 
 .map-city-label__name {
@@ -1532,10 +1533,10 @@ button {
   align-items: center;
   gap: 0.1rem;
   padding: 0.35rem 0.55rem;
-  background: rgba(2, 14, 10, 0.82);
-  border: 1px solid rgba(34, 255, 136, 0.45);
+  background: rgba(17, 26, 17, 0.82);
+  border: 1px solid rgba(74, 124, 89, 0.45);
   border-radius: 4px;
-  box-shadow: 0 0 18px rgba(34, 255, 136, 0.2);
+  box-shadow: 0 0 18px rgba(74, 124, 89, 0.2);
   pointer-events: none;
 }
 
@@ -1552,7 +1553,7 @@ button {
   font-size: 0.78rem;
   font-weight: 700;
   color: #22ff88;
-  text-shadow: 0 0 10px rgba(34, 255, 136, 0.45);
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.45);
 }
 
 /* Ana merkez bölge haritası */
@@ -1586,9 +1587,9 @@ button {
 .home-region-preview__canvas {
   aspect-ratio: 4 / 3;
   min-height: 160px;
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(74, 124, 89, 0.2);
   border-radius: 6px;
-  background: radial-gradient(ellipse at center, rgba(0, 40, 60, 0.35), rgba(2, 6, 12, 0.95));
+  background: radial-gradient(ellipse at center, rgba(0, 40, 60, 0.35), rgba(10, 15, 10, 0.95));
   overflow: hidden;
 }
 
@@ -1603,7 +1604,7 @@ button {
   stroke: #22ff88;
   stroke-width: 1.2;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 6px rgba(34, 255, 136, 0.35));
+  filter: drop-shadow(0 0 6px rgba(74, 124, 89, 0.35));
 }
 
 .home-region-preview__city-dot {
@@ -1671,7 +1672,7 @@ button {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(2, 6, 12, 0.72);
+  background: rgba(10, 15, 10, 0.72);
   backdrop-filter: blur(4px);
 }
 
@@ -1732,9 +1733,9 @@ button {
 
 .unit-detail-modal__stats div {
   padding: 0.45rem 0.55rem;
-  border: 1px solid rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(74, 124, 89, 0.15);
   border-radius: 4px;
-  background: rgba(4, 12, 22, 0.65);
+  background: rgba(17, 26, 17, 0.65);
 }
 
 .unit-detail-modal__stats dt {
@@ -1786,9 +1787,9 @@ button {
 }
 
 .city-territory-label--own .city-territory-label__inner {
-  background: rgba(2, 14, 10, 0.88);
-  border-color: rgba(34, 255, 136, 0.55);
-  box-shadow: 0 0 14px rgba(34, 255, 136, 0.22);
+  background: rgba(17, 26, 17, 0.88);
+  border-color: rgba(74, 124, 89, 0.55);
+  box-shadow: 0 0 14px rgba(74, 124, 89, 0.22);
 }
 
 .city-territory-label__city {

@@ -2,14 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import BuildingCard from '../components/BuildingCard';
-import ActiveQueue from '../components/ActiveQueue';
 import EmpireSlotBanner from '../components/EmpireSlotBanner';
 import PopulationDistributionPanel from '../components/PopulationDistributionPanel';
 import { getHqLevel, syncCityBuildingsToCatalog } from '../lib/buildingUtils';
-import {
-  getProgressionState,
-  isBuildingVisibleInStarterPhase,
-} from '../lib/progressionSystem';
+import { getProgressionState } from '../lib/progressionSystem';
+import { isTutorialBuildingVisible, isMilAiTutorialActive } from '../lib/milAiTutorialQuests';
 import { isCoastalPlayerCity, getConstructionQueueSummary } from '../lib/cityManagementUi';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { useLanguage } from '../context/LanguageContext';
@@ -30,13 +27,16 @@ export default function Buildings() {
   const { t } = useLanguage();
   const { hash } = useLocation();
   const activeCityId = useGameStore((s) => s.activeCityId);
-  const city = useGameStore((s) => s.cities[activeCityId]);
+  const cities = useGameStore((s) => s.cities);
+  const milAiCompleted = useGameStore((s) => s.milAiCompleted);
+  const city = cities[activeCityId];
+  const tutorialState = { activeCityId, cities, milAiCompleted };
+  const tutorialActive = isMilAiTutorialActive(tutorialState);
   const activePlayerCity = useGameStore((s) => s.playerCities.find((c) => c.id === activeCityId));
   const buildings = useMemo(
     () => syncCityBuildingsToCatalog(city?.buildings ?? STORE_EMPTY_ARRAY),
     [city?.buildings],
   );
-  const cityName = activePlayerCity?.name;
   const hqLevel = getHqLevel(city);
   const progression = getProgressionState(city);
   const coastal = isCoastalPlayerCity(activePlayerCity);
@@ -48,8 +48,18 @@ export default function Buildings() {
     return () => window.clearTimeout(timer);
   }, [hash, buildings]);
 
+  if (!city) {
+    return (
+      <div className="page page-wrapper buildings-page page--console">
+        <LocalizedPageHeader pageKey="buildings" />
+        <p className="buildings-page-loading" role="status">{t('pages.buildings.loading')}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page page-wrapper buildings-page page--console">
+      <LocalizedPageHeader pageKey="buildings" />
       <EmpireSlotBanner />
       <div className="buildings-page__toolbar">
         <span className="buildings-queue-badge font-hud-data" title={t('cityManagement.queueToolbarTitle')}>
@@ -58,16 +68,13 @@ export default function Buildings() {
           {t('cityManagement.queueTotal', { total: queueSummary.total, limit: queueSummary.limit })}
         </span>
       </div>
-      <LocalizedPageHeader pageKey="buildings" />
-      <ActiveQueue
-        title={`Aktif Kuyruk — ${cityName}`}
-        queueType="construction"
-        emptyText="Şu an yükseltilen bina yok. Aşağıdan bir bina seçerek kuyruğa ekleyebilirsiniz."
-      />
       <div className="buildings-page__grid-wrap">
+        <PopulationDistributionPanel />
         <div className="buildings-grid card-grid">
           {buildings.map((b) => {
-            const starterHidden = !isBuildingVisibleInStarterPhase(b.id, hqLevel);
+            const starterHidden = tutorialActive
+              ? !isTutorialBuildingVisible(b.id, tutorialState)
+              : false;
             const coastalLocked = b.id === 'shipyard' && !coastal;
             if (coastalLocked && b.level < 1) {
               return (
@@ -75,7 +82,11 @@ export default function Buildings() {
                   key={b.id}
                   building={b}
                   coastalLocked
-                  progressionLock={starterHidden ? (progression.locks.advanced ?? 'Komuta Merkezi yükseltin') : null}
+                  progressionLock={
+                    starterHidden
+                      ? (progression.locks.advanced ?? t('pages.buildings.lockUpgradeHq'))
+                      : null
+                  }
                 />
               );
             }
@@ -84,12 +95,15 @@ export default function Buildings() {
               <BuildingCard
                 key={b.id}
                 building={b}
-                progressionLock={starterHidden ? (progression.locks.advanced ?? 'Komuta Merkezi yükseltin') : null}
+                progressionLock={
+                  starterHidden
+                    ? (progression.locks.advanced ?? t('pages.buildings.lockUpgradeHq'))
+                    : null
+                }
               />
             );
           })}
         </div>
-        <PopulationDistributionPanel />
       </div>
     </div>
   );

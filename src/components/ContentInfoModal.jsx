@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import CostParts from './CostParts';
+import { useModalDismiss, stopModalPropagation } from '../hooks/useModalDismiss';
 import { useGameStore } from '../stores/gameStore';
 
 function LevelTable({ rows, effectLabel }) {
@@ -137,14 +137,7 @@ export default function ContentInfoModal() {
   const data = useGameStore((s) => s.contentInfoPayload);
   const closeContentInfo = useGameStore((s) => s.closeContentInfo);
 
-  useEffect(() => {
-    if (!data) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') closeContentInfo();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [data, closeContentInfo]);
+  useModalDismiss(Boolean(data), closeContentInfo);
 
   if (!data) return null;
 
@@ -161,7 +154,7 @@ export default function ContentInfoModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="content-info-title"
-        onClick={(e) => e.stopPropagation()}
+        onClick={stopModalPropagation}
       >
         <header className="content-info-modal__head">
           <div className="content-info-modal__visual">

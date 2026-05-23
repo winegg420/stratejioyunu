@@ -1,3 +1,4 @@
+import { translate } from '../i18n';
 import { CONSTRUCTION_QUEUE_LIMIT } from './gameConstants';
 import {
   getColonyCount,
@@ -18,6 +19,18 @@ export function formatCityBaseName(city) {
   if (city.province) return `${city.name} (${city.province})`;
   if (city.provinceName) return `${city.name} (${city.provinceName})`;
   return city.name;
+}
+
+/** Ana merkez / özet — şehir adı tekrarlanmaz (provinceName === name ise atlanır). */
+export function formatCitySubtitle(city, lang = 'tr') {
+  if (!city) return '—';
+  const name = city.name ?? '—';
+  const type = city.type ?? translate(lang, 'pages.home.feed.base');
+  const province = city.provinceName?.trim();
+  if (province && province !== name) {
+    return `${name} · ${type} · ${province}`;
+  }
+  return `${name} · ${type}`;
 }
 
 export function formatCityOptionLabel(city, t) {

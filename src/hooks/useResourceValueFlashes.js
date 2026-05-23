@@ -3,28 +3,42 @@ import { useEffect, useRef, useState } from 'react';
 /**
  * Kaynak current değeri değiştiğinde kısa yeşil parlama (tick, Supabase, patchCity).
  */
+function snapshotResources(resources) {
+  if (!resources?.length) return '';
+  return resources.map((r) => `${r.id}:${Math.floor(r.current ?? 0)}`).join('|');
+}
+
 export function useResourceValueFlashes(resources) {
-  const prevRef = useRef(null);
+  const prevKeyRef = useRef('');
   const [flashing, setFlashing] = useState({});
+  const resourceKey = snapshotResources(resources);
 
   useEffect(() => {
-    if (!resources?.length) {
-      prevRef.current = null;
+    if (!resourceKey) {
+      prevKeyRef.current = '';
       return undefined;
     }
 
-    const snapshot = Object.fromEntries(
-      resources.map((r) => [r.id, Math.floor(r.current ?? 0)]),
-    );
-    const prev = prevRef.current;
-    prevRef.current = snapshot;
+    const prevKey = prevKeyRef.current;
+    prevKeyRef.current = resourceKey;
+    if (!prevKey || prevKey === resourceKey) return undefined;
 
-    if (!prev) return undefined;
+    const prevMap = Object.fromEntries(
+      prevKey.split('|').filter(Boolean).map((part) => {
+        const [id, val] = part.split(':');
+        return [id, Number(val)];
+      }),
+    );
+    const nextMap = Object.fromEntries(
+      resourceKey.split('|').filter(Boolean).map((part) => {
+        const [id, val] = part.split(':');
+        return [id, Number(val)];
+      }),
+    );
 
     const changed = {};
-    for (const r of resources) {
-      const id = r.id;
-      if (prev[id] !== undefined && prev[id] !== snapshot[id]) {
+    for (const [id, val] of Object.entries(nextMap)) {
+      if (prevMap[id] !== undefined && prevMap[id] !== val) {
         changed[id] = true;
       }
     }
@@ -41,7 +55,7 @@ export function useResourceValueFlashes(resources) {
     }, 420);
 
     return () => window.clearTimeout(timer);
-  }, [resources]);
+  }, [resourceKey]);
 
   return flashing;
 }

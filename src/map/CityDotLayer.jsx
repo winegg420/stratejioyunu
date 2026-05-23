@@ -52,6 +52,7 @@ export default function CityDotLayer({
   mapCities,
   playerCities,
   visible = true,
+  renderKey = 0,
 }) {
   const cities = useMemo(
     () => buildCityList(mapCities, playerCities),
@@ -75,7 +76,7 @@ export default function CityDotLayer({
         }
         return (
           <Marker
-            key={`dot-${city.name}`}
+            key={`dot-${renderKey}-${city.name}`}
             position={[city.lat, city.lng]}
             icon={createDotIcon({ color, variant })}
             interactive={false}

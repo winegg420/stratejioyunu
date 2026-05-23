@@ -78,11 +78,11 @@ function mapCitySeed(city) {
 /** Bot / düşman / boş olmayan harita şehri için ideoloji */
 export function resolveMapCityOwnerIdeology(city) {
   if (!city) return null;
-  if (city.status === 'empty' || (!city.owner && city.status !== 'bot')) {
-    return null;
-  }
-
   const coords = { lat: city.lat, lng: city.lng };
+
+  if (city.status === 'empty' || (!city.owner && city.status !== 'bot')) {
+    return ideologyForMapSeed(`empty:${mapCitySeed(city)}`, coords);
+  }
 
   if (city.status === 'bot') {
     return ideologyForMapSeed(`bot:${mapCitySeed(city)}`, coords);

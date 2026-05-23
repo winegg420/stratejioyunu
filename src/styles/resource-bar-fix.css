@@ -1,80 +1,197 @@
-/* Kaynak çubuğu — kesilme düzeltmesi (hammadde / petrol / bütçe görünür) */
+/* Kaynak çubuğu — taşma / üst bindirme düzeltmesi (tüm sayfalar) */
 
 :root {
-  --resource-bar-h: 78px;
+  --resource-bar-h: 72px;
 }
 
+/* Üst bar — akış içinde (layout-shell-fix.css ile tamamlanır) */
 .resource-bar,
 .resource-bar--tactical,
 .resource-bar--command {
+  position: relative;
+  width: 100%;
+  z-index: 1100;
+  overflow: hidden;
+  contain: layout style;
+  isolation: isolate;
+}
+
+.resource-bar--stacked {
   height: auto !important;
-  min-height: var(--resource-bar-h) !important;
+  min-height: var(--resource-bar-h, 118px) !important;
   max-height: none !important;
-  overflow: visible !important;
 }
 
-.resource-bar-inner,
-.resource-bar-inner--flush {
+.resource-bar-inner:not(.resource-bar-inner--tiered),
+.resource-bar-inner--flush:not(.resource-bar-inner--tiered) {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
   height: auto !important;
-  min-height: var(--resource-bar-h);
-  align-items: stretch !important;
-  overflow: visible !important;
+  min-height: 88px;
+  max-height: none !important;
+  overflow: hidden !important;
+  flex-wrap: nowrap;
 }
 
-.resources-row,
-.resources-row--tactical {
+.resource-bar-resources {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 0.12rem !important;
+  padding: 0.22rem 0.15rem !important;
+  overflow: hidden !important;
+}
+
+.resources-row--primary,
+.resources-row--secondary {
+  flex: 0 0 auto !important;
+  min-height: 2.65rem !important;
+}
+
+.resources-row--advanced {
+  flex: 0 0 auto !important;
+  min-height: 2.35rem !important;
+  padding-top: 0.1rem !important;
+  border-top: 1px solid rgba(74, 124, 89, 0.12) !important;
+  gap: 0.35rem !important;
+}
+
+.resource-row-advanced-label {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 0 0.35rem 0 0.25rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.72);
+  white-space: nowrap;
+}
+
+.resources-row--advanced .resource-item {
+  flex: 1 1 0 !important;
+  max-width: 10rem !important;
+}
+
+.brand-block.brand-desktop.resource-bar-brand {
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  max-width: 11rem;
+  overflow: hidden;
+}
+
+/* Tek satır (eski) — stacked bar layout-contract.css ile yönetilir */
+.resource-bar:not(.resource-bar--stacked) .resources-row,
+.resource-bar:not(.resource-bar--stacked) .resources-row--tactical {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0;
+  height: auto !important;
+  max-height: inherit;
   overflow-x: auto !important;
-  overflow-y: visible !important;
-  min-height: calc(var(--resource-bar-h) - 4px);
+  overflow-y: hidden !important;
+  flex-wrap: nowrap !important;
   align-items: stretch !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .resource-item,
 .resource-item--tactical {
-  overflow: visible !important;
+  flex: 1 0 auto !important;
+  min-width: 5.5rem !important;
+  max-width: 9.5rem;
+  overflow: hidden !important;
   align-items: flex-start !important;
-  padding: 0.3rem 0.55rem !important;
-  min-height: calc(var(--resource-bar-h) - 8px);
+  padding: 0.28rem 0.5rem !important;
+  z-index: auto !important;
 }
 
 .resource-item .res-body {
-  overflow: visible;
   min-width: 0;
+  overflow: hidden;
 }
 
-.resource-bar--command .res-body {
-  gap: 0.08rem;
-}
-
-.resource-bar--command .res-label {
-  order: 0;
-  line-height: 1.1;
+.resource-item .res-label,
+.resource-item .res-value,
+.resource-item .res-hourly-live,
+.resource-item .res-rate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .resource-bar--command .res-value {
-  order: 1;
-  font-size: 1.05rem !important;
+  font-size: 1rem !important;
+  line-height: 1.15;
+}
+
+.resource-bar--command .res-value__current {
+  font-size: 1rem !important;
+}
+
+.resource-bar--command .res-hourly-live,
+.resource-bar--command .res-hourly-badge {
+  font-size: 0.58rem !important;
   line-height: 1.2;
 }
 
-.resource-bar--command .res-hourly-badge,
-.resource-bar--command .res-hourly-live,
-.resource-bar--command .res-rate {
-  order: 2;
-  font-size: 0.62rem !important;
-  line-height: 1.15;
+.resource-bar-actions,
+.resource-bar-actions--tactical {
+  flex: 0 0 auto;
+  z-index: auto !important;
+}
+
+/* Bar akışta — app-shell padding-top gerekmez */
+.app-shell,
+.app-shell.hud-shell {
+  padding-top: 0 !important;
+  box-sizing: border-box;
+}
+
+.app-shell.hud-shell:not(.route-map) .main-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.app-shell.hud-shell:not(.route-map) .content-area {
+  position: relative;
+  z-index: 1;
+  padding-top: 0.75rem !important;
+}
+
+/* Sayfa başlıkları bar altında kalmamalı */
+.page-header,
+.page-header--hud,
+.home-command-page-header {
+  position: relative;
+  z-index: 1;
   margin-top: 0;
 }
 
-.resource-bar--command .res-bar {
-  order: 3;
-  margin: 0.15rem 0 0;
+.page--command,
+.page--console,
+.home-page {
+  position: relative;
+  z-index: 1;
 }
 
-.res-hourly-badge {
-  white-space: nowrap;
+.resource-bar-workforce-warn {
+  z-index: 0;
 }
 
-.app-shell {
-  padding-top: var(--resource-bar-h) !important;
+@media (max-width: 900px) {
+  .resource-item,
+  .resource-item--tactical {
+    min-width: 5.25rem !important;
+    max-width: 8rem;
+  }
+
+  .brand-block.brand-desktop.resource-bar-brand {
+    min-width: 7rem;
+    max-width: 9rem;
+  }
 }

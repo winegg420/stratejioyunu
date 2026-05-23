@@ -1,0 +1,240 @@
+/**
+ * Tüm sayfalarda iç yüzeyler — tablolar, widget'lar, satırlar, inputlar.
+ * En son yüklenir; lacivert / cyan zemin kalmasın.
+ */
+
+/* ── Sayfa zeminleri ── */
+.app-shell.hud-shell,
+.app-shell.hud-shell .main-shell,
+.app-shell.hud-shell .content-area,
+.app-shell.hud-shell .content-area--terminal,
+.app-shell.hud-shell .route-content-panel,
+.app-shell.hud-shell .page,
+.app-shell.hud-shell .page--command,
+.app-shell.hud-shell .page--console,
+.app-shell.hud-shell [class*='-page'],
+.app-shell.hud-shell .home-page {
+  background: #0a0f0a !important;
+  background-image: none !important;
+}
+
+/* ── Panel / kart / widget ── */
+.app-shell.hud-shell .panel,
+.app-shell.hud-shell .glass-panel,
+.app-shell.hud-shell .content-card,
+.app-shell.hud-shell .card,
+.app-shell.hud-shell .home-cmd-widget,
+.app-shell.hud-shell .home-cmd-widget.glass-panel,
+.app-shell.hud-shell .home-stat-block,
+.app-shell.hud-shell .home-stat-block--chassis,
+.app-shell.hud-shell .strat-matrix,
+.app-shell.hud-shell .strat-gauge,
+.app-shell.hud-shell .strat-prod-row,
+.app-shell.hud-shell .strat-prod-list,
+.app-shell.hud-shell .strat-matrix__tax,
+.app-shell.hud-shell .expedition-tracker-panel,
+.app-shell.hud-shell .report-item,
+.app-shell.hud-shell .report-detail,
+.app-shell.hud-shell .queue-item,
+.app-shell.hud-shell .notif-item,
+.app-shell.hud-shell .market-row,
+.app-shell.hud-shell .trade-row,
+.app-shell.hud-shell .diplomacy-row,
+.app-shell.hud-shell .intel-card,
+.app-shell.hud-shell .season-quest-card,
+.app-shell.hud-shell .message-row,
+.app-shell.hud-shell .rankings-table-wrap,
+.app-shell.hud-shell .terminal-log-panel,
+.app-shell.hud-shell .terminal-dock-logs,
+.app-shell.hud-shell .military-empty-state,
+.app-shell.hud-shell .locked-feature-gate,
+.app-shell.hud-shell .cost-parts,
+.app-shell.hud-shell .unit-led-cell,
+.app-shell.hud-shell .unit-stock-bar,
+.app-shell.hud-shell .production-queue-row,
+.app-shell.hud-shell .expedition-row,
+.app-shell.hud-shell .map-command-modal__panel,
+.app-shell.hud-shell .map-intel-sidebar,
+.app-shell.hud-shell .map-hud-panel,
+.app-shell.hud-shell .cyber-toggle,
+.app-shell.hud-shell .global-briefing-panel,
+.app-shell.hud-shell .state-mail-compose,
+.app-shell.hud-shell .state-mail-thread,
+.app-shell.hud-shell .crisis-panel,
+.app-shell.hud-shell .progression-card {
+  background: #111a11 !important;
+  background-image: none !important;
+  border-color: rgba(74, 124, 89, 0.18) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  clip-path: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.home-cmd-widget--active {
+  border-color: rgba(74, 124, 89, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(74, 124, 89, 0.12) inset !important;
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.home-cmd-widget__label,
+.home-cmd-widget__sub {
+  color: #c9a84c !important;
+  text-shadow: none !important;
+}
+
+.home-cmd-widget__value {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.home-stat-block--chassis.home-stat-block--accent {
+  border-color: rgba(74, 124, 89, 0.4) !important;
+  box-shadow: none !important;
+}
+
+/* ── Tablolar (tüm sayfalar) ── */
+.app-shell.hud-shell table,
+.app-shell.hud-shell .data-table,
+.app-shell.hud-shell .stats-table,
+.app-shell.hud-shell .report-loss-table,
+.app-shell.hud-shell .report-ledger-table,
+.app-shell.hud-shell .report-battle-summary-table,
+.app-shell.hud-shell .rankings-table,
+.app-shell.hud-shell .content-info-modal__table,
+.app-shell.hud-shell [class*='-table'] {
+  background: transparent !important;
+  border-collapse: collapse !important;
+}
+
+.app-shell.hud-shell table th,
+.app-shell.hud-shell .data-table th,
+.app-shell.hud-shell .stats-table th,
+.app-shell.hud-shell .report-loss-table th,
+.app-shell.hud-shell .report-ledger-table th,
+.app-shell.hud-shell .report-battle-summary-table th,
+.app-shell.hud-shell .rankings-table th,
+.app-shell.hud-shell .content-info-modal__table th,
+.app-shell.hud-shell [class*='-table'] th {
+  background: #1a2e1a !important;
+  color: #c9a84c !important;
+  border-color: rgba(74, 124, 89, 0.2) !important;
+  text-shadow: none !important;
+}
+
+.app-shell.hud-shell table td,
+.app-shell.hud-shell .data-table td,
+.app-shell.hud-shell .stats-table td,
+.app-shell.hud-shell .report-loss-table td,
+.app-shell.hud-shell .report-ledger-table td,
+.app-shell.hud-shell .report-battle-summary-table td,
+.app-shell.hud-shell .rankings-table td,
+.app-shell.hud-shell .content-info-modal__table td,
+.app-shell.hud-shell [class*='-table'] td {
+  background: #111a11 !important;
+  color: #d4d4aa !important;
+  border-color: rgba(74, 124, 89, 0.12) !important;
+}
+
+.app-shell.hud-shell table tbody tr:nth-child(even) td,
+.app-shell.hud-shell .data-table tbody tr:nth-child(even) td,
+.app-shell.hud-shell .report-ledger-table tbody tr:nth-child(even) td,
+.app-shell.hud-shell .rankings-table tbody tr:nth-child(even) td,
+.app-shell.hud-shell .content-info-modal__table--terminal tbody tr:nth-child(odd),
+.app-shell.hud-shell .content-info-modal__table--terminal tbody tr:nth-child(even) {
+  background: rgba(26, 46, 26, 0.55) !important;
+  background-image: none !important;
+}
+
+.app-shell.hud-shell table tbody tr:hover td,
+.app-shell.hud-shell .data-table tbody tr:hover td,
+.app-shell.hud-shell .rankings-table tbody tr:hover td,
+.app-shell.hud-shell .content-info-modal__table tbody tr:hover td {
+  background: #1a2e1a !important;
+}
+
+.app-shell.hud-shell .rankings-table tr.is-me td {
+  background: rgba(74, 124, 89, 0.22) !important;
+}
+
+/* ── Liste satırları ── */
+.app-shell.hud-shell .list-row,
+.app-shell.hud-shell .report-list-item,
+.app-shell.hud-shell .news-item,
+.app-shell.hud-shell .terminal-dock-log-line,
+.app-shell.hud-shell .terminal-log-line {
+  background: #111a11 !important;
+  border-color: rgba(74, 124, 89, 0.12) !important;
+}
+
+/* ── Form elemanları ── */
+.app-shell.hud-shell input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.app-shell.hud-shell select,
+.app-shell.hud-shell textarea,
+.app-shell.hud-shell .custom-dropdown__trigger,
+.app-shell.hud-shell .custom-dropdown__menu,
+.app-shell.hud-shell .city-switcher-select,
+.app-shell.hud-shell .input-qty,
+.app-shell.hud-shell .production-input {
+  background: #111a11 !important;
+  border: 1px solid rgba(74, 124, 89, 0.28) !important;
+  color: #d4d4aa !important;
+  box-shadow: none !important;
+}
+
+.app-shell.hud-shell input::placeholder,
+.app-shell.hud-shell textarea::placeholder {
+  color: rgba(212, 212, 170, 0.45) !important;
+}
+
+/* ── Bina kartı içi ── */
+.app-shell.hud-shell .card-visual--building,
+.app-shell.hud-shell .building-img-wrap {
+  background: #111a11 !important;
+  border-color: rgba(74, 124, 89, 0.15) !important;
+}
+
+/* ── Modal / overlay içi ── */
+.app-shell.hud-shell .modal-content,
+.app-shell.hud-shell .modal-panel,
+.app-shell.hud-shell .content-info-modal__body,
+.app-shell.hud-shell .content-info-modal__table-wrap,
+.app-shell.hud-shell .system-locked-modal__panel {
+  background: #111a11 !important;
+  background-image: none !important;
+}
+
+/* ── Scrollbar ── */
+.app-shell.hud-shell * {
+  scrollbar-color: #4a7c59 #0a0f0a !important;
+}
+
+.app-shell.hud-shell *::-webkit-scrollbar-track {
+  background: #0a0f0a !important;
+}
+
+.app-shell.hud-shell *::-webkit-scrollbar-thumb {
+  background: #4a7c59 !important;
+}
+
+/* ── Strat matris gauge / progress ── */
+.app-shell.hud-shell .strat-gauge__track,
+.app-shell.hud-shell .strat-bar__track,
+.app-shell.hud-shell .res-bar,
+.app-shell.hud-shell .unit-stock-bar__track {
+  background: #0a0f0a !important;
+  border-color: rgba(74, 124, 89, 0.2) !important;
+}
+
+.app-shell.hud-shell .strat-gauge__fill,
+.app-shell.hud-shell .strat-bar__fill {
+  background: #4a7c59 !important;
+  box-shadow: none !important;
+}
+
+/* ── Terminal log (alt) — yeşil metin korunur ── */
+.app-shell.hud-shell .terminal-dock-logs,
+.app-shell.hud-shell .terminal-log-panel {
+  background: #0a0f0a !important;
+}

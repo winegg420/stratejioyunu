@@ -24,7 +24,7 @@ function countActiveExpeditions(expeditions = []) {
  * Yerel store + Supabase poll — widget'larda gerçek sayılar.
  */
 export function useHomeCommandStats() {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const expeditions = useGameStore((s) => s.expeditions);
   const reports = useGameStore((s) => s.reports);
   const cities = useGameStore((s) => s.cities);
@@ -42,11 +42,11 @@ export function useHomeCommandStats() {
   const [remote, setRemote] = useState(null);
 
   const refresh = useCallback(async () => {
-    const profileId = user?.id ?? getLastSyncUserId();
+    const profileId = session?.user?.id ?? getLastSyncUserId();
     if (!profileId) return;
     const stats = await fetchHomeCommandStatsFromServer(profileId);
     if (stats) setRemote(stats);
-  }, [user?.id]);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (gameHydrating) return undefined;

@@ -17,6 +17,13 @@ function getByPath(obj, path) {
 export function translate(lang, key, vars = {}) {
   const locale = getLocale(lang);
   let text = getByPath(locale, key);
+  if (text == null && lang === 'en') {
+    const trText = getByPath(tr, key);
+    if (trText != null && import.meta.env?.DEV) {
+      console.warn(`[i18n] EN missing key "${key}" — add to extra/en.js (TR: "${String(trText).slice(0, 48)}…")`);
+    }
+    text = trText;
+  }
   if (text == null) {
     text = getByPath(tr, key);
   }
@@ -31,3 +38,10 @@ export function resourceLabel(lang, resourceId) {
   const id = resourceId === 'metal' ? 'hammadde' : resourceId;
   return translate(lang, `resource.${id}`) || id;
 }
+
+export {
+  localizedBuildingLabel,
+  localizedResearchName,
+  localizedResearchDesc,
+  localizedUnitName,
+} from './displayLabels';

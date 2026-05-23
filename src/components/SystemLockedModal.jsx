@@ -1,14 +1,7 @@
-import { useEffect } from 'react';
+import { useModalDismiss } from '../hooks/useModalDismiss';
 
 export default function SystemLockedModal({ open, featureLabel, onClose, variant = 'default' }) {
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  useModalDismiss(open, onClose);
 
   if (!open) return null;
 
@@ -37,8 +30,8 @@ export default function SystemLockedModal({ open, featureLabel, onClose, variant
             ? 'Bu sektörü açmak için gerekli bina seviyesine ulaşmalısınız.'
             : 'Bu modül bir sonraki operasyon paketinde devreye alınacak.'}
         </p>
-        <button type="button" className="btn btn-secondary system-locked-close" onClick={onClose}>
-          [ KAPAT ]
+        <button type="button" className="system-locked-dismiss" onClick={onClose}>
+          AĞI KAPAT [ESC]
         </button>
       </div>
     </div>

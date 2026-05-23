@@ -1,3 +1,4 @@
+import { translate } from '../i18n';
 import { clampHappiness, DEFAULT_HAPPINESS, DEFAULT_TAX_RATE } from './cityModel';
 import { formatRate } from './gameUtils';
 import { BUILDING_RESOURCE_MAP } from './gameUtils';
@@ -209,10 +210,10 @@ export function applyHappinessToResourceRates(resources, happiness, cyberEffects
   });
 }
 
-export function formatHappinessLabel(happiness) {
+export function formatHappinessLabel(happiness, lang = 'tr') {
   const h = clampHappiness(happiness);
-  if (h >= 75) return 'Yüksek';
-  if (h >= 45) return 'Orta';
-  if (h >= 25) return 'Düşük';
-  return 'Kritik';
+  if (h >= 75) return translate(lang, 'happiness.high');
+  if (h >= 45) return translate(lang, 'happiness.mid');
+  if (h >= 25) return translate(lang, 'happiness.low');
+  return translate(lang, 'happiness.critical');
 }

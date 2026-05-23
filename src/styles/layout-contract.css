@@ -1,0 +1,95 @@
+/**
+ * Layout sözleşmesi — en son import; tüm sayfalarda geçerli.
+ * Dağınık layout-* dosyalarının üzerine yazar.
+ */
+
+/* Yan telemetri yalnızca haritada (DOM kalsa bile gizle) */
+.app-shell:not(.route-map) .cyber-shell-chrome,
+.home-page .cyber-shell-chrome,
+.page:not(.map-page) ~ .cyber-shell-chrome {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ana Merkez başlık — üst üste binme yok */
+.home-command-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-top: 0.25rem;
+  position: relative;
+  z-index: 4;
+  isolation: isolate;
+}
+
+.home-command-page-header .page-header__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.home-command-page-header .page-header__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.home-command-page-header .page-title {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: 1.15;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.home-command-page-header .page-feed-line--ready,
+.home-command-page-header .page-feed-line--pending,
+.home-command-page-header .page-subtitle--typewriter {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 !important;
+  padding: 0;
+  line-height: 1.45;
+  position: relative;
+  top: auto;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* İçerik alanı — sabit chrome yokken sol bindirme olmasın */
+.app-shell.hud-shell:not(.route-map) .content-area {
+  padding-top: 0.75rem !important;
+  padding-left: 1rem;
+}
+
+/* Üst kaynak barı: resource-bar-grid-final.css + tiered DOM */
+
+/* Eski çok satırlı düzen — geriye dönük sınıflar */
+.resource-bar--stacked .resources-row--primary,
+.resource-bar--stacked .resources-row--secondary,
+.resource-bar--stacked .resources-row--advanced {
+  display: none !important;
+}
+
+@media (max-width: 960px) {
+  .home-command-head {
+    grid-template-columns: 1fr;
+  }
+}

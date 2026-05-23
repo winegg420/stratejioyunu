@@ -38,7 +38,14 @@ export default function MarketPriceChart({ resourceId = 'hammadde', className = 
         {pathD && (
           <>
             <path d={`${pathD} L 100 40 L 0 40 Z`} fill="url(#marketChartGlow)" />
-            <path d={pathD} className="market-price-chart__line" vectorEffect="non-scaling-stroke" />
+            <path
+              d={pathD}
+              className="market-price-chart__line"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
           </>
         )}
       </svg>

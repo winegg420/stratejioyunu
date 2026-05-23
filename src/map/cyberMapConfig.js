@@ -26,13 +26,13 @@ export const ROUTE_STYLES = {
     className: 'cyber-route tactical-route tactical-route-beam tactical-route--found cyber-route--found',
   },
   trade: {
-    color: '#22d3ee',
+    color: '#4a7c59',
     dashArray: '5, 10',
     className: 'cyber-route tactical-route tactical-route-beam tactical-route--trade cyber-route--trade',
   },
 };
 
-export const FOG_FILL = { fillColor: '#020205', fillOpacity: 0.88, stroke: false };
+export const FOG_FILL = { fillColor: '#0a0f0a', fillOpacity: 0.88, stroke: false };
 
 export const VISION_RADIUS_DEG = 1.65;
 export const SPY_VISION_RADIUS_DEG = 2.4;

@@ -8,11 +8,11 @@
 }
 
 .map-city-dot--own .map-city-dot__core {
-  background: #39ff14 !important;
+  background: #4a7c59 !important;
   box-shadow:
-    0 0 8px #39ff14,
-    0 0 16px rgba(57, 255, 20, 0.65),
-    0 0 28px rgba(57, 255, 20, 0.35);
+    0 0 8px #4a7c59,
+    0 0 16px rgba(74, 124, 89, 0.65),
+    0 0 28px rgba(74, 124, 89, 0.35);
 }
 
 .map-city-dot--bot .map-city-dot__core {
@@ -32,8 +32,8 @@
   padding: 0.3rem 0.55rem;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
-  color: var(--neon-cyan, #00ffcc);
-  border: 1px solid rgba(0, 255, 204, 0.35);
+  color: var(--neon-cyan, #4a7c59);
+  border: 1px solid rgba(74, 124, 89, 0.35);
   background: rgba(0, 8, 14, 0.88);
   pointer-events: none;
 }
@@ -53,7 +53,7 @@
   right: -8px;
   font-size: 0.65rem;
   line-height: 1;
-  filter: drop-shadow(0 0 4px rgba(0, 255, 204, 0.65));
+  filter: drop-shadow(0 0 4px rgba(74, 124, 89, 0.65));
 }
 
 /* Sefer tipi seçimi */
@@ -71,17 +71,17 @@
   gap: 0.2rem;
   padding: 0.45rem 0.5rem;
   text-align: left;
-  border: 1px solid rgba(0, 255, 204, 0.28);
-  background: rgba(0, 12, 20, 0.85);
+  border: 1px solid rgba(74, 124, 89, 0.28);
+  background: #111a11;
   color: rgba(203, 213, 225, 0.9);
   cursor: pointer;
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
 }
 
 .expedition-intent-btn--active {
-  border-color: var(--neon-green, #39ff14);
-  box-shadow: 0 0 12px rgba(57, 255, 20, 0.3);
-  color: var(--neon-green, #39ff14);
+  border-color: var(--neon-green, #4a7c59);
+  box-shadow: 0 0 12px rgba(74, 124, 89, 0.3);
+  color: var(--neon-green, #4a7c59);
 }
 
 .expedition-intent-btn__label {
@@ -97,7 +97,7 @@
 }
 
 .expedition-intent-btn--active .expedition-intent-btn__risk {
-  color: rgba(57, 255, 20, 0.7);
+  color: rgba(74, 124, 89, 0.7);
 }
 
 /* INCOMING THREAT */
@@ -137,7 +137,7 @@
 
 .report-battle-summary-table th,
 .report-battle-summary-table td {
-  border: 1px solid rgba(0, 255, 204, 0.22);
+  border: 1px solid rgba(74, 124, 89, 0.22);
   padding: 0.4rem 0.55rem;
   text-align: left;
 }
@@ -145,7 +145,7 @@
 .report-battle-summary-table th {
   color: rgba(148, 163, 184, 0.85);
   font-weight: 600;
-  background: rgba(0, 255, 204, 0.06);
+  background: rgba(74, 124, 89, 0.06);
 }
 
 .report-battle-summary-table td {
@@ -153,7 +153,7 @@
 }
 
 .report-battle-summary-table .report-battle-summary-table__winner {
-  color: var(--neon-green, #39ff14);
+  color: var(--neon-green, #4a7c59);
   font-weight: 700;
 }
 
@@ -181,7 +181,7 @@
 .own-city-marker--empire .map-marker-pin,
 .main-hq-marker .map-marker-pin,
 .colony-marker .map-marker-pin {
-  filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.75));
+  filter: drop-shadow(0 0 8px rgba(74, 124, 89, 0.75));
 }
 
 .map-city-marker--bot .map-marker-pin {

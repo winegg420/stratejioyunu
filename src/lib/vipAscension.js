@@ -72,9 +72,11 @@ export function buildPostAscensionGamePatch(state, playerMeta, playerName = getC
     cities: { [cityId]: cityState },
     mapCities: mapCitiesWithHome,
     mapFocusRequest: null,
+    lastViewedLocation: null,
     mapTargetPickRequest: null,
     mapTargetPickResult: null,
     flashes: {},
+    budgetSpendFloats: [],
     navBadges: { expeditions: false, reports: false },
     pastExpeditions: [],
   };

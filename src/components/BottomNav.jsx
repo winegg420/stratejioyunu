@@ -12,7 +12,7 @@ export default function BottomNav() {
   const expeditionCount = useActiveExpeditionCount();
 
   return (
-    <nav className="bottom-nav" aria-label="Ana menü">
+    <nav className="bottom-nav" aria-label={t('common.mobileMenuAria')}>
       {MOBILE_NAV_ITEMS.map((item) => (
         <NavLink
           key={item.path}

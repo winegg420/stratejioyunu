@@ -1,4 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { useActionLock } from '../hooks/useActionLock';
 import { formatHappinessLabel, pruneCyberEffects } from '../lib/happinessSystem';
 import { getTroopStock } from '../lib/troopStock';
@@ -9,6 +11,8 @@ import {
   resolveDefenderCyberOpsLevel,
 } from '../utils/spyEngine';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { findSpyReportForCity } from '../lib/spyIntel';
+import { useLanguage } from '../context/LanguageContext';
 import {
   calcAttackerIntelPower,
   calcDefenderIntelDefense,
@@ -39,6 +43,9 @@ import {
 import { isConquerableMapTarget } from '../lib/worldCitySystem';
 import CargoLogisticsPanel from '../components/CargoLogisticsPanel';
 import CityInflightSupply from '../components/CityInflightSupply';
+import HudBackButton from '../components/HudBackButton';
+import ExpeditionTroopAccordion from '../components/ExpeditionTroopAccordion';
+import CustomDropdown from '../components/CustomDropdown';
 import { calcSpyProbeTravelSeconds } from '../utils/spyEngine';
 import {
   useActiveCityIdleTroops,
@@ -50,7 +57,7 @@ import {
 const STATUS_LABELS = {
   own: 'Kendi üssünüz',
   enemy: 'Düşman üssü',
-  empty: '[ SAHİPSİZ BÖLGE ]',
+  empty: 'Fethedilmemiş Bölge',
   vassal: 'Vasal üs',
   bot: '[ OTOMATİK YÖNETİM ]',
   siege: 'Kuşatma altında',
@@ -120,11 +127,22 @@ export default function CityDetailPanel({ city, onClose }) {
 }
 
 function MapCommandModal({ city, onClose }) {
+  const { t } = useLanguage();
   const [actionMode, setActionMode] = useState(null);
   const [troopQty, setTroopQty] = useState({});
   const [spyQty, setSpyQty] = useState(1);
   const [cyberAgentQty, setCyberAgentQty] = useState(1);
   const [cyberAbilityId, setCyberAbilityId] = useState(CYBER_ABILITIES[0]?.id ?? '');
+
+  useLayoutEffect(() => {
+    document.body.classList.add('map-city-panel-open');
+    const mobile = window.matchMedia('(max-width: 900px)').matches;
+    if (mobile) document.body.classList.add('map-scroll-locked');
+    return () => {
+      document.body.classList.remove('map-city-panel-open');
+      if (mobile) document.body.classList.remove('map-scroll-locked');
+    };
+  }, []);
 
   const live = useLiveMapCity(city);
   const activeCityId = useGameStore((s) => s.activeCityId);
@@ -145,13 +163,16 @@ function MapCommandModal({ city, onClose }) {
   const playerIdeology = useGameStore((s) => s.playerIdeology);
   const researches = useGameStore((s) => s.researches);
   const watchlist = useGameStore((s) => s.watchlist ?? []);
+  const reports = useGameStore((s) => s.reports ?? []);
   const addWatchTarget = useGameStore((s) => s.addWatchTarget);
   const playerName = getCurrentPlayerName();
-  const gameStateSlice = useGameStore((s) => ({
-    playerCities: s.playerCities,
-    cities: s.cities,
-    mapCities: s.mapCities,
-  }));
+  const gameStateSlice = useGameStore(
+    useShallow((s) => ({
+      playerCities: s.playerCities,
+      cities: s.cities,
+      mapCities: s.mapCities,
+    })),
+  );
   const { locked: actionLocked, runLocked } = useActionLock();
 
   const display = live ?? {
@@ -338,6 +359,17 @@ function MapCommandModal({ city, onClose }) {
     });
   };
 
+  const spyReport = useMemo(
+    () => findSpyReportForCity(reports, mapCity.name),
+    [reports, mapCity.name],
+  );
+
+  const hasResourceIntel = Boolean(
+    isAnyOwnCity
+    || display.resources
+    || spyReport,
+  );
+
   const resourceList = display.resources ?? [
     { id: 'food', label: 'Nüfus', icon: '👥' },
     { id: 'fuel', label: 'Petrol', icon: '🛢️' },
@@ -347,8 +379,8 @@ function MapCommandModal({ city, onClose }) {
     { id: 'uranium', label: 'Uranyum', icon: '☢️' },
   ];
 
-  return (
-    <div className="map-command-modal-root" role="presentation">
+  return createPortal(
+    <div className="map-command-modal-root map-command-modal-root--portaled" role="presentation">
       <button
         type="button"
         className="map-command-modal__backdrop"
@@ -422,19 +454,25 @@ function MapCommandModal({ city, onClose }) {
           <CityInflightSupply cityId={live.pc.id} cityName={live.pc.name} />
         )}
 
-        <section className="map-command-modal__resources" aria-label="Kaynak durumu">
-          <h3 className="map-command-modal__section-title">Kaynak Durumu</h3>
-          <ul className="map-command-modal__resource-grid">
-            {resourceList.map((r) => (
-              <li key={r.id}>
-                <span>{r.icon} {r.label}</span>
-                <strong className={!display.resources && (mapCity.status === 'bot' || mapCity.status === 'empty') ? 'map-command-modal__resource-unknown' : ''}>
-                  {formatResourceValue(r, mapCity)}
-                </strong>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {hasResourceIntel ? (
+          <section className="map-command-modal__resources" aria-label={t('map.cityPanel.resourcesAria')}>
+            <h3 className="map-command-modal__section-title">{t('map.cityPanel.resourcesTitle')}</h3>
+            <ul className="map-command-modal__resource-grid">
+              {resourceList.map((r) => (
+                <li key={r.id}>
+                  <span>{r.icon} {r.label}</span>
+                  <strong>
+                    {formatResourceValue(r, mapCity)}
+                  </strong>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <p className="map-command-modal__intel-locked" role="status">
+            {t('map.cityPanel.resourcesLocked')}
+          </p>
+        )}
 
         {outOfRange && (
           <p className="map-command-modal__warn">Radar menzili dışı — taktiksel emirler kilitli.</p>
@@ -475,15 +513,16 @@ function MapCommandModal({ city, onClose }) {
           <div className="map-command-modal__cargo-hub">
             <label className="cargo-logistics-field">
               <span>Hedef koloni</span>
-              <select
+              <CustomDropdown
                 className="expedition-launch-select"
                 value={cargoDestId}
-                onChange={(e) => setCargoDestId(e.target.value)}
-              >
-                {otherColonies.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={setCargoDestId}
+                aria-label="Hedef koloni"
+                options={otherColonies.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+              />
             </label>
             <CargoLogisticsPanel
               originCityId={activeCityId}
@@ -580,22 +619,23 @@ function MapCommandModal({ city, onClose }) {
               </div>
             )}
             <ExpeditionEtaStrip durationSeconds={attackDuration} airRush={airRushAttack} />
-            {idleTroops.map((t) => (
-              <TroopDispatchRow
-                key={t.id}
-                troop={t}
-                awayMap={awayMap}
-                value={troopQty[t.id] ?? 0}
-                onChange={(v) => setTroopQty((prev) => ({ ...prev, [t.id]: v }))}
-              />
-            ))}
-            <div className="map-command-modal__panel-actions">
+            <ExpeditionTroopAccordion
+              troops={idleTroops}
+              renderTroopRow={(t) => (
+                <TroopDispatchRow
+                  key={t.id}
+                  troop={t}
+                  awayMap={awayMap}
+                  value={troopQty[t.id] ?? 0}
+                  onChange={(v) => setTroopQty((prev) => ({ ...prev, [t.id]: v }))}
+                />
+              )}
+            />
+            <div className="map-command-modal__panel-actions map-command-modal__panel-actions--sticky">
               <button type="button" className="btn btn-hud-primary" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
                 {isConquerTarget && conquestEval.ok ? '[ FETİH BAŞLAT ]' : '[ SEFERİ BAŞLAT ]'}
               </button>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
-                Geri
-              </button>
+              <HudBackButton onStepBack={() => setActionMode(null)} />
             </div>
           </section>
         )}
@@ -620,9 +660,7 @@ function MapCommandModal({ city, onClose }) {
               <button type="button" className="btn btn-primary map-command-modal__panel-btn" disabled={!canStartSpy || actionLocked} onClick={confirmSpy}>
                 SONDA_TX
               </button>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
-                Geri
-              </button>
+              <HudBackButton onStepBack={() => setActionMode(null)} />
             </div>
           </section>
         )}
@@ -693,13 +731,12 @@ function MapCommandModal({ city, onClose }) {
               >
                 VIRÜS_TX
               </button>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setActionMode(null)}>
-                Geri
-              </button>
+              <HudBackButton onStepBack={() => setActionMode(null)} />
             </div>
           </section>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

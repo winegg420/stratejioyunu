@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import L from 'leaflet';
 import { enrichMapCityWithProvince, resolveCityProvinceName } from './cityProvinceMatch';
 import { getHoverStyle, getProvinceStyle } from './mapUtils';
 import { getBotProvinceStyle } from '../lib/botProvincePulse';
@@ -14,6 +15,8 @@ export function useProvinceMapHandlers({
   fulfillMapTargetPick,
   navigate,
   handleSelectCity,
+  openMapCityPanel,
+  onProvinceView,
   setActiveHighlightCity,
   activeProvinceLayerRef,
   botProvinceNamesRef,
@@ -28,6 +31,8 @@ export function useProvinceMapHandlers({
     fulfillMapTargetPick,
     navigate,
     handleSelectCity,
+    openMapCityPanel,
+    onProvinceView,
     setActiveHighlightCity,
     activeProvinceLayerRef,
     botProvinceNamesRef,
@@ -35,12 +40,21 @@ export function useProvinceMapHandlers({
   };
 
   const findCityForProvince = useCallback((feature) => {
-    const provinceName = feature.properties?.shapeName;
-    if (!provinceName) return null;
-    const { mapCities: cities, playerCities: pcs } = handlersRef.current;
-    return cities.find(
-      (c) => resolveCityProvinceName(c, pcs) === provinceName,
-    ) ?? cities.find((c) => c.name === provinceName) ?? null;
+    try {
+      const provinceName = feature?.properties?.shapeName;
+      if (!provinceName) return null;
+      const { mapCities: cities, playerCities: pcs } = handlersRef.current;
+      if (!Array.isArray(cities)) return null;
+      const norm = (s) => String(s ?? '').trim().toLocaleLowerCase('tr');
+      const target = norm(provinceName);
+      return cities.find((c) => {
+        const pn = resolveCityProvinceName(c, pcs);
+        return norm(pn) === target || norm(c.name) === target || norm(c.provinceName) === target;
+      }) ?? cities.find((c) => c.name === provinceName) ?? null;
+    } catch (err) {
+      console.warn('[MAP_PROVINCE]', err);
+      return null;
+    }
   }, []);
 
   const setActiveFeature = useCallback((layer) => {
@@ -52,44 +66,97 @@ export function useProvinceMapHandlers({
   }, []);
 
   const onEachProvince = useCallback((feature, layer) => {
-    const name = feature.properties?.shapeName;
-    if (name) {
-      layer.bindTooltip(name, { sticky: true, className: 'map-tooltip map-tooltip--cyber' });
-    }
-
-    const applyBaseStyle = () => {
-      const h = handlersRef.current;
-      if (name && h.botProvinceNamesRef?.current?.has(name)) {
-        layer.setStyle(getBotProvinceStyle());
-      } else {
-        layer.setStyle(getProvinceStyle());
-      }
-    };
-
-    layer.on('mouseover', () => {
-      if (handlersRef.current.activeProvinceLayerRef.current !== layer) {
-        const h = handlersRef.current;
-        const base = name && h.botProvinceNamesRef?.current?.has(name)
-          ? getBotProvinceStyle()
-          : getProvinceStyle();
-        layer.setStyle(getHoverStyle(base));
-      }
-    });
-    layer.on('mouseout', applyBaseStyle);
-    layer.on('click', () => {
-      const h = handlersRef.current;
-      const city = findCityForProvince(feature);
-      if (city) {
-        h.handleSelectCity(city);
-      } else {
-        h.setActiveHighlightCity({
-          name: feature.properties?.shapeName ?? 'Bölge',
-          provinceName: feature.properties?.shapeName,
-          province: feature.properties?.shapeISO,
+    try {
+      if (!feature || !layer) return;
+      const name = feature.properties?.shapeName;
+      if (name) {
+        layer.bindTooltip(name, {
+          sticky: false,
+          direction: 'top',
+          offset: [0, -10],
+          opacity: 0.96,
+          className: 'map-tooltip map-tooltip--cyber',
         });
       }
-      setActiveProvinceLayer(layer, h.activeProvinceLayerRef, getProvinceStyle);
-    });
+
+      const applyBaseStyle = () => {
+        try {
+          const h = handlersRef.current;
+          if (name && h.botProvinceNamesRef?.current?.has(name)) {
+            layer.setStyle(getBotProvinceStyle());
+          } else {
+            layer.setStyle(getProvinceStyle());
+          }
+        } catch {
+          /* layer disposed */
+        }
+      };
+
+      layer.on('mouseover', (e) => {
+        try {
+          if (name) {
+            const tip = layer.getTooltip?.();
+            if (tip) {
+              const anchor = e?.latlng ?? layer.getBounds?.()?.getCenter?.();
+              if (anchor) layer.openTooltip(anchor);
+              else layer.openTooltip();
+            }
+          }
+          if (handlersRef.current.activeProvinceLayerRef.current !== layer) {
+            const h = handlersRef.current;
+            const base = name && h.botProvinceNamesRef?.current?.has(name)
+              ? getBotProvinceStyle()
+              : getProvinceStyle();
+            layer.setStyle(getHoverStyle(base));
+          }
+        } catch {
+          /* ignore */
+        }
+      });
+      layer.on('mouseout', () => {
+        try {
+          layer.closeTooltip?.();
+        } catch {
+          /* ignore */
+        }
+        applyBaseStyle();
+      });
+      layer.on('click', (e) => {
+        try {
+          L.DomEvent.stopPropagation(e);
+          e?.originalEvent?.stopPropagation?.();
+          const h = handlersRef.current;
+          const city = findCityForProvince(feature);
+          const provinceName = feature.properties?.shapeName ?? 'Bölge';
+          const center = layer.getBounds?.()?.getCenter?.();
+          const highlight = city ?? {
+            name: provinceName,
+            provinceName,
+            province: feature.properties?.shapeISO,
+            lat: center?.lat,
+            lng: center?.lng,
+            status: 'empty',
+          };
+          if (h.mapTargetPickRequest) {
+            if (city) {
+              h.handleSelectCity(city);
+            } else {
+              h.handleSelectCity({
+                ...highlight,
+                name: provinceName,
+              });
+            }
+          } else {
+            h.openMapCityPanel?.(highlight);
+          }
+          setActiveProvinceLayer(layer, h.activeProvinceLayerRef, getProvinceStyle);
+        } catch (err) {
+          console.warn('[MAP_CLICK]', err);
+        }
+      });
+    } catch (err) {
+      console.warn('[MAP_EACH_PROVINCE]', err);
+    }
   }, [findCityForProvince]);
 
   return { onEachProvince, findCityForProvince, setActiveFeature };

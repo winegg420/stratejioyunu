@@ -9,12 +9,24 @@ import { GAME_NAME } from '../data/placeholder';
 
 export default function AuthPage() {
   const { t } = useLanguage();
-  const { isAuthed, authReady, signIn, loginDemo, isSupabaseConfigured } = useAuth();
+  const {
+    isAuthed,
+    authReady,
+    signIn,
+    register,
+    loginWithGoogle,
+    loginDemo,
+    isSupabaseConfigured,
+  } = useAuth();
   const navigate = useNavigate();
+  const [authTab, setAuthTab] = useState('login');
   const [playerId, setPlayerId] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [previewBriefing, setPreviewBriefing] = useState(false);
 
   if (!authReady) {
@@ -31,12 +43,37 @@ export default function AuthPage() {
 
   const goHome = () => navigate('/', { replace: true });
 
+  const handleGoogle = async () => {
+    setError('');
+    setInfo('');
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      setError(err.message || t('auth.loginFailed'));
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
     try {
-      await signIn(playerId, password);
+      if (authTab === 'register') {
+        if (password !== passwordConfirm) {
+          throw new Error(t('auth.passwordMismatch'));
+        }
+        const result = await register(playerId, password, displayName);
+        if (result.needsEmailConfirm) {
+          setInfo(t('auth.confirmEmailSent'));
+          setLoading(false);
+          return;
+        }
+      } else {
+        await signIn(playerId, password);
+      }
       goHome();
     } catch (err) {
       setError(err.message || t('auth.loginFailed'));
@@ -47,9 +84,10 @@ export default function AuthPage() {
 
   const handleQuickLogin = async () => {
     setError('');
+    setInfo('');
     setLoading(true);
     try {
-      loginDemo(playerId.trim() || 'Oyuncu');
+      loginDemo(playerId.trim() || displayName.trim() || 'Oyuncu');
       goHome();
     } finally {
       setLoading(false);
@@ -80,16 +118,70 @@ export default function AuthPage() {
           )}
         </header>
 
+        {isSupabaseConfigured && (
+          <>
+            <button
+              type="button"
+              className="btn auth-google-btn"
+              onClick={handleGoogle}
+              disabled={loading}
+            >
+              <span className="auth-google-btn__icon" aria-hidden="true">G</span>
+              {t('auth.googleLogin')}
+            </button>
+            <p className="auth-divider">
+              <span>{t('auth.orDivider')}</span>
+            </p>
+          </>
+        )}
+
+        <div className="auth-tabs" role="tablist" aria-label={t('auth.tabsAria')}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={authTab === 'login'}
+            className={authTab === 'login' ? 'active' : ''}
+            onClick={() => { setAuthTab('login'); setError(''); setInfo(''); }}
+            disabled={loading}
+          >
+            {t('auth.tabLogin')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={authTab === 'register'}
+            className={authTab === 'register' ? 'active' : ''}
+            onClick={() => { setAuthTab('register'); setError(''); setInfo(''); }}
+            disabled={loading || !isSupabaseConfigured}
+          >
+            {t('auth.tabRegister')}
+          </button>
+        </div>
+
         <form className="auth-form" onSubmit={handleSubmit}>
+          {authTab === 'register' && (
+            <label>
+              <span>{t('auth.displayName')}</span>
+              <input
+                type="text"
+                placeholder={t('auth.placeholderDisplayName')}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                autoComplete="nickname"
+                disabled={loading}
+              />
+            </label>
+          )}
           <label>
-            <span>{t('auth.playerId')}</span>
+            <span>{t('auth.emailOrId')}</span>
             <input
               type="text"
-              placeholder={t('auth.placeholderId')}
+              placeholder={t('auth.placeholderEmail')}
               value={playerId}
               onChange={(e) => setPlayerId(e.target.value)}
-              autoComplete="username"
+              autoComplete={authTab === 'register' ? 'email' : 'username'}
               disabled={loading}
+              required
             />
           </label>
           <label>
@@ -99,10 +191,25 @@ export default function AuthPage() {
               placeholder={t('auth.placeholderPassword')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete={authTab === 'register' ? 'new-password' : 'current-password'}
               disabled={loading}
+              required={authTab === 'register' || isSupabaseConfigured}
             />
           </label>
+          {authTab === 'register' && (
+            <label>
+              <span>{t('auth.passwordConfirm')}</span>
+              <input
+                type="password"
+                placeholder={t('auth.placeholderPassword')}
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                autoComplete="new-password"
+                disabled={loading}
+                required
+              />
+            </label>
+          )}
           <p className="auth-hint">
             {isSupabaseConfigured ? t('auth.hintConfigured') : t('auth.hintDemo')}
           </p>
@@ -111,8 +218,15 @@ export default function AuthPage() {
               {error}
             </p>
           )}
+          {info && (
+            <p className="auth-info" role="status">
+              {info}
+            </p>
+          )}
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? t('auth.submitting') : t('auth.submit')}
+            {loading
+              ? t('auth.submitting')
+              : (authTab === 'register' ? t('auth.submitRegister') : t('auth.submit'))}
           </button>
           <button
             type="button"

@@ -8,15 +8,15 @@
 .expedition-input-qty,
 .map-cmd-troop-row .input-qty,
 .map-cmd-troop-input .input-qty {
-  background: rgba(4, 12, 22, 0.88) !important;
-  border: 1px solid rgba(0, 240, 255, 0.55) !important;
+  background: rgba(17, 26, 17, 0.88) !important;
+  border: 1px solid rgba(74, 124, 89, 0.55) !important;
   border-radius: 0 !important;
   color: #22ff88 !important;
   font-family: var(--cmd-font-mono, var(--font-mono)) !important;
   text-align: center !important;
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.08) inset,
-    0 0 12px rgba(0, 240, 255, 0.08);
+    0 0 0 1px rgba(74, 124, 89, 0.08) inset,
+    0 0 12px rgba(74, 124, 89, 0.08);
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -47,16 +47,16 @@
 .map-cmd-troop-row .input-qty:focus,
 .map-cmd-troop-input .input-qty:focus {
   outline: none !important;
-  border-color: rgba(57, 255, 20, 0.75) !important;
+  border-color: rgba(74, 124, 89, 0.75) !important;
   box-shadow:
-    0 0 0 1px rgba(57, 255, 20, 0.35),
-    0 0 8px rgba(57, 255, 20, 0.5) !important;
+    0 0 0 1px rgba(74, 124, 89, 0.35),
+    0 0 8px rgba(74, 124, 89, 0.5) !important;
 }
 
 .barracks-page--military .input-qty::placeholder,
 .page--console .unit-card .input-qty::placeholder,
 .market-page .market-input-qty::placeholder {
-  color: rgba(34, 255, 136, 0.35);
+  color: rgba(74, 124, 89, 0.35);
 }
 
 /* Birim ansiklopedi — dikey nefes payı */
@@ -88,7 +88,7 @@
 }
 
 .content-info-modal__matchup--advantage {
-  border-color: rgba(34, 255, 136, 0.45) !important;
+  border-color: rgba(74, 124, 89, 0.45) !important;
   background: rgba(6, 40, 22, 0.55) !important;
 }
 

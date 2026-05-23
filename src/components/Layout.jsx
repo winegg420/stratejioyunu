@@ -9,12 +9,13 @@ import PwaUpdateBanner from './PwaUpdateBanner';
 import ContentInfoModal from './ContentInfoModal';
 import CyberShellChrome from './CyberShellChrome';
 import IncomingThreatFlash from './IncomingThreatFlash';
+import DevTestModeBanner from './DevTestModeBanner';
 import { useTerminalLogStore } from '../stores/terminalLogStore';
 import ErrorBoundary from './ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
+import { getDisplayName } from '../lib/auth';
 import { startSyncPolling, stopSyncPolling } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
-import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
 import { releaseMapSessionLocks } from '../map/mapRouteCleanup';
@@ -33,13 +34,29 @@ export default function Layout() {
   const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
   const initWorldSystems = useGameStore((s) => s.initWorldSystems);
   const touchPlayerActivity = useGameStore((s) => s.touchPlayerActivity);
-  const { session, authMode } = useAuth();
+  const { session, authMode, authReady } = useAuth();
+  const hydrateAttemptRef = useRef(null);
 
-  useHudButtonStrokes();
+  // useHudButtonStrokes — MutationObserver döngü riski; geçici kapalı
 
   useEffect(() => {
     initWorldSystems();
   }, [initWorldSystems]);
+
+  useEffect(() => {
+    if (!authReady || authMode !== 'supabase' || !session?.user?.id) return undefined;
+    const userId = session.user.id;
+    const state = useGameStore.getState();
+    if (state.gameHydrating) return undefined;
+    if (state._supabaseHydrated && state.playerCities?.length) return undefined;
+    if (hydrateAttemptRef.current === userId) return undefined;
+
+    hydrateAttemptRef.current = userId;
+    useGameStore.getState().hydrateFromSupabase(userId, getDisplayName(session.user)).catch(() => {
+      hydrateAttemptRef.current = null;
+    });
+    return undefined;
+  }, [authReady, authMode, session?.user?.id]);
 
   useEffect(() => startTicker(), [startTicker]);
 
@@ -107,9 +124,10 @@ export default function Layout() {
       className={`app-shell hud-shell hud-final${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
       <ResourceBar />
+      <DevTestModeBanner />
       <IncomingThreatFlash />
       <PwaUpdateBanner />
-      <CyberShellChrome />
+      {isMapPage && <CyberShellChrome />}
       <TerminalBottomDock />
       <ContentInfoModal />
       <div className="main-shell">

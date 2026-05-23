@@ -19,10 +19,12 @@ import MapFocusCrosshair from './MapFocusCrosshair';
 import MapMaxBounds from './MapMaxBounds';
 import MapHudControls from './MapHudControls';
 import MapPanZoomController from './MapPanZoomController';
+import MapDragPanController from './MapDragPanController';
 import MapMouseCoordinateHud from './MapMouseCoordinateHud';
 import CityDiplomacyBadgeLayer from './CityDiplomacyBadgeLayer';
 import MapFitFlyLayers from './MapFitFlyLayers';
 import MapHexClickPulse from './MapHexClickPulse';
+import MapResizeEffect from './MapResizeEffect';
 
 const TURKEY_CENTER = [39.0, 35.0];
 const TURKEY_ZOOM = 6;
@@ -85,13 +87,15 @@ function TurkeyLeafletMap({
       className="turkey-map turkey-map--cyber"
       scrollWheelZoom
       touchZoom
-      dragging
-      doubleClickZoom
+      dragging={false}
+      doubleClickZoom={false}
       zoomControl={false}
     >
       <MapMaxBounds />
+      <MapResizeEffect />
       <MapHexClickPulse onMapClick={onMapClickPulse} />
       <MapPanZoomController enabled={mapPanEnabled} />
+      <MapDragPanController enabled={mapPanEnabled} />
       <MapMouseCoordinateHud />
       <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
       <ProvinceRadarLayer
@@ -117,6 +121,7 @@ function TurkeyLeafletMap({
         mapCities={filteredCities}
         playerCities={playerCities}
         visible={!showCityLabels}
+        renderKey={Math.round((mapZoom ?? 6) * 10)}
       />
       <CityDiplomacyBadgeLayer mapCities={filteredCities} visible={showCityLabels} />
       <CityTargetReticleLayer
@@ -139,6 +144,7 @@ function TurkeyLeafletMap({
         onCityHover={onCityHover}
         onCityHoverEnd={onCityHoverEnd}
         showPinLabels={showCityLabels}
+        markerRenderKey={Math.round((mapZoom ?? 6) * 10)}
       />
       <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
       <MapFitFlyLayers fitBounds={fitBounds} flyTarget={flyTarget} />

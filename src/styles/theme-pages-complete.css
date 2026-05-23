@@ -1,0 +1,160 @@
+/**
+ * Sayfa bazlı son düzeltmeler — market, diplomasi, araştırma, ana merkez, tüm tablolar.
+ */
+
+/* ── Kaynak barı: resource-bar-grid-final.css ── */
+
+/* ── Butonlar (mavi secondary kaldır) ── */
+.hud-shell .btn-secondary:not(:disabled),
+.app-shell.hud-shell .btn-secondary:not(:disabled) {
+  background: #1a2e1a !important;
+  border-color: rgba(74, 124, 89, 0.35) !important;
+  color: #d4d4aa !important;
+}
+
+.hud-shell .btn-secondary:hover:not(:disabled),
+.app-shell.hud-shell .btn-secondary:hover:not(:disabled) {
+  background: #111a11 !important;
+  border-color: #4a7c59 !important;
+  color: #ffffff !important;
+}
+
+.app-shell.hud-shell .btn-primary,
+.app-shell.hud-shell .btn-build,
+.market-page .btn-primary {
+  background: #4a7c59 !important;
+  border-color: #3a6347 !important;
+  color: #ffffff !important;
+}
+
+/* ── Market ── */
+.market-page .market-exchange-panel,
+.market-page .market-offer-panel,
+.market-exchange-row,
+.market-offer-card,
+.market-ticker-tag,
+.market-offer-field input,
+.market-offer-select {
+  background: #111a11 !important;
+  border-color: rgba(74, 124, 89, 0.18) !important;
+}
+
+.market-exchange-field {
+  background: #1a2e1a !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
+  border-radius: 4px;
+  padding: 0.35rem !important;
+}
+
+.market-offer-select {
+  color: #d4d4aa !important;
+}
+
+/* ── Diplomasi ── */
+.diplomacy-page-header .page-title,
+.diplomacy-pact-row__type {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.diplomacy-pact-row {
+  background: #111a11 !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
+  clip-path: none !important;
+}
+
+.diplomacy-pact-row__dot {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+.diplomacy-panel,
+.diplomacy-panel--alliance,
+.diplomacy-panel--pacts,
+.diplomacy-panel--templates {
+  background: #111a11 !important;
+}
+
+/* ── Ana Merkez — matris & kuyruklar ── */
+.strat-ops-chip,
+.strat-matrix__tax,
+.home-command-advisors .ai-radar-panel {
+  background: #111a11 !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
+  clip-path: none !important;
+}
+
+.strat-ops-chip strong,
+.strat-ops-chip__timer {
+  color: #d4d4aa !important;
+  text-shadow: none !important;
+}
+
+.strat-tax__value {
+  color: #c9a84c !important;
+  text-shadow: none !important;
+}
+
+.home-queue-block,
+.home-queue-panel,
+.queue-block,
+.active-queue-panel {
+  background: #111a11 !important;
+  border: none !important;
+}
+
+/* ── Araştırma — kilitli kartlar ── */
+.locked-feature-gate {
+  background: #111a11 !important;
+  border: 1px solid rgba(74, 124, 89, 0.12) !important;
+}
+
+.locked-feature-gate__denied {
+  background: rgba(17, 26, 17, 0.94) !important;
+}
+
+.locked-feature-gate__scanlines {
+  animation: none !important;
+  opacity: 0.15 !important;
+}
+
+.content-card--research-advanced,
+.research-blueprint-icon {
+  background: #111a11 !important;
+  background-image: none !important;
+  border-color: rgba(201, 168, 76, 0.3) !important;
+}
+
+.research-card__advanced-rozet {
+  background: #1a2e1a !important;
+}
+
+/* ── Genel iç yüzey süpürücü ── */
+.app-shell.hud-shell [class*='panel'],
+.app-shell.hud-shell [class*='-row'],
+.app-shell.hud-shell [class*='-card']:not(.building-card):not(.unit-card),
+.app-shell.hud-shell [class*='-chip'],
+.app-shell.hud-shell [class*='-block'],
+.app-shell.hud-shell fieldset,
+.app-shell.hud-shell .ops-list__item,
+.app-shell.hud-shell .intel-op-btn-wrap {
+  background-color: #111a11;
+}
+
+.app-shell.hud-shell .page--command,
+.app-shell.hud-shell .page {
+  background: #0a0f0a !important;
+}
+
+/* Tablo satırları — son güvence */
+.app-shell.hud-shell tr,
+.app-shell.hud-shell [class*='-table'] tbody tr,
+.app-shell.hud-shell .market-offer-card,
+.app-shell.hud-shell .diplomacy-pact-row {
+  background-color: #111a11 !important;
+}
+
+.app-shell.hud-shell tr:nth-child(even) td,
+.app-shell.hud-shell .market-offer-card:nth-child(even) {
+  background-color: rgba(26, 46, 26, 0.45) !important;
+}

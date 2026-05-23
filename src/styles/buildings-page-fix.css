@@ -1,0 +1,30 @@
+/* Binalar — yalnızca sayfa düzeni (kart boyutu index.css ile aynı kalır) */
+
+.buildings-page.page-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.buildings-page__toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.buildings-page__grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.buildings-page__grid-wrap .population-dist-panel {
+  width: 100%;
+  max-width: 100%;
+}
+
+.buildings-page-loading {
+  margin: 1rem 0;
+  color: rgba(148, 163, 184, 0.9);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}

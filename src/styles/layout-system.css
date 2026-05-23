@@ -1,0 +1,12 @@
+/**
+ * Layout — tek giriş noktası (import sırası sabit).
+ * Yeni layout kuralları: önce alt dosyaya, en son layout-contract.css'e.
+ */
+@import './layout-scroll-fix.css';
+@import './resource-bar-fix.css';
+@import './buildings-page-fix.css';
+@import './layout-overlap-fix.css';
+@import './layout-shell-fix.css';
+@import './card-command-layout.css';
+@import './layout-contract.css';
+@import './hourly-production-full.css';

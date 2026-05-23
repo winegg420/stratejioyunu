@@ -6,11 +6,15 @@ import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import NewExpeditionModal from '../components/NewExpeditionModal';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import MeydanBattlePanel from '../components/MeydanBattlePanel';
+import OperationsMetropolisAlert from '../components/OperationsMetropolisAlert';
+import CustomDropdown from '../components/CustomDropdown';
 import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { ALLIANCE_OP_STATUS } from '../lib/allianceOperation';
 import { diplomacy } from '../data/placeholder';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Expeditions() {
+  const { t } = useLanguage();
   const [launchOpen, setLaunchOpen] = useState(false);
   const [opTarget, setOpTarget] = useState('');
   const [syncDelayMinutes, setSyncDelayMinutes] = useState(0);
@@ -52,7 +56,7 @@ export default function Expeditions() {
               className="btn btn-hud-primary"
               onClick={() => setLaunchOpen(true)}
             >
-              [ YENİ SEFERE ÇIK ]
+              {t('pages.expeditions.newExpedition')}
             </button>
             <button
               type="button"
@@ -60,10 +64,10 @@ export default function Expeditions() {
               onClick={() => opTarget && createAllianceOperation({ targetName: opTarget })}
               disabled={!opTarget}
             >
-              [ İTTİFAK OPERASYONU BAŞLAT ]
+              {t('pages.expeditions.allianceOp')}
             </button>
             <Link to="/harita" className="btn btn-hud-secondary">
-              Haritaya Git
+              {t('common.openMap')}
             </Link>
           </>
         )}
@@ -71,24 +75,25 @@ export default function Expeditions() {
 
       <NewExpeditionModal open={launchOpen} onClose={() => setLaunchOpen(false)} />
 
+      <OperationsMetropolisAlert />
+
       <section className="panel alliance-ops-panel">
-        <h3 className="panel-title">Koordineli İttifak Saldırısı</h3>
+        <h3 className="panel-title">{t('pages.expeditions.allianceTitle')}</h3>
         <p className="hint">
-          {diplomacy.alliance.name} — lider operasyon planlar; üyeler onay verince aynı anda varış hesaplanır.
-          Geç kalanlar yalnız savaşır.
+          {t('pages.expeditions.allianceDesc', { name: diplomacy.alliance.name })}
         </p>
         <label className="alliance-ops-field">
-          <span>Hedef</span>
-          <select
+          <span>{t('pages.expeditions.table.target')}</span>
+          <CustomDropdown
             className="expedition-launch-select"
             value={opTarget}
-            onChange={(e) => setOpTarget(e.target.value)}
-          >
-            <option value="">Seçin…</option>
-            {opTargets.map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
+            onChange={setOpTarget}
+            aria-label={t('pages.expeditions.allianceTargetAria')}
+            options={[
+              { value: '', label: t('common.select'), disabled: true },
+              ...opTargets.map((name) => ({ value: name, label: name })),
+            ]}
+          />
         </label>
         <div className="alliance-ops-timing">
           <label>

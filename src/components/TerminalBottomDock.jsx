@@ -1,29 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
 import CommandTickerFeed from './CommandTickerFeed';
-import CyberTerminalPlaceholder from './CyberTerminalPlaceholder';
-import { useTerminalLogStore } from '../stores/terminalLogStore';
 
+export const TERMINAL_DOCK_LOGS_ID = 'terminal-dock-logs';
+
+/** Alt komuta şeridi — akan haber bandı; portallar yalnızca kuyruk panelleri için */
 export default function TerminalBottomDock() {
-  const shellRef = useRef(null);
-  const lines = useTerminalLogStore((s) => s.lines);
-  const [hasPanelLogs, setHasPanelLogs] = useState(false);
+  const portalMountRef = useRef(null);
+  const portalPanelRef = useRef(null);
+  const [hasPortals, setHasPortals] = useState(false);
 
   useEffect(() => {
-    const el = document.getElementById('terminal-dock-logs');
+    const el = portalMountRef.current;
     if (!el) return undefined;
-    const sync = () => setHasPanelLogs(el.childElementCount > 0);
+    const sync = () => setHasPortals(el.childElementCount > 0);
     sync();
     const mo = new MutationObserver(sync);
-    mo.observe(el, { childList: true });
+    mo.observe(el, { childList: true, subtree: true });
     return () => mo.disconnect();
   }, []);
 
   useEffect(() => {
-    const el = shellRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const el = portalPanelRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') {
+      document.documentElement.style.setProperty('--terminal-dock-logs-h', '0px');
+      return undefined;
+    }
 
     const syncHeight = () => {
-      const h = el.offsetHeight;
+      const h = hasPortals ? Math.ceil(el.getBoundingClientRect().height) : 0;
       document.documentElement.style.setProperty('--terminal-dock-logs-h', `${h}px`);
     };
 
@@ -34,32 +38,25 @@ export default function TerminalBottomDock() {
       ro.disconnect();
       document.documentElement.style.setProperty('--terminal-dock-logs-h', '0px');
     };
-  }, [lines.length, hasPanelLogs]);
+  }, [hasPortals]);
 
-  const showLogs = lines.length > 0 || hasPanelLogs;
+  useEffect(() => {
+    document.documentElement.style.setProperty('--terminal-dock-ticker-h', '2.35rem');
+  }, []);
 
   return (
-    <aside className="terminal-bottom-dock" aria-label="Operasyon terminali">
+    <aside className="terminal-bottom-dock" aria-label="Komuta haber şeridi">
       <div
-        ref={shellRef}
-        className={`terminal-dock-logs${showLogs ? '' : ' terminal-dock-logs--idle'}`}
+        ref={portalPanelRef}
+        className={['terminal-dock-logs', !hasPortals && 'terminal-dock-logs--hidden'].filter(Boolean).join(' ')}
+        aria-hidden={!hasPortals}
       >
-        {lines.length > 0 && (
-          <div className="terminal-dock-logs__scroll" role="log" aria-live="polite" aria-relevant="additions">
-            {lines.map((line) => (
-              <p key={line.id} className="terminal-dock-log-line">
-                <span className="terminal-dock-log-line__tag font-hud-data">[{line.tag}]</span>
-                <span className="terminal-dock-log-line__text">{line.text}</span>
-              </p>
-            ))}
-          </div>
-        )}
-        <div id="terminal-dock-logs" className="terminal-dock-logs__portals" />
-        {!showLogs && (
-          <CyberTerminalPlaceholder variant="scan" className="terminal-dock-logs__placeholder" />
-        )}
+        <div id={TERMINAL_DOCK_LOGS_ID} ref={portalMountRef} className="terminal-dock-logs__portals" />
       </div>
-      <CommandTickerFeed />
+
+      <div className="terminal-dock-ticker-shell">
+        <CommandTickerFeed />
+      </div>
     </aside>
   );
 }

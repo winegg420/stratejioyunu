@@ -234,31 +234,45 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
 
       {showResults && result && (
         <div key={resultKey} className={`battle-sim-result battle-sim-result--${result.outcome}`}>
-          <strong>{result.outcomeLabel}</strong>
+          <div className="battle-sim-outcome-grid">
+            <article
+              className={[
+                'battle-sim-outcome-card',
+                'battle-sim-outcome-card--primary',
+                result.outcome === 'win' && 'battle-sim-outcome-card--win',
+                result.outcome === 'loss' && 'battle-sim-outcome-card--loss',
+              ].filter(Boolean).join(' ')}
+            >
+              <span className="battle-sim-outcome-card__tag">SONUÇ</span>
+              <strong className="battle-sim-outcome-card__value" title={result.outcomeLabel}>
+                {result.outcome === 'win' ? 'BAŞARILI' : result.outcome === 'loss' ? 'KAYIP RİSKİ' : 'BELİRSİZ'}
+              </strong>
+            </article>
+            <article className="battle-sim-outcome-card">
+              <span className="battle-sim-outcome-card__tag">ZAFER OLASILIĞI</span>
+              <strong className="battle-sim-outcome-card__value">%{result.winProbability}</strong>
+            </article>
+            <article className="battle-sim-outcome-card battle-sim-outcome-card--loss">
+              <span className="battle-sim-outcome-card__tag">KAYIP (SİZ)</span>
+              <strong className="battle-sim-outcome-card__value">~%{result.attackerLossPct}</strong>
+            </article>
+            <article className="battle-sim-outcome-card">
+              <span className="battle-sim-outcome-card__tag">KAYIP (DÜŞMAN)</span>
+              <strong className="battle-sim-outcome-card__value">~%{result.defenderLossPct}</strong>
+            </article>
+          </div>
           <dl className="battle-sim-stats">
             <div>
               <dt>Saldırı gücü</dt>
-              <dd>{result.attackerPower.toLocaleString('tr-TR')}</dd>
+              <dd title={String(result.attackerPower)}>{result.attackerPower.toLocaleString('tr-TR')}</dd>
             </div>
             <div>
               <dt>Savunma gücü</dt>
-              <dd>{result.defenderPower.toLocaleString('tr-TR')}</dd>
-            </div>
-            <div>
-              <dt>Zafer olasılığı</dt>
-              <dd>%{result.winProbability}</dd>
-            </div>
-            <div>
-              <dt>Tahmini kayıp (siz)</dt>
-              <dd>~%{result.attackerLossPct}</dd>
-            </div>
-            <div>
-              <dt>Tahmini kayıp (düşman)</dt>
-              <dd>~%{result.defenderLossPct}</dd>
+              <dd title={String(result.defenderPower)}>{result.defenderPower.toLocaleString('tr-TR')}</dd>
             </div>
           </dl>
           <p className="battle-sim-disclaimer">
-            Simülasyon tahminidir; gerçek savaşta teknoloji ve şans faktörleri etkili olabilir.
+            {result.outcomeLabel} — Simülasyon tahminidir; gerçek savaşta teknoloji ve şans faktörleri etkili olabilir.
           </p>
         </div>
       )}

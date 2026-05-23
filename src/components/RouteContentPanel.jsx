@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import PageRouteLoader from './PageRouteLoader';
+import { useHydrationTimeout } from '../hooks/useHydrationTimeout';
 
 export default function RouteContentPanel() {
   const { pathname } = useLocation();
   const [enterPulse, setEnterPulse] = useState(true);
+
+  useHydrationTimeout();
 
   useEffect(() => {
     setEnterPulse(false);

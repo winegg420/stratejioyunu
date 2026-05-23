@@ -36,8 +36,12 @@ npm run deploy
 
 Vercel CLI ile giriş yapılmış olmalı (`npx vercel login`).
 
+## Canlıda otomatik güncelleme
+
+Deploy sonrası açık sekmede yeni sürüm algılanırsa sayfa **kendiliğinden yenilenir** (PWA Service Worker + `registerAppUpdates`). İlk kez bu sürümden sonra hâlâ eski görünüm varsa bir kez **Ctrl+Shift+R** yeterlidir.
+
 ## Sorun giderme
 
-- Site eski görünüyorsa: **Ctrl+Shift+R** veya gizli pencere (PWA önbelleği).
+- Site eski görünüyorsa (ilk kurulumdan sonra): bir kez **Ctrl+Shift+R**; sonraki deploy’lar otomatik yenilenir.
 - Actions kırmızı + `VERCEL_TOKEN`: secret'ı yenileyin.
 - Son başarılı deploy: [Vercel Dashboard](https://vercel.com/idagureli-4647s-projects/stratejioyunu)

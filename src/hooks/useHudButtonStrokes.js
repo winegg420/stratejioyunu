@@ -13,8 +13,17 @@ export function useHudButtonStrokes() {
 
     syncHudButtonStrokes(root);
 
+    let syncing = false;
+    let frame = 0;
     const observer = new MutationObserver(() => {
-      syncHudButtonStrokes(root);
+      if (syncing) return;
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        syncing = true;
+        syncHudButtonStrokes(root);
+        syncing = false;
+      });
     });
 
     observer.observe(root, {

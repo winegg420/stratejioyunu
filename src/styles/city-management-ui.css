@@ -8,8 +8,8 @@
   gap: 0.75rem 1.25rem;
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 255, 204, 0.35);
-  background: linear-gradient(90deg, rgba(0, 255, 204, 0.08), rgba(57, 255, 20, 0.04));
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  background: linear-gradient(90deg, rgba(74, 124, 89, 0.08), rgba(74, 124, 89, 0.04));
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
 
@@ -17,7 +17,7 @@
   display: block;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
-  color: rgba(0, 255, 204, 0.85);
+  color: rgba(74, 124, 89, 0.85);
   margin-bottom: 0.2rem;
 }
 
@@ -25,8 +25,8 @@
   display: block;
   font-size: 1.35rem;
   font-weight: 700;
-  color: var(--neon-green, #39ff14);
-  text-shadow: 0 0 12px rgba(57, 255, 20, 0.45);
+  color: var(--neon-green, #4a7c59);
+  text-shadow: 0 0 12px rgba(74, 124, 89, 0.45);
   letter-spacing: 0.06em;
 }
 
@@ -61,24 +61,13 @@
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--neon-cyan, #00ffcc);
+  color: var(--neon-cyan, #4a7c59);
   padding: 0.25rem 0.55rem;
-  border: 1px solid rgba(0, 255, 204, 0.35);
+  border: 1px solid rgba(74, 124, 89, 0.35);
   background: rgba(0, 20, 30, 0.65);
 }
 
-.buildings-page__grid-wrap {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
-  gap: 1rem;
-  align-items: start;
-}
-
-@media (max-width: 960px) {
-  .buildings-page__grid-wrap {
-    grid-template-columns: 1fr;
-  }
-}
+/* Binalar grid düzeni → buildings-page-fix.css */
 
 /* Ana merkez şehir seçici */
 .city-switcher-wrap {
@@ -94,9 +83,9 @@
   width: 1.65rem;
   height: 1.65rem;
   padding: 0;
-  border: 1px solid rgba(0, 255, 204, 0.35);
-  background: rgba(0, 12, 22, 0.85);
-  color: var(--neon-cyan, #00ffcc);
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  background: #111a11;
+  color: var(--neon-cyan, #4a7c59);
   font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
@@ -104,9 +93,9 @@
 }
 
 .city-cycle-btn:hover:not(:disabled) {
-  border-color: var(--neon-green, #39ff14);
-  color: var(--neon-green, #39ff14);
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.35);
+  border-color: var(--neon-green, #4a7c59);
+  color: var(--neon-green, #4a7c59);
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.35);
 }
 
 .city-cycle-btn:disabled {
@@ -123,8 +112,8 @@
   display: block;
   font-size: 0.68rem;
   font-weight: 700;
-  color: var(--neon-green, #39ff14);
-  text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+  color: var(--neon-green, #4a7c59);
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.35);
   letter-spacing: 0.04em;
 }
 
@@ -172,14 +161,12 @@
 .building-level-progress__bar {
   height: 5px;
   background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(0, 255, 204, 0.25);
+  border: 1px solid rgba(74, 124, 89, 0.25);
   overflow: hidden;
 }
 
 .building-level-progress__fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--neon-cyan, #00ffcc), var(--neon-green, #39ff14));
-  box-shadow: 0 0 8px rgba(57, 255, 20, 0.45);
   transition: width 0.35s linear;
 }
 
@@ -195,18 +182,7 @@
 }
 
 .population-dist-panel__bar {
-  display: flex;
-  height: 10px;
-  border: 1px solid rgba(0, 255, 204, 0.25);
-  overflow: hidden;
   margin-bottom: 0.65rem;
-}
-
-.population-dist-panel__segment {
-  display: block;
-  height: 100%;
-  min-width: 2px;
-  transition: width 0.3s ease;
 }
 
 .population-dist-panel__legend {

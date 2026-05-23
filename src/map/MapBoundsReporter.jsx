@@ -39,14 +39,27 @@ export default function MapBoundsReporter({ onViewportChange }) {
       lastSigRef.current = sig;
       onChangeRef.current(next);
     };
+
+    const onZoomEnd = () => {
+      try {
+        map.invalidateSize({ animate: false, pan: false });
+      } catch {
+        /* unmount */
+      }
+      report();
+    };
+
     const onUserMove = () => {
       if (map.dragging?.moved?.()) report();
     };
-    map.on('zoomend', report);
+
+    map.on('zoom', report);
+    map.on('zoomend', onZoomEnd);
     map.on('dragend', onUserMove);
     report();
     return () => {
-      map.off('zoomend', report);
+      map.off('zoom', report);
+      map.off('zoomend', onZoomEnd);
       map.off('dragend', onUserMove);
     };
   }, [map]);

@@ -559,6 +559,16 @@ export function scheduleSaveGameState(state, options = {}) {
   }, 280);
 }
 
+/** Bekleyen debounce iptal — anında kayıt (double-submit kilidi için). */
+export function saveGameStateNow(state, options = {}) {
+  if (!isSyncEnabled()) return Promise.resolve({ ok: true, skipped: true });
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = null;
+  }
+  return saveGameState(state, options);
+}
+
 /**
  * Giriş sonrası tam oyun durumunu Supabase'den yükler.
  */
@@ -616,8 +626,15 @@ export async function loadGameState(userId, { playerName } = {}) {
   const buildingsByCity = groupBy(cityIds, bldRes.data ?? [], 'city_id');
   const unitsByCity = groupBy(cityIds, unitRes.data ?? [], 'city_id');
 
-  const displayName = profile.display_name ?? playerName ?? 'Oyuncu';
+  const displayName = profile.display_name?.trim()
+    || profile.player_name?.trim()
+    || playerName
+    || 'Oyuncu';
   const playerMeta = profile.player_meta ?? {};
+  const isAdminUser = Boolean(
+    playerMeta.isAdmin === true
+    || playerMeta.role === 'admin',
+  );
   const playerIdeology = normalizeIdeology(profile.ideology)
     ?? loadPlayerIdeology(displayName);
   const protectionEndsAt = profile.protection_ends_at
@@ -714,6 +731,9 @@ export async function loadGameState(userId, { playerName } = {}) {
   }
 
   return {
+    profileDisplayName: displayName,
+    profilePlayerName: profile.player_name,
+    isAdminUser,
     activeCityId,
     playerIdeology,
     protectionEndsAt,
@@ -886,11 +906,11 @@ export function stopSyncPolling() {
 }
 
 export async function hydrateGameStore(userId, { playerName, getState, setState, completeExpedition }) {
-  if (!userId || !setState) return false;
+  if (!userId || !setState) return { ok: false };
 
   lastSyncUserId = userId;
   const patch = await loadGameState(userId, { playerName });
-  if (!patch) return false;
+  if (!patch) return { ok: false };
 
   setState((prev) => applyDevTestModeToState({ ...prev, ...patch }));
   if (typeof getState().tick === 'function') getState().tick();
@@ -898,7 +918,14 @@ export async function hydrateGameStore(userId, { playerName, getState, setState,
   await syncExpeditionsFromServer(getState, setState, completeExpedition);
 
   scheduleSaveGameState(getState(), { profileId: userId, saveAllUnits: true, researches: true });
-  return true;
+
+  const state = getState();
+  return {
+    ok: true,
+    displayName: state.profileDisplayName,
+    playerName: state.profilePlayerName,
+    isAdminUser: state.isAdminUser,
+  };
 }
 
 export function getLastSyncUserId() {

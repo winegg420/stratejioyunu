@@ -21,7 +21,7 @@ export default function GlobalBriefingModal({
   showIdeologyPick = true,
 }) {
   const [mounted, setMounted] = useState(false);
-  const { visibleCompleted, currentPartial, done, isTyping } = useTypewriter(
+  const { visibleCompleted, currentPartial, done, isTyping, skipToEnd } = useTypewriter(
     GLOBAL_BRIEFING_PARAGRAPHS,
     { active: open, charMs: 26, pauseMs: 480 },
   );
@@ -43,12 +43,26 @@ export default function GlobalBriefingModal({
 
   if (!mounted || !open) return null;
 
+  const completeTyping = () => {
+    if (!done) skipToEnd();
+  };
+
   const handleBackdrop = () => {
+    if (!done) {
+      skipToEnd();
+      return;
+    }
     if (canAccept) onAccept?.();
   };
 
   return createPortal(
-    <div className="global-briefing-overlay" role="dialog" aria-modal="true" aria-labelledby="global-briefing-title">
+    <div
+      className="global-briefing-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="global-briefing-title"
+      onClick={completeTyping}
+    >
       <button
         type="button"
         className="global-briefing-backdrop"

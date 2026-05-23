@@ -5,28 +5,64 @@ import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { isDepotOverflow, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
-import { formatHourlyProduction, getHourlyAmount } from '../lib/hourlyProduction';
+import { formatHourlyProduction, getHourlyAmount, formatHourlyAmount } from '../lib/hourlyProduction';
 import { formatCityOptionLabel } from '../lib/cityManagementUi';
 import { isMainHqCity } from '../lib/worldCitySystem';
-import { enrichResourcesWithEmpireTreasury } from '../lib/empireTreasury';
+import { getEmpireMoneyTotal } from '../lib/empireTreasury';
+import BudgetSpendFloater from './BudgetSpendFloater';
+import CustomDropdown from './CustomDropdown';
 import { GAME_NAME } from '../data/placeholder';
 import {
   formatPeaceForceCountdown,
-  getProgressionState,
   isPeaceForceProtected,
 } from '../lib/progressionSystem';
 import ServerTimeClock from './ServerTimeClock';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
+import { useResourceBarHeight } from '../hooks/useResourceBarHeight';
 
 const DEPOT_WARN_PCT = 90;
-const DEPOT_BAR_IDS = new Set(['hammadde', 'fuel', 'money']);
 
-const FILL_CLASS = {
-  hammadde: 'res-fill--hammadde',
-  fuel: 'res-fill--fuel',
-  money: 'res-fill--money',
-};
+/** Üst bar — 5 kaynak (uranyum yalnızca Binalar / Araştırma) */
+const RESOURCE_ROW_TOP = ['food', 'fuel', 'hammadde', 'energy', 'money'];
+
+function pickResourcesByIds(resources, ids) {
+  const byId = new Map(resources.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function renderResourceItems({
+  items,
+  flashes,
+  valueFlashes,
+  energyCrisis,
+  budgetSpendFloats,
+  resourceLabel,
+  t,
+}) {
+  return items.map((r) => {
+    const pct = r.max ? (r.current / r.max) * 100 : 100;
+    const depotOverflow = isDepotOverflow(r);
+    const depotFull = r.max != null && r.current >= r.max;
+    const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotFull;
+    return (
+      <ResourceItem
+        key={r.id}
+        resource={r}
+        displayLabel={resourceLabel(r.id) || r.label}
+        t={t}
+        pct={pct}
+        flash={Boolean(flashes[r.id])}
+        valueFlash={Boolean(valueFlashes[r.id])}
+        depotWarn={depotWarn}
+        depotFull={depotFull}
+        depotOverflow={depotOverflow}
+        energyCrisis={r.id === 'energy' && energyCrisis}
+        budgetSpendFloats={r.id === 'money' ? budgetSpendFloats : null}
+      />
+    );
+  });
+}
 
 function ResourceItem({
   resource,
@@ -38,23 +74,27 @@ function ResourceItem({
   depotFull,
   depotOverflow,
   energyCrisis,
+  budgetSpendFloats,
   t,
 }) {
   const hasDepot = resource.max != null;
-  const showDepotBar = hasDepot || DEPOT_BAR_IDS.has(resource.id);
   const frozen = resource.productionFrozen || depotOverflow;
-  const fillClass = FILL_CLASS[resource.id] ?? 'res-fill--default';
   const workforceCut = resource.workforcePenalty && !frozen;
   const hourlyLabel = !frozen ? formatHourlyProduction(resource) : null;
   const hourlyAmount = !frozen ? getHourlyAmount(resource) : 0;
   const showHourlyBadge = hourlyAmount > 0 && ['hammadde', 'fuel', 'money', 'food', 'energy'].includes(resource.id);
+  const hourlyZeroLabel = resource.id === 'energy'
+    ? `+0${t('cityManagement.hourlyEnergy')}`
+    : t('common.perHourZero');
 
   return (
     <div
       className={[
         'resource-item',
         'resource-item--tactical',
-        showDepotBar && 'has-depot',
+        'resource-item--bar-cell',
+        resource.id === 'money' && 'resource-item--money',
+        hasDepot && 'has-depot',
         (flash || valueFlash) && 'resource-flash',
         valueFlash && 'resource-flash--value',
         depotWarn && 'depot-warn',
@@ -67,49 +107,47 @@ function ResourceItem({
         .join(' ')}
       title={`${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}`}
     >
-      <span className="res-icon" aria-hidden="true">
-        {resource.icon}
-      </span>
-      <div className="res-body">
-        <span className="res-label">{displayLabel}</span>
-        <span className="res-value">
-          <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
-            {formatCompactNumber(resource.current)}
-          </span>
-          {hasDepot && <span className="res-max"> / {formatCompactNumber(resource.max)}</span>}
-          {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
+      {resource.id === 'money' && budgetSpendFloats?.length > 0 && (
+        <div className="budget-spend-float-layer" aria-hidden="true">
+          {budgetSpendFloats.map((f) => (
+            <BudgetSpendFloater key={f.id} amount={f.amount} />
+          ))}
+        </div>
+      )}
+      <div className="res-bar-cell__head">
+        <span className="res-icon" aria-hidden="true">
+          {resource.icon}
         </span>
+        <span className="res-label">{displayLabel}</span>
+      </div>
+      <div className="res-bar-cell__value">
+        <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
+          {formatCompactNumber(resource.current)}
+        </span>
+        {hasDepot && (
+          <span className="res-bar-cell__cap">
+            / {formatCompactNumber(resource.max)}
+          </span>
+        )}
+        {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         {resource.empireShared && (
           <span className="res-empire-badge" title={t('resourceBar.sharedTreasuryTitle')}>
             {t('resourceBar.sharedTreasury')}
           </span>
         )}
+      </div>
+      <div className="res-bar-cell__foot">
         {showHourlyBadge ? (
           <span className="res-hourly-badge font-hud-data">
-            +{formatCompactNumber(hourlyAmount)}
+            +{formatHourlyAmount(hourlyAmount)}
             {resource.id === 'energy' ? t('cityManagement.hourlyEnergy') : t('cityManagement.hourlyPerHour')}
           </span>
         ) : hourlyLabel ? (
           <span className="res-hourly-live">{hourlyLabel}</span>
         ) : (
           <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
-            {frozen ? t('resourceBar.stopped') : '—'}
+            {frozen ? t('resourceBar.stopped') : hourlyZeroLabel}
           </span>
-        )}
-        {showDepotBar && (
-          <div
-            className="res-bar res-bar--command"
-            role="progressbar"
-            aria-valuenow={Math.min(100, pct)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${displayLabel} depo`}
-          >
-            <div
-              className={`res-fill res-fill--command ${fillClass}${depotWarn ? ' warn' : ''}`}
-              style={{ width: `${Math.min(100, pct)}%` }}
-            />
-          </div>
         )}
       </div>
     </div>
@@ -117,13 +155,21 @@ function ResourceItem({
 }
 
 export default function ResourceBar() {
-  const { t, resourceLabel } = useLanguage();
   const gameReady = useGameDataReady();
+  const barRef = useResourceBarHeight([gameReady]);
+  const { t, resourceLabel } = useLanguage();
   const { playerName } = useAuth();
   const activeCityId = useGameStore((s) => s.activeCityId);
+  const cities = useGameStore((s) => s.cities);
   const playerCities = useGameStore((s) => s.playerCities);
   const setActiveCity = useGameStore((s) => s.setActiveCity);
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const budgetSpendFloats = useGameStore((s) => s.budgetSpendFloats ?? STORE_EMPTY_ARRAY);
+  const rawResources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const resources = rawResources.map((r) => (
+    r.id === 'money'
+      ? { ...r, current: getEmpireMoneyTotal(cities), empireShared: true }
+      : r
+  ));
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const flashes = useGameStore((s) => s.flashes);
   const valueFlashes = useResourceValueFlashes(resources);
@@ -131,10 +177,7 @@ export default function ResourceBar() {
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
   const peaceActive = isPeaceForceProtected(protectionEndsAt);
   const peaceCountdown = formatPeaceForceCountdown(protectionEndsAt);
-  const progression = activeCity ? getProgressionState(activeCity) : null;
-  const visibleResources = progression?.kbrnUnlocked
-    ? resources
-    : resources.filter((r) => r.id !== 'uranium');
+  const visibleResources = resources.filter((r) => r.id !== 'uranium');
 
   const cityCount = playerCities.length;
   const activeCityIndex = playerCities.findIndex((c) => c.id === activeCityId);
@@ -149,10 +192,20 @@ export default function ResourceBar() {
 
   const hasResources = visibleResources.length > 0;
   const showSyncOnly = !gameReady && !hasResources;
+  const rowResources = pickResourcesByIds(visibleResources, RESOURCE_ROW_TOP);
+  const resourceRenderProps = {
+    flashes,
+    valueFlashes,
+    energyCrisis,
+    budgetSpendFloats,
+    resourceLabel,
+    t,
+  };
 
   if (showSyncOnly) {
     return (
       <header
+        ref={barRef}
         className="resource-bar resource-bar--tactical resource-bar--command resource-bar--loading"
         role="banner"
         aria-busy="true"
@@ -169,10 +222,12 @@ export default function ResourceBar() {
 
   return (
     <header
+      ref={barRef}
       className={[
         'resource-bar',
         'resource-bar--tactical',
         'resource-bar--command',
+        'resource-bar--stacked',
         !gameReady && hasResources && 'resource-bar--soft-sync',
         workforceShortage && 'resource-bar--workforce-warn',
       ]
@@ -185,86 +240,56 @@ export default function ResourceBar() {
           {t('workforce.penalty')}
         </p>
       )}
-      <div className="resource-bar-inner resource-bar-inner--flush">
-        <div className="brand-block brand-desktop resource-bar-brand">
-          <span className="game-title">{GAME_NAME}</span>
-          {!gameReady && hasResources && (
-            <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
-          )}
-          <div className="city-switcher-wrap">
-            <button
-              type="button"
-              className="city-cycle-btn"
-              onClick={() => cycleCity(-1)}
-              disabled={cityCount < 2}
-              aria-label={t('cityManagement.prevCity')}
-              title={t('cityManagement.prevCity')}
-            >
-              ‹
-            </button>
-            <label className="city-switcher">
-              <span className="sr-only">{t('resourceBar.activeCity')}</span>
-              <select
-                value={activeCityId}
-                onChange={(e) => setActiveCity(e.target.value)}
-                className="city-switcher-select"
+      <div className="resource-bar-inner resource-bar-inner--flush resource-bar-inner--tiered">
+        <div className="resource-bar-tier resource-bar-tier--top">
+          <div className="resource-bar-top-col resource-bar-top-col--left">
+            <div className="brand-block brand-desktop resource-bar-brand">
+              <span className="game-title">{GAME_NAME}</span>
+              {!gameReady && hasResources && (
+                <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
+              )}
+            </div>
+            <div className="city-switcher-wrap">
+              <button
+                type="button"
+                className="city-cycle-btn"
+                onClick={() => cycleCity(-1)}
+                disabled={cityCount < 2}
+                aria-label={t('cityManagement.prevCity')}
+                title={t('cityManagement.prevCity')}
               >
-                {playerCities.map((c) => (
-                  <option
-                    key={c.id}
-                    value={c.id}
-                    className={isMainHqCity(c) ? 'city-option--hq' : undefined}
-                  >
-                    {formatCityOptionLabel(c)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="city-cycle-btn"
-              onClick={() => cycleCity(1)}
-              disabled={cityCount < 2}
-              aria-label={t('cityManagement.nextCity')}
-              title={t('cityManagement.nextCity')}
-            >
-              ›
-            </button>
+                ‹
+              </button>
+              <label className="city-switcher">
+                <span className="sr-only">{t('resourceBar.activeCity')}</span>
+                <CustomDropdown
+                  className="city-switcher-select"
+                  value={activeCityId}
+                  onChange={setActiveCity}
+                  aria-label={t('resourceBar.activeCity')}
+                  options={playerCities.map((c) => ({
+                    value: c.id,
+                    label: formatCityOptionLabel(c),
+                  }))}
+                />
+              </label>
+              <button
+                type="button"
+                className="city-cycle-btn"
+                onClick={() => cycleCity(1)}
+                disabled={cityCount < 2}
+                aria-label={t('cityManagement.nextCity')}
+                title={t('cityManagement.nextCity')}
+              >
+                ›
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="resources-row resources-row--tactical" role="list" aria-label={t('resourceBar.resources')}>
-          {visibleResources.map((r) => {
-            const pct = r.max ? (r.current / r.max) * 100 : 100;
-            const depotOverflow = isDepotOverflow(r);
-            const depotFull = r.max != null && r.current >= r.max;
-            const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotFull;
-            return (
-              <ResourceItem
-                key={r.id}
-                resource={r}
-                displayLabel={resourceLabel(r.id) || r.label}
-                t={t}
-                pct={pct}
-                flash={Boolean(flashes[r.id])}
-                valueFlash={Boolean(valueFlashes[r.id])}
-                depotWarn={depotWarn}
-                depotFull={depotFull}
-                depotOverflow={depotOverflow}
-                energyCrisis={r.id === 'energy' && energyCrisis}
-              />
-            );
-          })}
-        </div>
-
-        <div className="resource-bar-actions resource-bar-actions--tactical">
-          <LanguageSwitcher className="lang-switcher--bar" />
-          <ServerTimeClock />
-          <div className="player-block player-desktop">
-            <span className="player-name">{playerName}</span>
+          <div className="resource-bar-top-col resource-bar-top-col--center">
             {peaceActive && (
               <span
-                className="protection-badge protection-badge--active"
+                className="protection-badge protection-badge--active protection-badge--bar-center"
                 title={t('resourceBar.peaceForceTitle')}
               >
                 <span className="protection-badge__icon" aria-hidden="true">
@@ -276,6 +301,22 @@ export default function ResourceBar() {
                 </span>
               </span>
             )}
+          </div>
+
+          <div className="resource-bar-top-col resource-bar-top-col--right resource-bar-actions resource-bar-actions--tactical">
+            <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
+            <ServerTimeClock />
+            <div className="player-block player-desktop">
+              <span className="player-name">{playerName}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="resource-bar-tier resource-bar-tier--resources">
+          <div className="resource-bar-resources" aria-label={t('resourceBar.resources')}>
+            <div className="resources-row resources-row--single" role="list">
+              {renderResourceItems({ items: rowResources, ...resourceRenderProps })}
+            </div>
           </div>
         </div>
       </div>

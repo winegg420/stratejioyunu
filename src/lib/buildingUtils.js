@@ -123,8 +123,18 @@ export function formatPrerequisiteList(unmet) {
     .join(' · ');
 }
 
+/**
+ * Yeni oyun: yalnızca Komuta Merkezi Sv.1, diğer binalar Sv.0.
+ * placeholder.js içindeki level değerleri UI örneğidir; oyun durumuna kopyalanmaz.
+ */
 export function createStarterBuildings({ useDemoLevels = false } = {}) {
-  return syncCityBuildingsToCatalog(buildingDefs, { useDemoLevels });
+  if (useDemoLevels) {
+    return syncCityBuildingsToCatalog([], { useDemoLevels: true });
+  }
+  return syncCityBuildingsToCatalog(
+    [{ id: HQ_BUILDING_ID, level: 1, built: true, upgrading: false }],
+    { useDemoLevels: false },
+  );
 }
 
 export function isBuildingBuilt(building) {

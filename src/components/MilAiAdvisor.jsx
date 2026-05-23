@@ -1,118 +1,156 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
-import { useTypewriter } from '../hooks/useTypewriter';
-import { getMilAiNextStep } from '../lib/aiProgression';
 import { buildMilAiTerminalLines } from '../lib/milAiDynamicAdvice';
+import {
+  getMilAiTutorialProgress,
+  isMilAiAdvisorOnline,
+  isMilAiTutorialActive,
+} from '../lib/milAiTutorialQuests';
+import { useLanguage } from '../context/LanguageContext';
 
+function lineClassName(line) {
+  if (line.startsWith('[ GÖREV') || line.startsWith('[ GÖREV-') || /^GÖREV-\d+/.test(line)) {
+    return 'mil-ai-terminal__line--task';
+  }
+  if (line.includes('GÖREV TAMAMLANDI') || line.includes('COMPLETE')) {
+    return 'mil-ai-terminal__line--celebrate';
+  }
+  if (line.startsWith('[ DURUM') || line.startsWith('[ STATUS')) {
+    return 'mil-ai-terminal__line--status';
+  }
+  if (line.startsWith('[ EMİR') || line.startsWith('[ ORDER') || line.startsWith('[ EMİR')) {
+    return 'mil-ai-terminal__line--order';
+  }
+  if (line.startsWith('[ UYARI') || line.startsWith('[ WARNING')) {
+    return 'mil-ai-terminal__line--severity-warn';
+  }
+  if (line.startsWith('[ BRİF')) {
+    return 'mil-ai-terminal__line--intel';
+  }
+  if (line.startsWith('[ SİSTEM') || line.startsWith('[ SYSTEM')) {
+    return 'mil-ai-terminal__line--standby';
+  }
+  if (line.startsWith('[ TAVSİYE') || line.startsWith('[ ADVICE')) {
+    return 'mil-ai-terminal__line--intel';
+  }
+  if (line.includes('Kritik') || line.includes('Critical')) {
+    return 'mil-ai-terminal__line--severity-critical';
+  }
+  return 'mil-ai-terminal__line--done';
+}
+
+/** MIL-AI — YZ Merkezi ile aktif; tutorial + seviye tavsiyeleri */
 export default function MilAiAdvisor() {
+  const { t, lang } = useLanguage();
+  const [expanded, setExpanded] = useState(false);
   const activeCityId = useGameStore((s) => s.activeCityId);
-  const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const city = useGameStore((s) => s.cities[activeCityId]);
   const researches = useGameStore((s) => s.researches);
   const expeditions = useGameStore((s) => s.expeditions);
+  const milAiCompleted = useGameStore((s) => s.milAiCompleted);
+  const milAiCelebration = useGameStore((s) => s.milAiCelebration);
+  const milAiScoutLaunched = useGameStore((s) => s.milAiScoutLaunched);
 
   const guideState = useMemo(
-    () => ({ activeCityId, cities: { [activeCityId]: city }, researches, expeditions }),
-    [activeCityId, city, researches, expeditions],
+    () => ({
+      activeCityId,
+      cities: { [activeCityId]: city },
+      researches,
+      expeditions,
+      milAiCompleted,
+      milAiCelebration,
+      milAiScoutLaunched,
+      now: Date.now(),
+    }),
+    [activeCityId, city, researches, expeditions, milAiCompleted, milAiCelebration, milAiScoutLaunched],
   );
 
-  const guide = useMemo(() => getMilAiNextStep(guideState), [guideState]);
-
-  const lineSignature = useMemo(() => {
-    const { nextStep, lastCompleted, allComplete, stepIndex } = guide;
-    const city = guideState.cities?.[guideState.activeCityId];
-    const hasOutgoing = (guideState.expeditions ?? []).some(
-      (e) => e.direction === 'outgoing' && (e.endsAt == null || e.endsAt > Date.now()),
-    );
-    return [
-      stepIndex,
-      allComplete ? 'done' : '',
-      lastCompleted?.id ?? '',
-      nextStep?.id ?? '',
-      nextStep?.progressHint?.(guideState) ?? '',
-      city?.happiness ?? '',
-      (city?.constructionQueue?.length ?? 0),
-      (guideState.expeditions?.length ?? 0),
-      hasOutgoing ? 'out' : 'idle',
-    ].join('|');
-  }, [guide, guideState]);
+  const online = useMemo(() => isMilAiAdvisorOnline(guideState), [guideState]);
+  const progress = useMemo(() => getMilAiTutorialProgress(guideState), [guideState]);
+  const tutorialActive = useMemo(() => isMilAiTutorialActive(guideState), [guideState]);
 
   const lines = useMemo(
-    () => buildMilAiTerminalLines(guideState),
-    [lineSignature, guideState],
+    () => buildMilAiTerminalLines(guideState, t, lang),
+    [guideState, t, lang],
   );
 
-  const { visibleCompleted, currentPartial, done, isTyping } = useTypewriter(lines, {
-    active: true,
-    charMs: 18,
-    pauseMs: 340,
-  });
-
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [visibleCompleted, currentPartial, done, lineSignature]);
+  const toggle = () => setExpanded((v) => !v);
 
   return (
     <aside
-      className={`mil-ai-advisor mil-ai-terminal mil-ai-terminal--guide glass-panel${guide.allComplete ? ' mil-ai-advisor--done' : ''}`}
+      className={[
+        'mil-ai-advisor',
+        'mil-ai-terminal',
+        'mil-ai-terminal--guide',
+        'glass-panel',
+        !online && 'mil-ai-advisor--standby',
+        progress.tutorialComplete && 'mil-ai-advisor--done',
+        expanded ? 'mil-ai-advisor--expanded' : 'mil-ai-advisor--collapsed',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      <div className="mil-ai-advisor__head">
-        <span className="mil-ai-advisor__badge">MIL-AI REHBER</span>
+      <button
+        type="button"
+        className="mil-ai-advisor__head mil-ai-advisor__head--toggle"
+        onClick={toggle}
+        aria-expanded={expanded}
+        aria-controls="mil-ai-terminal-panel"
+      >
+        <span className="mil-ai-advisor__badge">{t('components.milAi.badge')}</span>
         <span className="mil-ai-advisor__pulse" aria-hidden="true" />
-        <span className="mil-ai-terminal__status font-hud-data" aria-live="polite">
-          {guide.allComplete ? (
-            'REHBER TAMAM'
-          ) : (
-            <>
-              <span className="mil-ai-terminal__status-dot" aria-hidden="true" />
-              <span className="mil-ai-terminal__status-label">AKTİF</span>
-              {isTyping && (
-                <span className="mil-ai-terminal__status-hint"> · YAZIYOR</span>
-              )}
-              {!isTyping && done && (
+        {expanded ? (
+          <span className="mil-ai-terminal__status font-hud-data" aria-live="polite">
+            {!online ? (
+              <span className="mil-ai-terminal__status-label">{t('milAi.standby.short')}</span>
+            ) : progress.tutorialComplete ? (
+              t('components.milAi.statusComplete')
+            ) : (
+              <>
+                <span className="mil-ai-terminal__status-dot" aria-hidden="true" />
+                <span className="mil-ai-terminal__status-label">{t('components.milAi.statusActive')}</span>
                 <span className="mil-ai-terminal__status-hint">
-                  {` · ADIM ${guide.stepIndex + 1}/3`}
+                  {t('components.milAi.stepHint', {
+                    current: progress.stepIndex + 1,
+                    total: progress.totalSteps,
+                  })}
                 </span>
-              )}
-            </>
-          )}
+              </>
+            )}
+          </span>
+        ) : (
+          <span className="mil-ai-advisor__collapsed-label">
+            {!online ? t('milAi.standby.short') : t('components.milAi.expandHint')}
+          </span>
+        )}
+        <span className="mil-ai-advisor__chevron" aria-hidden="true">
+          {expanded ? '▾' : '▸'}
         </span>
-      </div>
+      </button>
 
-      <div className="mil-ai-terminal__screen" ref={scrollRef}>
-        <div className="mil-ai-terminal__body">
-          {visibleCompleted.map((line, i) => (
-            <p
-              key={`${lineSignature}-done-${i}`}
-              className={[
-                'mil-ai-terminal__line',
-                'mil-ai-terminal__line--done',
-                line.includes('GÖREV TAMAMLANDI') && 'mil-ai-terminal__line--complete',
-                line.includes('SIRADAKİ HEDEF') && 'mil-ai-terminal__line--next',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {line}
-            </p>
-          ))}
-          {currentPartial && (
-            <p className="mil-ai-terminal__line mil-ai-terminal__line--active">
-              {currentPartial}
-              <span className="mil-ai-terminal__cursor" aria-hidden="true" />
+      {expanded ? (
+        <div id="mil-ai-terminal-panel" className="mil-ai-advisor__panel">
+          <div className="mil-ai-terminal__screen">
+            <div className="mil-ai-terminal__body">
+              {lines.map((line) => (
+                <p key={line} className={['mil-ai-terminal__line', lineClassName(line)].join(' ')}>
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+          {tutorialActive && online && progress.currentQuest && (
+            <p className="mil-ai-advisor__quest-meta font-hud-data">
+              {progress.currentQuest.code}
+              {' · '}
+              {t('milAi.tutorial.stepOf', {
+                current: progress.stepIndex + 1,
+                total: progress.totalSteps,
+              })}
             </p>
           )}
         </div>
-      </div>
-
-      {!guide.allComplete && guide.nextStep && !isTyping && done && (
-        <span className="mil-ai-advisor__pending mil-ai-advisor__pending--guide">
-          Aktif hedef: {guide.nextStep.title}
-        </span>
-      )}
+      ) : null}
     </aside>
   );
 }

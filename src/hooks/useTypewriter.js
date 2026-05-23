@@ -1,13 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+function paragraphsKey(paragraphs) {
+  if (!paragraphs?.length) return '';
+  return paragraphs.join('\u0001');
+}
 
 /**
- * Paragrafları sırayla typewriter ile yazar; paragraflar arası pauseMs bekler.
+ * Paragrafları sırayla typewriter ile yazar.
  */
 export function useTypewriter(paragraphs, { charMs = 28, pauseMs = 520, active = true } = {}) {
   const [paragraphIndex, setParagraphIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [done, setDone] = useState(false);
   const completedRef = useRef([]);
+  const paragraphsRef = useRef(paragraphs);
+  paragraphsRef.current = paragraphs;
+  const stableKey = paragraphsKey(paragraphs);
 
   useEffect(() => {
     if (!active) return undefined;
@@ -16,20 +24,21 @@ export function useTypewriter(paragraphs, { charMs = 28, pauseMs = 520, active =
     setDone(false);
     completedRef.current = [];
     return undefined;
-  }, [active, paragraphs]);
+  }, [active, stableKey]);
 
   useEffect(() => {
-    if (!active || !paragraphs?.length) {
+    const list = paragraphsRef.current;
+    if (!active || !list?.length) {
       setDone(true);
       return undefined;
     }
 
-    if (paragraphIndex >= paragraphs.length) {
+    if (paragraphIndex >= list.length) {
       setDone(true);
       return undefined;
     }
 
-    const current = paragraphs[paragraphIndex] ?? '';
+    const current = list[paragraphIndex] ?? '';
 
     if (charIndex < current.length) {
       const t = window.setTimeout(() => setCharIndex((c) => c + 1), charMs);
@@ -37,7 +46,7 @@ export function useTypewriter(paragraphs, { charMs = 28, pauseMs = 520, active =
     }
 
     completedRef.current[paragraphIndex] = current;
-    if (paragraphIndex + 1 >= paragraphs.length) {
+    if (paragraphIndex + 1 >= list.length) {
       const t = window.setTimeout(() => setDone(true), pauseMs);
       return () => clearTimeout(t);
     }
@@ -47,13 +56,28 @@ export function useTypewriter(paragraphs, { charMs = 28, pauseMs = 520, active =
       setCharIndex(0);
     }, pauseMs);
     return () => clearTimeout(t);
-  }, [active, paragraphs, paragraphIndex, charIndex, charMs, pauseMs]);
+  }, [active, stableKey, paragraphIndex, charIndex, charMs, pauseMs]);
 
-  const visibleCompleted = paragraphs
-    .slice(0, paragraphIndex)
-    .map((text, i) => completedRef.current[i] ?? text);
+  const skipToEnd = useCallback(() => {
+    const list = paragraphsRef.current ?? [];
+    if (!list.length) {
+      setDone(true);
+      return;
+    }
+    completedRef.current = [...list];
+    setParagraphIndex(list.length);
+    setCharIndex(0);
+    setDone(true);
+  }, []);
 
-  const currentPartial = paragraphs[paragraphIndex]?.slice(0, charIndex) ?? '';
+  const list = paragraphs ?? [];
+  const visibleCompleted = done
+    ? list
+    : list
+      .slice(0, paragraphIndex)
+      .map((text, i) => completedRef.current[i] ?? text);
+
+  const currentPartial = done ? '' : (list[paragraphIndex]?.slice(0, charIndex) ?? '');
 
   return {
     visibleCompleted,
@@ -61,5 +85,6 @@ export function useTypewriter(paragraphs, { charMs = 28, pauseMs = 520, active =
     paragraphIndex,
     done,
     isTyping: active && !done,
+    skipToEnd,
   };
 }

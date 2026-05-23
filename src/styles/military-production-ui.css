@@ -1,0 +1,394 @@
+/* Askeri üretim — MAX / ÜRET, terminal progress, simülasyon & kilit modal */
+
+/* —— MAX (outline) / ÜRET (filled) —— */
+.cyber-data-input__max,
+.btn-unit-max {
+  padding: 0.38rem 0.65rem !important;
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase;
+  background: transparent !important;
+  border: 1px solid #4a7c59 !important;
+  color: #4a7c59 !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.cyber-data-input__max:hover:not(:disabled),
+.cyber-data-input__max:focus-visible:not(:disabled),
+.btn-unit-max:hover:not(:disabled),
+.btn-unit-max:focus-visible:not(:disabled) {
+  background: #4a7c59 !important;
+  color: #000 !important;
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.45) !important;
+}
+
+.btn-unit-produce {
+  flex: 1 1 auto;
+  min-width: 5.5rem;
+  padding: 0.42rem 0.85rem !important;
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase;
+  background: #4a7c59 !important;
+  border: 1px solid #4a7c59 !important;
+  color: #000 !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out !important;
+  box-shadow: 0 0 12px rgba(74, 124, 89, 0.25) !important;
+}
+
+.btn-unit-produce:hover:not(:disabled),
+.btn-unit-produce:focus-visible:not(:disabled) {
+  background: transparent !important;
+  color: #4a7c59 !important;
+  box-shadow: 0 0 14px rgba(74, 124, 89, 0.5) !important;
+}
+
+.btn-unit-produce.btn-hud-processing {
+  color: #001a14 !important;
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.65) !important;
+}
+
+/* Birim kartı aksiyon şeridi — card-command-layout.css ile hizalanır */
+
+.unit-card-actions .btn-secondary {
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.08em;
+}
+
+/* —— Terminal segment progress —— */
+.terminal-progress-track {
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(74, 124, 89, 0.22);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.65);
+}
+
+.terminal-progress-fill {
+  height: 100%;
+  min-width: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #4a7c59 0,
+    #4a7c59 2px,
+    rgba(0, 20, 16, 0.95) 2px,
+    rgba(0, 20, 16, 0.95) 6px
+  );
+  box-shadow:
+    0 0 8px rgba(74, 124, 89, 0.35),
+    inset 0 0 4px rgba(74, 124, 89, 0.2);
+  transition: width 0.35s ease;
+}
+
+.terminal-progress-segment {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--seg-tint, #4a7c59) 0,
+    var(--seg-tint, #4a7c59) 2px,
+    rgba(0, 12, 10, 0.92) 2px,
+    rgba(0, 12, 10, 0.92) 6px
+  );
+  box-shadow: inset 0 0 6px rgba(74, 124, 89, 0.12);
+}
+
+.strat-meter__track.terminal-progress-track {
+  height: 8px;
+  border-radius: 0;
+}
+
+.strat-meter--warn .terminal-progress-fill {
+  background: repeating-linear-gradient(
+    90deg,
+    #ff4466 0,
+    #ff4466 2px,
+    rgba(28, 6, 10, 0.95) 2px,
+    rgba(28, 6, 10, 0.95) 6px
+  );
+  box-shadow: 0 0 8px rgba(255, 68, 102, 0.4);
+}
+
+.building-level-progress__bar.terminal-progress-track {
+  height: 8px;
+  margin-top: 0.25rem;
+}
+
+.population-dist-panel__bar.terminal-progress-track {
+  display: flex;
+  height: 12px;
+  margin-bottom: 0.65rem;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.population-dist-panel__segment.terminal-progress-segment {
+  flex-shrink: 0;
+}
+
+.strat-prod-row__fill {
+  background: repeating-linear-gradient(
+    90deg,
+    #4a7c59 0,
+    #4a7c59 2px,
+    rgba(0, 16, 14, 0.9) 2px,
+    rgba(0, 16, 14, 0.9) 6px
+  ) !important;
+  box-shadow: 0 0 6px rgba(74, 124, 89, 0.3);
+}
+
+/* —— Savaş simülasyonu & rapor metrik grid —— */
+.battle-sim-outcome-grid,
+.report-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0.65rem 0 0.75rem;
+  align-items: stretch;
+}
+
+.battle-sim-outcome-card,
+.report-metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.55rem 0.45rem;
+  text-align: center;
+  border: 1px solid rgba(74, 124, 89, 0.22);
+  background: rgba(10, 15, 10, 0.75);
+  overflow: hidden;
+}
+
+.battle-sim-outcome-card__tag,
+.report-metric-card__tag {
+  font-family: var(--font-terminal, var(--font-mono));
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.85);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-sim-outcome-card__value,
+.report-metric-card__value {
+  font-family: var(--font-terminal, var(--font-mono));
+  font-weight: 700;
+  font-size: clamp(0.72rem, 2.2vw, 0.92rem);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e8fff8;
+}
+
+.battle-sim-outcome-card--primary {
+  border-color: rgba(74, 124, 89, 0.45);
+  box-shadow: 0 0 12px rgba(74, 124, 89, 0.12);
+}
+
+.battle-sim-outcome-card--win .battle-sim-outcome-card__value {
+  color: #4a7c59;
+}
+
+.battle-sim-outcome-card--loss .battle-sim-outcome-card__value {
+  color: #ff6688;
+}
+
+.battle-sim-result--win .battle-sim-outcome-card--primary {
+  border-color: rgba(74, 124, 89, 0.55);
+}
+
+.battle-sim-result--loss .battle-sim-outcome-card--primary {
+  border-color: rgba(255, 68, 102, 0.5);
+}
+
+.battle-sim-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.battle-sim-stats > div {
+  min-width: 0;
+  padding: 0.5rem 0.45rem;
+  text-align: center;
+  overflow: hidden;
+  border-radius: 0;
+  border: 1px solid rgba(74, 124, 89, 0.18);
+  background: rgba(10, 15, 10, 0.65);
+}
+
+.battle-sim-stats dt,
+.battle-sim-stats dd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.battle-sim-stats dd {
+  font-size: clamp(0.72rem, 2vw, 0.88rem);
+  font-family: var(--font-terminal, var(--font-mono));
+}
+
+.battle-sim-input-row > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  font-size: clamp(0.68rem, 2vw, 0.78rem);
+}
+
+.report-loot-grid {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)) !important;
+  gap: 0.45rem !important;
+}
+
+.report-loot-item {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.report-loot-label,
+.report-loot-amount {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-intel-fields {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)) !important;
+  gap: 0.45rem !important;
+}
+
+.report-intel-field {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.report-intel-label,
+.report-intel-field strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.68rem, 2vw, 0.82rem);
+}
+
+.report-battle-stats {
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)) !important;
+  gap: 0.45rem !important;
+}
+
+.report-battle-stats div {
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+}
+
+.report-battle-stats dt,
+.report-battle-stats dd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.report-loss-table td:first-child {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operation-outcome-banner {
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-terminal, var(--font-mono));
+}
+
+.operation-outcome-banner strong,
+.operation-outcome-banner__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* —— Sistem kilit / ACCESS DENIED modal —— */
+.system-locked-panel {
+  text-align: center;
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+}
+
+.system-locked-panel .system-locked-eyebrow,
+.system-locked-panel .system-locked-title,
+.system-locked-panel .system-locked-sub,
+.system-locked-panel .system-locked-feature,
+.system-locked-panel .system-locked-hint {
+  text-align: center;
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+}
+
+.system-locked-feature strong {
+  display: inline-block;
+  margin-top: 0.15rem;
+}
+
+.system-locked-dismiss {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.55rem 0.85rem;
+  font-family: var(--font-terminal, var(--font-mono)) !important;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #4a7c59;
+  background: rgba(17, 26, 17, 0.9);
+  border: 1px solid rgba(74, 124, 89, 0.55);
+  cursor: pointer;
+  transition: color 0.08s ease, background 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+.system-locked-dismiss:hover,
+.system-locked-dismiss:focus-visible {
+  color: #000;
+  background: #4a7c59;
+  border-color: #4a7c59;
+  box-shadow: 0 0 16px rgba(74, 124, 89, 0.55);
+  animation: system-lock-glitch 0.32s steps(3, end);
+  outline: none;
+}
+
+@keyframes system-lock-glitch {
+  0% { transform: translate(0); filter: none; }
+  33% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+  66% { transform: translate(2px, -1px); color: #ff3355; }
+  100% { transform: translate(0); filter: none; }
+}

@@ -1,26 +1,66 @@
 /**
- * Kurucu (God Mode) erişimi — yalnızca tanımlı hesaplar.
- * .env: VITE_FOUNDER_PLAYER_NAME, VITE_FOUNDER_EMAIL (virgülle çoklu)
+ * Kurucu / admin (God Mode) erişimi.
+ * .env: VITE_FOUNDER_PLAYER_NAME, VITE_FOUNDER_EMAIL, VITE_ADMIN_PLAYER_NAMES
  */
+import { resolveProfileIsAdmin } from './profileApi';
+
+export const DEV_ADMIN_STORAGE_KEY = 'strateji_dev_admin';
 
 function parseList(raw) {
   if (!raw || typeof raw !== 'string') return [];
   return raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 }
 
-const FOUNDER_NAMES = new Set([
+const ENV_ADMIN_NAMES = new Set([
   ...parseList(import.meta.env.VITE_FOUNDER_PLAYER_NAME),
   ...parseList(import.meta.env.VITE_ADMIN_PLAYER_NAMES),
-  'komutan_alpha',
 ]);
 
-const FOUNDER_EMAILS = new Set(parseList(import.meta.env.VITE_FOUNDER_EMAIL));
+const ENV_ADMIN_EMAILS = new Set(parseList(import.meta.env.VITE_FOUNDER_EMAIL));
 
-export function isFounderPlayer(playerName, email = null) {
-  if (import.meta.env.VITE_ADMIN_UNLOCK === '1') return true;
+export function isDevAdminEnabled() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(DEV_ADMIN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function isEnvAdminAllowlist(playerName, email) {
   const name = String(playerName ?? '').trim().toLowerCase();
-  if (name && FOUNDER_NAMES.has(name)) return true;
+  if (name && ENV_ADMIN_NAMES.has(name)) return true;
   const mail = String(email ?? '').trim().toLowerCase();
-  if (mail && FOUNDER_EMAILS.has(mail)) return true;
+  if (mail && ENV_ADMIN_EMAILS.has(mail)) return true;
   return false;
+}
+
+/**
+ * Oyun içi admin paneli — profil meta, auth rolü veya env allowlist.
+ * Dev localStorage / VITE_ADMIN_UNLOCK burada kullanılmaz (herkese açılmasın).
+ */
+export function isGameAdmin({
+  playerName = null,
+  email = null,
+  session = null,
+  profileIsAdmin = false,
+  profile = null,
+} = {}) {
+  if (profileIsAdmin) return true;
+  const user = session?.user ?? null;
+  if (profile && resolveProfileIsAdmin(profile, user)) return true;
+  if (user && resolveProfileIsAdmin(null, user)) return true;
+  if (isEnvAdminAllowlist(playerName, email)) return true;
+  return false;
+}
+
+/** @deprecated isGameAdmin kullanın — geriye dönük uyumluluk */
+export function isFounderPlayer(playerName, email = null, options = {}) {
+  return isGameAdmin({
+    playerName,
+    email,
+    session: options.session ?? null,
+    profileIsAdmin: options.profileIsAdmin ?? false,
+    profile: options.profile ?? null,
+  });
 }

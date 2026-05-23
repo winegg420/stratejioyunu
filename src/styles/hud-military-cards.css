@@ -4,12 +4,12 @@
 .hud-shell .building-card.building-card--steel,
 .app-shell.hud-shell .building-card.building-card--steel {
   position: relative;
-  border: 1px solid rgba(0, 240, 255, 0.15) !important;
-  background-color: rgba(5, 10, 20, 0.85) !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
+  background-color: rgba(17, 26, 17, 0.85) !important;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(5, 10, 20, 0.92) 0%, rgba(2, 4, 8, 0.98) 100%) !important;
+    linear-gradient(rgba(74, 124, 89, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(17, 26, 17, 0.92) 0%, rgba(10, 15, 10, 0.98) 100%) !important;
   background-size: 20px 20px, 20px 20px, 100% 100% !important;
   clip-path: polygon(
     0 0,
@@ -21,7 +21,7 @@
   );
   border-radius: 0 !important;
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
+    0 0 0 1px rgba(74, 124, 89, 0.06) inset,
     0 12px 32px rgba(0, 0, 0, 0.45) !important;
   backdrop-filter: none !important;
   overflow: hidden;
@@ -37,32 +37,32 @@
   right: 0;
   width: 14px;
   height: 14px;
-  background: linear-gradient(135deg, transparent 50%, rgba(0, 240, 255, 0.35) 50%);
+  background: linear-gradient(135deg, transparent 50%, rgba(74, 124, 89, 0.35) 50%);
   pointer-events: none;
   z-index: 2;
 }
 
 .building-card.building-card--steel:hover:not(.building-card--blocked) {
-  border-color: rgba(0, 240, 255, 0.35) !important;
+  border-color: rgba(74, 124, 89, 0.35) !important;
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.12) inset,
-    0 0 24px rgba(0, 240, 255, 0.12),
+    0 0 0 1px rgba(74, 124, 89, 0.12) inset,
+    0 0 24px rgba(74, 124, 89, 0.12),
     0 14px 36px rgba(0, 0, 0, 0.5) !important;
 }
 
 .building-card.building-card--steel .card-header h3 {
   letter-spacing: 0.04em;
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+  text-shadow: 0 0 12px rgba(74, 124, 89, 0.15);
 }
 
 .building-card.building-card--steel .badge {
-  border-color: rgba(0, 240, 255, 0.25);
-  background: rgba(0, 240, 255, 0.08);
-  color: rgba(0, 240, 255, 0.85);
+  border-color: rgba(74, 124, 89, 0.25);
+  background: rgba(74, 124, 89, 0.08);
+  color: rgba(74, 124, 89, 0.85);
 }
 
 .building-card.building-card--steel .card-visual {
-  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.1);
 }
 
 .building-card.building-card--steel.building-card--blocked {
@@ -75,11 +75,11 @@
 .unit-card,
 .hud-shell .unit-card,
 .app-shell.hud-shell .unit-card {
-  border: 1px solid rgba(0, 240, 255, 0.15) !important;
+  border: 1px solid rgba(74, 124, 89, 0.15) !important;
   background:
-    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(5, 10, 20, 0.88) 0%, rgba(2, 4, 8, 0.96) 100%) !important;
+    linear-gradient(rgba(74, 124, 89, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(17, 26, 17, 0.88) 0%, rgba(10, 15, 10, 0.96) 100%) !important;
   background-size: 16px 16px, 16px 16px, 100% 100% !important;
   clip-path: polygon(
     0 0,
@@ -90,7 +90,7 @@
     0 calc(100% - 8px)
   );
   border-radius: 0 !important;
-  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.05) inset !important;
+  box-shadow: 0 0 0 1px rgba(74, 124, 89, 0.05) inset !important;
 }
 
 .unit-led-grid {
@@ -105,8 +105,8 @@
   flex-direction: column;
   gap: 0.2rem;
   padding: 0.45rem 0.5rem;
-  border: 1px solid rgba(0, 240, 255, 0.12);
-  background: linear-gradient(180deg, rgba(8, 14, 24, 0.95) 0%, rgba(3, 6, 12, 0.98) 100%);
+  border: 1px solid rgba(74, 124, 89, 0.12);
+  background: linear-gradient(180deg, rgba(17, 26, 17, 0.95) 0%, rgba(3, 6, 12, 0.98) 100%);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
 }
 
@@ -141,15 +141,15 @@
 }
 
 .unit-led-value--cyan {
-  color: #67e8f9;
+  color: #d4d4aa;
   text-shadow: 0 0 10px rgba(103, 232, 249, 0.3);
 }
 
 .unit-stock-bar {
   margin: 0 0 0.85rem;
   padding: 0.5rem 0.55rem;
-  border: 1px solid rgba(0, 240, 255, 0.14);
-  background: rgba(3, 8, 16, 0.9);
+  border: 1px solid rgba(74, 124, 89, 0.14);
+  background: rgba(10, 15, 10, 0.9);
 }
 
 .unit-stock-bar__head {
@@ -179,7 +179,7 @@
 .unit-stock-bar__track {
   height: 6px;
   background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(74, 124, 89, 0.12);
   overflow: hidden;
 }
 
@@ -195,14 +195,32 @@
   gap: 1rem;
 }
 
+.barracks-production-section {
+  margin: 0 0 1.25rem;
+}
+
+.barracks-section-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(212, 212, 170, 0.92);
+}
+
+.barracks-page--military .battle-simulator-panel {
+  margin-top: 0.5rem;
+}
+
 .barracks-page--military .barracks-agent-counter {
   font-family: var(--font-mono, 'Share Tech Mono', monospace);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
-  color: rgba(0, 240, 255, 0.75);
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: rgba(74, 124, 89, 0.75);
+  border: 1px solid rgba(74, 124, 89, 0.2);
   padding: 0.35rem 0.65rem;
-  background: rgba(5, 10, 20, 0.85);
+  background: rgba(17, 26, 17, 0.85);
 }
 
 .barracks-page--military .barracks-agent-counter strong {

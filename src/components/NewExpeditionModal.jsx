@@ -9,6 +9,7 @@ import {
 } from '../lib/expeditionTravel';
 import { getTroopStock } from '../lib/troopStock';
 import ExpeditionEtaStrip from './ExpeditionEtaStrip';
+import CustomDropdown from './CustomDropdown';
 import TroopStockLabel from './TroopStockLabel';
 import {
   STORE_EMPTY_ARRAY,
@@ -204,18 +205,20 @@ export default function NewExpeditionModal({ open, onClose }) {
         <div className="expedition-launch-modal__body">
           <label className="expedition-launch-field">
             <span>Hedef şehir</span>
-            <select
+            <CustomDropdown
               className="expedition-launch-select"
               value={targetName}
-              onChange={(e) => setTargetName(e.target.value)}
-            >
-              <option value="">Seçin…</option>
-              {targets.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name} ({c.status})
-                </option>
-              ))}
-            </select>
+              onChange={setTargetName}
+              placeholder="Seçin…"
+              aria-label="Hedef şehir"
+              options={[
+                { value: '', label: 'Seçin…', disabled: true },
+                ...targets.map((c) => ({
+                  value: c.name,
+                  label: `${c.name} (${c.status})`,
+                })),
+              ]}
+            />
           </label>
 
           {!targets.length && (

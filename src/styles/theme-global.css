@@ -1,0 +1,385 @@
+/**
+ * Kalıcı askeri yeşil tema — tüm sayfalar.
+ * Neon (#4a7c59, #4a7c59) yalnızca: sefer sayacı, saldırı uyarısı, KBRN alarm, harita sefer rotası.
+ */
+
+:root {
+  --bg-deep: #0a0f0a;
+  --bg-panel: #111a11;
+  --bg-card: #111a11;
+  --bg-hover: #1a2e1a;
+  --sidebar-bg: #0d150d;
+
+  --border: rgba(74, 124, 89, 0.22);
+  --border-glow: rgba(74, 124, 89, 0.35);
+  --border-subtle: rgba(74, 124, 89, 0.12);
+
+  --text: #d4d4aa;
+  --text-muted: rgba(212, 212, 170, 0.55);
+  --text-heading: #ffffff;
+
+  --accent: #4a7c59;
+  --accent-dim: #3a6347;
+  --accent-secondary: #c9a84c;
+  --success: #4a7c59;
+  --danger: #8b1a1a;
+  --warn: #c9a84c;
+
+  --neon-cyan: #4a7c59;
+  --neon-green: #4a7c59;
+  --neon-cyan-dim: rgba(74, 124, 89, 0.45);
+  --neon-green-dim: rgba(74, 124, 89, 0.45);
+  --neon-green-glow: rgba(74, 124, 89, 0.2);
+  --terminal-neon: #4a7c59;
+  --cmd-green: #4a7c59;
+  --cmd-cyan: #4a7c59;
+  --hud-cyan: #4a7c59;
+
+  --hud-bg-deep: #0a0f0a;
+  --hud-bg-mid: #111a11;
+  --hud-bg-panel: #111a11;
+  --hud-bg-card: #111a11;
+  --hud-border: rgba(74, 124, 89, 0.22);
+  --hud-border-glow: rgba(74, 124, 89, 0.35);
+  --hud-accent: #4a7c59;
+  --hud-accent-glow: rgba(74, 124, 89, 0.25);
+  --hud-alert-red: #8b1a1a;
+  --hud-alert-orange: #c9a84c;
+  --hud-lock-cyan: #4a7c59;
+  --hud-grid: rgba(74, 124, 89, 0.04);
+
+  --font-size-title: 1.35rem;
+  --font-size-body: 0.9375rem;
+  --font-size-small: 0.8125rem;
+}
+
+body {
+  background: var(--bg-deep) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+  font-size: var(--font-size-body);
+}
+
+body::before {
+  display: none !important;
+}
+
+h1,
+h2,
+h3,
+.page-title,
+.panel-title,
+.section-title,
+.card-title {
+  color: var(--text-heading) !important;
+}
+
+.section-title,
+.home-cmd-widget__label,
+.badge-level {
+  color: var(--accent-secondary) !important;
+}
+
+.hint,
+.text-muted,
+.muted,
+.res-label,
+.card-meta {
+  color: var(--text-muted) !important;
+}
+
+.app-shell.hud-shell .sidebar,
+.hud-shell .sidebar-hud,
+.hud-shell .sidebar {
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link,
+.app-shell.hud-shell .sidebar-hud .nav-link,
+.hud-shell .nav-link {
+  color: var(--text) !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link:not(:disabled):hover,
+.app-shell.hud-shell .sidebar-hud .nav-link:not(:disabled):hover,
+.hud-shell .nav-link:not(:disabled):hover {
+  background: var(--bg-hover) !important;
+  box-shadow: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link.active,
+.app-shell.hud-shell .sidebar-hud .nav-link.active,
+.hud-shell .nav-link.active {
+  background: rgba(74, 124, 89, 0.22) !important;
+  border-left: 3px solid var(--accent) !important;
+  color: var(--text-heading) !important;
+  box-shadow: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link.active::before,
+.app-shell.hud-shell .sidebar-hud .nav-link.active::before {
+  display: none !important;
+}
+
+.hud-shell .sidebar-hud .nav-link.active .nav-label,
+.app-shell.hud-shell .sidebar-hud .nav-link.active .nav-label,
+.hud-shell .sidebar-hud .nav-link.active .nav-icon,
+.app-shell.hud-shell .sidebar-hud .nav-link.active .nav-icon {
+  color: var(--text-heading) !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.hud-shell .bottom-nav-link.active {
+  color: var(--accent) !important;
+  background: rgba(74, 124, 89, 0.18) !important;
+}
+
+.glass-panel,
+.panel,
+.card:not(.building-card--unbuilt),
+.content-card,
+.home-cmd-widget,
+.strat-matrix,
+.hud-shell .panel,
+.app-shell.hud-shell .panel,
+.app-shell.hud-shell .card:not(.building-card--unbuilt) {
+  background: var(--bg-card) !important;
+  border: none !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: none !important;
+}
+
+.modal-content,
+.modal-panel,
+.city-detail-panel,
+.map-side-panel,
+.access-denied-overlay__panel {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+}
+
+.card:hover:not(.building-card--unbuilt),
+.glass-panel:hover {
+  border-color: transparent !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.hud-shell .resource-bar,
+.app-shell.hud-shell .resource-bar,
+.resource-bar,
+.resource-bar--tactical,
+.resource-bar--command,
+.resource-bar--stacked {
+  background: var(--bg-panel) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.hud-shell .resource-item,
+.app-shell.hud-shell .resource-item {
+  background: rgba(26, 46, 26, 0.45) !important;
+  border: none !important;
+}
+
+.res-value {
+  color: var(--text-heading) !important;
+  text-shadow: none !important;
+}
+
+.btn-primary,
+.hud-button--primary,
+.map-cmd-btn--primary {
+  background: var(--accent) !important;
+  border-color: var(--accent-dim) !important;
+  color: var(--text-heading) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.btn-danger,
+.map-cmd-btn--attack {
+  background: var(--danger) !important;
+  border-color: #6d1515 !important;
+  color: var(--text-heading) !important;
+}
+
+.progress-bar-fill,
+.queue-progress-fill,
+.build-progress__fill {
+  background: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+.tab-btn.active,
+.hud-tab.active {
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+.hud-shell *,
+.app-shell.hud-shell * {
+  text-shadow: none !important;
+}
+
+.hud-shell *:not(.command-ticker__track):not(.map-status-band__track):not(.nav-expedition-count):not(.nav-attack-alert),
+.app-shell.hud-shell *:not(.command-ticker__track):not(.map-status-band__track):not(.nav-expedition-count):not(.nav-attack-alert) {
+  animation: none !important;
+}
+
+.app-shell.hud-shell .command-ticker__track,
+.app-shell.hud-shell .map-status-band__track,
+.hud-shell .command-ticker__track,
+.hud-shell .map-status-band__track {
+  animation: command-ticker-roll var(--command-ticker-duration, 72s) linear infinite !important;
+  will-change: transform;
+}
+
+.leaflet-overlay-pane svg path.tactical-route,
+.leaflet-overlay-pane svg path.tactical-route-beam {
+  animation:
+    tactical-route-flow 2.8s linear infinite,
+    tactical-pulse 2.4s ease-in-out infinite !important;
+}
+
+.leaflet-overlay-pane svg path.tactical-route-beam {
+  animation:
+    tactical-route-flow 1.4s linear infinite,
+    tactical-pulse 2s ease-in-out infinite !important;
+}
+
+.nav-attack-alert {
+  animation: attack-alert-pulse 1s ease-in-out infinite !important;
+}
+
+.leaflet-interactive.map-marker-under-attack,
+.leaflet-interactive.map-marker-attack-ring {
+  animation: map-attack-pulse 1.2s ease-in-out infinite !important;
+}
+
+* {
+  scrollbar-color: var(--accent) var(--bg-deep) !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--bg-deep) !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent) !important;
+  box-shadow: none !important;
+}
+
+.nav-expedition-count {
+  background: rgba(74, 124, 89, 0.15) !important;
+  color: #4a7c59 !important;
+  border: 1px solid rgba(74, 124, 89, 0.45) !important;
+  box-shadow: none !important;
+}
+
+.nav-attack-alert {
+  background: var(--danger) !important;
+  color: #4a7c59 !important;
+  border: 1px solid #4a7c59 !important;
+  box-shadow: 0 0 6px rgba(74, 124, 89, 0.35) !important;
+}
+
+.news-global-alarm,
+.news-kbrn,
+.command-ticker__item--kbrn-alarm,
+.map-status-band__item--kbrn-alarm {
+  border-left-color: #4a7c59 !important;
+}
+
+.news-global-alarm .news-text,
+.news-kbrn .news-text,
+.command-ticker__item--kbrn-alarm,
+.map-status-band__item--kbrn-alarm {
+  color: #4a7c59 !important;
+}
+
+.leaflet-overlay-pane svg path.tactical-route,
+.leaflet-overlay-pane svg path.tactical-route-beam,
+.leaflet-overlay-pane .tactical-route-neon-dot path {
+  stroke: #4a7c59 !important;
+}
+
+.tactical-route-neon-dot path {
+  fill: #4a7c59 !important;
+}
+
+.command-ticker__tag {
+  color: var(--accent-secondary) !important;
+}
+
+.home-cmd-widget--active .home-cmd-widget__value,
+.home-command-page-header .page-title {
+  text-shadow: none !important;
+}
+
+.hud-shell .bottom-nav,
+.app-shell.hud-shell .bottom-nav {
+  background: var(--sidebar-bg) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.app-shell.hud-shell .content-area,
+.hud-shell .content-area,
+.app-shell .content-area {
+  background: #0a0f0a !important;
+}
+
+.app-shell.hud-shell .sidebar,
+.app-shell.hud-shell .sidebar-hud,
+.hud-shell .sidebar,
+.hud-shell .sidebar-hud,
+.sidebar-desktop.sidebar-hud {
+  background: #0d150d !important;
+}
+
+.expedition-tracker-panel,
+.expedition-tracker-panel--empty {
+  background: #111a11 !important;
+  border: none !important;
+}
+
+.strat-matrix.panel,
+.strat-matrix.glass-panel {
+  background: #111a11 !important;
+  border: none !important;
+}
+
+.mil-ai-advisor--collapsed .mil-ai-terminal__screen,
+.mil-ai-advisor--collapsed .mil-ai-advisor__collapsed-hint,
+.mil-ai-advisor--collapsed .mil-ai-advisor__pending {
+  display: none !important;
+}
+
+.mil-ai-advisor--collapsed .mil-ai-advisor__pulse {
+  display: none !important;
+}
+
+.resource-bar--stacked.resource-bar {
+  min-height: var(--resource-bar-h, 76px) !important;
+  max-height: none !important;
+}
+
+.terminal-bottom-dock,
+.command-ticker {
+  background: var(--bg-panel) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.c4isr-side-decor,
+[class*='scanline'] {
+  display: none !important;
+}

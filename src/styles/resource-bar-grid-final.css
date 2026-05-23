@@ -1,0 +1,222 @@
+/**
+ * Üst kaynak barı — iki katman (tiered DOM).
+ * Üst: şehir + elmas | bayrak + saat
+ * Alt: kaynaklar tam genişlik
+ */
+
+/* Kabuk yüksekliği — içerik kadar büyüsün */
+.app-shell.hud-shell .resource-bar.resource-bar--stacked,
+.app-shell .resource-bar.resource-bar--stacked {
+  height: auto !important;
+  min-height: 6.25rem !important;
+  max-height: none !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.resource-bar--stacked .resource-bar-inner--tiered {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 0.4rem !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 6rem !important;
+  max-height: none !important;
+  padding: 0.45rem 0.7rem 0.5rem !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+/* ── Üst şerit: şehir (sol) · durum (orta) · saat/oyuncu (sağ) ── */
+.resource-bar--stacked .resource-bar-tier--top {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  gap: 0.65rem !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  min-height: 2rem !important;
+}
+
+.resource-bar-top-col {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+
+.resource-bar-top-col--left {
+  flex: 1 1 33% !important;
+  justify-content: flex-start !important;
+  gap: 0.45rem !important;
+}
+
+.resource-bar-top-col--center {
+  flex: 1 1 34% !important;
+  justify-content: center !important;
+}
+
+.resource-bar-top-col--right {
+  flex: 1 1 33% !important;
+  justify-content: flex-end !important;
+}
+
+.resource-bar--stacked .resource-bar-tier--top .resource-bar-brand {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+.resource-bar--stacked .resource-bar-tier--top .resource-bar-actions {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.55rem !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.protection-badge--bar-center {
+  max-width: 100%;
+  justify-content: center;
+}
+
+.resource-bar--stacked .game-title {
+  display: none !important;
+}
+
+.resource-bar--stacked .city-switcher-wrap {
+  flex: 1 1 auto;
+  min-width: 8rem;
+  max-width: min(14rem, 100%);
+}
+
+.resource-bar--stacked .city-switcher .custom-dropdown__trigger {
+  font-size: 0.82rem !important;
+  padding: 0.35rem 0.55rem !important;
+  min-height: 2rem !important;
+}
+
+.resource-bar--stacked .city-cycle-btn {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  font-size: 1rem;
+}
+
+.resource-bar--stacked .resource-bar-diamond {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  padding: 0.25rem 0.5rem !important;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 4px;
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.resource-bar--stacked .resource-bar-diamond .res-icon {
+  font-size: 1rem !important;
+}
+
+.resource-bar--stacked .resource-bar-diamond__value {
+  font-size: 0.92rem !important;
+  color: #c9a84c !important;
+}
+
+.resource-bar--stacked .player-block.player-desktop {
+  display: none !important;
+}
+
+.resource-bar--stacked .lang-switcher--bar.lang-switcher--bar-compact .lang-switcher__title {
+  display: none !important;
+}
+
+.resource-bar--stacked .lang-switcher--bar.lang-switcher--bar-compact .lang-switcher__btn {
+  min-width: 1.75rem !important;
+  min-height: 1.55rem !important;
+}
+
+.resource-bar--stacked .server-time-clock--terminal {
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.08rem !important;
+  padding: 0.22rem 0.45rem !important;
+  border: 1px solid rgba(74, 124, 89, 0.28);
+  border-radius: 4px;
+  background: rgba(17, 26, 17, 0.95);
+}
+
+.resource-bar--stacked .server-time-clock--terminal .server-time-label {
+  display: block !important;
+  font-size: 0.55rem !important;
+  opacity: 0.8;
+}
+
+.resource-bar--stacked .server-time-clock--terminal .server-time-value {
+  font-size: 0.88rem !important;
+  color: #c9a84c !important;
+}
+
+/* ── Alt şerit: kaynaklar ── */
+.resource-bar--stacked .resource-bar-tier--resources {
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  border-top: 1px solid rgba(74, 124, 89, 0.25);
+  padding-top: 0.4rem !important;
+}
+
+.resource-bar--stacked .resource-bar-tier--resources .resource-bar-resources {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: none !important;
+  padding: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* Kaynak 5-sütun düzeni → resource-bar-five-grid.css */
+
+.resource-bar--stacked .resource-bar-tier--resources .res-empire-badge,
+.resource-bar--stacked .resource-bar-tier--resources .res-stgn-badge {
+  display: inline !important;
+  font-size: 0.55rem !important;
+}
+
+@media (max-width: 1100px) {
+  .resource-bar--stacked .resource-bar-tier--resources .resource-item,
+  .resource-bar--stacked .resource-bar-tier--resources .resource-item--tactical {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0.3rem 0.45rem !important;
+  }
+
+  .resource-bar--stacked .resource-bar-tier--resources .res-value__current {
+    font-size: 0.95rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .resource-bar--stacked .resource-bar-tier--resources .res-hourly-badge,
+  .resource-bar--stacked .resource-bar-tier--resources .res-hourly-live,
+  .resource-bar--stacked .resource-bar-tier--resources .res-rate {
+    display: none !important;
+  }
+}

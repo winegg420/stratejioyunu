@@ -1,5 +1,8 @@
+import { mergeLocale } from '../mergeLocale.js';
+import extraEn from '../extra/en.js';
+
 /** @type {import('./tr.js').default} */
-const en = {
+const enBase = {
   lang: { tr: 'Turkish', en: 'English' },
   nav: {
     home: 'Headquarters',
@@ -43,6 +46,8 @@ const en = {
     depotFull: 'depot overflow, production halted',
     peaceForce: 'PEACE FORCE',
     peaceForceTitle: 'Peace Force shield — attacks, cyber and WMD cannot target you. Launching an attack drops the shield.',
+    diamondsTitle: 'Premium diamonds — build speed-up and shop',
+    diamonds: 'Diamonds',
   },
   sidebar: {
     server: 'SERVER',
@@ -86,6 +91,12 @@ const en = {
     hourlyPerHour: '/hr',
     hourlyEnergy: ' E/hr',
   },
+  happiness: {
+    high: 'High',
+    mid: 'Moderate',
+    low: 'Low',
+    critical: 'Critical',
+  },
   common: {
     buy: 'Buy',
     sell: 'Sell',
@@ -93,6 +104,9 @@ const en = {
     confirm: 'Confirm',
     close: 'Close',
     loading: 'Loading…',
+    calculating: '[ CALCULATING... ]',
+    frozen: '[ STGN ]',
+    perHourZero: '+0/hr',
     max: 'MAX',
     select: 'Select…',
     noData: 'No data',
@@ -106,17 +120,29 @@ const en = {
     subtitle: 'Absolute authority — one leader, official State Mail, power struggle on the map',
     briefing: '[ NATIONAL BRIEFING ] Read',
     supabaseConnected: 'Supabase connected',
-    playerId: 'Player ID',
+    googleLogin: 'Continue with Gmail',
+    orDivider: 'or',
+    tabsAria: 'Sign in and register',
+    tabLogin: 'Sign In',
+    tabRegister: 'Register',
+    emailOrId: 'Email or Player ID',
+    displayName: 'Display name (optional)',
     password: 'Password',
+    passwordConfirm: 'Confirm password',
+    playerId: 'Player ID',
     signIn: 'Sign In',
     quickLogin: 'Quick Login (Demo)',
     loginFailed: 'Sign-in failed.',
+    passwordMismatch: 'Passwords do not match.',
+    confirmEmailSent: 'Confirmation email sent. Check your inbox, then sign in.',
+    placeholderEmail: 'you@gmail.com or player_id',
+    placeholderDisplayName: 'Your commander name',
     placeholderId: 'any name or email',
-    placeholderPassword: 'any password',
-    submit: 'Enter Game',
-    submitting: 'Signing in…',
-    quickLogin: 'Quick Login (leave empty)',
-    hintConfigured: 'Leave password empty or use Quick Login for demo. Enter a password to sign in with Supabase.',
+    placeholderPassword: 'at least 6 characters',
+    submit: 'Sign In',
+    submitRegister: 'Register & Play',
+    submitting: 'Please wait…',
+    hintConfigured: 'Use Gmail, email/password, or Quick Login (demo). Leave password empty for demo.',
     hintDemo: 'No registration required. Use Quick Login to play immediately.',
     bootError: 'Game failed to load',
     reload: 'Reload Page',
@@ -229,5 +255,7 @@ const en = {
     },
   },
 };
+
+const en = mergeLocale(enBase, extraEn);
 
 export default en;

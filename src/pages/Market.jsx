@@ -2,7 +2,10 @@
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import MarketOffersEmptyState from '../components/MarketOffersEmptyState';
 import MarketPriceTag from '../components/MarketPriceTag';
+import ProcessingActionButton from '../components/ProcessingActionButton';
+import { useKeyedAsyncLock } from '../hooks/useAsyncActionLock';
 import { useMarketTicker } from '../hooks/useMarketTicker';
+import { flushGameSave } from '../lib/gameActionSync';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
 import {
@@ -13,6 +16,7 @@ import {
 import { formatSupplyTrend } from '../lib/openMarket';
 import { getResourceDisplay } from '../data/resourceCatalog';
 import CyberDataInput from '../components/CyberDataInput';
+import CustomDropdown from '../components/CustomDropdown';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { useLanguage } from '../context/LanguageContext';
 import { getEmpireMoneyTotal } from '../lib/empireTreasury';
@@ -47,6 +51,7 @@ export default function Market() {
   const [offerResource, setOfferResource] = useState('hammadde');
   const [offerQty, setOfferQty] = useState('');
   const [offerPrice, setOfferPrice] = useState('');
+  const { runLocked, isBusy, isProcessing } = useKeyedAsyncLock();
 
   const setBuy = (id, val) => {
     setBuyQty((prev) => ({ ...prev, [id]: val }));
@@ -65,14 +70,21 @@ export default function Market() {
   };
 
   const handleTrade = (resourceId, mode) => {
+    const lockKey = `trade-${resourceId}-${mode}`;
+    if (isBusy) return;
+
     const raw = mode === 'buy' ? buyQty[resourceId] : sellQty[resourceId];
     const qty = Math.max(0, Math.floor(Number(raw) || 0));
     if (!qty) return;
-    const ok = executeMarketTrade({ resourceId, qty, mode });
-    if (ok) {
-      if (mode === 'buy') setBuy(resourceId, '');
-      else setSell(resourceId, '');
-    }
+
+    runLocked(lockKey, async () => {
+      const ok = executeMarketTrade({ resourceId, qty, mode });
+      if (ok) {
+        if (mode === 'buy') setBuy(resourceId, '');
+        else setSell(resourceId, '');
+        await flushGameSave({ cityId: activeCityId });
+      }
+    });
   };
 
   const handleOffer = (e) => {
@@ -126,7 +138,7 @@ export default function Market() {
       <section className="panel market-exchange-panel glass-panel">
         <h3 className="panel-title">Kaynak Alım / Satım</h3>
         <p className="market-exchange-hint">
-          Ortak hesap (userBalance): <strong className="font-hud-data">{userBalance.toLocaleString('tr-TR')}</strong> bütçe
+          Ortak Hazine: <strong className="font-hud-data">{userBalance.toLocaleString('tr-TR')}</strong> Bütçe
         </p>
         <p className="market-exchange-hint">
           Fiyatlar Merkez Bankası paritelerine göre güncellenir. Miktar girin ve işlem yapın.
@@ -168,7 +180,7 @@ export default function Market() {
                           inputClassName="market-input-qty"
                           value={buyQty[id]}
                           min={0}
-                          disabled={!marketReady}
+                          disabled={!marketReady || isBusy}
                           onChange={(e) => setBuy(id, e.target.value)}
                           onMax={() => {
                             const next = maxBuyQty(id);
@@ -178,14 +190,15 @@ export default function Market() {
                         />
                       </div>
                     </div>
-                    <button
+                    <ProcessingActionButton
                       type="button"
                       className="btn btn-hud-primary btn-sm market-hud-btn market-hud-btn--buy"
-                      disabled={!marketReady}
+                      processing={isProcessing(`trade-${id}-buy`)}
+                      disabled={!marketReady || isBusy}
                       onClick={() => handleTrade(id, 'buy')}
                     >
                       Satın Al
-                    </button>
+                    </ProcessingActionButton>
                   </label>
                   <label className="market-exchange-field">
                     <span>Satım</span>
@@ -197,7 +210,7 @@ export default function Market() {
                           value={sellQty[id]}
                           min={0}
                           max={stock}
-                          disabled={!marketReady}
+                          disabled={!marketReady || isBusy}
                           onChange={(e) => setSell(id, e.target.value)}
                           onMax={() => {
                             const next = String(stock);
@@ -207,14 +220,15 @@ export default function Market() {
                         />
                       </div>
                     </div>
-                    <button
+                    <ProcessingActionButton
                       type="button"
                       className="btn btn-hud-secondary btn-sm market-hud-btn market-hud-btn--sell"
-                      disabled={!marketReady}
+                      processing={isProcessing(`trade-${id}-sell`)}
+                      disabled={!marketReady || isBusy}
                       onClick={() => handleTrade(id, 'sell')}
                     >
                       Sat
-                    </button>
+                    </ProcessingActionButton>
                   </label>
                 </div>
               </article>
@@ -233,18 +247,17 @@ export default function Market() {
                 {getResourceDisplay(offerResource).icon}
               </span>
               <div className="market-data-cell__body">
-                <select
+                <CustomDropdown
                   className="market-offer-select market-terminal-select tactical-terminal-select"
                   value={offerResource}
-                  onChange={(e) => setOfferResource(e.target.value)}
+                  onChange={setOfferResource}
                   disabled={!marketReady}
-                >
-                  {MARKET_TRADABLE_IDS.map((rid) => (
-                    <option key={rid} value={rid}>
-                      {formatMarketPriceLabel(rid, centralBank)}
-                    </option>
-                  ))}
-                </select>
+                  aria-label="Teklif kaynağı"
+                  options={MARKET_TRADABLE_IDS.map((rid) => ({
+                    value: rid,
+                    label: formatMarketPriceLabel(rid, centralBank),
+                  }))}
+                />
               </div>
             </div>
           </label>

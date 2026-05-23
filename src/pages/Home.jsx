@@ -22,10 +22,15 @@ import AnimatedCounter from '../components/AnimatedCounter';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useHomeCommandStats } from '../hooks/useHomeCommandStats';
 import { getProgressionState } from '../lib/progressionSystem';
+
+const HOME_PROGRESSION_FALLBACK = Object.freeze({
+  ideologyUnlocked: false,
+  kbrnUnlocked: false,
+});
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
 
-function QueueItem({ name, detail, endsAt, queued, now }) {
+function QueueItem({ name, detail, endsAt, queued, now, queuedLabel }) {
   const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
   return (
     <li className={`queue-item${queued ? ' queue-item--queued' : ''}`}>
@@ -34,22 +39,22 @@ function QueueItem({ name, detail, endsAt, queued, now }) {
         {name} <span className="queue-item__detail">{detail}</span>
       </span>
       <span className="queue-item__timer font-hud-data">
-        {queued ? '[ KUYRUKTA ]' : formatSeconds(remaining)}
+        {queued ? queuedLabel : formatSeconds(remaining)}
       </span>
     </li>
   );
 }
 
-const STAT_ICONS = {
-  'AKTİF OPERASYON': '⚔',
-  'İNŞAAT KUYRUĞU': '🏗',
-  'ÜRETİM KUYRUĞU': '⚙',
-  'OKUNMAYAN RAPOR': '📡',
-  'ŞEHİR SAYISI': '🏙',
+const WIDGET_ICONS = {
+  activeOps: '⚔',
+  buildQueue: '🏗',
+  prodQueue: '⚙',
+  unreadReports: '📡',
+  cityCount: '🏙',
 };
 
-function CommandWidget({ label, value, sub, active }) {
-  const icon = STAT_ICONS[label] ?? '◈';
+function CommandWidget({ label, value, sub, active, iconKey }) {
+  const icon = WIDGET_ICONS[iconKey] ?? '◈';
   const isActive = active ?? (typeof value === 'number' ? value > 0 : false);
   const numeric = typeof value === 'number';
   return (
@@ -90,7 +95,7 @@ export default function Home() {
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => (activeCityId ? s.cities[activeCityId] : null));
   const activeCity = playerCities.find((c) => c.id === activeCityId);
-  const progression = gameReady ? getProgressionState(city) : { ideologyUnlocked: false, kbrnUnlocked: false };
+  const progression = gameReady && city ? getProgressionState(city) : HOME_PROGRESSION_FALLBACK;
   const showIdeologyBriefing = progression.ideologyUnlocked;
 
   const [briefingOpen, setBriefingOpen] = useState(false);
@@ -125,14 +130,14 @@ export default function Home() {
     ...(activeCrisis?.active
       ? [{
         type: activeCrisis.admin ? 'crisis-emergency' : 'crisis-alarm',
-        text: `[ ${activeCrisis.admin ? 'KÜRESEL ACİL DURUM' : 'DOĞAL AFET ALARMI'} ] ${formatCrisisLabel(activeCrisis.type)}${activeCrisis.regionName ? ` — ${activeCrisis.regionName}` : ''}`,
+        text: `[ ${activeCrisis.admin ? t('pages.home.alerts.globalEmergency') : t('pages.home.alerts.naturalDisaster')} ] ${formatCrisisLabel(activeCrisis.type)}${activeCrisis.regionName ? ` — ${activeCrisis.regionName}` : ''}`,
         time: 'CANLI',
       }]
       : []),
     ...(globalOutbreak?.active
       ? [{
         type: 'global-alarm',
-        text: `[ GLOBAL ALARM ] Aktif: ${globalOutbreak.regionName} — karantina sürüyor`,
+        text: `[ ${t('pages.home.alerts.globalAlarm')} ] ${globalOutbreak.regionName} — ${t('pages.home.alerts.quarantine')}`,
         time: 'CANLI',
       }]
       : []),
@@ -145,14 +150,19 @@ export default function Home() {
 
   const sectorReady = gameReady && Boolean(activeCity?.name && city);
   const sectorFeedLine = sectorReady
-    ? [
-      `> ${activeCity.name}`,
-      activeCity.type ?? 'Üs',
-      activeCity.provinceName ? `${activeCity.provinceName} sektörü` : null,
-      'komuta hattı senkron',
-    ]
-      .filter(Boolean)
-      .join(' · ')
+    ? (() => {
+      const parts = [
+        activeCity.name,
+        (activeCity.type && String(activeCity.type).trim())
+          ? activeCity.type
+          : t('pages.home.feed.base'),
+      ];
+      if (activeCity.provinceName?.trim()) {
+        parts.push(t('pages.home.feed.sector', { province: activeCity.provinceName.trim() }));
+      }
+      parts.push(t('pages.home.feed.sync'));
+      return `> ${parts.join(' · ')}`;
+    })()
     : t('resourceBar.syncing');
 
   if (!gameReady) {
@@ -202,35 +212,48 @@ export default function Home() {
 
         <CrisisResponsePanel />
 
-        <div className="home-cmd-widgets" role="list" aria-label="Komuta özeti">
+        <div className="home-cmd-widgets" role="list" aria-label={t('pages.home.widgets.ariaSummary')}>
           <CommandWidget
-            label="AKTİF OPERASYON"
+            iconKey="activeOps"
+            label={t('pages.home.widgets.activeOps')}
             value={cmdStats.activeExpeditions}
-            sub={cmdStats.live ? 'canlı · operasyon' : 'operasyon'}
+            sub={cmdStats.live
+              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindOps') })
+              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindOps') })}
             active={cmdStats.activeExpeditions > 0}
           />
           <CommandWidget
-            label="İNŞAAT KUYRUĞU"
+            iconKey="buildQueue"
+            label={t('pages.home.widgets.buildQueue')}
             value={cmdStats.constructionCount}
-            sub={cmdStats.live ? 'canlı · bina' : 'bina'}
+            sub={cmdStats.live
+              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindBuilding') })
+              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindBuilding') })}
             active={cmdStats.constructionCount > 0}
           />
           <CommandWidget
-            label="ÜRETİM KUYRUĞU"
+            iconKey="prodQueue"
+            label={t('pages.home.widgets.prodQueue')}
             value={cmdStats.productionCount}
-            sub={cmdStats.live ? 'canlı · birim' : 'birim'}
+            sub={cmdStats.live
+              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindUnit') })
+              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindUnit') })}
             active={cmdStats.productionCount > 0}
           />
           <CommandWidget
-            label="OKUNMAYAN RAPOR"
+            iconKey="unreadReports"
+            label={t('pages.home.widgets.unreadReports')}
             value={cmdStats.unreadReports}
-            sub={cmdStats.live ? 'canlı · rapor' : 'rapor'}
+            sub={cmdStats.live
+              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindReport') })
+              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindReport') })}
             active={cmdStats.unreadReports > 0}
           />
           <CommandWidget
-            label="ŞEHİR SAYISI"
+            iconKey="cityCount"
+            label={t('pages.home.widgets.cityCount')}
             value={playerCities.length}
-            sub="aktif"
+            sub={t('pages.home.widgets.activeLabel')}
             active={playerCities.length > 0}
           />
         </div>
@@ -241,39 +264,40 @@ export default function Home() {
         </div>
 
         <div className="home-grid">
-          <section className="panel home-panel glass-panel">
-            <h3 className="panel-title">
+          <details className="panel home-panel home-panel--foldable glass-panel">
+            <summary className="panel-title">
               <span className="panel-title__icon">🏗️</span>
-              Aktif İnşaatlar — {activeCity?.name}
-            </h3>
+              {t('pages.home.sections.activeBuilds', { name: activeCity?.name })}
+            </summary>
             <ul className="queue-list">
               {city?.constructionQueue?.length > 0 ? (
                 city.constructionQueue.map((q) => (
                   <QueueItem
                     key={q.id}
                     name={q.name}
-                    detail={`→ Sv.${q.targetLevel}`}
+                    detail={`→ ${t('common.levelShort')}${q.targetLevel}`}
                     endsAt={q.endsAt}
                     queued={q.queued}
                     now={now}
+                    queuedLabel={t('pages.home.queue.queued')}
                   />
                 ))
               ) : (
                 <QueueEmptyState
-                  tag="[ KUYRUK BOŞ ]"
-                  title="Aktif inşaat yok"
-                  hint="Binalar sekmesinden inşaat veya yükseltme başlatın."
+                  tag={t('pages.home.empty.queueTag')}
+                  title={t('pages.home.empty.noBuild')}
+                  hint={t('pages.home.empty.noBuildHint')}
                   icon="🏗"
                 />
               )}
             </ul>
-          </section>
+          </details>
 
-          <section className="panel home-panel glass-panel">
-            <h3 className="panel-title">
+          <details className="panel home-panel home-panel--foldable glass-panel">
+            <summary className="panel-title">
               <span className="panel-title__icon">⚔️</span>
-              Asker Üretim Kuyruğu — {activeCity?.name}
-            </h3>
+              {t('pages.home.sections.prodQueue', { name: activeCity?.name })}
+            </summary>
             <ul className="queue-list">
               {city?.productionQueue?.length > 0 ? (
                 city.productionQueue.map((q) => (
@@ -284,23 +308,24 @@ export default function Home() {
                     endsAt={q.endsAt}
                     queued={q.queued}
                     now={now}
+                    queuedLabel={t('pages.home.queue.queued')}
                   />
                 ))
               ) : (
                 <QueueEmptyState
-                  tag="[ KUYRUK BOŞ ]"
-                  title="Üretim kuyruğu boş"
-                  hint="Kara Kuvvetleri, Tersane veya Hava Üssü'nden birim üretin."
+                  tag={t('pages.home.empty.queueTag')}
+                  title={t('pages.home.empty.noProd')}
+                  hint={t('pages.home.empty.noProdHint')}
                   icon="⚙"
                 />
               )}
             </ul>
-          </section>
+          </details>
 
-          <section className="panel home-panel glass-panel span-2">
+          <section className="panel home-panel home-panel--news glass-panel span-2">
             <h3 className="panel-title">
               <span className="panel-title__icon">🌐</span>
-              Sunucu Haberleri
+              {t('pages.home.sections.serverNews')}
             </h3>
             <NewsFeed items={newsItems} />
           </section>

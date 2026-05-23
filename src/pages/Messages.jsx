@@ -1,20 +1,18 @@
 import { useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
+import StateMailComposeModal from '../components/StateMailComposeModal';
 import { stateMailMessages } from '../data/placeholder';
 import { useAuth } from '../context/AuthContext';
+import { formatStateMailDate } from '../lib/formatDisplayDate';
 import { formatIdeologyLabel } from '../lib/ideologySystem';
+import { useLanguage } from '../context/LanguageContext';
 import { useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 
-const ENCRYPTION_OPTIONS = [
-  { id: 'standard', label: 'AES-256 · STATE-MAIL' },
-  { id: 'alliance', label: 'QUANTUM-SHIELD · ALLIANCE-CHAN' },
-  { id: 'war', label: 'BURN-AFTER-READ · RED-CHANNEL' },
-];
-
 export default function Messages() {
   const { playerName } = useAuth();
+  const { lang } = useLanguage();
   const playerIdeology = useGameStore((s) => s.playerIdeology);
   const addToast = useNotificationStore((s) => s.addToast);
 
@@ -98,7 +96,7 @@ export default function Messages() {
                     <span className="state-mail-list__from">{m.fromPresident}</span>
                     <span className="state-mail-list__subject">{m.subject}</span>
                     <span className="state-mail-list__meta">
-                      {m.time} · {m.encryption}
+                      {formatStateMailDate(m.time, lang)} · {m.encryption}
                     </span>
                   </button>
                 </li>
@@ -106,55 +104,7 @@ export default function Messages() {
             </ul>
           </aside>
 
-          {composeOpen ? (
-            <section className="state-mail-compose panel">
-              <div className="state-mail-compose__head">
-                <span className="state-mail-compose__tag">[ YENİ RESMİ YAZI / COMPOSE ]</span>
-              </div>
-              <form className="state-mail-compose__form" onSubmit={handleSend}>
-                <label>
-                  [ ALICI / PRESIDENT ]
-                  <input
-                    type="text"
-                    value={toPresident}
-                    onChange={(e) => setToPresident(e.target.value)}
-                    placeholder="President_Alpha"
-                    autoComplete="off"
-                  />
-                </label>
-                <label>
-                  [ KONU / SUBJECT ]
-                  <input
-                    type="text"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="İttifak teklifi — gizli kanal"
-                  />
-                </label>
-                <label>
-                  [ GÜVENLİK PROTOKOLÜ / ENCRYPTION ]
-                  <select value={encryption} onChange={(e) => setEncryption(e.target.value)}>
-                    {ENCRYPTION_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  [ METİN / BODY ]
-                  <textarea
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder="Resmi diplomatik metin…"
-                  />
-                </label>
-                <button type="submit" className="state-mail-send-btn">
-                  [ RESMİ YAZIŞMAYI İMZALA VE GÖNDER ]
-                </button>
-              </form>
-            </section>
-          ) : selected ? (
+          {selected ? (
             <article className="state-mail-detail panel">
               <header className="state-mail-detail__head">
                 <span className="state-mail-detail__tag">[ RESMİ YAZIŞMA / READ ]</span>
@@ -174,7 +124,7 @@ export default function Messages() {
                 </div>
                 <div className="state-mail-field">
                   <span className="state-mail-field__label">[ ZAMAN / TIMESTAMP ]</span>
-                  <span className="state-mail-field__value">{selected.time}</span>
+                  <span className="state-mail-field__value">{formatStateMailDate(selected.time, lang)}</span>
                 </div>
               </header>
               <div className="state-mail-detail__body">{selected.body}</div>
@@ -190,6 +140,20 @@ export default function Messages() {
           )}
         </div>
       )}
+
+      <StateMailComposeModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        toPresident={toPresident}
+        setToPresident={setToPresident}
+        subject={subject}
+        setSubject={setSubject}
+        encryption={encryption}
+        setEncryption={setEncryption}
+        body={body}
+        setBody={setBody}
+        onSubmit={handleSend}
+      />
     </div>
   );
 }

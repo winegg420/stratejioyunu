@@ -1,49 +1,27 @@
-/* Sol menü — aktif sekme (standart neon yeşil) */
+/* Sol menü — aktif sekme (askeri yeşil tema) */
 
 .hud-shell .sidebar-hud .nav-link.active,
 .app-shell.hud-shell .sidebar-hud .nav-link.active {
   position: relative;
-  border-left: 3px solid var(--neon-green, #39ff14) !important;
-  background: linear-gradient(
-    90deg,
-    rgba(57, 255, 20, 0.24) 0%,
-    rgba(57, 255, 20, 0.1) 38%,
-    rgba(57, 255, 20, 0.03) 72%,
-    transparent 100%
-  ) !important;
-  color: #e8ffe8 !important;
-  box-shadow:
-    inset 4px 0 14px var(--neon-green-glow, rgba(57, 255, 20, 0.28)),
-    inset 0 0 28px rgba(57, 255, 20, 0.1),
-    0 0 18px var(--neon-green-glow, rgba(57, 255, 20, 0.14)) !important;
+  border-left: 3px solid var(--accent, #4a7c59) !important;
+  background: rgba(74, 124, 89, 0.22) !important;
+  color: var(--text-heading, #ffffff) !important;
+  box-shadow: none !important;
 }
 
 .hud-shell .sidebar-hud .nav-link.active::before,
 .app-shell.hud-shell .sidebar-hud .nav-link.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8%;
-  bottom: 8%;
-  width: 3px;
-  background: var(--neon-green, #39ff14);
-  box-shadow:
-    0 0 8px var(--neon-green, #39ff14),
-    0 0 18px var(--neon-green-dim, rgba(57, 255, 20, 0.65));
-  pointer-events: none;
+  display: none !important;
 }
 
 .hud-shell .sidebar-hud .nav-link.active .nav-label,
 .app-shell.hud-shell .sidebar-hud .nav-link.active .nav-label {
-  color: #f0fff4 !important;
+  color: var(--text-heading, #ffffff) !important;
   font-weight: 600 !important;
-  text-shadow:
-    0 0 8px rgba(0, 240, 255, 0.35),
-    0 0 14px rgba(57, 255, 20, 0.65),
-    0 0 22px rgba(57, 255, 20, 0.35) !important;
+  text-shadow: none !important;
 }
 
 .hud-shell .sidebar-hud .nav-link.active .nav-icon,
 .app-shell.hud-shell .sidebar-hud .nav-link.active .nav-icon {
-  filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.5));
+  filter: none !important;
 }

@@ -63,7 +63,7 @@ export default function TradeRouteCargoLayer({ expeditions, mapCities, playerCit
           center={m.pos}
           radius={7}
           pathOptions={{
-            color: '#22d3ee',
+            color: '#4a7c59',
             fillColor: m.isReturn ? '#22ff88' : '#fbbf24',
             fillOpacity: 0.95,
             weight: 2,

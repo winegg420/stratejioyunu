@@ -4,24 +4,37 @@
  * - localStorage: strateji_dev_test=1
  */
 import { buildings as buildingDefs, landUnits, airUnits, seaUnits } from '../data/placeholder';
+import { RESOURCE_CATALOG, RESOURCE_IDS, ensureCityResources } from '../data/resourceCatalog';
 import { createStarterBuildings, createStarterResearches } from './buildingUtils';
 import { getUnitDisplayName } from '../data/unitCatalog';
 import { CYBER_ABILITIES } from './cyberOps';
+import { MIL_AI_TUTORIAL_QUEST_IDS } from './milAiTutorialQuests';
 
 export const DEV_TEST_BUILDING_LEVEL = 15;
 export const DEV_TEST_RESEARCH_LEVEL = 15;
 export const DEV_TEST_UNIT_QTY = 100;
 export const DEV_TEST_SPY_QTY = 100;
 export const DEV_TEST_AGENT_QTY = 100;
+export const DEV_TEST_RESOURCE_FILL = 50000;
 
 const DEV_LS_KEY = 'strateji_dev_test';
+const DEV_ADMIN_LS_KEY = 'strateji_dev_admin';
 
 const ALL_COMBAT_UNIT_DEFS = [...landUnits, ...airUnits, ...seaUnits];
 
-/** Varsayılan kapalı — yalnızca açıkça etkinleştirildiğinde (env veya localStorage). */
+export function isDevAdminLocalEnabled() {
+  try {
+    return localStorage.getItem(DEV_ADMIN_LS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Varsayılan kapalı — env, dev_test veya admin modu ile açılır. */
 export function isDevTestMode() {
   if (import.meta.env.VITE_DEV_TEST_MODE === 'false') return false;
   if (import.meta.env.VITE_DEV_TEST_MODE === 'true') return true;
+  if (isDevAdminLocalEnabled()) return true;
   try {
     return localStorage.getItem(DEV_LS_KEY) === '1';
   } catch {
@@ -112,11 +125,24 @@ function buildDevIdleTroops(existing = []) {
   return rows;
 }
 
+function boostResources(resources) {
+  const rows = ensureCityResources(resources);
+  return rows.map((row) => {
+    const meta = RESOURCE_CATALOG[row.id];
+    const starterMax = meta?.starter?.max;
+    const cap = row.max == null
+      ? DEV_TEST_RESOURCE_FILL
+      : Math.max(starterMax ?? 0, row.max, DEV_TEST_RESOURCE_FILL);
+    return { ...row, current: cap, max: cap };
+  });
+}
+
 function boostCity(city) {
   if (!city) return city;
   return {
     ...city,
     buildings: boostBuildings(city.buildings),
+    resources: boostResources(city.resources),
     idleTroops: buildDevIdleTroops(city.idleTroops),
     idleSpies: DEV_TEST_SPY_QTY,
     idleAgents: DEV_TEST_AGENT_QTY,
@@ -142,6 +168,9 @@ export function applyDevTestModeToState(state) {
     researches: boostResearches(state.researches),
     protectionEndsAt: null,
     devTestModeActive: true,
+    milAiCompleted: [...MIL_AI_TUTORIAL_QUEST_IDS],
+    milAiScoutLaunched: true,
+    milAiCelebration: null,
   };
 }
 
@@ -155,5 +184,7 @@ export function getDevTestCyberCapabilities() {
 }
 
 export function getDevTestModeBannerText() {
-  return `[ GELİŞTİRİCİ TEST ] Sv.${DEV_TEST_BUILDING_LEVEL} bina & araştırma · ${DEV_TEST_UNIT_QTY} birlik · savaş menzili/diplomasi bypass`;
+  const viaAdmin = isDevAdminLocalEnabled();
+  const prefix = viaAdmin ? '[ ADMİN TEST MODU ]' : '[ GELİŞTİRİCİ TEST ]';
+  return `${prefix} Sv.${DEV_TEST_BUILDING_LEVEL} bina & araştırma · ${DEV_TEST_UNIT_QTY} birlik · kaynak doldurma · savaş/diplomasi bypass`;
 }

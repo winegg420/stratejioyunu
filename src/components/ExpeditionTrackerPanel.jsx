@@ -1,34 +1,33 @@
 ﻿import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
+import { useLanguage } from '../context/LanguageContext';
 
-const DIRECTION_META = {
-  outgoing: { icon: '↗️', label: 'Gidiş' },
-  returning: { icon: '↙️', label: 'Dönüş' },
-};
-
-function ExpeditionRow({ expedition, now, originLabel, onRecall }) {
+function ExpeditionRow({ expedition, now, originLabel, onRecall, t }) {
   const remaining = remainingFromEndsAt(expedition.endsAt, now);
   const progress = progressFromTiming(expedition.startedAt, expedition.endsAt, now);
-  const dir = DIRECTION_META[expedition.direction] || DIRECTION_META.outgoing;
   const isReturn = expedition.direction === 'returning' || expedition.recalled;
   const canRecall = expedition.direction === 'outgoing' && !expedition.recalled;
+  const dirIcon = isReturn ? '↙️' : '↗️';
+  const dirLabel = isReturn
+    ? t('pages.home.expedition.directionReturning')
+    : t('pages.home.expedition.directionOutgoing');
 
   const title = isReturn
-    ? '[GERİ DÖNÜŞ] Üsse Dönülüyor'
+    ? t('pages.home.expedition.returningTitle')
     : expedition.target;
   const targetLabel = isReturn ? originLabel : expedition.target;
 
   return (
     <li className={`expedition-track-row expedition-track-row--${expedition.direction}${isReturn ? ' expedition-track-row--recall' : ''}`}>
       <div className="expedition-track-main">
-        <span className="expedition-track-dir" title={dir.label}>
-          {dir.icon}
+        <span className="expedition-track-dir" title={dirLabel}>
+          {dirIcon}
         </span>
         <div>
           <strong className={isReturn ? 'expedition-track-title-return' : ''}>{title}</strong>
           <span className="expedition-track-origin">
             {isReturn
-              ? `Hedef: ${targetLabel}`
+              ? t('pages.home.expedition.targetLabel', { name: targetLabel })
               : `${originLabel} → ${expedition.target}`}
           </span>
           {!isReturn && <span className="expedition-track-type">{expedition.type}</span>}
@@ -47,7 +46,7 @@ function ExpeditionRow({ expedition, now, originLabel, onRecall }) {
           className="btn btn-secondary btn-sm expedition-recall-btn"
           onClick={() => onRecall(expedition.id)}
         >
-          Geri Çağır
+          {t('pages.home.expedition.recall')}
         </button>
       )}
     </li>
@@ -55,6 +54,7 @@ function ExpeditionRow({ expedition, now, originLabel, onRecall }) {
 }
 
 export default function ExpeditionTrackerPanel() {
+  const { t } = useLanguage();
   const now = useGameStore((s) => s.now);
   const expeditions = useGameStore((s) => s.expeditions);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -64,7 +64,7 @@ export default function ExpeditionTrackerPanel() {
     return (
       <section className="expedition-tracker-panel expedition-tracker-panel--empty panel glass-panel">
         <h3 className="expedition-tracker-title expedition-tracker-title--overlay">
-          Sefer Takip Paneli
+          {t('pages.home.expedition.title')}
         </h3>
         <div className="expedition-empty-radar">
           <div className="expedition-empty-radar__scope" aria-hidden="true">
@@ -75,11 +75,9 @@ export default function ExpeditionTrackerPanel() {
             <span className="expedition-empty-radar__blip" />
           </div>
           <div className="expedition-empty-radar__copy">
-            <span className="expedition-empty-radar__tag">[ SEFER YOK ]</span>
-            <p className="expedition-empty-radar__title">Yolda aktif sefer yok</p>
-            <p className="expedition-empty-radar__hint">
-              Harita sekmesinden hedef seçerek saldırı veya keşif seferi başlatın.
-            </p>
+            <span className="expedition-empty-radar__tag">{t('pages.home.expedition.emptyTag')}</span>
+            <p className="expedition-empty-radar__title">{t('pages.home.expedition.emptyTitle')}</p>
+            <p className="expedition-empty-radar__hint">{t('pages.home.expedition.emptyHint')}</p>
           </div>
         </div>
       </section>
@@ -87,10 +85,12 @@ export default function ExpeditionTrackerPanel() {
   }
 
   return (
-    <section className="expedition-tracker-panel glass-panel" aria-label="Sefer takip">
+    <section className="expedition-tracker-panel glass-panel" aria-label={t('pages.home.expedition.aria')}>
       <div className="expedition-tracker-header">
-        <h3 className="expedition-tracker-title">Sefer Takip Paneli</h3>
-        <span className="expedition-tracker-count">{expeditions.length} aktif</span>
+        <h3 className="expedition-tracker-title">{t('pages.home.expedition.title')}</h3>
+        <span className="expedition-tracker-count">
+          {t('pages.home.expedition.activeCount', { count: expeditions.length })}
+        </span>
       </div>
       <ul className="expedition-tracker-list">
         {expeditions.map((e) => (
@@ -100,6 +100,7 @@ export default function ExpeditionTrackerPanel() {
             now={now}
             originLabel={getExpeditionOriginLabel(e, playerCities)}
             onRecall={recallExpedition}
+            t={t}
           />
         ))}
       </ul>

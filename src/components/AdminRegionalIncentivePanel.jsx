@@ -3,6 +3,7 @@ import { CBNS_REGIONS } from '../utils/cbrnEngine';
 import { REGION_RESOURCE_IDS } from '../lib/adminOverrideEngine';
 import { getResourceDisplay } from '../data/resourceCatalog';
 import { useGameStore } from '../stores/gameStore';
+import CustomDropdown from './CustomDropdown';
 
 export default function AdminRegionalIncentivePanel() {
   const regionalIncentive = useGameStore((s) => s.regionalIncentive);
@@ -40,27 +41,26 @@ export default function AdminRegionalIncentivePanel() {
       )}
       <label className="admin-bank-field">
         <span>Bölge</span>
-        <select
+        <CustomDropdown
           className="city-switcher-select"
           value={regionId}
-          onChange={(e) => setRegionId(e.target.value)}
-        >
-          {CBNS_REGIONS.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-        </select>
+          onChange={setRegionId}
+          aria-label="Bölge"
+          options={CBNS_REGIONS.map((r) => ({ value: r.id, label: r.name }))}
+        />
       </label>
       <label className="admin-bank-field">
         <span>Kaynak</span>
-        <select
+        <CustomDropdown
           className="city-switcher-select"
           value={resourceId}
-          onChange={(e) => setResourceId(e.target.value)}
-        >
-          {REGION_RESOURCE_IDS.map((id) => (
-            <option key={id} value={id}>{getResourceDisplay(id).label}</option>
-          ))}
-        </select>
+          onChange={setResourceId}
+          aria-label="Kaynak"
+          options={REGION_RESOURCE_IDS.map((id) => ({
+            value: id,
+            label: getResourceDisplay(id).label,
+          }))}
+        />
       </label>
       <label className="admin-bank-field">
         <span>Üretim çarpanı: ×{multiplier}</span>

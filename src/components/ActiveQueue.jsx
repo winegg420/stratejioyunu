@@ -1,12 +1,16 @@
 import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
+import { calcConstructionSpeedupDiamondCost } from '../lib/premiumDiamonds';
 import CyberTerminalPlaceholder from './CyberTerminalPlaceholder';
 import TerminalLogPanel from './TerminalLogPanel';
 
 const ALL_UNITS = [...landUnits, ...airUnits, ...seaUnits];
 
-function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onStart, productionHud }) {
+function QueueRow({
+  item, queued, remaining, progress, onSpeedUp, onCancel, onStart, productionHud,
+  speedUpCost, canAffordSpeedUp, speedUpTitle,
+}) {
   const display = queued ? 'Sırada' : formatSeconds(remaining);
 
   if (productionHud) {
@@ -29,8 +33,16 @@ function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onSt
               Başlat
             </button>
           ) : (
-            <button type="button" className="btn btn-speedup btn-sm" onClick={onSpeedUp}>
-              Hızlandır
+            <button
+              type="button"
+              className="btn btn-speedup btn-speedup--diamond btn-sm"
+              title={speedUpTitle}
+              disabled={!canAffordSpeedUp}
+              onClick={onSpeedUp}
+            >
+              <span aria-hidden="true">⚡</span>
+              <span className="btn-speedup__cost">{speedUpCost}</span>
+              <span aria-hidden="true">💎</span>
             </button>
           )}
           <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
@@ -60,8 +72,16 @@ function QueueRow({ item, queued, remaining, progress, onSpeedUp, onCancel, onSt
           </button>
         )}
         {!queued && (
-          <button type="button" className="btn btn-speedup btn-sm" onClick={onSpeedUp}>
-            Hızlandır
+          <button
+            type="button"
+            className="btn btn-speedup btn-speedup--diamond btn-sm"
+            title={speedUpTitle}
+            disabled={!canAffordSpeedUp}
+            onClick={onSpeedUp}
+          >
+            <span aria-hidden="true">⚡</span>
+            <span className="btn-speedup__cost">{speedUpCost}</span>
+            <span aria-hidden="true">💎</span>
           </button>
         )}
         <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
@@ -88,20 +108,30 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   const cancelProduction = useGameStore((s) => s.cancelProduction);
   const startQueuedConstruction = useGameStore((s) => s.startQueuedConstruction);
   const startQueuedProduction = useGameStore((s) => s.startQueuedProduction);
+  const diamonds = useGameStore((s) => s.playerMeta?.diamonds ?? 0);
   const hasActive = queue.some((q) => !q.queued);
 
   const isProduction = queueType === 'production';
 
   const items = queue.map((q) => {
     const unitMeta = isProduction ? ALL_UNITS.find((u) => u.id === q.unitId) : null;
+    const rem = q.queued ? 0 : remainingFromEndsAt(q.endsAt, now);
+    const speedUpCost = !isProduction && !q.queued && rem > 1
+      ? calcConstructionSpeedupDiamondCost(rem)
+      : 0;
     return {
       id: q.id,
       label: queueType === 'construction' ? q.name : q.unit,
       detail: queueType === 'construction' ? `Seviye ${q.targetLevel}` : `×${q.count}`,
       unitImage: unitMeta?.image,
       queued: q.queued,
-      remaining: q.queued ? 0 : remainingFromEndsAt(q.endsAt, now),
+      remaining: rem,
       progress: q.queued ? 0 : progressFromTiming(q.startedAt, q.endsAt, now),
+      speedUpCost,
+      canAffordSpeedUp: isProduction || speedUpCost === 0 || diamonds >= speedUpCost,
+      speedUpTitle: isProduction
+        ? 'Hızlandır'
+        : `Hızlandır (−%90) · ${speedUpCost} elmas`,
     };
   });
 
@@ -136,6 +166,9 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
               remaining={item.remaining}
               progress={item.progress}
               productionHud={isProduction}
+              speedUpCost={item.speedUpCost}
+              canAffordSpeedUp={item.canAffordSpeedUp}
+              speedUpTitle={item.speedUpTitle}
               onSpeedUp={() => onSpeedUp(item.id)}
               onCancel={() => onCancel(item.id)}
               onStart={() => !hasActive && onStartQueued(item.id)}

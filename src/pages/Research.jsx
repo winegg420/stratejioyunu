@@ -14,11 +14,14 @@ import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameSt
 import { canAffordCost } from '../utils/resourceCosts';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import ResearchBlueprintIcon from '../components/ResearchBlueprintIcon';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/research-blueprint-icons.css';
+import UraniumContextPanel from '../components/UraniumContextPanel';
 
 function AdvancedLockWarn() {
+  const { t } = useLanguage();
   return (
-    <span className="research-section__lock-warn" title="Ar-Ge Merkezi Sv.8+ gerekli">
+    <span className="research-section__lock-warn" title={t('pages.research.lockHint')}>
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d="M12 3L4 7v6c0 5 3.5 8.5 8 9.5M12 3l8 4v6c0 5-3.5 8.5-8 9.5M12 3v18"
@@ -27,12 +30,14 @@ function AdvancedLockWarn() {
         />
         <rect x="10" y="11" width="4" height="5" rx="0.5" fill="currentColor" opacity="0.85" />
       </svg>
-      Kilitli
+      {t('pages.research.locked')}
     </span>
   );
 }
 
 function ResearchCard({ item, advancedLocked }) {
+  const { t, researchName } = useLanguage();
+  const displayName = researchName(item.id, item.name);
   const now = useGameStore((s) => s.now);
   const city = useActiveCity();
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
@@ -68,22 +73,27 @@ function ResearchCard({ item, advancedLocked }) {
         branchBlocked && 'card--kbrn-locked',
       ].filter(Boolean).join(' ')}
     >
-      {isAdvanced && <span className="research-card__advanced-rozet">[ İLERİ ]</span>}
+      {isAdvanced && <span className="research-card__advanced-rozet">{t('pages.research.advancedBadge')}</span>}
       <span className="content-card__intel-badge">[ i ]</span>
-      <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${item.name} ansiklopedi`}>
+      <button
+        type="button"
+        className="content-card__intel-hit"
+        onClick={openInfo}
+        aria-label={t('pages.research.encyclopediaAria', { name: displayName })}
+      >
         <div className="card-visual-research" aria-hidden="true">
           <ResearchBlueprintIcon researchId={item.id} />
         </div>
         <div className="content-card__head">
-          <h3>{item.name}</h3>
-          <span className="badge">Sv. {item.level} / {item.max}</span>
+          <h3>{displayName}</h3>
+          <span className="badge">{t('common.levelShort')} {item.level} / {item.max}</span>
           {item.active && <span className="timer-badge">{formatSeconds(remaining)}</span>}
-          {item.queued && <span className="timer-badge">Sırada</span>}
+          {item.queued && <span className="timer-badge">{t('pages.research.queued')}</span>}
         </div>
       </button>
       {!branchBlocked && (
         <p className="content-card__meta">
-          Maliyet: <strong>{displayCost}</strong>
+          {t('pages.research.cost')} <strong>{displayCost}</strong>
         </p>
       )}
       <div className="card-actions">
@@ -94,11 +104,11 @@ function ResearchCard({ item, advancedLocked }) {
             disabled={hasActive || branchBlocked}
             onClick={() => startQueuedResearch(item.id)}
           >
-            Başlat
+            {t('pages.research.start')}
           </button>
         ) : (
           <button type="button" className="btn btn-primary" disabled={!canStart} onClick={() => enqueueResearch(item.id)}>
-            {item.active ? 'Araştırılıyor...' : 'Araştır'}
+            {item.active ? t('pages.research.researching') : t('pages.research.research')}
           </button>
         )}
         <button
@@ -107,11 +117,11 @@ function ResearchCard({ item, advancedLocked }) {
           disabled={!canQueue || item.active || item.queued || branchBlocked}
           onClick={() => enqueueResearch(item.id, { addToQueue: true })}
         >
-          Kuyruğa Ekle
+          {t('common.queueAdd')}
         </button>
         {(item.active || item.queued) && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => cancelResearch(item.id)}>
-            İptal
+            {t('common.cancel')}
           </button>
         )}
       </div>
@@ -127,13 +137,14 @@ function ResearchCard({ item, advancedLocked }) {
   );
 
   return (
-    <LockedFeatureGate buildingId={RESEARCH_BUILDING_ID} featureName={item.name} hideHint>
+    <LockedFeatureGate buildingId={RESEARCH_BUILDING_ID} featureName={displayName} hideHint>
       {wrapped}
     </LockedFeatureGate>
   );
 }
 
 export default function Research() {
+  const { t } = useLanguage();
   const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const city = useActiveCity();
   const advancedUnlocked = isKbrnBranchUnlocked(city);
@@ -151,8 +162,9 @@ export default function Research() {
   return (
     <div className="page page--console page--research">
       <LocalizedPageHeader pageKey="research" />
+      <UraniumContextPanel />
       <section className="research-section">
-        <h2 className="panel-title research-section__title">[ STANDART DOKTRİNLER ]</h2>
+        <h2 className="panel-title research-section__title">{t('pages.research.standardSection')}</h2>
         <div className="card-grid">
           {core.map((r) => (
             <ResearchCard key={r.id} item={r} advancedLocked={false} />
@@ -163,13 +175,13 @@ export default function Research() {
       <section className="research-section research-section--kbrn">
         <h2 className="panel-title research-section__title">
           {!advancedUnlocked && <AdvancedLockWarn />}
-          [ İLERİ SEVİYE — AR-GE MERKEZİ SV.8+ GEREKLİ ]
+          {t('pages.research.advancedTitle')}
         </h2>
         <div className="research-kbrn-hover-panel" role="note">
           <p className="hint research-kbrn-intro">
-            KBRN, nükleer sanayi, balistik ve yapay zeka protokolleri — en yüksek maliyetli dal.
+            {t('pages.research.kbrnIntro')}
             {!advancedUnlocked && (
-              <> Ar-Ge Merkezi Sv.{KBRN_RESEARCH_CENTER_UNLOCK}+ gerekir.</>
+              <> {t('pages.research.kbrnUnlock', { level: KBRN_RESEARCH_CENTER_UNLOCK })}</>
             )}
           </p>
         </div>

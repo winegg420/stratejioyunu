@@ -9,6 +9,7 @@ export function createDefaultPlayerMeta() {
     badges: [],
     totalAscensions: 0,
     lastActiveAt: Date.now(),
+    diamonds: 30,
   };
 }
 

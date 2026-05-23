@@ -7,16 +7,16 @@ const OPTIONS = [
 ];
 
 /** TR / UK bayrakları — üst kaynak çubuğunda veya giriş ekranında */
-export default function LanguageSwitcher({ className = '' }) {
+export default function LanguageSwitcher({ className = '', compact = false }) {
   const { lang, setLang } = useLanguage();
 
   return (
     <div
-      className={['lang-switcher', className].filter(Boolean).join(' ')}
+      className={['lang-switcher', compact && 'lang-switcher--compact', className].filter(Boolean).join(' ')}
       role="group"
       aria-label="Dil / Language"
     >
-      <span className="lang-switcher__title">DİL</span>
+      {!compact && <span className="lang-switcher__title">DİL</span>}
       {OPTIONS.map((opt) => {
         const Flag = opt.Flag;
         const active = lang === opt.id;
@@ -37,7 +37,7 @@ export default function LanguageSwitcher({ className = '' }) {
             aria-pressed={active}
           >
             <Flag className="lang-switcher__svg" />
-            <span className="lang-switcher__code">{opt.code}</span>
+            {!compact && <span className="lang-switcher__code">{opt.code}</span>}
           </button>
         );
       })}

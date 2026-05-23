@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import HistoryBookPanel from '../components/HistoryBookPanel';
 import { useGameStore } from '../stores/gameStore';
 import { formatIdeologyLabel } from '../lib/ideologySystem';
 import { formatLoyaltyScore } from '../lib/loyaltySystem';
+import { fetchSeasonLeaderboardRows } from '../lib/profileApi';
 import {
   buildSeasonLeaderboard,
   formatSeasonCountdown,
@@ -19,16 +20,31 @@ function SeasonBlock({ period, block, seasonStats, onClaim }) {
   const def = getCompetitionDef(block?.competitionType);
   const playerName = getCurrentPlayerName();
   const score = getPlayerSeasonScore(seasonStats, block?.competitionType);
+  const [liveRows, setLiveRows] = useState([]);
+  const [boardSource, setBoardSource] = useState('loading');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await fetchSeasonLeaderboardRows(block?.competitionType);
+      if (cancelled) return;
+      setLiveRows(result.rows ?? []);
+      setBoardSource(result.source);
+    })();
+    return () => { cancelled = true; };
+  }, [block?.competitionType]);
+
   const board = useMemo(
     () => buildSeasonLeaderboard({
-      competitionType: block?.competitionType,
       playerName,
       playerScore: score,
+      liveRows,
     }),
-    [block?.competitionType, playerName, score],
+    [playerName, score, liveRows],
   );
   const rank = getPlayerSeasonRank(board, playerName);
   const canClaim = rank != null && rank <= 3;
+  const hasLiveRanking = boardSource === 'live' && liveRows.length > 0;
 
   return (
     <section className="panel season-block">
@@ -41,28 +57,32 @@ function SeasonBlock({ period, block, seasonStats, onClaim }) {
       </p>
       <p className="season-block__score">
         Puanınız: <span className="font-hud-data">{score.toLocaleString('tr-TR')}</span>
-        {rank && (
+        {rank && hasLiveRanking && (
           <>
             {' '}
             · Derece: <span className="font-hud-data">#{rank}</span>
           </>
         )}
       </p>
-      <ol className="season-leaderboard">
-        {board.slice(0, 5).map((row) => (
-          <li
-            key={row.playerName}
-            className={row.isSelf ? 'season-leaderboard__row--self' : ''}
-          >
-            <span className="font-hud-data">#{row.rank}</span> {row.displayName}
-            <span className="season-leaderboard__pts">{row.score.toLocaleString('tr-TR')}</span>
-          </li>
-        ))}
-      </ol>
+      {hasLiveRanking ? (
+        <ol className="season-leaderboard">
+          {board.slice(0, 5).map((row) => (
+            <li
+              key={row.playerName}
+              className={row.isSelf ? 'season-leaderboard__row--self' : ''}
+            >
+              <span className="font-hud-data">#{row.rank}</span> {row.displayName}
+              <span className="season-leaderboard__pts">{row.score.toLocaleString('tr-TR')}</span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="hint season-leaderboard-empty">Henüz sıralama oluşmadı</p>
+      )}
       <p className="hint season-block__reward-note">
         Ödül: kozmetik unvan + sadakat puanı (hammadde/ordu yok — snowball engeli).
       </p>
-      {canClaim && (
+      {canClaim && hasLiveRanking && (
         <button
           type="button"
           className="btn btn-primary"

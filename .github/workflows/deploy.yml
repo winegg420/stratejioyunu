@@ -80,4 +80,8 @@ jobs:
             echo "::error::Canlı bundle güncel görünmüyor (lang-switcher yok). Önbellek veya deploy hatası."
             exit 1
           fi
+          if ! echo "$BODY" | grep -q 'registerAppUpdates'; then
+            echo "::error::Canlı bundle otomatik güncelleme modülünü içermiyor. Deploy veya önbellek hatası."
+            exit 1
+          fi
           echo "Canlı production doğrulandı."

@@ -1,5 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CustomDropdown from '../components/CustomDropdown';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
@@ -114,19 +115,17 @@ export default function Trade() {
         <form className="trade-form" onSubmit={handleSubmit}>
           <label className="trade-form-field">
             <span>Hedef şehir</span>
-            <select
+            <CustomDropdown
               value={targetName}
-              onChange={(e) => setTargetName(e.target.value)}
+              onChange={setTargetName}
               className="city-switcher-select"
-              required
-            >
-              <option value="">Seçin…</option>
-              {tradeTargets.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Seçin…"
+              aria-label="Hedef şehir"
+              options={[
+                { value: '', label: 'Seçin…', disabled: true },
+                ...tradeTargets.map((c) => ({ value: c.name, label: c.name })),
+              ]}
+            />
           </label>
 
           <div className="trade-resource-grid">

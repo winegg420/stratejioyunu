@@ -1,3 +1,71 @@
+/* Seferler — operasyon uyarı kutusu */
+
+.ops-metropolis-alert {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.ops-metropolis-alert--cooldown {
+  border: 1px solid #ff3333;
+  box-shadow: 0 0 10px #ff3333;
+}
+
+.ops-metropolis-alert--ready {
+  border: 1px solid #22ff88;
+  box-shadow:
+    0 0 12px rgba(74, 124, 89, 0.45),
+    inset 0 0 12px rgba(74, 124, 89, 0.06);
+}
+
+.ops-metropolis-alert__tag {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: rgba(255, 100, 100, 0.9);
+}
+
+.ops-metropolis-alert__text {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ops-metropolis-alert--cooldown .ops-metropolis-alert__text {
+  color: #ffb4b4;
+}
+
+.ops-metropolis-alert--ready .ops-metropolis-alert__text {
+  color: #86efac;
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 14px rgba(74, 124, 89, 0.55);
+}
+
+.ops-metropolis-alert__countdown {
+  margin: 0.45rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #ff6b6b;
+  text-shadow: 0 0 12px rgba(255, 51, 51, 0.45);
+}
+
+.ops-metropolis-alert__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: rgba(134, 239, 172, 0.75);
+}
+
+.ops-metropolis-alert--ready .ops-metropolis-alert__tag {
+  color: rgba(74, 124, 89, 0.85);
+}
+
 /* Seferler — nötr komuta başlığı (boş kırmızı uyarı şeridi yok) */
 
 .expeditions-page-header .page-header__status {
@@ -6,10 +74,10 @@
 
 .expeditions-page-header.page-header--alert .page-title,
 .expeditions-page-header .page-title {
-  color: #e8f8ff !important;
+  color: #ffffff !important;
   text-shadow:
     0 0 20px var(--cmd-cyan-glow),
-    0 0 40px rgba(0, 240, 255, 0.15) !important;
+    0 0 40px rgba(74, 124, 89, 0.15) !important;
 }
 
 .expeditions-page-header .page-header__status-dot {
@@ -28,6 +96,29 @@
   padding: 0.45rem 0.6rem;
   border: 1px solid rgba(248, 113, 113, 0.35);
   background: rgba(40, 8, 8, 0.35);
+}
+
+/* Meydan ilan — normal buton boyutu (tam genişlik kırmızı blok değil) */
+.expeditions-page .meydan-battle-declare {
+  align-items: flex-start;
+  max-width: 22rem;
+}
+
+.expeditions-page .meydan-battle-field {
+  width: 100%;
+}
+
+.expeditions-page .meydan-battle-declare-btn {
+  width: auto;
+  align-self: flex-start;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  box-shadow: 0 0 8px rgba(255, 90, 70, 0.35) !important;
+}
+
+.expeditions-page .meydan-battle-declare-btn:hover:not(:disabled) {
+  box-shadow: 0 0 12px rgba(255, 90, 70, 0.45) !important;
 }
 
 .expeditions-page-header .page-action {
@@ -53,7 +144,7 @@
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(2, 6, 14, 0.82);
+  background: rgba(17, 26, 17, 0.82);
   backdrop-filter: blur(6px);
   cursor: pointer;
 }
@@ -66,11 +157,11 @@
   display: flex;
   flex-direction: column;
   background: rgba(5, 12, 22, 0.9);
-  border: 1px solid rgba(0, 240, 255, 0.28);
+  border: 1px solid rgba(74, 124, 89, 0.28);
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.08) inset,
+    0 0 0 1px rgba(74, 124, 89, 0.08) inset,
     0 24px 64px rgba(0, 0, 0, 0.65),
-    0 0 40px rgba(0, 240, 255, 0.1);
+    0 0 40px rgba(74, 124, 89, 0.1);
 }
 
 .expedition-launch-modal__head {
@@ -79,14 +170,14 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1rem 1.1rem 0.75rem;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+  border-bottom: 1px solid rgba(74, 124, 89, 0.15);
 }
 
 .expedition-launch-modal__eyebrow {
   margin: 0 0 0.25rem;
   font-size: 0.62rem;
   letter-spacing: 0.14em;
-  color: rgba(0, 240, 255, 0.7);
+  color: rgba(74, 124, 89, 0.7);
 }
 
 .expedition-launch-modal__head h2 {
@@ -116,13 +207,13 @@
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(0, 240, 255, 0.65);
+  color: rgba(74, 124, 89, 0.65);
 }
 
 .expedition-launch-select {
   padding: 0.45rem 0.55rem;
-  background: rgba(4, 12, 22, 0.88);
-  border: 1px solid rgba(0, 240, 255, 0.45);
+  background: rgba(17, 26, 17, 0.88);
+  border: 1px solid rgba(74, 124, 89, 0.45);
   color: #22ff88;
   font-family: var(--cmd-font-mono, var(--font-mono));
 }
@@ -141,7 +232,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.75rem 1.1rem 1rem;
-  border-top: 1px solid rgba(0, 240, 255, 0.12);
+  border-top: 1px solid rgba(74, 124, 89, 0.12);
 }
 
 .expedition-launch-submit {
@@ -160,8 +251,8 @@
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.55rem 0.65rem;
-  border: 1px solid rgba(0, 240, 255, 0.12);
-  background: rgba(2, 8, 18, 0.55);
+  border: 1px solid rgba(74, 124, 89, 0.12);
+  background: rgba(17, 26, 17, 0.55);
 }
 
 .expedition-troop-row__meta {
@@ -192,8 +283,8 @@
   height: 0.35rem;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(0, 240, 255, 0.12);
-  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(74, 124, 89, 0.12);
+  border: 1px solid rgba(74, 124, 89, 0.25);
   border-radius: 0;
 }
 
@@ -202,8 +293,8 @@
   width: 14px;
   height: 14px;
   background: #22ff88;
-  border: 1px solid rgba(0, 240, 255, 0.8);
-  box-shadow: 0 0 10px rgba(34, 255, 136, 0.55);
+  border: 1px solid rgba(74, 124, 89, 0.8);
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.55);
   cursor: pointer;
 }
 
@@ -211,8 +302,8 @@
   width: 14px;
   height: 14px;
   background: #22ff88;
-  border: 1px solid rgba(0, 240, 255, 0.8);
-  box-shadow: 0 0 10px rgba(34, 255, 136, 0.55);
+  border: 1px solid rgba(74, 124, 89, 0.8);
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.55);
   cursor: pointer;
 }
 
@@ -229,25 +320,25 @@
 
 .expedition-launch-modal .btn-hud-primary,
 .map-command-modal .btn-hud-primary {
-  border: 1px solid rgba(34, 255, 136, 0.75) !important;
+  border: 1px solid rgba(74, 124, 89, 0.75) !important;
   color: #22ff88 !important;
   background: rgba(4, 20, 14, 0.65) !important;
   box-shadow:
-    0 0 0 1px rgba(34, 255, 136, 0.12) inset,
-    0 0 18px rgba(34, 255, 136, 0.18) !important;
-  text-shadow: 0 0 10px rgba(34, 255, 136, 0.55) !important;
+    0 0 0 1px rgba(74, 124, 89, 0.12) inset,
+    0 0 18px rgba(74, 124, 89, 0.18) !important;
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.55) !important;
 }
 
 .expedition-launch-modal .btn-hud-primary:hover:not(:disabled),
 .map-command-modal .btn-hud-primary:hover:not(:disabled) {
-  background: rgba(34, 255, 136, 0.18) !important;
-  box-shadow: 0 0 24px rgba(34, 255, 136, 0.45) !important;
+  background: rgba(74, 124, 89, 0.18) !important;
+  box-shadow: 0 0 24px rgba(74, 124, 89, 0.45) !important;
 }
 
 .expedition-launch-modal .btn-hud-secondary,
 .map-command-modal .btn-hud-secondary {
-  border: 1px solid rgba(0, 240, 255, 0.55) !important;
-  color: rgba(0, 240, 255, 0.95) !important;
-  background: rgba(4, 14, 24, 0.65) !important;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.12) !important;
+  border: 1px solid rgba(74, 124, 89, 0.55) !important;
+  color: rgba(74, 124, 89, 0.95) !important;
+  background: rgba(17, 26, 17, 0.65) !important;
+  box-shadow: 0 0 16px rgba(74, 124, 89, 0.12) !important;
 }

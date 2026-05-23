@@ -1,33 +1,43 @@
-/** Taktik bina kartı görselleri — canlıda public/buildings JPG yolları (deploy güvenli). */
-export const BUILDING_ASSET_VERSION = '20260524';
+/** Taktik bina kartı görselleri — canlıda public/buildings yolları (deploy güvenli). */
+export const BUILDING_ASSET_VERSION = '20260519c';
 
-/** Özel PNG/JPG kart görselleri — cache kırıcı sürüm ile */
-export const CUSTOM_BUILDING_IMAGE_IDS = ['barracks', 'shipyard', 'ai_center'];
+export const BUILDING_PLACEHOLDER_IMAGE = '/buildings/hq.jpg';
 
-/** @deprecated Yedek yollar — public/buildings ile aynı dosya */
+/** Tüm binalar — yedek görsel yolları */
 export const BUILDING_IMAGE_PUBLIC_FALLBACK = {
+  hq: '/buildings/komutamerkezi.png',
+  refinery: '/buildings/refinery.jpg',
+  plant: '/buildings/plant.jpg',
   barracks: '/buildings/barracks.jpg',
+  airport: '/buildings/airport.jpg',
   shipyard: '/buildings/shipyard.jpg',
+  research: '/buildings/argemerkezi.png',
+  intel: '/buildings/intel.jpg',
+  market: '/buildings/market.jpg',
+  cyber_ops: '/buildings/intel.jpg',
   ai_center: '/buildings/ai-center.jpg',
 };
+
+/** Özel PNG/JPG kart görselleri — cache kırıcı sürüm ile */
+export const CUSTOM_BUILDING_IMAGE_IDS = Object.keys(BUILDING_IMAGE_PUBLIC_FALLBACK);
 
 const v = (path) => `${path}?v=${BUILDING_ASSET_VERSION}`;
 
 export const BUILDING_VISUALS = {
   hq: {
-    image: '/buildings/hq.jpg',
+    image: v('/buildings/komutamerkezi.png'),
     designation: 'Strategic Command Center',
   },
   refinery: {
-    image: '/buildings/refinery.jpg',
+    image: v('/buildings/refinery.jpg'),
     designation: 'Fuel & Raw Material Refinery',
   },
   plant: {
-    image: '/buildings/plant.jpg',
+    image: v('/buildings/plant.jpg'),
     designation: 'Power Generation Grid',
   },
   cyber_ops: {
-    image: '/buildings/intel.jpg',
+    image: v('/buildings/intel.jpg'),
     designation: 'Cyber Operations Command',
   },
   ai_center: {
@@ -35,11 +45,11 @@ export const BUILDING_VISUALS = {
     designation: 'AI Command Center — Neural Warfare Core',
   },
   market: {
-    image: '/buildings/market.jpg',
+    image: v('/buildings/market.jpg'),
     designation: 'Trade Exchange Terminal',
   },
   intel: {
-    image: '/buildings/intel.jpg',
+    image: v('/buildings/intel.jpg'),
     designation: 'Signals Intelligence Hub',
   },
   barracks: {
@@ -47,7 +57,7 @@ export const BUILDING_VISUALS = {
     designation: 'Reinforced Tactical Operations Center',
   },
   airport: {
-    image: '/buildings/airport.jpg',
+    image: v('/buildings/airport.jpg'),
     designation: 'Hardened Aerial Dominance Complex',
   },
   shipyard: {
@@ -55,11 +65,23 @@ export const BUILDING_VISUALS = {
     designation: 'Naval Fabrication Yard',
   },
   research: {
-    image: '/buildings/research.jpg',
+    image: v('/buildings/argemerkezi.png'),
     designation: 'Advanced Quantum Data Nexus',
   },
 };
 
 export function getBuildingVisual(buildingId) {
-  return BUILDING_VISUALS[buildingId] ?? null;
+  const visual = BUILDING_VISUALS[buildingId];
+  if (visual?.image) return visual;
+  const fallback = BUILDING_IMAGE_PUBLIC_FALLBACK[buildingId];
+  if (fallback) {
+    return {
+      image: v(fallback),
+      designation: '',
+    };
+  }
+  return {
+    image: v(BUILDING_PLACEHOLDER_IMAGE),
+    designation: '',
+  };
 }

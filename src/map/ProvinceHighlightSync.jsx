@@ -5,9 +5,9 @@ import { provinceCodesMatch } from './mapOwnership';
 import { getProvinceStyle } from './mapUtils';
 
 const ACTIVE_STYLE = {
-  fillColor: '#00f0ff',
+  fillColor: '#4a7c59',
   fillOpacity: 0.22,
-  color: '#00f0ff',
+  color: '#4a7c59',
   weight: 3.2,
   opacity: 1,
   lineJoin: 'round',

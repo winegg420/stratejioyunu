@@ -1,5 +1,8 @@
+import { mergeLocale } from '../mergeLocale.js';
+import extraTr from '../extra/tr.js';
+
 /** @type {const} */
-const tr = {
+const trBase = {
   lang: { tr: 'Türkçe', en: 'English' },
   nav: {
     home: 'Ana Merkez',
@@ -43,6 +46,8 @@ const tr = {
     depotFull: 'depo taştı, üretim durdu',
     peaceForce: 'BARIŞ GÜCÜ',
     peaceForceTitle: 'Barış Gücü koruması — saldırı, siber ve KBRN size uygulanamaz. Saldırı başlatırsanız kalkan düşer.',
+    diamondsTitle: 'Premium elmas — inşaat hızlandırma ve mağaza',
+    diamonds: 'Elmas',
   },
   sidebar: {
     server: 'SUNUCU',
@@ -86,6 +91,12 @@ const tr = {
     hourlyPerHour: '/saat',
     hourlyEnergy: ' E/saat',
   },
+  happiness: {
+    high: 'Yüksek',
+    mid: 'Orta',
+    low: 'Düşük',
+    critical: 'Kritik',
+  },
   common: {
     buy: 'Al',
     sell: 'Sat',
@@ -93,6 +104,9 @@ const tr = {
     confirm: 'Onayla',
     close: 'Kapat',
     loading: 'Yükleniyor…',
+    calculating: '[ HESAPLANIYOR... ]',
+    frozen: '[ STGN ]',
+    perHourZero: '+0/saat',
     max: 'MAX',
     select: 'Seçin…',
     noData: 'Veri yok',
@@ -106,17 +120,29 @@ const tr = {
     subtitle: 'Mutlak otorite — tek lider, resmi State Mail, harita üzerinde güç mücadelesi',
     briefing: '[ ULUSAL BRİFİNG ] Oku',
     supabaseConnected: 'Supabase bağlı',
-    playerId: 'Oyuncu ID',
+    googleLogin: 'Gmail ile Giriş / Kayıt',
+    orDivider: 'veya',
+    tabsAria: 'Giriş ve kayıt',
+    tabLogin: 'Giriş',
+    tabRegister: 'Kayıt Ol',
+    emailOrId: 'E-posta veya Oyuncu ID',
+    displayName: 'Görünen ad (isteğe bağlı)',
     password: 'Şifre',
+    passwordConfirm: 'Şifre (tekrar)',
+    playerId: 'Oyuncu ID',
     signIn: 'Giriş Yap',
     quickLogin: 'Hızlı Giriş (Demo)',
     loginFailed: 'Giriş yapılamadı.',
+    passwordMismatch: 'Şifreler eşleşmiyor.',
+    confirmEmailSent: 'Doğrulama e-postası gönderildi. Gelen kutunuzu kontrol edip ardından giriş yapın.',
+    placeholderEmail: 'ornek@gmail.com veya oyuncu_adi',
+    placeholderDisplayName: 'Komutan adınız',
     placeholderId: 'istediğiniz bir ad veya e-posta',
-    placeholderPassword: 'istediğiniz bir şifre',
-    submit: 'Oyuna Gir',
-    submitting: 'Giriş yapılıyor…',
-    quickLogin: 'Hızlı Giriş (boş bırak)',
-    hintConfigured: 'Şifre boş bırakılırsa veya Hızlı Giriş ile demo modda girersiniz. Şifre girerseniz Supabase hesabınızla giriş yapılır.',
+    placeholderPassword: 'en az 6 karakter',
+    submit: 'Giriş Yap',
+    submitRegister: 'Kayıt Ol ve Oyuna Gir',
+    submitting: 'İşleniyor…',
+    hintConfigured: 'Gmail, e-posta/şifre veya Hızlı Giriş (demo) kullanabilirsiniz. Demo için şifreyi boş bırakın.',
     hintDemo: 'Kayıt gerekmez. Hızlı Giriş ile doğrudan oyuna girebilirsiniz.',
     bootError: 'Oyun yüklenemedi',
     reload: 'Sayfayı Yenile',
@@ -229,5 +255,7 @@ const tr = {
     },
   },
 };
+
+const tr = mergeLocale(trBase, extraTr);
 
 export default tr;

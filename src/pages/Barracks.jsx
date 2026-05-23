@@ -6,13 +6,14 @@ import BattleSimulator from '../components/BattleSimulator';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { landUnits as landUnitDefs } from '../data/placeholder';
 import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Barracks() {
+  const { t, unitName } = useLanguage();
   const activeCityId = useGameStore((s) => s.activeCityId);
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === activeCityId)?.name);
   const awayMap = useTroopsAwayMap(activeCityId);
   const troops = useActiveCityIdleTroops();
-  const idleAgents = useGameStore((s) => s.cities[s.activeCityId]?.idleAgents ?? 0);
   const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? []);
   const productionQueueKey = productionQueue.map((q) => q.id).join('-') || 'empty';
   const landUnits = useMemo(
@@ -28,29 +29,26 @@ export default function Barracks() {
 
   return (
     <div className="page page--console barracks-page barracks-page--military">
-      <LocalizedPageHeader
-        pageKey="barracks"
-        action={(
-          <span className="barracks-agent-counter" title="İstihbarat ve siber virüs operasyonları">
-            Mevcut / Boşta Ajan: <strong>{idleAgents}</strong>
-            <span className="barracks-agent-hint"> (keşif + siber)</span>
-          </span>
-        )}
-      />
+      <LocalizedPageHeader pageKey="barracks" />
       <ActiveQueue
         key={productionQueueKey}
-        title={`Aktif Kuyruk — ${cityName}`}
+        title={t('pages.barracks.queueTitle', { city: cityName })}
         queueType="production"
-        emptyText="Üretim kuyruğu boş. Bir birlik seçip üretim başlatabilirsiniz."
+        emptyText={t('pages.barracks.queueEmpty')}
       />
+      <section className="barracks-production-section" aria-labelledby="barracks-production-heading">
+        <h2 id="barracks-production-heading" className="barracks-section-title">
+          {t('pages.barracks.productionSection')}
+        </h2>
+        <div className="card-grid barracks-production-grid">
+          {landUnits.map((u) => (
+            <LockedFeatureGate key={u.id} buildingId="barracks" featureName={unitName(u.id, u.name)}>
+              <UnitCard unit={{ ...u, name: unitName(u.id, u.name) }} awayMap={awayMap} />
+            </LockedFeatureGate>
+          ))}
+        </div>
+      </section>
       <BattleSimulator />
-      <div className="card-grid">
-        {landUnits.map((u) => (
-          <LockedFeatureGate key={u.id} buildingId="barracks" featureName={u.name}>
-            <UnitCard unit={u} awayMap={awayMap} />
-          </LockedFeatureGate>
-        ))}
-      </div>
     </div>
   );
 }

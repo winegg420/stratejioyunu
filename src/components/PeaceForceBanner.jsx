@@ -4,9 +4,11 @@ import {
   isPeaceForceProtected,
   PEACE_FORCE_DAYS,
 } from '../lib/progressionSystem';
+import { useLanguage } from '../context/LanguageContext';
 import TerminalLogPanel from './TerminalLogPanel';
 
 export default function PeaceForceBanner() {
+  const { t } = useLanguage();
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
   const active = isPeaceForceProtected(protectionEndsAt);
   const countdown = formatPeaceForceCountdown(protectionEndsAt);
@@ -14,27 +16,31 @@ export default function PeaceForceBanner() {
   if (!active) return null;
 
   return (
-    <TerminalLogPanel title="Barış gücü" tag="DİPLOMATİ" className="terminal-log-panel--peace">
-    <div className="peace-force-banner" role="status">
-      <span className="peace-force-banner__icon" aria-hidden="true">
-        🕊️
-      </span>
-      <div className="peace-force-banner__body">
-        <strong className="peace-force-banner__title">[ BARIŞ GÜCÜ KORUMASI AKTİF ]</strong>
-        <p className="peace-force-banner__sub">
-          {PEACE_FORCE_DAYS} günlük diplomatik muafiyet — saldırı, siber ve KBRN size uygulanamaz.
-          {countdown && (
-            <>
-              {' '}
-              Kalan: <span className="font-hud-data">{countdown}</span>
-            </>
-          )}
-        </p>
-        <p className="peace-force-banner__warn">
-          Koruma süresi bitmiş bir oyuncuya saldırı başlatırsanız kalkan anında düşer.
-        </p>
+    <TerminalLogPanel
+      title={t('pages.home.peaceForce.panelTitle')}
+      tag={t('pages.home.peaceForce.panelTag')}
+      className="terminal-log-panel--peace"
+    >
+      <div className="peace-force-banner" role="status">
+        <span className="peace-force-banner__icon" aria-hidden="true">
+          🕊️
+        </span>
+        <div className="peace-force-banner__body">
+          <strong className="peace-force-banner__title">{t('pages.home.peaceForce.title')}</strong>
+          <p className="peace-force-banner__sub">
+            {t('pages.home.peaceForce.body', { days: PEACE_FORCE_DAYS })}
+            {countdown && (
+              <>
+                {' '}
+                {t('pages.home.peaceForce.remaining', { time: countdown })}
+              </>
+            )}
+          </p>
+          <p className="peace-force-banner__warn">
+            {t('pages.home.peaceForce.warn')}
+          </p>
+        </div>
       </div>
-    </div>
     </TerminalLogPanel>
   );
 }

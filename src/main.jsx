@@ -1,6 +1,4 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import './index.css';
 import './styles/global-hud-polish.css';
 import './styles/hud-shell.css';
@@ -28,6 +26,11 @@ import './styles/market-command.css';
 import './styles/cyber-terminal.css';
 import './styles/c4isr-ui.css';
 import './styles/military-terminal-ui.css';
+import './styles/military-production-ui.css';
+import './styles/unit-military-icons.css';
+import './styles/budget-spend-float.css';
+import './styles/custom-dropdown.css';
+import './styles/access-denied-overlay.css';
 import './styles/hud-modal-close.css';
 import './styles/sidebar-active.css';
 import './styles/operational-flow.css';
@@ -35,25 +38,19 @@ import './styles/ui-ux-revisions.css';
 import './styles/city-management-ui.css';
 import './styles/logistics-trade-ui.css';
 import './styles/map-war-ui.css';
-import './styles/layout-scroll-fix.css';
-import './styles/resource-bar-fix.css';
+import './styles/map-error-boundary.css';
+import './styles/c4isr-global-standard.css';
+import './styles/layout-system.css';
+import './styles/visual-comfort.css';
+import './styles/theme-global.css';
+import './styles/theme-overrides-final.css';
+import './styles/theme-surfaces-unified.css';
+import './styles/theme-pages-complete.css';
+import './styles/layout-bar-terminal-fix.css';
+import './styles/premium-diamonds.css';
+import './styles/resource-bar-grid-final.css';
+import './styles/resource-bar-five-grid.css';
 import App from './App.jsx';
-import { disableDevTestModeLocal } from './lib/devTestMode';
-
-disableDevTestModeLocal();
-
-if (import.meta.env.PROD) {
-  registerSW({
-    immediate: true,
-    onRegisteredSW(_swUrl, registration) {
-      registration?.update();
-      window.setInterval(() => registration?.update(), 60 * 60 * 1000);
-    },
-    onNeedRefresh() {
-      window.dispatchEvent(new CustomEvent('pwa-need-refresh'));
-    },
-  });
-}
 
 const rootEl = document.getElementById('root');
 
@@ -84,8 +81,4 @@ if (!rootEl) {
   throw new Error('#root bulunamadı');
 }
 
-createRoot(rootEl).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+createRoot(rootEl).render(<App />);

@@ -1,0 +1,295 @@
+/* Kilitli sekme / özellik — soluk önizleme, hover'da gereksinim */
+
+
+
+.locked-feature-gate {
+
+  position: relative;
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-height: 0;
+
+}
+
+
+
+.locked-feature-gate--soft {
+
+  cursor: help;
+
+  border-radius: 2px;
+
+}
+
+
+
+.locked-feature-gate__content--soft {
+
+  opacity: 0.44;
+
+  pointer-events: none;
+
+  user-select: none;
+
+  filter: grayscale(0.3) brightness(0.76);
+
+  transition: opacity 0.2s ease, filter 0.2s ease;
+
+}
+
+
+
+.locked-feature-gate--soft:hover .locked-feature-gate__content--soft,
+
+.locked-feature-gate--soft:focus-within .locked-feature-gate__content--soft {
+
+  opacity: 0.58;
+
+  filter: grayscale(0.2) brightness(0.82);
+
+}
+
+
+
+.locked-feature-gate__hover-tip {
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 6;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 0.45rem;
+
+  padding: 0.85rem 1rem;
+
+  text-align: center;
+
+  background: rgba(10, 15, 10, 0.92);
+
+  border: 1px solid rgba(201, 168, 76, 0.22);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+
+  pointer-events: none;
+
+}
+
+
+
+.locked-feature-gate--soft:hover .locked-feature-gate__hover-tip,
+
+.locked-feature-gate--soft:focus-within .locked-feature-gate__hover-tip {
+
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+
+}
+
+
+
+.locked-feature-gate__hover-icon {
+
+  font-size: 0.9rem;
+
+  line-height: 1;
+
+  opacity: 0.85;
+
+}
+
+
+
+.locked-feature-gate__hover-text {
+
+  margin: 0;
+
+  max-width: 22rem;
+
+  font-size: 0.76rem;
+
+  line-height: 1.45;
+
+  color: #d4d4aa;
+
+}
+
+
+
+.locked-feature-gate__hover-link {
+
+  display: inline-block;
+
+  padding: 0.32rem 0.65rem;
+
+  font-family: var(--font-mono, monospace);
+
+  font-size: 0.62rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.06em;
+
+  color: #c9a84c;
+
+  text-decoration: none;
+
+  border: 1px solid rgba(201, 168, 76, 0.35);
+
+  border-radius: 2px;
+
+  transition: background 0.12s ease, color 0.12s ease;
+
+}
+
+
+
+.locked-feature-gate__hover-link:hover {
+
+  color: #0a0f0a;
+
+  background: #c9a84c;
+
+}
+
+
+
+.locked-feature-gate .unit-card .card-actions,
+
+.locked-feature-gate .card-actions {
+
+  opacity: 0.35;
+
+  pointer-events: none;
+
+}
+
+
+
+.page--research .locked-feature-gate--soft .card-actions {
+
+  opacity: 0.3;
+
+  pointer-events: none;
+
+}
+
+
+
+/* Binalar — kilitli kartlar soluk, rozet yok */
+
+.building-lock-badge,
+
+.building-lock-badge--progression {
+
+  display: none !important;
+
+}
+
+
+
+.building-card--blocked,
+
+.building-card--progression-locked,
+
+.building-card--coastal-locked {
+
+  opacity: 0.52 !important;
+
+  filter: grayscale(0.28) brightness(0.82) !important;
+
+  transition: opacity 0.2s ease, filter 0.2s ease;
+
+}
+
+
+
+.building-card--blocked:hover,
+
+.building-card--progression-locked:hover,
+
+.building-card--coastal-locked:hover {
+
+  opacity: 0.68 !important;
+
+  filter: grayscale(0.15) brightness(0.88) !important;
+
+}
+
+
+
+.page--research .card--kbrn-locked {
+
+  opacity: 0.48;
+
+  filter: grayscale(0.25) brightness(0.78);
+
+  transition: opacity 0.2s ease, filter 0.2s ease;
+
+}
+
+
+
+.page--research .card--kbrn-locked:hover {
+
+  opacity: 0.62;
+
+  filter: grayscale(0.12) brightness(0.85);
+
+}
+
+
+
+.page--research .research-section__lock-warn {
+
+  display: none;
+
+}
+
+
+
+/* Eski ACCESS DENIED katmanı — devre dışı */
+
+.locked-feature-gate__denied,
+
+.locked-feature-gate__scanlines,
+
+.locked-feature-gate__soft-badge,
+
+.locked-feature-gate__soft-link {
+
+  display: none !important;
+
+}
+
+
+
+.locked-feature-gate__content:not(.locked-feature-gate__content--soft) {
+
+  opacity: 0.44;
+
+  filter: grayscale(0.3) brightness(0.76);
+
+  pointer-events: none;
+
+}
+
+

@@ -1,5 +1,6 @@
 /** Şehir sosyal / siber alanları — modern askeri strateji modeli */
 
+import { ensureCityResources } from '../data/resourceCatalog';
 import { syncCityBuildingsToCatalog } from './buildingUtils';
 
 export const DEFAULT_POPULATION = 2400;
@@ -37,5 +38,6 @@ export function enrichCityModel(city, overrides = {}) {
   const buildings = city?.buildings
     ? syncCityBuildingsToCatalog(city.buildings)
     : city?.buildings;
-  return { ...city, ...vitality, ...(buildings ? { buildings } : {}) };
+  const resources = ensureCityResources(city?.resources ?? []);
+  return { ...city, ...vitality, resources, ...(buildings ? { buildings } : {}) };
 }

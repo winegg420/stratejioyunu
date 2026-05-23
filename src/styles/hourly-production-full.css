@@ -1,0 +1,52 @@
+/* Saatlik üretim — tam sayı görünsün, ellipsis/kısaltma yok */
+
+.resource-item .res-hourly-live,
+.resource-item .res-hourly-badge,
+.resource-item .res-rate,
+.resource-bar--stacked .res-bar-cell__foot .res-hourly-badge,
+.resource-bar--stacked .res-bar-cell__foot .res-hourly-live,
+.resource-bar--stacked .res-bar-cell__foot .res-rate,
+.resource-bar--command .res-hourly-live,
+.resource-bar--command .res-hourly-badge {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  white-space: nowrap;
+  font-size: 0.48rem !important;
+  letter-spacing: -0.01em;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-hourly-live,
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-hourly-badge {
+  font-size: 0.46rem !important;
+}
+
+.strat-prod-row__rate {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-size: 0.56rem !important;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .resource-bar--stacked .resource-bar-tier--resources .res-hourly-badge,
+  .resource-bar--stacked .resource-bar-tier--resources .res-hourly-live,
+  .resource-bar--stacked .resource-bar-tier--resources .res-rate {
+    display: block !important;
+    font-size: 0.42rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .resource-item .res-hourly-live,
+  .resource-item .res-hourly-badge,
+  .resource-item .res-rate {
+    font-size: 0.4rem !important;
+  }
+
+  .strat-prod-row__rate {
+    font-size: 0.5rem !important;
+  }
+}

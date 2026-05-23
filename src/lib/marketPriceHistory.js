@@ -50,9 +50,12 @@ export function getChartSeries(history, resourceId = 'hammadde') {
   const min = Math.min(...buys);
   const max = Math.max(...buys);
   const span = Math.max(1, max - min);
+  const chartH = 40;
+  const padY = 4;
+  const plotH = chartH - padY * 2;
   const points = rows.map((r, i) => ({
     x: rows.length < 2 ? i : (i / (rows.length - 1)) * 100,
-    y: 100 - ((r.buy - min) / span) * 100,
+    y: padY + plotH * (1 - (r.buy - min) / span),
     price: r.buy,
     t: r.t,
   }));

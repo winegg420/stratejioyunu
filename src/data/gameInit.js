@@ -18,6 +18,7 @@ import {
   loadProtectionEndsAt,
   saveProtectionEndsAt,
 } from '../lib/briefingStorage';
+import { normalizeMilAiCompleted } from '../lib/milAiTutorialQuests';
 import {
   loadCosmeticTitles,
   loadDailyQuestsState,
@@ -133,9 +134,11 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     pastExpeditions: [],
     navBadges: { expeditions: false, reports: false },
     mapFocusRequest: null,
+    lastViewedLocation: null,
     mapTargetPickRequest: null,
     mapTargetPickResult: null,
     flashes: {},
+    budgetSpendFloats: [],
     meydanBattle: null,
     cyberOpsLog: [],
     globalCbrnOutbreak: null,
@@ -147,7 +150,9 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     _cbrnTickCount: 0,
     playerIdeology: loadPlayerIdeology(playerKey),
     protectionEndsAt,
-    milAiCompleted: loadMilAiCompleted(playerKey),
+    milAiCompleted: normalizeMilAiCompleted(loadMilAiCompleted(playerKey)),
+    milAiCelebration: null,
+    milAiScoutLaunched: false,
     loyaltyScore: 0,
     seasonStats: loadSeasonStats(playerKey) ?? createDefaultSeasonStats(),
     seasonEngagement: syncSeasonEngagement(

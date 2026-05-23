@@ -5,13 +5,16 @@ import { canAffordCost } from '../utils/resourceCosts';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
 import {
-  arePrerequisitesMet,
   BUILDING_LABELS,
-  getUnmetPrerequisites,
 } from '../lib/buildingUtils';
 import {
+  areTutorialPrerequisitesMet,
+  getUnmetTutorialPrerequisites,
+} from '../lib/milAiTutorialQuests';
+import {
+  BUILDING_ASSET_VERSION,
   BUILDING_IMAGE_PUBLIC_FALLBACK,
-  CUSTOM_BUILDING_IMAGE_IDS,
+  BUILDING_PLACEHOLDER_IMAGE,
   getBuildingVisual,
 } from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
@@ -24,14 +27,19 @@ import {
 import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
 import { formatEmpireSlotHint } from '../lib/empireExpansion';
 import BuildCountdownHud from './BuildCountdownHud';
+import { calcConstructionSpeedupDiamondCost } from '../lib/premiumDiamonds';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function BuildingCard({ building, progressionLock = null, coastalLocked = false }) {
-  const { t } = useLanguage();
+  const { t, buildingLabel } = useLanguage();
+  const buildingName = buildingLabel(building.id, building.name);
   const now = useGameStore((s) => s.now);
-  const city = useGameStore((s) => s.cities[s.activeCityId]);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const city = useGameStore((s) => s.cities[activeCityId]);
   const playerCities = useGameStore((s) => s.playerCities);
   const cities = useGameStore((s) => s.cities);
+  const milAiCompleted = useGameStore((s) => s.milAiCompleted);
+  const tutorialState = { activeCityId, cities, milAiCompleted };
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const empireSlotHint = building.id === 'hq'
     ? formatEmpireSlotHint({ playerCities, cities })
@@ -39,6 +47,8 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
   const cancelConstruction = useGameStore((s) => s.cancelConstruction);
+  const speedUpConstruction = useGameStore((s) => s.speedUpConstruction);
+  const diamonds = useGameStore((s) => s.playerMeta?.diamonds ?? 0);
   const openContentInfo = useGameStore((s) => s.openContentInfo);
   const queueFull = useConstructionQueueFull();
   const { locked: actionLocked, runLocked } = useActionLock();
@@ -49,8 +59,8 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const active = queue.find((q) => !q.queued && (q.buildingId === building.id || q.name === building.name));
   const upgrading = Boolean(building.upgrading) || Boolean(active);
   const remaining = active ? remainingFromEndsAt(active.endsAt, now) : 0;
-  const prereqsMet = arePrerequisitesMet(city, building.id);
-  const unmetPrereqs = getUnmetPrerequisites(city, building.id);
+  const prereqsMet = areTutorialPrerequisitesMet(city, building.id, tutorialState);
+  const unmetPrereqs = getUnmetTutorialPrerequisites(city, building.id, tutorialState);
   const nextSpec = resolveNextConstructionSpec(building);
   const displayCost = nextSpec?.cost ?? null;
   const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
@@ -66,7 +76,9 @@ export default function BuildingCard({ building, progressionLock = null, coastal
     : '[ SEKTÖR KİLİTLİ ]';
   const currentLevel = building.level ?? 0;
   const targetLevel = nextSpec?.targetLevel ?? currentLevel + 1;
-  const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
+  const queueBadge = queueEntry
+    ? (queueEntry.queued ? t('components.buildingCard.queued') : t('components.buildingCard.upgrading'))
+    : null;
   const totalUpgradeSec = active
     ? (active.durationSeconds
       ?? (active.endsAt && active.startedAt
@@ -76,16 +88,18 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const upgradeProgressPct = totalUpgradeSec > 0
     ? Math.min(100, Math.max(0, ((totalUpgradeSec - remaining) / totalUpgradeSec) * 100))
     : 0;
+  const speedUpCost = remaining > 0 ? calcConstructionSpeedupDiamondCost(remaining) : 0;
+  const canDiamondSpeedUp = upgrading && queueEntry && !queueEntry.queued && remaining > 1;
 
   const upgradeLabel = queueFull
-    ? 'İnşaat Sırası Dolu'
+    ? t('components.buildingCard.queueFull')
     : upgrading
-      ? 'Yükseltiliyor...'
+      ? t('components.buildingCard.upgradingEllipsis')
       : !prereqsMet
-        ? 'Ön Koşul Eksik'
+        ? t('components.buildingCard.prereqMissing')
         : isUnbuilt
-          ? '[ İNŞA ET ]'
-          : 'Yükselt';
+          ? t('components.buildingCard.buildCta')
+          : t('components.buildingCard.upgrade');
 
   const handleUpgrade = () => {
     runLocked(() => enqueueConstruction(building.id));
@@ -102,14 +116,17 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   }, [building.id, visual?.image]);
 
   const imageUrl = visual?.image ?? '';
-  const publicFallback = BUILDING_IMAGE_PUBLIC_FALLBACK[building.id];
-  const customImage = CUSTOM_BUILDING_IMAGE_IDS.includes(building.id);
+  const imgFallbacks = [
+    BUILDING_IMAGE_PUBLIC_FALLBACK[building.id],
+    BUILDING_PLACEHOLDER_IMAGE,
+  ].filter(Boolean);
 
   const handleImgError = (e) => {
     const img = e.currentTarget;
-    if (publicFallback && img.dataset.fallback !== '1') {
-      img.dataset.fallback = '1';
-      img.src = publicFallback;
+    const step = Number(img.dataset.fallbackStep || '0');
+    if (step < imgFallbacks.length) {
+      img.dataset.fallbackStep = String(step + 1);
+      img.src = `${imgFallbacks[step]}?v=${BUILDING_ASSET_VERSION}`;
       return;
     }
     setImgFailed(true);
@@ -138,11 +155,6 @@ export default function BuildingCard({ building, progressionLock = null, coastal
         .filter(Boolean)
         .join(' ')}
     >
-      {coastalLocked && (
-        <p className="building-coastal-lock" role="status">
-          {t('cityManagement.coastalLock')}
-        </p>
-      )}
       <span className="building-lvl-rozet" aria-label={`Seviye ${currentLevel}`}>
         [ LVL {currentLevel} ]
       </span>
@@ -154,44 +166,32 @@ export default function BuildingCard({ building, progressionLock = null, coastal
           {queueBadge}
         </span>
       )}
-      {progressionBlocked && (
-        <span className="building-lock-badge building-lock-badge--progression" title={progressionLock}>
-          [ KİLİTLİ: {progressionLock} ]
-        </span>
-      )}
-      {isBlocked && !progressionBlocked && (
-        <span className="building-lock-badge" title={blockedLabel}>
-          [ KİLİTLİ: ÖN KOŞULLAR ]
-        </span>
+      <div className="content-card__stack">
+      {coastalLocked && (
+        <p className="building-coastal-lock" role="status">
+          {t('cityManagement.coastalLock')}
+        </p>
       )}
       <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${building.name} ansiklopedi`}>
         <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
           {visual && !imgFailed ? (
-            <>
-              <div
-                className={[
-                  'building-img-wrap',
-                  'building-img-wrap--cell-grid',
-                  customImage && `building-img-wrap--${building.id}`,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={
-                  imageUrl
-                    ? { '--building-card-bg': `url("${imageUrl}")` }
-                    : undefined
-                }
-              >
-                <img
-                  src={imageUrl}
-                  alt=""
-                  className="building-card__img"
-                  loading={customImage ? 'eager' : 'lazy'}
-                  decoding="async"
-                  onError={handleImgError}
-                />
-              </div>
-            </>
+            <div
+              className={[
+                'building-img-wrap',
+                'building-img-wrap--cell-grid',
+                `building-img-wrap--${building.id}`,
+              ].join(' ')}
+              style={{ '--building-card-bg': `url("${imageUrl}")` }}
+            >
+              <img
+                src={imageUrl}
+                alt=""
+                className="building-card__img"
+                loading="lazy"
+                decoding="async"
+                onError={handleImgError}
+              />
+            </div>
           ) : visual ? (
             <div className="building-img-wrap building-card__silhouette-fallback" aria-hidden="true">
               {building.image}
@@ -218,7 +218,7 @@ export default function BuildingCard({ building, progressionLock = null, coastal
               <span>Sv.{targetLevel}</span>
             </div>
             <div
-              className="building-level-progress__bar"
+              className="building-level-progress__bar terminal-progress-track"
               role="progressbar"
               aria-valuenow={Math.round(upgradeProgressPct)}
               aria-valuemin={0}
@@ -226,13 +226,29 @@ export default function BuildingCard({ building, progressionLock = null, coastal
               aria-label={`Sv.${currentLevel} → Sv.${targetLevel}`}
             >
               <div
-                className="building-level-progress__fill"
+                className="building-level-progress__fill terminal-progress-fill"
                 style={{ width: `${upgradeProgressPct}%` }}
               />
             </div>
           </div>
-          <p className="content-card__meta">
-            Kalan: <BuildCountdownHud remaining={remaining} />
+          <p className="content-card__meta building-upgrade-timer-row">
+            <span className="building-upgrade-timer-row__left">
+              Kalan: <BuildCountdownHud remaining={remaining} />
+            </span>
+            {canDiamondSpeedUp && (
+              <button
+                type="button"
+                className="btn-building-speedup"
+                title={t('components.buildingCard.speedUpTitle', { cost: speedUpCost })}
+                aria-label={t('components.buildingCard.speedUpTitle', { cost: speedUpCost })}
+                disabled={diamonds < speedUpCost || actionLocked}
+                onClick={() => runLocked(() => speedUpConstruction(queueEntry.id))}
+              >
+                <span className="btn-building-speedup__icon" aria-hidden="true">⚡</span>
+                <span className="btn-building-speedup__cost">{speedUpCost}</span>
+                <span className="btn-building-speedup__gem" aria-hidden="true">💎</span>
+              </button>
+            )}
           </p>
         </>
       )}
@@ -254,6 +270,7 @@ export default function BuildingCard({ building, progressionLock = null, coastal
           🏛️ {empireSlotHint}
         </p>
       )}
+      </div>
       <div className="card-actions">
         {upgrading && queueEntry && (
           <button

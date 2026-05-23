@@ -6,7 +6,7 @@ export function getHudButtonStrokeConfig(btn) {
     return { stroke: 'rgba(120, 132, 148, 0.75)', width: 1.2, compact: false };
   }
   if (btn.classList.contains('btn-max') || btn.classList.contains('btn-sm')) {
-    return { stroke: 'rgba(94, 184, 255, 0.7)', width: 1.1, compact: true };
+    return { stroke: 'rgba(74, 124, 89, 0.7)', width: 1.1, compact: true };
   }
   if (btn.classList.contains('btn-danger')) {
     return { stroke: 'rgba(255, 130, 110, 0.9)', width: 1.25, compact: false };

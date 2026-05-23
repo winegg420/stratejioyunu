@@ -1,0 +1,105 @@
+/* Premium elmas + inşaat hızlandırma */
+
+.diamond-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.18rem 0.4rem;
+  min-width: 0;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  background: rgba(17, 26, 17, 0.92);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.diamond-indicator__gem {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.diamond-indicator__value {
+  font-size: 0.68rem;
+  color: #c9a84c;
+  letter-spacing: 0.03em;
+}
+
+.building-upgrade-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.building-upgrade-timer-row__left {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-building-speedup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem 0.4rem;
+  margin: 0;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  background: rgba(26, 22, 10, 0.9);
+  color: #fde68a;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn-building-speedup:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.22);
+  border-color: #c9a84c;
+  color: #ffffff;
+}
+
+.btn-building-speedup:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-building-speedup__icon {
+  font-size: 0.65rem;
+}
+
+.btn-building-speedup__cost {
+  color: #c9a84c;
+}
+
+.btn-building-speedup__gem {
+  font-size: 0.62rem;
+}
+
+.btn-speedup--diamond {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding-inline: 0.45rem;
+}
+
+.btn-speedup__cost {
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.resource-bar--stacked .diamond-indicator {
+  padding: 0.14rem 0.32rem;
+}
+
+.resource-bar--stacked .diamond-indicator__value {
+  font-size: 0.62rem;
+}
+
+@media (max-width: 1100px) {
+  .resource-bar--stacked .diamond-indicator__gem {
+    font-size: 0.65rem;
+  }
+}

@@ -5,6 +5,7 @@ import { useGameStore } from '../stores/gameStore';
 import { BLACK_MARKET_LABELS, BLACK_MARKET_TYPES } from '../lib/blackMarket';
 import { getResourceDisplay } from '../data/resourceCatalog';
 import CyberDataInput from '../components/CyberDataInput';
+import CustomDropdown from '../components/CustomDropdown';
 
 export default function BlackMarket() {
   const listings = useGameStore((s) => s.blackMarketListings ?? []);
@@ -58,24 +59,36 @@ export default function BlackMarket() {
         <form className="black-market-form" onSubmit={handlePost}>
           <label>
             <span>Tür</span>
-            <select value={type} onChange={(e) => setType(e.target.value)}>
-              {Object.entries(BLACK_MARKET_LABELS).map(([id, label]) => (
-                <option key={id} value={id}>{label}</option>
-              ))}
-            </select>
+            <CustomDropdown
+              value={type}
+              onChange={setType}
+              aria-label="İlan türü"
+              options={Object.entries(BLACK_MARKET_LABELS).map(([id, label]) => ({
+                value: id,
+                label,
+              }))}
+            />
           </label>
           <label>
             <span>Başlık</span>
-            <CyberDataInput value={title} onChange={(e) => setTitle(e.target.value)} />
+            <CyberDataInput
+              value={title}
+              placeholder="Örn: Acil hammadde satışı"
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </label>
           {type === BLACK_MARKET_TYPES.STOLEN_GOODS && (
             <label>
               <span>Kaynak</span>
-              <select value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
-                {['hammadde', 'food', 'fuel'].map((id) => (
-                  <option key={id} value={id}>{getResourceDisplay(id).label}</option>
-                ))}
-              </select>
+              <CustomDropdown
+                value={resourceId}
+                onChange={setResourceId}
+                aria-label="Kaynak"
+                options={['hammadde', 'food', 'fuel'].map((id) => ({
+                  value: id,
+                  label: getResourceDisplay(id).label,
+                }))}
+              />
             </label>
           )}
           <label>

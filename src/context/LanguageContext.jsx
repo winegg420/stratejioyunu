@@ -8,11 +8,15 @@ import {
 } from 'react';
 import {
   LANG_STORAGE_KEY,
+  localizedBuildingLabel,
+  localizedResearchDesc,
+  localizedResearchName,
+  localizedUnitName,
   resourceLabel,
   translate,
 } from '../i18n';
 
-const LanguageContext = createContext(null);
+export const LanguageContext = createContext(null);
 
 function readStoredLang() {
   try {
@@ -44,13 +48,34 @@ export function LanguageProvider({ children }) {
 
   const resLabel = useCallback((id) => resourceLabel(lang, id), [lang]);
 
+  const buildingLabel = useCallback(
+    (id, fallback) => localizedBuildingLabel(lang, id, fallback),
+    [lang],
+  );
+  const researchName = useCallback(
+    (id, fallback) => localizedResearchName(lang, id, fallback),
+    [lang],
+  );
+  const researchDesc = useCallback(
+    (id, fallback) => localizedResearchDesc(lang, id, fallback),
+    [lang],
+  );
+  const unitName = useCallback(
+    (id, fallback) => localizedUnitName(lang, id, fallback),
+    [lang],
+  );
+
   const value = useMemo(() => ({
     lang,
     setLang,
     t,
     resourceLabel: resLabel,
+    buildingLabel,
+    researchName,
+    researchDesc,
+    unitName,
     isEn: lang === 'en',
-  }), [lang, setLang, t, resLabel]);
+  }), [lang, setLang, t, resLabel, buildingLabel, researchName, researchDesc, unitName]);
 
   return (
     <LanguageContext.Provider value={value}>

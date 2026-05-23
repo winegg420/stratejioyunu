@@ -59,7 +59,11 @@ export function syncMapCitiesForPlayer(mapCities, playerCities, playerName, play
       };
     }
     if (c.status === 'empty' || !c.owner) {
-      return { ...c, owner: null, ownerIdeology: null };
+      return {
+        ...c,
+        owner: null,
+        ownerIdeology: resolveMapCityOwnerIdeology(c),
+      };
     }
     const ownerIdeology = resolveMapCityOwnerIdeology(c)
       ?? ideologyForOwner(c.owner, { lat: c.lat, lng: c.lng });

@@ -1,7 +1,7 @@
 /** Harita modal ve etiket metinleri */
 
 export const RESOURCE_UNKNOWN_LABEL = '[ VERİ YOK — İSTİHBARAT GEREKLİ ]';
-export const OWNER_UNCLAIMED_LABEL = '[ SAHİPSİZ BÖLGE ]';
+export const OWNER_UNCLAIMED_LABEL = 'Fethedilmemiş Bölge';
 export const BOT_MANAGEMENT_LABEL = '[ OTOMATİK YÖNETİM ]';
 
 export function formatMapOwnerDisplay(city, playerName) {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import IntelAccordion from '../components/IntelAccordion';
 import IntelTargetPicker from '../components/IntelTargetPicker';
@@ -9,6 +9,8 @@ import IntelListRow from '../components/IntelListRow';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import IntelOpActionButton from '../components/IntelOpActionButton';
+import IntelNoAgentsAlert from '../components/IntelNoAgentsAlert';
+import CustomDropdown from '../components/CustomDropdown';
 import {
   AGENT_OPERATIONS,
   KBRN_CHEM_PRESSURE_OP,
@@ -33,6 +35,7 @@ import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameSt
 
 export default function Intelligence() {
   const navigate = useNavigate();
+  const location = useLocation();
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const city = useActiveCity();
@@ -69,6 +72,9 @@ export default function Intelligence() {
   const [agentCount, setAgentCount] = useState(1);
   const [kbrnTargetName, setKbrnTargetName] = useState('');
   const [kbrnAgents, setKbrnAgents] = useState(2);
+  const [agentOpId, setAgentOpId] = useState(AGENT_OPERATIONS[0]?.id ?? '');
+
+  const hasAgents = idleAgents > 0;
 
   useEffect(() => {
     if (!mapTargetPickResult) return;
@@ -146,15 +152,20 @@ export default function Intelligence() {
   }, [kbrnResolvedTarget, kbrnAgents, mapCities, playerCities, activeCityId]);
 
   const goMapPick = (field) => {
-    requestMapTargetPick(field);
-    navigate('/harita');
+    const returnPath = `${location.pathname}${location.search}`;
+    requestMapTargetPick(field, returnPath);
+    navigate('/harita', {
+      state: { mapPickField: field, mapPickReturn: returnPath },
+    });
   };
 
   const handleAgentSend = (op) => {
     const target = resolvedAgentName || cyberTargets[0]?.name;
-    if (!target) return;
+    if (!target || !op) return;
     sendIntelOperation({ target, opType: op.name, opId: op.id, agentCount: 1 });
   };
+
+  const selectedAgentOp = AGENT_OPERATIONS.find((op) => op.id === agentOpId) ?? AGENT_OPERATIONS[0];
 
   const handleCyberSend = (abilityId) => {
     if (!selectedTarget) return;
@@ -225,31 +236,49 @@ export default function Intelligence() {
 
       <LockedFeatureGate buildingId="intel" featureName="Ajan operasyonları">
         <IntelAccordion title="Ajan Operasyonları" icon="🕵️" defaultOpen>
-          <IntelTargetPicker
-            value={resolvedAgentName}
-            onChange={setAgentTargetName}
-            targets={cyberTargets}
-            onMapPick={() => goMapPick('agent')}
-            disabled={!cyberTargets.length}
-          />
-          <ul className="ops-list ops-list--cards">
-            {AGENT_OPERATIONS.map((op) => (
-              <li key={op.id} className="intel-op-card">
-                <div className="intel-op-card__body">
-                  <strong className="intel-op-card__title">{op.name}</strong>
-                  <p className="intel-op-card__desc">{op.desc}</p>
-                  <span className="hint intel-op-card__cost">{op.cost}</span>
-                </div>
-                <IntelOpActionButton
-                  className="btn-sm"
-                  locked={idleAgents < 1 || !resolvedAgentName}
-                  onClick={() => handleAgentSend(op)}
-                >
-                  Gönder
-                </IntelOpActionButton>
-              </li>
-            ))}
-          </ul>
+          {!hasAgents ? (
+            <IntelNoAgentsAlert />
+          ) : (
+            <>
+              <IntelTargetPicker
+                label="KOD ADI"
+                value={resolvedAgentName}
+                onChange={setAgentTargetName}
+                targets={cyberTargets}
+                onMapPick={() => goMapPick('agent')}
+                disabled={!cyberTargets.length}
+              />
+              <label className="intel-target-picker intel-op-type-field">
+                <span className="intel-target-picker__label">OPERASYON TİPİ</span>
+                <CustomDropdown
+                  className="intel-target-picker__select"
+                  value={agentOpId}
+                  onChange={setAgentOpId}
+                  aria-label="Operasyon tipi"
+                  options={AGENT_OPERATIONS.map((op) => ({
+                    value: op.id,
+                    label: op.name,
+                  }))}
+                />
+              </label>
+              {selectedAgentOp && (
+                <article className="intel-op-card intel-op-card--preview">
+                  <div className="intel-op-card__body">
+                    <strong className="intel-op-card__title">{selectedAgentOp.name}</strong>
+                    <p className="intel-op-card__desc">{selectedAgentOp.desc}</p>
+                    <span className="hint intel-op-card__cost">{selectedAgentOp.cost}</span>
+                  </div>
+                  <IntelOpActionButton
+                    className="btn-sm"
+                    locked={!resolvedAgentName || !cyberTargets.length}
+                    onClick={() => handleAgentSend(selectedAgentOp)}
+                  >
+                    Gönder
+                  </IntelOpActionButton>
+                </article>
+              )}
+            </>
+          )}
         </IntelAccordion>
       </LockedFeatureGate>
 
@@ -269,9 +298,12 @@ export default function Intelligence() {
                 title="Saldırılabilir düşman üssü yok"
                 hint="Haritada keşfedilen bot veya oyuncu üsleri burada listelenir."
               />
+            ) : !hasAgents ? (
+              <IntelNoAgentsAlert />
             ) : (
               <>
                 <IntelTargetPicker
+                  label="KOD ADI"
                   value={resolvedCyberName}
                   onChange={setCyberTargetName}
                   targets={cyberTargets}
@@ -338,9 +370,12 @@ export default function Intelligence() {
                 title="Haritada hedef üs yok"
                 hint="Haritadan hedef seçin."
               />
+            ) : !hasAgents ? (
+              <IntelNoAgentsAlert />
             ) : (
               <>
                 <IntelTargetPicker
+                  label="KOD ADI"
                   value={kbrnTargetName || resolvedCyberName}
                   onChange={setKbrnTargetName}
                   targets={cyberTargets}

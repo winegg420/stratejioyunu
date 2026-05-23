@@ -1,0 +1,213 @@
+/* Askeri birim & bina kartları — flex düzeni, taşma ve alt hizalı aksiyonlar */
+
+.card-grid,
+.buildings-page .buildings-grid,
+.barracks-page--military .card-grid,
+.page--console .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.card-grid > .locked-feature-gate,
+.buildings-grid > .building-req-tooltip-wrap,
+.card-grid > article,
+.buildings-grid > .building-req-tooltip-wrap {
+  height: 100%;
+  min-height: 0;
+}
+
+.locked-feature-gate {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.locked-feature-gate__content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.building-req-tooltip-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.building-req-tooltip-wrap > .building-card {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/* —— Kart gövdesi —— */
+.card.unit-card.content-card--slim,
+.card.building-card.content-card--slim {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  gap: 0;
+}
+
+.content-card__stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.content-card--slim .content-card__intel-hit {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.content-card--slim .card-visual {
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.content-card--slim .card-visual--building {
+  flex-shrink: 0;
+  min-height: 140px;
+  max-height: 180px;
+}
+
+.content-card--slim .building-img-wrap {
+  height: 140px;
+  max-height: 180px;
+}
+
+.content-card--slim .building-card__img {
+  height: 100%;
+  max-height: 180px;
+}
+
+.content-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.35rem 0.5rem;
+  padding: 0 !important;
+  min-width: 0;
+}
+
+.content-card__head h3 {
+  margin: 0;
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-size: clamp(0.72rem, 2.6vw, 0.92rem);
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  word-break: break-word;
+}
+
+.unit-card-header {
+  align-items: flex-start;
+}
+
+.content-card__meta {
+  flex-shrink: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: clamp(0.62rem, 2.2vw, 0.68rem);
+  line-height: 1.45;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+.content-card__meta + .content-card__meta {
+  margin-top: -0.35rem !important;
+}
+
+.building-level-progress {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* —— Alt aksiyon şeridi —— */
+.content-card--slim .card-actions,
+.content-card--slim .unit-card-actions {
+  flex: 0 0 auto;
+  margin-top: auto !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0 0 !important;
+  border-top: 1px solid rgba(74, 124, 89, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.unit-card-actions {
+  flex-wrap: nowrap !important;
+}
+
+.unit-card-actions .cyber-data-input {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.unit-card-actions .cyber-data-input__field,
+.unit-card-actions .cyber-data-input__max {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.unit-card-actions .btn-unit-produce,
+.unit-card-actions .btn-secondary,
+.content-card--slim .card-actions .btn {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.content-card--slim .card-actions .building-cancel-btn {
+  width: 100%;
+}
+
+.badge-troop-stock,
+.building-level-badge {
+  flex-shrink: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 520px) {
+  .card-grid,
+  .buildings-page .buildings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-card--slim .card-visual--building {
+    min-height: 120px;
+  }
+}

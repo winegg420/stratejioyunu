@@ -1,0 +1,126 @@
+/* Siber CustomDropdown — native select yerine */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-mono, var(--font-hud-data, monospace));
+}
+
+.custom-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.65rem;
+  text-align: left;
+  color: #a7f3d0;
+  background: #000;
+  border: 1px solid rgba(74, 124, 89, 0.55);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    color 0.12s ease;
+}
+
+.custom-dropdown__trigger:hover:not(:disabled) {
+  border-color: #00ff88;
+  box-shadow: 0 0 10px rgba(74, 124, 89, 0.25);
+}
+
+.custom-dropdown--open .custom-dropdown__trigger {
+  border-color: #4a7c59;
+  box-shadow: 0 0 14px rgba(74, 124, 89, 0.35);
+}
+
+.custom-dropdown--disabled .custom-dropdown__trigger {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.custom-dropdown__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.custom-dropdown__value--placeholder {
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.custom-dropdown__chevron {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  color: #00ff88;
+  opacity: 0.9;
+}
+
+.custom-dropdown__menu {
+  position: absolute;
+  z-index: 120;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: min(16rem, 42vh);
+  overflow-y: auto;
+  background: #000;
+  border: 1px solid rgba(74, 124, 89, 0.65);
+  border-radius: 2px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 18px rgba(74, 124, 89, 0.12);
+}
+
+.custom-dropdown__option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  color: rgba(167, 243, 208, 0.88);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    background 0.1s ease,
+    color 0.1s ease,
+    text-shadow 0.1s ease;
+}
+
+.custom-dropdown__option:hover:not(:disabled) {
+  color: #000;
+  background: #00ff88;
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.8);
+}
+
+.custom-dropdown__option--selected {
+  color: #4a7c59;
+  background: rgba(74, 124, 89, 0.12);
+}
+
+.custom-dropdown__option:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Kaynak çubuğu şehir seçici — dar alan */
+.city-switcher .custom-dropdown__trigger {
+  min-height: 1.85rem;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+}
+
+.city-switcher .custom-dropdown__menu {
+  min-width: 12rem;
+}

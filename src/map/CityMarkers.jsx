@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import L from 'leaflet';
 import { Marker } from 'react-leaflet';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { isPeaceForceProtected } from '../lib/progressionSystem';
@@ -56,6 +57,7 @@ export default function CityMarkers({
   onCityHover,
   onCityHoverEnd,
   showPinLabels = true,
+  markerRenderKey = 0,
 }) {
   const storeCities = useGameStore((s) => s.cities);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
@@ -113,23 +115,17 @@ export default function CityMarkers({
 
         return (
           <Marker
-            key={`${city.playerId || city.name}-${ownerLabel}-${cyberActive ? 'c' : 'n'}`}
+            key={`${markerRenderKey}-${city.playerId || city.name}-${ownerLabel}-${cyberActive ? 'c' : 'n'}`}
             position={[city.lat, city.lng]}
             icon={icon}
             zIndexOffset={isActive ? 1200 : city.isOwn ? 400 : 0}
+            bubblingMouseEvents={false}
             eventHandlers={{
-              click: () => onSelectCity(markerCity),
-              mouseover: (e) => {
-                const { clientX, clientY } = e.originalEvent;
-                onCityHover?.({
-                  name: markerCity.name,
-                  lat: city.lat,
-                  lng: city.lng,
-                  x: clientX,
-                  y: clientY,
-                });
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+                onSelectCity(markerCity);
               },
-              mousemove: (e) => {
+              mouseover: (e) => {
                 const { clientX, clientY } = e.originalEvent;
                 onCityHover?.({
                   name: markerCity.name,

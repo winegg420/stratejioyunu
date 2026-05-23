@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import CustomDropdown from './CustomDropdown';
 import { useGameStore } from '../stores/gameStore';
 import {
   CHRONICLE_TYPE_LABELS,
@@ -83,19 +84,16 @@ export default function HistoryBookPanel() {
       </p>
 
       <div className="history-book-toolbar">
-        <select
+        <CustomDropdown
           className="history-book-season-select"
           value={selectedSeason ?? ''}
-          onChange={(e) => setSelectedSeason(e.target.value)}
+          onChange={setSelectedSeason}
           aria-label="Sezon seç"
-        >
-          {seasonIds.map((id) => (
-            <option key={id} value={id}>
-              {formatSeasonLabel(id)}
-              {id === seasonChronicles?.currentSeasonId ? ' (aktif)' : ''}
-            </option>
-          ))}
-        </select>
+          options={seasonIds.map((id) => ({
+            value: id,
+            label: `${formatSeasonLabel(id)}${id === seasonChronicles?.currentSeasonId ? ' (aktif)' : ''}`,
+          }))}
+        />
         <span className="history-book-status">
           {loading ? 'Arşiv yükleniyor…' : (
             <>

@@ -3,6 +3,11 @@ import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { diplomacy } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
+
+function confirmBreakTreaty(partner, t) {
+  return window.confirm(t('pages.diplomacy.confirmBreakPact', { partner }));
+}
 import {
   TREATY_KIND,
   TREATY_LABELS,
@@ -11,7 +16,7 @@ import {
 } from '../lib/diplomaticAgreements';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 
-function PactRow({ treaty, onBreak }) {
+function PactRow({ treaty, onBreak, t }) {
   const endsLabel = treaty.endsAt
     ? new Date(treaty.endsAt).toLocaleString('tr-TR')
     : 'Süresiz';
@@ -25,16 +30,20 @@ function PactRow({ treaty, onBreak }) {
       </div>
       <button
         type="button"
-        className="btn btn-danger btn-sm diplomacy-pact-row__break"
-        onClick={() => onBreak(treaty.partner)}
+        className="btn btn-secondary btn-sm diplomacy-pact-row__break"
+        onClick={() => {
+          if (!confirmBreakTreaty(treaty.partner, t)) return;
+          onBreak(treaty.partner);
+        }}
       >
-        Anlaşmayı boz
+        {t('pages.diplomacy.breakPact')}
       </button>
     </li>
   );
 }
 
 export default function Diplomacy() {
+  const { t } = useLanguage();
   const { alliance, votes } = diplomacy;
   const diplomaticTreaties = useGameStore((s) => s.diplomaticTreaties ?? []);
   const breakDiplomaticTreaty = useGameStore((s) => s.breakDiplomaticTreaty);
@@ -86,10 +95,11 @@ export default function Diplomacy() {
           </p>
           {activeTreaties.length > 0 ? (
             <ul className="diplomacy-pact-list treaty-list">
-              {activeTreaties.map((t) => (
+              {activeTreaties.map((treaty) => (
                 <PactRow
-                  key={t.id ?? t.partner}
-                  treaty={t}
+                  key={treaty.id ?? treaty.partner}
+                  treaty={treaty}
+                  t={t}
                   onBreak={breakDiplomaticTreaty}
                 />
               ))}

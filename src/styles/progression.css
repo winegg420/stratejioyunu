@@ -6,7 +6,7 @@
   margin-bottom: 1rem;
   border: 1px solid rgba(34, 197, 94, 0.45);
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(20, 83, 45, 0.35), rgba(15, 23, 42, 0.85));
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.35), rgba(17, 26, 17, 0.85));
   box-shadow: 0 0 18px rgba(34, 197, 94, 0.15);
 }
 
@@ -38,11 +38,41 @@
   padding: 0.85rem 1rem;
   border: 1px solid rgba(59, 130, 246, 0.35);
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(17, 26, 17, 0.75);
 }
 
 .mil-ai-advisor--done {
   opacity: 0.85;
+}
+
+.mil-ai-advisor--standby {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(10, 15, 10, 0.85);
+}
+
+.mil-ai-advisor--standby .mil-ai-advisor__pulse {
+  background: rgba(148, 163, 184, 0.6);
+  animation: none;
+}
+
+.mil-ai-terminal__line--standby {
+  color: rgba(212, 212, 170, 0.75);
+  letter-spacing: 0.06em;
+}
+
+.mil-ai-terminal__line--celebrate {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
+}
+
+.mil-ai-advisor__quest-meta {
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(74, 124, 89, 0.2);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: rgba(201, 168, 76, 0.85);
+  text-align: right;
 }
 
 .mil-ai-advisor__head {
@@ -50,6 +80,41 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.35rem;
+}
+
+.mil-ai-advisor__head--toggle {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mil-ai-advisor--collapsed .mil-ai-advisor__head--toggle {
+  margin-bottom: 0;
+}
+
+.mil-ai-advisor__collapsed-label {
+  margin-left: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: rgba(212, 212, 170, 0.65);
+  text-transform: uppercase;
+}
+
+.mil-ai-advisor__chevron {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #c9a84c;
+  margin-left: 0.25rem;
+}
+
+.mil-ai-advisor--collapsed .mil-ai-terminal__status {
+  display: none;
 }
 
 .mil-ai-advisor__badge {
@@ -187,8 +252,38 @@
 }
 
 .mil-ai-terminal__line--next {
-  color: #7dd3fc;
+  color: #ffffff;
   text-shadow: 0 0 10px rgba(125, 211, 252, 0.3);
+}
+
+.mil-ai-terminal__line--task {
+  color: #c9a84c;
+  font-weight: 700;
+  text-shadow: none;
+}
+
+.mil-ai-terminal__line--status {
+  color: #d4d4aa;
+  text-shadow: none;
+}
+
+.mil-ai-terminal__line--order {
+  color: #4a7c59;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.mil-ai-terminal__line--intel {
+  color: rgba(212, 212, 170, 0.92);
+  text-shadow: none;
+}
+
+.mil-ai-terminal__line--severity-critical {
+  color: #f87171;
+}
+
+.mil-ai-terminal__line--severity-warn {
+  color: #fbbf24;
 }
 
 .mil-ai-advisor__pending--guide {
@@ -277,7 +372,7 @@
   margin: 0;
   padding-left: 1.1rem;
   font-size: 0.85rem;
-  color: #7dd3fc;
+  color: #ffffff;
 }
 
 .ai-radar-list__item {

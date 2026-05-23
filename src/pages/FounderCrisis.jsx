@@ -4,14 +4,20 @@ import AdminCrisisPanel from '../components/AdminCrisisPanel';
 import AdminCentralBankPanel from '../components/AdminCentralBankPanel';
 import AdminRegionalIncentivePanel from '../components/AdminRegionalIncentivePanel';
 import { useAuth } from '../context/AuthContext';
-import { isFounderPlayer } from '../lib/adminAccess';
+import { isGameAdmin } from '../lib/adminAccess';
+import { useGameStore } from '../stores/gameStore';
 import '../styles/crisis.css';
 
 export default function FounderCrisis() {
   const { playerName, session } = useAuth();
-  const email = session?.user?.email ?? null;
+  const isAdminUser = useGameStore((s) => s.isAdminUser);
 
-  if (!isFounderPlayer(playerName, email)) {
+  if (!isGameAdmin({
+    playerName,
+    email: session?.user?.email,
+    session,
+    profileIsAdmin: isAdminUser,
+  })) {
     return <Navigate to="/" replace />;
   }
 

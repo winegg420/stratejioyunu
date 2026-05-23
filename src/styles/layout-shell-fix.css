@@ -1,0 +1,294 @@
+/**
+ * Kabuk düzeni — kaynak çubuğu akışta (fixed değil), başlık bindirmesi yok.
+ * main.jsx içinde en son import edilir.
+ */
+
+/* ── Kaynak çubuğu: flex akışında, sabit yükseklik (JS ölçümü) ── */
+.app-shell.hud-shell,
+.app-shell {
+  padding-top: 0 !important;
+}
+
+.resource-bar:not(.resource-bar--stacked),
+.resource-bar--tactical:not(.resource-bar--stacked),
+.resource-bar--command:not(.resource-bar--stacked) {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  z-index: 1100 !important;
+  min-height: var(--resource-bar-h, 88px) !important;
+  max-height: var(--resource-bar-h, 88px) !important;
+  height: var(--resource-bar-h, 88px) !important;
+  overflow: hidden !important;
+  contain: layout style paint;
+  box-sizing: border-box;
+}
+
+.resource-bar--stacked.resource-bar,
+.resource-bar--stacked.resource-bar--command {
+  position: relative !important;
+  width: 100% !important;
+  z-index: 1100 !important;
+  height: auto !important;
+  min-height: var(--resource-bar-h, 100px) !important;
+  max-height: none !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-bar-inner:not(.resource-bar-inner--tiered),
+.resource-bar:not(.resource-bar--stacked) .resource-bar-inner--flush:not(.resource-bar-inner--tiered) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 0.35rem !important;
+  box-sizing: border-box;
+}
+
+.brand-block.brand-desktop.resource-bar-brand {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  min-width: 7rem !important;
+  max-width: 9.5rem !important;
+  padding: 0.2rem 0.5rem !important;
+  overflow: hidden;
+}
+
+.brand-block .game-title {
+  font-size: 0.95rem !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.city-switcher-wrap {
+  margin-top: 0.15rem;
+}
+
+.city-switcher .custom-dropdown__trigger {
+  min-height: 1.5rem !important;
+  max-height: 1.5rem !important;
+  padding: 0.15rem 0.35rem !important;
+  font-size: 0.62rem !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resources-row,
+.resource-bar:not(.resource-bar--stacked) .resources-row--tactical {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  align-items: center !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  flex-wrap: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item,
+.resource-bar:not(.resource-bar--stacked) .resource-item--tactical {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  min-width: 5.5rem !important;
+  max-width: 7.5rem !important;
+  height: auto !important;
+  max-height: calc(var(--resource-bar-h, 88px) - 10px) !important;
+  padding: 0.2rem 0.4rem !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+.resource-item .res-body {
+  gap: 0 !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-label {
+  font-size: 0.55rem !important;
+  line-height: 1.15 !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-value {
+  font-size: 0.82rem !important;
+  line-height: 1.1 !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-hourly-live,
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-hourly-badge {
+  font-size: 0.5rem !important;
+  line-height: 1.1 !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-item .res-bar--command {
+  height: 2px !important;
+  margin: 0.08rem 0 0 !important;
+}
+
+.resource-bar:not(.resource-bar--stacked) .resource-bar-actions,
+.resource-bar:not(.resource-bar--stacked) .resource-bar-actions--tactical {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  height: auto !important;
+  max-height: 100% !important;
+  padding: 0.2rem 0.45rem !important;
+  gap: 0.35rem !important;
+  min-width: 10rem !important;
+  max-width: 14rem !important;
+  overflow: hidden;
+}
+
+/* Dil seçici — yatay, bayraklar üst üste binmesin */
+.lang-switcher--bar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  padding: 0.15rem 0.3rem !important;
+  min-width: 0 !important;
+  max-width: 8.5rem !important;
+}
+
+.lang-switcher--bar .lang-switcher__title {
+  display: block !important;
+  flex: 0 0 auto;
+  margin: 0 !important;
+  padding: 0 0.25rem 0 0 !important;
+  border-right: 1px solid rgba(34, 211, 238, 0.28);
+  font-size: 0.55rem !important;
+  line-height: 1;
+}
+
+.lang-switcher--bar .lang-switcher__btn {
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  min-width: 2.35rem !important;
+  max-width: 2.75rem !important;
+  min-height: 1.5rem !important;
+  padding: 0.1rem 0.22rem !important;
+}
+
+.lang-switcher--bar .lang-switcher__svg {
+  width: 18px !important;
+  height: 12px !important;
+}
+
+/* Harita dışı — yan telemetri başlığa binmesin */
+.app-shell.hud-shell:not(.route-map) .cyber-shell-chrome {
+  display: none !important;
+}
+
+/* Ana Merkez başlık + feed satırı */
+.home-command-head {
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  padding-top: 0.25rem;
+  position: relative;
+  z-index: 2;
+}
+
+.home-command-page-header .page-header__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.home-command-page-header .page-header__title-row {
+  width: 100%;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.home-command-page-header .page-title {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 1.12 !important;
+  padding-bottom: 0.15rem;
+}
+
+.home-command-page-header .page-feed-line--ready,
+.home-command-page-header .page-feed-line--pending,
+.home-command-page-header .page-subtitle--typewriter {
+  display: block !important;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 !important;
+  padding-top: 0.1rem;
+  white-space: normal !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45 !important;
+  position: relative !important;
+  top: auto !important;
+}
+
+.app-shell.hud-shell:not(.route-map) .content-area {
+  padding-top: 0.65rem !important;
+}
+
+.app-shell.hud-shell:not(.route-map) .main-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0 !important;
+}
+
+@media (max-width: 1100px) {
+  .lang-switcher--bar .lang-switcher__title {
+    display: none !important;
+  }
+
+  .resource-bar-actions,
+  .resource-bar-actions--tactical {
+    min-width: 7.5rem !important;
+    max-width: 10rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  /* hud-mobile-fix — fixed bar + padding çift boşluk / bindirme yapıyordu */
+  html.mobile-shell-active .resource-bar,
+  html.mobile-shell-active .resource-bar--tactical,
+  html.mobile-shell-active .resource-bar--command {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    overflow: hidden !important;
+    max-height: var(--resource-bar-h, 88px) !important;
+  }
+
+  html.mobile-shell-active .resources-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .brand-block.brand-desktop.resource-bar-brand {
+    display: none !important;
+  }
+
+  .resource-item,
+  .resource-item--tactical {
+    min-width: 4.75rem !important;
+    max-width: 6.5rem !important;
+  }
+}

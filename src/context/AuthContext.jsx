@@ -4,11 +4,22 @@ import {
   getDisplayName,
   getSession,
   onAuthStateChange,
+  signInWithGoogle,
   signInWithPassword,
   signOutSupabase,
+  signUp,
 } from '../lib/auth';
 import { stopSyncPolling } from '../lib/supabaseSync';
+import { fetchUserProfile, resolveProfileDisplayName, resolveProfileIsAdmin } from '../lib/profileApi';
 import { useGameStore } from '../stores/gameStore';
+
+const PLAYER_IDENTITY_KEY = 'strateji_player_name';
+
+function syncPlayerIdentityKeys(displayName, playerName) {
+  if (typeof window === 'undefined') return;
+  const label = displayName?.trim() || playerName?.trim();
+  if (label) localStorage.setItem(PLAYER_IDENTITY_KEY, label);
+}
 
 const AUTH_KEY = 'strateji_auth_demo';
 const PLAYER_KEY = 'strateji_player_name';
@@ -37,7 +48,10 @@ function setDemoAuth(name) {
 }
 
 export function AuthProvider({ children }) {
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return isDemoAuthed() && !isSupabaseConfigured;
+  });
   const [session, setSession] = useState(null);
   const [isDemo, setIsDemo] = useState(() => isDemoAuthed());
   const [playerName, setPlayerName] = useState(() =>
@@ -45,13 +59,40 @@ export function AuthProvider({ children }) {
   );
   const hydratedUserRef = useRef(null);
 
+  const applyProfileIdentity = useCallback((user, profile) => {
+    const displayName = profile
+      ? resolveProfileDisplayName(profile, getDisplayName(user))
+      : getDisplayName(user);
+    setPlayerName(displayName);
+    syncPlayerIdentityKeys(displayName, profile?.player_name);
+    const isAdmin = resolveProfileIsAdmin(profile, user);
+    if (isAdmin) {
+      useGameStore.setState({ isAdminUser: true });
+    }
+  }, []);
+
   const hydrateGameForUser = useCallback(async (user) => {
     if (!user?.id) return;
     if (hydratedUserRef.current === user.id) return;
-    const name = getDisplayName(user);
-    const ok = await useGameStore.getState().hydrateFromSupabase(user.id, name);
-    if (ok) hydratedUserRef.current = user.id;
-  }, []);
+
+    const profile = await fetchUserProfile(user.id);
+    applyProfileIdentity(user, profile);
+
+    const fallbackName = profile
+      ? resolveProfileDisplayName(profile, getDisplayName(user))
+      : getDisplayName(user);
+    const result = await useGameStore.getState().hydrateFromSupabase(user.id, fallbackName);
+    if (result?.ok) {
+      hydratedUserRef.current = user.id;
+      if (result.displayName) {
+        setPlayerName(result.displayName);
+        syncPlayerIdentityKeys(result.displayName, result.playerName);
+      }
+      if (result.isAdminUser) {
+        useGameStore.setState({ isAdminUser: true });
+      }
+    }
+  }, [applyProfileIdentity]);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,10 +109,14 @@ export function AuthProvider({ children }) {
           ]);
           if (!cancelled && existing) {
             setSession(existing);
-            setPlayerName(getDisplayName(existing.user));
             setIsDemo(false);
             clearDemoAuth();
             hydrateUser = existing.user;
+            const profile = await fetchUserProfile(existing.user.id);
+            if (!cancelled) applyProfileIdentity(existing.user, profile);
+          } else if (!cancelled && isDemoAuthed()) {
+            setIsDemo(true);
+            setPlayerName(readDemoPlayerName());
           }
         } else if (!cancelled && isDemoAuthed()) {
           setIsDemo(true);
@@ -96,18 +141,26 @@ export function AuthProvider({ children }) {
 
     init();
 
-    const { data } = onAuthStateChange((_event, nextSession) => {
+    const { data } = onAuthStateChange((event, nextSession) => {
       if (cancelled) return;
+      setAuthReady(true);
       setSession(nextSession);
-      if (nextSession) {
+      if (nextSession?.user) {
         setIsDemo(false);
         clearDemoAuth();
-        setPlayerName(getDisplayName(nextSession.user));
+        hydratedUserRef.current = null;
         hydrateGameForUser(nextSession.user);
-      } else {
+        return;
+      }
+      if (event === 'SIGNED_OUT') {
         hydratedUserRef.current = null;
         stopSyncPolling();
-        useGameStore.setState({ _supabaseHydrated: false });
+        useGameStore.setState({
+          _supabaseHydrated: false,
+          profileDisplayName: null,
+          profilePlayerName: null,
+          isAdminUser: false,
+        });
       }
     });
 
@@ -115,7 +168,12 @@ export function AuthProvider({ children }) {
       cancelled = true;
       data.subscription.unsubscribe();
     };
-  }, [hydrateGameForUser]);
+  }, [hydrateGameForUser, applyProfileIdentity]);
+
+  useEffect(() => {
+    const unlock = window.setTimeout(() => setAuthReady(true), 6000);
+    return () => window.clearTimeout(unlock);
+  }, []);
 
   const loginDemo = useCallback((name = 'Oyuncu') => {
     hydratedUserRef.current = null;
@@ -125,6 +183,7 @@ export function AuthProvider({ children }) {
     setSession(null);
     setIsDemo(true);
     setPlayerName(displayName);
+    setAuthReady(true);
     signOutSupabase();
   }, []);
 
@@ -147,19 +206,48 @@ export function AuthProvider({ children }) {
     setSession(nextSession);
     setIsDemo(false);
     clearDemoAuth();
-    setPlayerName(getDisplayName(nextSession?.user));
     hydratedUserRef.current = null;
     if (nextSession?.user) {
       await hydrateGameForUser(nextSession.user);
     }
     return { mode: 'supabase' };
-  }, [loginDemo, hydrateGameForUser]);
+  }, [loginDemo, hydrateGameForUser, applyProfileIdentity]);
+
+  const register = useCallback(async (playerId, password, displayName) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase yapılandırılmamış.');
+    }
+    const data = await signUp(playerId, password, displayName);
+    const nextSession = data.session;
+    if (nextSession?.user) {
+      setSession(nextSession);
+      setIsDemo(false);
+      clearDemoAuth();
+      hydratedUserRef.current = null;
+      await hydrateGameForUser(nextSession.user);
+      return { mode: 'supabase', needsEmailConfirm: false };
+    }
+    return { mode: 'supabase', needsEmailConfirm: true };
+  }, [hydrateGameForUser]);
+
+  const loginWithGoogle = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase yapılandırılmamış. Hızlı Giriş kullanın.');
+    }
+    await signInWithGoogle();
+    return { mode: 'oauth' };
+  }, []);
 
   const logout = useCallback(async () => {
     clearDemoAuth();
     hydratedUserRef.current = null;
     stopSyncPolling();
-    useGameStore.setState({ _supabaseHydrated: false });
+    useGameStore.setState({
+      _supabaseHydrated: false,
+      profileDisplayName: null,
+      profilePlayerName: null,
+      isAdminUser: false,
+    });
     setSession(null);
     setIsDemo(false);
     setPlayerName('Komutan_Alpha');
@@ -176,10 +264,12 @@ export function AuthProvider({ children }) {
       isSupabaseConfigured,
       loginDemo,
       signIn,
+      register,
+      loginWithGoogle,
       login: loginDemo,
       logout,
     }),
-    [authReady, session, isDemo, playerName, loginDemo, signIn, logout],
+    [authReady, session, isDemo, playerName, loginDemo, signIn, register, loginWithGoogle, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

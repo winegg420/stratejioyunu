@@ -1,3 +1,4 @@
+import L from 'leaflet';
 import { Marker } from 'react-leaflet';
 import { createCyberCityIcon } from './cyberMarkers';
 
@@ -28,7 +29,13 @@ export default function CyberCityMarkers({
             position={[city.lat, city.lng]}
             icon={createCyberCityIcon(city, { underAttack: isUnderAttack, isActive })}
             zIndexOffset={isActive ? 600 : city.status === 'own' ? 200 : 0}
-            eventHandlers={{ click: () => onSelectCity(city) }}
+            bubblingMouseEvents={false}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+                onSelectCity(city);
+              },
+            }}
           />
         );
       })}

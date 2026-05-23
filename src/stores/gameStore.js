@@ -147,7 +147,8 @@ import {
   creditEmpireMoney,
   deductEmpireMoney,
 } from '../lib/empireTreasury';
-import { arePrerequisitesMet, PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
+import { PANEL_LOCKED_BUILDING_IDS } from '../lib/buildingUtils';
+import { areTutorialPrerequisitesMet } from '../lib/milAiTutorialQuests';
 import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { applyExpeditionLoot, refundCostWithDepotCap } from '../lib/lootUtils';
 import { buildLossRows } from '../lib/reportLosses';
@@ -170,7 +171,7 @@ import {
   resolveSpyMission,
 } from '../utils/spyEngine';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
-import { canAffordCost, deductCost } from '../utils/resourceCosts';
+import { canAffordCost, deductCost, parseUnitCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
 import { syncResearchesToCatalog } from '../data/researchCatalog';
@@ -188,11 +189,22 @@ import {
   isPeaceForceProtected,
 } from '../lib/progressionSystem';
 import {
+  applyDevTestModeToState,
   bypassWarLocksForDevTest,
   getDevTestCyberCapabilities,
   isDevTestMode,
 } from '../lib/devTestMode';
-import { getMilAiRewardLabel, MIL_AI_QUESTS } from '../lib/milAiTutorial';
+import {
+  disableAdminModeOnState,
+  enableAdminModeOnState,
+} from '../lib/adminModeControl';
+import { translate, LANG_STORAGE_KEY } from '../i18n';
+import {
+  getNextAutoTutorialQuest,
+  isQuestComplete,
+  MIL_AI_TUTORIAL_QUESTS,
+  normalizeMilAiCompleted,
+} from '../lib/milAiTutorialQuests';
 import {
   applyAiCenterEnergyDrain,
   applyAiResourceAutoBalanceTick,
@@ -314,7 +326,19 @@ import {
   triggerRandomCbrnEvent as rollGlobalCbrnOutbreak,
   formatNewsTickerTime,
 } from '../utils/cbrnEngine';
-import { isFounderPlayer } from '../lib/adminAccess';
+import { isGameAdmin } from '../lib/adminAccess';
+
+function canUseAdminOverride(state, playerKey) {
+  return isGameAdmin({
+    playerName: playerKey,
+    profileIsAdmin: state.isAdminUser,
+  });
+}
+import {
+  applyConstructionTimeReduction,
+  calcConstructionSpeedupDiamondCost,
+  getPlayerDiamonds,
+} from '../lib/premiumDiamonds';
 import {
   computeCityHappiness,
   getActiveCyberBarracksSlow,
@@ -325,8 +349,10 @@ import {
   pruneKbrnEffects,
 } from '../lib/happinessSystem';
 import {
+  getLastSyncUserId,
   hydrateGameStore,
   isSyncEnabled,
+  saveGameStateNow,
   scheduleSaveGameState,
   syncExpeditionsFromServer,
 } from '../lib/supabaseSync';
@@ -354,15 +380,40 @@ function renormalizeCatalogState(state) {
 
 function patchCity(set, get, cityId, patch) {
   const { cities } = get();
+  const existing = cities[cityId];
+  if (!existing) return;
   const cityPatch = patch.resources
     ? { ...patch, resources: ensureCityResources(patch.resources) }
     : patch;
   set({
     cities: {
       ...cities,
-      [cityId]: { ...cities[cityId], ...cityPatch },
+      [cityId]: enrichCityModel({ ...existing, ...cityPatch }),
     },
   });
+}
+
+const BUDGET_SPEND_FLOAT_MS = 1500;
+
+function moneyInCost(costStr, qty) {
+  const lines = parseUnitCost(costStr);
+  const moneyLine = lines.find((c) => c.resourceId === 'money');
+  return moneyLine ? Math.floor(moneyLine.amount * qty) : 0;
+}
+
+/** Global bütçe barı — kırmızı -X yüzen animasyonu */
+function pushBudgetSpendFloat(set, get, amount) {
+  const n = Math.floor(amount);
+  if (n <= 0) return;
+  const id = genId('bsp');
+  set({
+    budgetSpendFloats: [...(get().budgetSpendFloats ?? []).slice(-4), { id, amount: n }],
+  });
+  window.setTimeout(() => {
+    set((s) => ({
+      budgetSpendFloats: (s.budgetSpendFloats ?? []).filter((f) => f.id !== id),
+    }));
+  }, BUDGET_SPEND_FLOAT_MS);
 }
 
 function persistEngagement(get) {
@@ -452,8 +503,8 @@ function refreshCityMorale(state, cityId) {
   const population = Math.max(400, basePopulation - popDrain);
   const vipMult = getVipMultiplierFromState(state);
   const resources = applyProductionFreeze(
-    city.resources,
-    city.buildings,
+    ensureCityResources(city.resources),
+    city.buildings ?? [],
     {
       ...city,
       cityId,
@@ -813,6 +864,7 @@ export const useGameStore = create((set, get) => ({
       const treasury = deductEmpireMoney(cities, moneyPay, cityId);
       cities = treasury.cities;
       resources = (cities[cityId]?.resources ?? resources).map((r) => ({ ...r }));
+      pushBudgetSpendFloat(set, get, moneyPay);
     }
 
     resources = resources.map((r) => {
@@ -912,6 +964,7 @@ export const useGameStore = create((set, get) => ({
     let cities = state.cities;
     const paid = deductEmpireMoney(cities, totalCost, cityId);
     cities = paid.cities;
+    pushBudgetSpendFloat(set, get, totalCost);
 
     let resources = (cities[cityId]?.resources ?? city.resources).map((r) => ({ ...r }));
     const row = resources.find((r) => r.id === offer.resourceId);
@@ -1017,6 +1070,30 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
+  applyAdminTestBoost: () => {
+    if (!isDevTestMode()) return false;
+    set((state) => applyDevTestModeToState(state));
+    return true;
+  },
+
+  enableAdminMode: async () => {
+    set((state) => enableAdminModeOnState(state));
+    return true;
+  },
+
+  disableAdminMode: async () => {
+    set((state) => disableAdminModeOnState(state));
+    const userId = getLastSyncUserId();
+    if (userId && get()._supabaseHydrated) {
+      await saveGameStateNow(get(), {
+        profileId: userId,
+        saveAllUnits: true,
+        researches: true,
+      });
+    }
+    return true;
+  },
+
   initWorldSystems: () => {
     const state = get();
     const catalogPatch = renormalizeCatalogState(state);
@@ -1029,6 +1106,7 @@ export const useGameStore = create((set, get) => ({
     );
     syncRegistryFromMap(mapCities);
     set({ ...catalogPatch, mapCities });
+    get().applyAdminTestBoost();
     get()._runServerCleansing(false);
     get().touchPlayerActivity();
     get().refreshServerBroadcast();
@@ -1085,18 +1163,19 @@ export const useGameStore = create((set, get) => ({
   hydrateFromSupabase: async (userId, playerName) => {
     set({ gameHydrating: true });
     try {
-      const ok = await hydrateGameStore(userId, {
+      const result = await hydrateGameStore(userId, {
         playerName,
         getState: get,
         setState: (patch) => set(patch),
         completeExpedition: (id) => get()._completeExpedition(id),
       });
-      if (ok) {
+      if (result?.ok) {
         set((prev) => renormalizeCatalogState(prev));
+        get().applyAdminTestBoost();
         get().initWorldSystems();
         await get().refreshServerBroadcast();
       }
-      return ok;
+      return result ?? { ok: false };
     } finally {
       set({ gameHydrating: false });
     }
@@ -1237,7 +1316,7 @@ export const useGameStore = create((set, get) => ({
 
   adminTriggerCrisis: async ({ type, catastrophic = false } = {}) => {
     const playerKey = getCurrentPlayerName();
-    if (!isFounderPlayer(playerKey)) return false;
+    if (!canUseAdminOverride(get(), playerKey)) return false;
     const state = get();
     if (state.activeCrisis?.active) {
       useNotificationStore.getState().addToast('Aktif kriz var — önce sonlanmasını bekleyin veya süreyi bekleyin.', 'warn');
@@ -1277,7 +1356,7 @@ export const useGameStore = create((set, get) => ({
 
   adminSetCentralBank: async ({ fuelBasePrice, parities } = {}) => {
     const playerKey = getCurrentPlayerName();
-    if (!isFounderPlayer(playerKey)) return false;
+    if (!canUseAdminOverride(get(), playerKey)) return false;
     const prev = normalizeCentralBank(get().centralBank);
     const centralBank = normalizeCentralBank({
       fuelBasePrice: fuelBasePrice ?? prev.fuelBasePrice,
@@ -1312,7 +1391,7 @@ export const useGameStore = create((set, get) => ({
     durationHours = 168,
   } = {}) => {
     const playerKey = getCurrentPlayerName();
-    if (!isFounderPlayer(playerKey)) return false;
+    if (!canUseAdminOverride(get(), playerKey)) return false;
     const endsAt = Date.now() + durationHours * 60 * 60 * 1000;
     const regionalIncentive = normalizeRegionalIncentive({
       active: true,
@@ -1346,7 +1425,7 @@ export const useGameStore = create((set, get) => ({
 
   adminClearRegionalIncentive: async () => {
     const playerKey = getCurrentPlayerName();
-    if (!isFounderPlayer(playerKey)) return false;
+    if (!canUseAdminOverride(get(), playerKey)) return false;
     await saveServerBroadcast({
       centralBank: get().centralBank,
       regionalIncentive: null,
@@ -1671,6 +1750,7 @@ export const useGameStore = create((set, get) => ({
     }
 
     let cities = deductEmpireMoney(state.cities, listing.price, cityId).cities;
+    pushBudgetSpendFloat(set, get, listing.price);
     const city = cities[cityId];
     if (listing.resourceId && city) {
       const resources = city.resources.map((r) => {
@@ -1943,41 +2023,57 @@ export const useGameStore = create((set, get) => ({
     cloudSync(get, { saveProfile: true });
   },
 
-  completeMilAiQuest: (questId) => {
+  _completeMilAiTutorialQuest: (questId) => {
     const state = get();
-    const quest = MIL_AI_QUESTS.find((q) => q.id === questId);
+    const quest = MIL_AI_TUTORIAL_QUESTS.find((q) => q.id === questId);
     if (!quest) return false;
-    const done = new Set(state.milAiCompleted ?? []);
+    const done = new Set(normalizeMilAiCompleted(state.milAiCompleted ?? []));
     if (done.has(questId)) return false;
-    if (!quest.check(state)) {
-      useNotificationStore.getState().addToast('Görev henüz tamamlanmadı.', 'warn');
-      return false;
+    if (!isQuestComplete(state, quest)) return false;
+
+    const nextDone = [...done, questId];
+    const playerKey = getCurrentPlayerName();
+    saveMilAiCompleted(playerKey, nextDone);
+
+    let lang = 'tr';
+    try {
+      lang = localStorage.getItem(LANG_STORAGE_KEY) === 'en' ? 'en' : 'tr';
+    } catch {
+      /* ignore */
     }
+    const celebrateText = quest.celebrateKey
+      ? translate(lang, quest.celebrateKey)
+      : quest.id;
 
-    const cityId = state.activeCityId;
-    const city = state.cities[cityId];
-    if (!city) return false;
-
-    const resources = (city.resources ?? []).map((r) => {
-      let add = 0;
-      if (r.id === 'hammadde' && quest.reward.hammadde) add = quest.reward.hammadde;
-      if (r.id === 'fuel' && quest.reward.fuel) add = quest.reward.fuel;
-      if (r.id === 'money' && quest.reward.money) add = quest.reward.money;
-      if (!add) return r;
-      const cap = r.max ?? Number.POSITIVE_INFINITY;
-      return { ...r, current: Math.min(cap, (r.current ?? 0) + add) };
+    set({
+      milAiCompleted: nextDone,
+      milAiCelebration: {
+        questId,
+        messageKey: quest.celebrateKey,
+        at: Date.now(),
+      },
     });
 
-    patchCity(set, get, cityId, { resources });
-    const nextDone = [...(state.milAiCompleted ?? []), questId];
-    saveMilAiCompleted(getCurrentPlayerName(), nextDone);
-    set({ milAiCompleted: nextDone });
     useNotificationStore.getState().addToast(
-      `MIL-AI ödülü: ${getMilAiRewardLabel(quest.reward)}`,
+      `[ GÖREV TAMAMLANDI ] ${celebrateText}`,
       'success',
     );
-    cloudSync(get, { cityId });
+    cloudSync(get, { saveProfile: true });
     return true;
+  },
+
+  completeMilAiQuest: (questId) => get()._completeMilAiTutorialQuest(questId),
+
+  _syncMilAiTutorial: () => {
+    const state = get();
+    const celebration = state.milAiCelebration;
+    if (celebration?.at && Date.now() - celebration.at > 14000) {
+      if (state.milAiCelebration) set({ milAiCelebration: null });
+    }
+    const quest = getNextAutoTutorialQuest(state);
+    if (quest) {
+      get()._completeMilAiTutorialQuest(quest.id);
+    }
   },
 
   setPlayerIdeology: (ideology, { force = false } = {}) => {
@@ -2632,6 +2728,7 @@ export const useGameStore = create((set, get) => ({
       set({ incomingAttacks: nextIncoming });
     }
     completedIncomingIds.forEach((id) => get()._completeIncomingAttack(id));
+    get()._syncMilAiTutorial();
   },
 
   _completeConstruction: (cityId, itemId) => {
@@ -2671,6 +2768,7 @@ export const useGameStore = create((set, get) => ({
     queue.splice(activeIdx, 1);
 
     patchCity(set, get, cityId, { buildings, resources, constructionQueue: queue });
+    get()._syncMilAiTutorial();
 
     const resId = BUILDING_RESOURCE_MAP[item.buildingId];
     const newRate = resId ? resources.find((r) => r.id === resId)?.rate : null;
@@ -2699,6 +2797,7 @@ export const useGameStore = create((set, get) => ({
     queue.splice(activeIdx, 1);
 
     patchCity(set, get, cityId, { idleTroops, productionQueue: queue });
+    get()._syncMilAiTutorial();
     get().bumpSeasonStat('unitsTrained', item.count ?? 1);
     useNotificationStore.getState().addToast(
       `Üretim Tamamlandı: ${item.count} ${item.unit}`,
@@ -3702,7 +3801,12 @@ export const useGameStore = create((set, get) => ({
 
     if (city.constructionQueue.length >= CONSTRUCTION_QUEUE_LIMIT) return false;
     if (!canAffordCost(spec.cost, 1, city.resources)) return false;
-    if (!arePrerequisitesMet(city, buildingId)) return false;
+    const tutorialState = {
+      activeCityId: cityId,
+      cities: state.cities,
+      milAiCompleted: state.milAiCompleted,
+    };
+    if (!areTutorialPrerequisitesMet(city, buildingId, tutorialState)) return false;
 
     const hasActive = city.constructionQueue.some((q) => !q.queued);
     const queued = addToQueue || hasActive;
@@ -3724,6 +3828,7 @@ export const useGameStore = create((set, get) => ({
     };
 
     const resources = deductCost(spec.cost, 1, city.resources);
+    pushBudgetSpendFloat(set, get, moneyInCost(spec.cost, 1));
     const unlockOnStart = PANEL_LOCKED_BUILDING_IDS.includes(buildingId);
     const buildings = city.buildings.map((b) => {
       if (b.id !== buildingId) return b;
@@ -3797,6 +3902,7 @@ export const useGameStore = create((set, get) => ({
     };
 
     const resources = deductCost(costStr, count, city.resources);
+    pushBudgetSpendFloat(set, get, moneyInCost(costStr, count));
     const withPop = deductPopulation({ ...city, resources }, popCost);
     patchCity(set, get, cityId, {
       resources: withPop.resources,
@@ -3967,6 +4073,7 @@ export const useGameStore = create((set, get) => ({
       },
       expeditions: [...s.expeditions, expedition],
       navBadges: { ...s.navBadges, expeditions: true },
+      ...(isSpy ? { milAiScoutLaunched: true } : {}),
     }));
 
     get().bumpSeasonStat('expeditionsLaunched', 1);
@@ -4326,6 +4433,10 @@ export const useGameStore = create((set, get) => ({
 
   clearMapFocusRequest: () => set({ mapFocusRequest: null }),
 
+  setLastViewedLocation: (location) => set({ lastViewedLocation: location ?? null }),
+
+  clearLastViewedLocation: () => set({ lastViewedLocation: null }),
+
   requestMapTargetPick: (field, returnPath = '/istihbarat') => {
     set({
       mapTargetPickRequest: { field, returnPath },
@@ -4352,14 +4463,40 @@ export const useGameStore = create((set, get) => ({
   speedUpConstruction: (queueId) => {
     const cityId = get().activeCityId;
     const city = get().cities[cityId];
-    const item = city.constructionQueue.find((q) => q.id === queueId);
-    if (!item || item.queued) return;
+    const item = city?.constructionQueue?.find((q) => q.id === queueId);
+    if (!item || item.queued || item.endsAt == null) return false;
+
+    const now = Date.now();
+    const remainingSec = Math.max(0, Math.ceil((item.endsAt - now) / 1000));
+    if (remainingSec <= 1) return false;
+
+    const cost = calcConstructionSpeedupDiamondCost(remainingSec);
+    const meta = { ...(get().playerMeta ?? loadPlayerMeta()) };
+    const balance = getPlayerDiamonds(meta);
+    if (balance < cost) {
+      useNotificationStore.getState().addToast(
+        `Yetersiz elmas — gerekli: ${cost} 💎`,
+        'warn',
+      );
+      return false;
+    }
+
+    const newEndsAt = applyConstructionTimeReduction(item.endsAt, now);
+    const nextMeta = { ...meta, diamonds: balance - cost };
+    savePlayerMeta(nextMeta);
+
     patchCity(set, get, cityId, {
       constructionQueue: city.constructionQueue.map((q) =>
-        q.id === queueId ? { ...q, endsAt: Date.now() } : q,
+        (q.id === queueId ? { ...q, endsAt: newEndsAt } : q),
       ),
     });
+    set({ playerMeta: nextMeta });
+    useNotificationStore.getState().addToast(
+      `İnşaat hızlandırıldı (−%90 süre) · ${cost} 💎`,
+      'success',
+    );
     get().tick();
+    return true;
   },
 
   speedUpProduction: (queueId) => {
@@ -4702,19 +4839,7 @@ export function useTroopsAwayMap(cityId) {
   );
 }
 
-export { formatCityOptionLabel } from '../lib/cityManagementUi';
-
-/** Ana merkez / özet — şehir adı tekrarlanmaz (provinceName === name ise atlanır). */
-export function formatCitySubtitle(city) {
-  if (!city) return '—';
-  const name = city.name ?? '—';
-  const type = city.type ?? 'Üs';
-  const province = city.provinceName?.trim();
-  if (province && province !== name) {
-    return `${name} · ${type} · ${province}`;
-  }
-  return `${name} · ${type}`;
-}
+export { formatCityOptionLabel, formatCitySubtitle } from '../lib/cityManagementUi';
 
 export { buildLossRows, CONSTRUCTION_QUEUE_LIMIT };
 

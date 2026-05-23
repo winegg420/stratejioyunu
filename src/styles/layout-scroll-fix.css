@@ -1,24 +1,112 @@
-/* Güvenli scroll — kaynak çubuğunu KESMEZ */
+/* Harita dışı tüm sayfalar — tek kaydırılabilir içerik alanı (Ana Merkez, Binalar, …) */
 
-.app-shell .content-area {
-  overflow-x: hidden;
-  overflow-y: auto;
+.app-shell.hud-shell:not(.route-map) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell.hud-shell:not(.route-map) .main-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+}
+
+.app-shell.hud-shell:not(.route-map) .content-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  padding: 0.75rem 1.25rem 1.25rem !important;
+}
+
+.app-shell.hud-shell:not(.route-map) .route-content-panel > .page {
+  padding-top: 0.15rem;
+}
+
+.app-shell.hud-shell:not(.route-map) .route-content-panel {
+  position: relative;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.app-shell.hud-shell:not(.route-map) .route-content-panel--enter::after {
+  display: none;
+}
+
+/* Harita — tam yükseklik, Leaflet görünür */
+.app-shell.hud-shell.route-map {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(
+    var(--terminal-dock-ticker-h, 2rem) + var(--terminal-dock-logs-h, 0px) + 0.25rem
+  ) !important;
+}
+
+.app-shell.route-map .main-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
 }
 
 .app-shell.route-map .content-area {
-  overflow: hidden;
-  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
 }
 
-.app-shell.route-map .map-page-wrapper {
-  height: 100%;
+.app-shell.route-map .route-content-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell.route-map .map-page-wrapper--tactical {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell.route-map .map-page--tactical {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
+.app-shell.route-map .map-container--tactical {
+  flex: 1 1 auto;
+  min-height: 220px;
+}
+
+.app-shell.route-map .turkey-map,
+.app-shell.route-map .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 220px !important;
+}
+
 @media (max-width: 900px) {
-  .app-shell.mobile-app .content-area:not(.route-map .content-area) {
-    padding-bottom: calc(var(--bottom-nav-h, 56px) + 0.5rem);
+  html.mobile-shell-active .app-shell.hud-shell.mobile-app:not(.route-map) .content-area {
+    padding-bottom: calc(var(--bottom-nav-h, 56px) + 0.75rem) !important;
   }
 }

@@ -1,19 +1,19 @@
 /* Operasyonel akış — route fade, aktif menü hattı, alt terminal dock */
 
 :root {
-  --terminal-dock-ticker-h: 2rem;
+  --terminal-dock-ticker-h: 2.35rem;
   --terminal-dock-logs-h: 0px;
 }
 
 /* [1] Route transition — terminal koyuluğu + 0.15s fade */
 .content-area--terminal {
-  background: #030508;
-  background-image: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(0, 240, 255, 0.03), transparent 55%);
+  background: #0a0f0a;
+  background-image: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(74, 124, 89, 0.03), transparent 55%);
 }
 
 .route-content-panel {
   position: relative;
-  min-height: 100%;
+  min-height: auto;
   isolation: isolate;
 }
 
@@ -82,11 +82,8 @@
   top: 0;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  background: linear-gradient(180deg, #00f0ff 0%, #39ff14 45%, #22ff88 100%);
-  box-shadow:
-    0 0 10px rgba(0, 240, 255, 0.85),
-    0 0 18px rgba(57, 255, 20, 0.65),
-    0 0 28px rgba(34, 255, 136, 0.35);
+  background: #4a7c59;
+  box-shadow: none;
   pointer-events: none;
   z-index: 6;
   transition:
@@ -119,17 +116,23 @@
 
 .terminal-dock-logs {
   width: 100%;
-  max-height: min(9.5rem, 28vh);
+  max-height: min(4.25rem, 11vh);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: rgba(2, 4, 8, 0.94);
-  border-top: 1px dashed rgba(0, 240, 255, 0.42);
+  background: rgba(10, 15, 10, 0.94);
+  border-top: 1px dashed rgba(74, 124, 89, 0.42);
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.55);
 }
 
+.terminal-dock-logs__scroll {
+  max-height: min(3.25rem, 9vh);
+  overflow-y: auto;
+}
+
 .terminal-dock-logs--idle {
-  min-height: 2.25rem;
+  min-height: 1.5rem;
+  max-height: min(2.75rem, 8vh);
 }
 
 .terminal-dock-logs__portals:empty {
@@ -142,7 +145,7 @@
 
 .terminal-log-panel {
   width: 100%;
-  border-bottom: 1px dashed rgba(0, 240, 255, 0.12);
+  border-bottom: 1px dashed rgba(74, 124, 89, 0.12);
   font-family: var(--font-terminal, var(--font-mono));
 }
 
@@ -155,8 +158,8 @@
   align-items: center;
   gap: 0.65rem;
   padding: 0.35rem 0.85rem;
-  background: rgba(0, 240, 255, 0.05);
-  border-bottom: 1px dashed rgba(57, 255, 20, 0.18);
+  background: rgba(74, 124, 89, 0.05);
+  border-bottom: 1px dashed rgba(74, 124, 89, 0.18);
 }
 
 .terminal-log-panel__tag {
@@ -165,7 +168,7 @@
   font-weight: 700;
   color: #22ff88;
   letter-spacing: 0.08em;
-  text-shadow: 0 0 8px rgba(34, 255, 136, 0.45);
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.45);
 }
 
 .terminal-log-panel__title {
@@ -220,7 +223,7 @@
   right: auto;
   bottom: auto;
   width: 100%;
-  border-top: 1px dashed rgba(0, 240, 255, 0.35);
+  border-top: 1px dashed rgba(74, 124, 89, 0.35);
 }
 
 .app-shell.hud-shell {

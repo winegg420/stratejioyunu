@@ -3,8 +3,8 @@
 :root {
   --cmd-font-display: 'Rajdhani', 'Segoe UI', sans-serif;
   --cmd-font-mono: 'Share Tech Mono', 'Courier New', monospace;
-  --cmd-cyan: #00f0ff;
-  --cmd-cyan-glow: rgba(0, 240, 255, 0.55);
+  --cmd-cyan: #4a7c59;
+  --cmd-cyan-glow: rgba(74, 124, 89, 0.55);
   --cmd-green: #22ff88;
   --cmd-red: #ff3355;
   --cmd-red-glow: rgba(255, 51, 85, 0.65);
@@ -21,7 +21,7 @@
 
 /* ── Arka plan: siber savaş odası ── */
 body {
-  background-color: #040810 !important;
+  background-color: #0a0f0a !important;
   background-image:
     radial-gradient(ellipse 120% 80% at 50% -20%, rgba(0, 80, 120, 0.12) 0%, transparent 50%),
     radial-gradient(ellipse 70% 50% at 100% 50%, rgba(80, 20, 40, 0.08) 0%, transparent 45%),
@@ -31,8 +31,8 @@ body {
 
 body::before {
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(74, 124, 89, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.025) 1px, transparent 1px),
     repeating-linear-gradient(
       -12deg,
       transparent,
@@ -51,17 +51,17 @@ body::before {
   font-weight: 700 !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  color: #e8f8ff !important;
+  color: #ffffff !important;
   text-shadow:
     0 0 20px var(--cmd-cyan-glow),
-    0 0 40px rgba(0, 240, 255, 0.15),
+    0 0 40px rgba(74, 124, 89, 0.15),
     0 2px 0 rgba(0, 0, 0, 0.8) !important;
 }
 
 .page-header--hud .page-header__status {
   font-family: var(--cmd-font-mono) !important;
-  color: rgba(0, 240, 255, 0.55) !important;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  color: rgba(74, 124, 89, 0.55) !important;
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.2) !important;
 }
 
 .page-subtitle--typewriter,
@@ -70,7 +70,7 @@ body::before {
   font-size: 0.78rem !important;
   color: var(--cmd-green) !important;
   letter-spacing: 0.06em !important;
-  text-shadow: 0 0 10px rgba(34, 255, 136, 0.45) !important;
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.45) !important;
   margin-top: 0.45rem !important;
   min-height: 1.25em;
 }
@@ -120,27 +120,27 @@ body::before {
 .app-shell.hud-shell .card,
 .hud-shell .panel,
 .app-shell.hud-shell .panel {
-  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  border: 1px solid rgba(74, 124, 89, 0.18) !important;
   background-color: var(--cmd-panel-bg) !important;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(8, 16, 32, 0.95) 0%, rgba(3, 8, 16, 0.98) 100%) !important;
+    linear-gradient(rgba(74, 124, 89, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(17, 26, 17, 0.95) 0%, rgba(10, 15, 10, 0.98) 100%) !important;
   background-size: 18px 18px, 18px 18px, 100% 100% !important;
   clip-path: var(--cmd-clip) !important;
   border-radius: 0 !important;
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
+    0 0 0 1px rgba(74, 124, 89, 0.06) inset,
     0 8px 28px rgba(0, 0, 0, 0.45),
-    0 0 20px rgba(0, 240, 255, 0.04) !important;
+    0 0 20px rgba(74, 124, 89, 0.04) !important;
 }
 
 .hud-shell .card:hover:not(.building-card--blocked),
 .app-shell.hud-shell .card:hover:not(.building-card--blocked) {
-  border-color: rgba(0, 240, 255, 0.32) !important;
+  border-color: rgba(74, 124, 89, 0.32) !important;
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.1) inset,
-    0 0 24px rgba(0, 240, 255, 0.12),
+    0 0 0 1px rgba(74, 124, 89, 0.1) inset,
+    0 0 24px rgba(74, 124, 89, 0.12),
     0 12px 32px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -180,11 +180,11 @@ body::before {
   text-transform: uppercase;
   color: var(--cmd-green) !important;
   background: rgba(4, 16, 12, 0.92) !important;
-  border: 1px solid rgba(34, 255, 136, 0.45) !important;
+  border: 1px solid rgba(74, 124, 89, 0.45) !important;
   box-shadow:
-    0 0 12px rgba(34, 255, 136, 0.25),
-    inset 0 0 8px rgba(34, 255, 136, 0.06) !important;
-  text-shadow: 0 0 8px rgba(34, 255, 136, 0.5) !important;
+    0 0 12px rgba(74, 124, 89, 0.25),
+    inset 0 0 8px rgba(74, 124, 89, 0.06) !important;
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.5) !important;
   pointer-events: none;
 }
 
@@ -208,9 +208,9 @@ body::before {
 
 /* Gereksinim tooltip — siber yeşil */
 .building-req-tooltip {
-  border: 1px solid rgba(34, 255, 136, 0.4) !important;
+  border: 1px solid rgba(74, 124, 89, 0.4) !important;
   background: rgba(4, 14, 10, 0.96) !important;
-  box-shadow: 0 0 20px rgba(34, 255, 136, 0.15) !important;
+  box-shadow: 0 0 20px rgba(74, 124, 89, 0.15) !important;
 }
 
 .building-req-tooltip-title {
@@ -222,21 +222,21 @@ body::before {
 /* ── Butonlar & inputlar — neon glow ── */
 .hud-shell .btn,
 .app-shell.hud-shell .btn {
-  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08) inset !important;
+  box-shadow: 0 0 0 1px rgba(74, 124, 89, 0.08) inset !important;
   transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
 
 .hud-shell .btn-primary,
 .hud-shell .btn-hud-primary,
 .app-shell.hud-shell .btn-primary {
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.35) !important;
+  text-shadow: 0 0 10px rgba(74, 124, 89, 0.35) !important;
 }
 
 .hud-shell .btn:hover:not(:disabled),
 .app-shell.hud-shell .btn:hover:not(:disabled) {
   box-shadow:
-    0 0 16px rgba(0, 240, 255, 0.2),
-    0 0 0 1px rgba(0, 240, 255, 0.15) inset !important;
+    0 0 16px rgba(74, 124, 89, 0.2),
+    0 0 0 1px rgba(74, 124, 89, 0.15) inset !important;
 }
 
 .hud-shell input,
@@ -245,8 +245,8 @@ body::before {
 .app-shell.hud-shell input,
 .app-shell.hud-shell select {
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.06) inset,
-    0 0 12px rgba(0, 240, 255, 0.04) !important;
+    0 0 0 1px rgba(74, 124, 89, 0.06) inset,
+    0 0 12px rgba(74, 124, 89, 0.04) !important;
 }
 
 /* input:focus — global-hud-polish.css */
@@ -254,7 +254,7 @@ body::before {
 .resource-bar--steel {
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(0, 240, 255, 0.08) !important;
+    0 0 20px rgba(74, 124, 89, 0.08) !important;
 }
 
 /* ── Araştırma blueprint ── */
@@ -265,12 +265,12 @@ body::before {
   justify-content: center;
   font-size: 2rem;
   background:
-    linear-gradient(rgba(0, 240, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.06) 1px, transparent 1px),
-    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.08) 0%, transparent 65%),
-    linear-gradient(180deg, rgba(6, 20, 36, 0.95) 0%, rgba(2, 8, 18, 0.98) 100%) !important;
+    linear-gradient(rgba(74, 124, 89, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(74, 124, 89, 0.08) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(17, 26, 17, 0.95) 0%, rgba(17, 26, 17, 0.98) 100%) !important;
   background-size: 12px 12px, 12px 12px, 100% 100%, 100% 100% !important;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.15) !important;
   position: relative;
   overflow: hidden;
 }
@@ -279,7 +279,7 @@ body::before {
   content: '';
   position: absolute;
   inset: 8px;
-  border: 1px dashed rgba(0, 240, 255, 0.25);
+  border: 1px dashed rgba(74, 124, 89, 0.25);
   pointer-events: none;
 }
 
@@ -291,11 +291,11 @@ body::before {
   font-family: var(--cmd-font-mono);
   font-size: 0.5rem;
   letter-spacing: 0.2em;
-  color: rgba(0, 240, 255, 0.35);
+  color: rgba(74, 124, 89, 0.35);
 }
 
 .content-card--research .card-visual-research {
-  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.2));
+  filter: drop-shadow(0 0 8px rgba(74, 124, 89, 0.2));
 }
 
 /* ── Harita: kesikli daire yok, hedef nişangahı ── */

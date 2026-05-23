@@ -3,13 +3,14 @@ import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import ReportFilters from '../components/ReportFilters';
-import ReportDetail from '../components/ReportDetail';
-import BattleSimulator from '../components/BattleSimulator';
+import ReportDetailModal from '../components/ReportDetailModal';
 import CyberToggle from '../components/CyberToggle';
 import { isOperationReport } from '../data/intelOperationsCatalog';
 import { useGameStore } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Reports() {
+  const { t } = useLanguage();
   const reports = useGameStore((s) => s.reports);
   const markReportsRead = useGameStore((s) => s.markReportsRead);
   const deleteReports = useGameStore((s) => s.deleteReports);
@@ -58,6 +59,10 @@ export default function Reports() {
 
   const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return;
+    const ok = window.confirm(
+      t('pages.reports.confirmDeleteSelected', { count: selectedIds.size }),
+    );
+    if (!ok) return;
     deleteReports([...selectedIds]);
     setSelectedIds(new Set());
     setExpandedId(null);
@@ -65,6 +70,8 @@ export default function Reports() {
 
   const handleDeleteAll = () => {
     if (!reports.length) return;
+    const ok = window.confirm(t('pages.reports.confirmDeleteAll', { count: reports.length }));
+    if (!ok) return;
     deleteReports('all');
     setSelectedIds(new Set());
     setExpandedId(null);
@@ -98,25 +105,27 @@ export default function Reports() {
               disabled={filtered.length < 1}
               onClick={handleMarkFilteredRead}
             >
-              Tümünü Okundu Say
+              {t('pages.reports.markRead')}
             </button>
             <button
               type="button"
-              className="btn btn-danger btn-sm"
+              className="btn btn-outline-danger btn-sm report-toolbar-btn"
               disabled={selectedIds.size < 1}
               aria-disabled={selectedIds.size < 1}
               onClick={handleDeleteSelected}
             >
-              Seçilenleri Sil ({selectedIds.size})
+              {t('pages.reports.deleteSelected')} ({selectedIds.size})
             </button>
-            <button type="button" className="btn btn-danger btn-sm" onClick={handleDeleteAll}>
-              Tümünü Sil
+            <button
+              type="button"
+              className="btn btn-outline-danger btn-sm report-toolbar-btn"
+              onClick={handleDeleteAll}
+            >
+              {t('pages.reports.deleteAll')}
             </button>
           </div>
         ) : null}
       />
-
-      <BattleSimulator />
 
       {reports.length > 0 ? (
         <>
@@ -125,13 +134,16 @@ export default function Reports() {
             <CyberToggle
               checked={allFilteredSelected}
               onChange={() => toggleSelectAll()}
-              activeLabel="TÜMÜ"
-              lockedLabel="SEÇ"
-              aria-label="Tümünü seç"
+              activeLabel={t('pages.reports.filterAll')}
+              lockedLabel={t('pages.reports.filterSelect')}
+              aria-label={t('pages.reports.selectAllAria')}
             />
-            Tümünü Seç
+            {t('pages.reports.selectAll')}
             {selectedIds.size > 0 && (
-              <span className="report-select-count"> ({selectedIds.size} seçili)</span>
+              <span className="report-select-count">
+                {' '}
+                {t('pages.reports.selectedCount', { count: selectedIds.size })}
+              </span>
             )}
           </label>
           <ul className="report-list">
@@ -145,7 +157,7 @@ export default function Reports() {
                     checked={selectedIds.has(r.id)}
                     onChange={() => toggleSelect(r.id)}
                     showX
-                    activeLabel="SEÇİLİ"
+                    activeLabel={t('pages.reports.filterSelected')}
                     lockedLabel="—"
                     aria-label={`${r.title} seç`}
                   />
@@ -163,30 +175,9 @@ export default function Reports() {
                     onClick={() => toggleDetail(r.id)}
                     aria-expanded={expandedId === r.id}
                   >
-                    {expandedId === r.id ? 'Gizle' : 'Detay'}
+                    {expandedId === r.id ? t('pages.reports.hide') : t('pages.reports.detail')}
                   </button>
                 </div>
-                {expandedId === r.id && (
-                  <div className="report-detail-wrap">
-                    <ReportDetail report={r} />
-                    <div className="report-detail-footer">
-                      <button
-                        type="button"
-                        className="btn btn-secondary report-detail-nav-btn"
-                        onClick={() => setExpandedId(null)}
-                      >
-                        Kapat
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary report-detail-nav-btn"
-                        onClick={() => setExpandedId(null)}
-                      >
-                        Geri Dön
-                      </button>
-                    </div>
-                  </div>
-                )}
               </li>
             ))}
           </ul>
@@ -202,7 +193,16 @@ export default function Reports() {
             </div>
           )}
         </>
-      ) : (
+      ) : null}
+
+      {expandedId && (
+        <ReportDetailModal
+          report={reports.find((r) => r.id === expandedId) ?? null}
+          onClose={() => setExpandedId(null)}
+        />
+      )}
+
+      {reports.length === 0 && (
         <EmptyState
           tag="[ RAPOR ARŞİVİ BOŞ ]"
           icon="📋"

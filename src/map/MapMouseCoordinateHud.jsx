@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useMap } from 'react-leaflet';
 
+import { safeLatLngToLoc } from '../lib/mapSafeUtils';
+
 /** Taktik grid koordinatı (LOC: x, y) */
 export function latLngToLoc(lat, lng) {
-  const x = Math.round(((lng - 26) / 19) * 999);
-  const y = Math.round(((42 - lat) / 6) * 999);
-  return {
-    x: Math.max(0, Math.min(999, x)),
-    y: Math.max(0, Math.min(999, y)),
-  };
+  return safeLatLngToLoc(lat, lng);
 }
 
 export default function MapMouseCoordinateHud() {
@@ -16,15 +13,24 @@ export default function MapMouseCoordinateHud() {
   const [loc, setLoc] = useState(null);
 
   useEffect(() => {
+    let active = true;
     const onMove = (e) => {
-      const { lat, lng } = e.latlng;
-      setLoc(latLngToLoc(lat, lng));
+      if (!active || !e?.latlng) return;
+      try {
+        const { lat, lng } = e.latlng;
+        setLoc(latLngToLoc(lat, lng));
+      } catch {
+        /* ignore hover glitch */
+      }
     };
-    const onLeave = () => setLoc(null);
+    const onLeave = () => {
+      if (active) setLoc(null);
+    };
 
     map.on('mousemove', onMove);
     map.on('mouseout', onLeave);
     return () => {
+      active = false;
       map.off('mousemove', onMove);
       map.off('mouseout', onLeave);
     };

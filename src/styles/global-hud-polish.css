@@ -1,10 +1,10 @@
 /* Global HUD — input focus parlaması & ince scrollbar */
 
 :root {
-  --hud-focus-glow: 0 0 8px rgba(57, 255, 20, 0.5);
-  --hud-focus-ring: 0 0 0 1px rgba(57, 255, 20, 0.35);
-  --scrollbar-thumb: rgba(0, 240, 255, 0.42);
-  --scrollbar-thumb-hover: rgba(57, 255, 20, 0.55);
+  --hud-focus-glow: 0 0 8px rgba(74, 124, 89, 0.5);
+  --hud-focus-ring: 0 0 0 1px rgba(74, 124, 89, 0.35);
+  --scrollbar-thumb: rgba(74, 124, 89, 0.42);
+  --scrollbar-thumb-hover: rgba(74, 124, 89, 0.55);
 }
 
 /* Kaydırma çubukları — ince, şeffaf zemin */
@@ -29,7 +29,7 @@
 
 *::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
-  box-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 6px rgba(74, 124, 89, 0.35);
 }
 
 /* Kaynak şeridi yatay kaydırma gizli kalır */
@@ -70,8 +70,8 @@ textarea:focus-visible {
 .expedition-launch-select:focus,
 .expedition-launch-select:focus-visible {
   box-shadow:
-    0 0 0 1px rgba(0, 240, 255, 0.4),
-    0 0 8px rgba(0, 240, 255, 0.45) !important;
+    0 0 0 1px rgba(74, 124, 89, 0.4),
+    0 0 8px rgba(74, 124, 89, 0.45) !important;
 }
 
 /* Depo kapasite — %90 siber-sarı, %100+ siber-kırmızı */
@@ -99,37 +99,37 @@ textarea:focus-visible {
   }
 }
 
-.resource-bar--command .resource-item.depot-warn {
-  border-color: rgba(255, 210, 74, 0.45);
-  box-shadow: 0 0 12px rgba(255, 210, 74, 0.2);
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-warn {
+  border-color: rgba(74, 124, 89, 0.45);
+  box-shadow: none;
 }
 
-.resource-bar--command .resource-item.depot-warn .res-value__current {
-  color: #ffd24a;
-  animation: depot-cap-warn-glow 1.2s ease-in-out infinite;
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-warn .res-value__current {
+  color: #e8f0e8;
+  animation: none;
 }
 
-.resource-bar--command .resource-item.depot-warn .res-fill--command {
-  background: linear-gradient(90deg, #5a4a10, #ffd24a) !important;
-  box-shadow: 0 0 10px rgba(255, 210, 74, 0.5) !important;
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-warn .res-fill--command {
+  background: #4a7c59 !important;
+  box-shadow: none !important;
 }
 
-.resource-bar--command .resource-item.depot-full,
-.resource-bar--command .resource-item.depot-overflow {
-  border-color: rgba(255, 51, 102, 0.55);
-  box-shadow: 0 0 14px rgba(255, 51, 102, 0.28);
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-full,
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-overflow {
+  border-color: rgba(74, 124, 89, 0.55);
+  box-shadow: none;
 }
 
-.resource-bar--command .resource-item.depot-full .res-value__current,
-.resource-bar--command .resource-item.depot-overflow .res-value__current {
-  color: #ff3366;
-  animation: depot-cap-full-glow 1s ease-in-out infinite;
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-full .res-value__current,
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-overflow .res-value__current {
+  color: #e8f0e8;
+  animation: none;
 }
 
-.resource-bar--command .resource-item.depot-full .res-fill--command,
-.resource-bar--command .resource-item.depot-overflow .res-fill--command {
-  background: linear-gradient(90deg, #4a1018, #ff3366) !important;
-  box-shadow: 0 0 12px rgba(255, 51, 102, 0.65) !important;
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-full .res-fill--command,
+.resource-bar--command:not(.resource-bar--stacked) .resource-item.depot-overflow .res-fill--command {
+  background: #4a7c59 !important;
+  box-shadow: none !important;
 }
 
 /* Geliştirici test modu şeridi */
@@ -144,7 +144,7 @@ textarea:focus-visible {
   font-size: 0.62rem;
   letter-spacing: 0.06em;
   color: #ffb347;
-  background: linear-gradient(90deg, rgba(255, 80, 40, 0.12), rgba(0, 240, 255, 0.1), rgba(255, 80, 40, 0.12));
+  background: linear-gradient(90deg, rgba(255, 80, 40, 0.12), rgba(74, 124, 89, 0.1), rgba(255, 80, 40, 0.12));
   border-bottom: 1px solid rgba(255, 179, 71, 0.45);
   text-shadow: 0 0 8px rgba(255, 140, 50, 0.35);
   pointer-events: none;

@@ -1,0 +1,20 @@
+{
+  "name": "[OYUN ADI]",
+  "short_name": "[OYUN ADI]",
+  "description": "Dünya haritası üzerinde çok oyunculu web stratejisi",
+  "theme_color": "#0a0e14",
+  "background_color": "#0a0e14",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

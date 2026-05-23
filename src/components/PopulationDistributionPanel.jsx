@@ -15,6 +15,10 @@ export default function PopulationDistributionPanel({ className = '' }) {
   const breakdown = useMemo(() => getPopulationBreakdown(city), [city]);
   const locale = lang === 'en' ? 'en-US' : 'tr-TR';
 
+  if (!city) {
+    return null;
+  }
+
   return (
     <section
       className={['population-dist-panel', 'panel', className].filter(Boolean).join(' ')}
@@ -26,14 +30,18 @@ export default function PopulationDistributionPanel({ className = '' }) {
           total: breakdown.total.toLocaleString(locale),
         })}
       </p>
-      <div className="population-dist-panel__bar" role="img" aria-label={t('cityManagement.populationBarAria')}>
+      <div
+        className="population-dist-panel__bar terminal-progress-track"
+        role="img"
+        aria-label={t('cityManagement.populationBarAria')}
+      >
         {breakdown.segments.map((seg) => {
           const label = t(POP_LABEL_KEYS[seg.id]);
           return (
             <span
               key={seg.id}
-              className="population-dist-panel__segment"
-              style={{ width: `${seg.pct}%`, background: seg.color }}
+              className="population-dist-panel__segment terminal-progress-segment"
+              style={{ width: `${seg.pct}%`, '--seg-tint': seg.color }}
               title={`${label}: ${seg.value.toLocaleString(locale)} (%${seg.pct})`}
             />
           );

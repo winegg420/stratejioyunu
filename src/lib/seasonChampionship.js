@@ -3,8 +3,6 @@
  */
 import { genId } from './gameUtils';
 import { applyLoyaltyDelta } from './loyaltySystem';
-import { LOYALTY_LEADERBOARD_DEMO } from '../data/placeholder';
-
 export const SEASON_PERIOD = {
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
@@ -202,34 +200,28 @@ export function getPlayerSeasonScore(stats, competitionType) {
   return stats?.[def.statKey] ?? 0;
 }
 
-function seedBotScores(competitionType, playerScore, playerName) {
-  const def = getCompetitionDef(competitionType);
-  const base = Math.max(playerScore, 100);
-  const bots = LOYALTY_LEADERBOARD_DEMO.filter((r) => r.playerName !== playerName);
-  return bots.map((bot, i) => ({
-    playerName: bot.playerName,
-    displayName: bot.displayName ?? bot.playerName,
-    score: Math.floor(base * (1.4 - i * 0.12) + (bot.loyaltyScore ?? 0) / 50),
-    isBot: true,
-  }));
-}
-
 export function buildSeasonLeaderboard({
-  competitionType,
   playerName,
   playerScore,
+  liveRows = [],
 }) {
-  const rows = [
-    {
-      playerName,
-      displayName: playerName,
-      score: playerScore,
-      isSelf: true,
-    },
-    ...seedBotScores(competitionType, playerScore, playerName),
-  ];
-  rows.sort((a, b) => b.score - a.score);
-  return rows.map((r, idx) => ({ ...r, rank: idx + 1 }));
+  const selfRow = {
+    playerName,
+    displayName: playerName,
+    score: playerScore,
+    isSelf: true,
+  };
+
+  const merged = [...liveRows];
+  const selfIdx = merged.findIndex((r) => r.playerName === playerName);
+  if (selfIdx >= 0) {
+    merged[selfIdx] = { ...merged[selfIdx], isSelf: true };
+  } else if (playerScore > 0 || liveRows.length === 0) {
+    merged.push(selfRow);
+  }
+
+  merged.sort((a, b) => b.score - a.score);
+  return merged.map((r, idx) => ({ ...r, rank: idx + 1 }));
 }
 
 export function getPlayerSeasonRank(leaderboard, playerName) {

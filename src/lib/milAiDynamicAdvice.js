@@ -1,119 +1,130 @@
 /**
- * MIL-AI — oyuncu durumuna göre dinamik askeri tavsiyeler (typewriter terminal).
+ * MIL-AI — komuta terminali (tutorial + YZ seviye tavsiyeleri).
  */
-import { BUILDING_LABELS, getBuildingById } from './buildingUtils';
-import { getMilAiNextStep, buildMilAiGuideLines } from './aiProgression';
+import { localizedBuildingLabel } from '../i18n';
+import { getBuildingById } from './buildingUtils';
+import {
+  getMilAiTutorialProgress,
+  getMilAiTutorialQuestTask,
+  getMilAiTutorialQuestTitle,
+  isMilAiAdvisorOnline,
+  isMilAiTutorialActive,
+  pickMilAiLevelAdvice,
+  isQuestComplete,
+} from './milAiTutorialQuests';
 
-const HAPPINESS_LOW = 45;
-const HAPPINESS_CRITICAL = 30;
+const MAX_WORDS = 12;
+
+function clamp(text, maxWords = MAX_WORDS) {
+  const words = String(text ?? '').trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, maxWords).join(' ');
+}
+
+export function milAiCommandLine(label, body) {
+  return `[ ${label} ] ${clamp(body)}`;
+}
 
 function getActiveCity(state) {
   return state?.cities?.[state.activeCityId] ?? null;
 }
 
-function hasOutgoingExpedition(state) {
-  return (state.expeditions ?? []).some(
-    (e) => e.direction === 'outgoing' && (e.endsAt == null || e.endsAt > Date.now()),
+function buildStandbyLine(t, lang) {
+  return milAiCommandLine(
+    lang === 'en' ? 'SYSTEM' : 'SİSTEM',
+    t('milAi.standby.message'),
   );
 }
 
-function pickConstructionAdvice(city) {
-  const queue = city?.constructionQueue ?? [];
-  const active = queue.find((q) => !q.queued);
-  if (active) return null;
+function buildTutorialLines(state, t, lang) {
+  const progress = getMilAiTutorialProgress(state);
+  const quest = progress.currentQuest;
+  const city = getActiveCity(state);
+  const lines = [];
 
-  if (queue.length === 0) {
-    const refinery = getBuildingById(city, 'refinery');
-    const plant = getBuildingById(city, 'plant');
-    if ((refinery?.level ?? 0) < 3) {
-      return 'Başkan, inşaat kuyruğu boş. Hammadde üretiminizi artırmak için Yakıt Rafinerisi yükseltmesini öneririm.';
+  if (progress.allComplete || !quest) {
+    lines.push(milAiCommandLine('SİSTEM', t('milAi.tutorial.systemOnline')));
+    const advice = pickMilAiLevelAdvice(state, lang);
+    if (advice) {
+      lines.push(milAiCommandLine(lang === 'en' ? 'ADVICE' : 'TAVSİYE', advice));
     }
-    if ((plant?.level ?? 0) < 2) {
-      return 'Başkan, inşaat hattı atıl. Enerji Santrali yükseltmesi tüm üs verimini çarpanlar.';
-    }
-    const hq = getBuildingById(city, 'hq');
-    if ((hq?.level ?? 0) < 4) {
-      return 'Başkan, kuyruk boş. Komuta Merkezi yükseltmesi yeni bina ve koridor kapılarını açar.';
-    }
-    return 'Başkan, inşaat kuyruğu boş. Üretim binalarını yükseltmek veya askeri tesis açmak için Binalar sekmesini kullanın.';
+    return lines;
   }
 
-  return 'Başkan, sıradaki inşaat emri kuyrukta — aktif yükseltmeyi başlatın.';
-}
+  const code = quest.code ?? `GÖREV-${String(progress.stepIndex + 1).padStart(2, '0')}`;
+  lines.push(milAiCommandLine(code, getMilAiTutorialQuestTask(quest, t)));
 
-function pickMoraleAdvice(city) {
-  const happiness = city?.happiness ?? 72;
-  if (happiness <= HAPPINESS_CRITICAL) {
-    return 'Başkan, moral kritik seviyede. Vergi oranını düşürün, Yakıt Rafinerisi ve lojistik hatlarını güçlendirin.';
+  if (quest.buildingId) {
+    const lv = getBuildingById(city, quest.buildingId)?.level ?? 0;
+    const name = localizedBuildingLabel(lang, quest.buildingId, quest.buildingId);
+    const target = quest.id === 'quest_04_plant_second' ? 2 : 1;
+    const status = lv >= target
+      ? (lang === 'en' ? 'ready' : 'hazır')
+      : `${name} Sv.${lv}/${target}`;
+    lines.push(milAiCommandLine(lang === 'en' ? 'STATUS' : 'DURUM', status));
+  } else if (quest.id === 'quest_08_infantry_100') {
+    const inf = city?.idleTroops?.find((u) => u.id === 'infantry')?.available ?? 0;
+    lines.push(milAiCommandLine('DURUM', `${inf}/100 ${lang === 'en' ? 'infantry' : 'piyade'}`));
+  } else if (quest.id === 'quest_11_scout') {
+    const sent = state.milAiScoutLaunched || (state.expeditions ?? []).some((e) => e.mode === 'spy');
+    lines.push(milAiCommandLine('DURUM', sent
+      ? (lang === 'en' ? 'scout en route' : 'keşif yolda')
+      : (lang === 'en' ? 'map target required' : 'harita hedefi gerekli')));
   }
-  if (happiness <= HAPPINESS_LOW) {
-    return 'Başkan, garnizon morali düşük. Vergiyi dengeleyin ve üretim hatlarını canlı tutun.';
-  }
-  return null;
-}
 
-function pickExpeditionAdvice(state) {
-  if (hasOutgoingExpedition(state)) return null;
-  const idle = (state.expeditions ?? []).length === 0;
-  if (idle) {
-    return 'Başkan, aktif sefer yok. Haritadan düşman üssü seçerek keşif veya saldırı konvoyu gönderin.';
+  if (quest.warnKey) {
+    lines.push(milAiCommandLine(lang === 'en' ? 'WARNING' : 'UYARI', t(quest.warnKey)));
   }
-  return 'Başkan, sahadaki birlikleriniz beklemede. Yeni operasyon için Operasyonlar veya Harita hattını kullanın.';
-}
+  if (quest.briefKey) {
+    lines.push(milAiCommandLine('BRİF', t(quest.briefKey)));
+  }
 
-function pickResourceAdvice(city) {
-  const resources = city?.resources ?? [];
-  const hammadde = resources.find((r) => r.id === 'hammadde');
-  const fuel = resources.find((r) => r.id === 'fuel');
-  if (hammadde && hammadde.max != null && hammadde.current / hammadde.max > 0.92) {
-    return 'Başkan, hammadde deposu dolmak üzere. Ticaret Terminali veya sefer ganimeti ile dengeleyin.';
-  }
-  if (fuel && fuel.current < 200) {
-    return 'Başkan, petrol rezervi zayıf. Yakıt Rafinerisi üretimini artırın veya Pazar üzerinden ikmal alın.';
-  }
-  return null;
-}
+  lines.push(milAiCommandLine(
+    lang === 'en' ? 'ORDER' : 'EMİR',
+    t('milAi.tutorial.orderBuild', {
+      target: quest.buildingId
+        ? localizedBuildingLabel(lang, quest.buildingId, quest.buildingId)
+        : getMilAiTutorialQuestTitle(quest, t),
+    }),
+  ));
 
-function pickProductionAdvice(city) {
-  const pq = city?.productionQueue ?? [];
-  const barracks = getBuildingById(city, 'barracks');
-  if ((barracks?.level ?? 0) >= 1 && pq.length === 0) {
-    return 'Başkan, Kara Kuvvetleri üretim hattı boş. Kara birliği emri vererek garnizonu güçlendirin.';
-  }
-  return null;
+  return lines;
 }
 
 /**
  * @returns {string[]}
  */
-export function buildMilAiDynamicAdviceLines(state) {
-  const city = getActiveCity(state);
-  if (!city) return ['> MIL-AI // Şehir verisi bekleniyor...'];
-
-  const tips = [
-    pickMoraleAdvice(city),
-    pickConstructionAdvice(city),
-    pickExpeditionAdvice(state),
-    pickResourceAdvice(city),
-    pickProductionAdvice(city),
-  ].filter(Boolean);
-
-  if (!tips.length) {
-    return ['> Başkan, operasyonel göstergeler stabil. Rehber hedeflerine odaklanın.'];
+export function buildMilAiTerminalLines(state, t, lang = 'tr') {
+  if (!isMilAiAdvisorOnline(state)) {
+    return [buildStandbyLine(t, lang)];
   }
 
-  return tips.map((t) => `> ${t}`);
-}
+  const celebration = state.milAiCelebration;
+  if (celebration?.messageKey) {
+    return [
+      milAiCommandLine(
+        lang === 'en' ? 'COMPLETE' : 'GÖREV TAMAMLANDI',
+        t(celebration.messageKey),
+      ),
+      ...buildTutorialLines(state, t, lang).slice(0, 2),
+    ];
+  }
 
-/** Rehber + dinamik tavsiye satırları (typewriter için) */
-export function buildMilAiTerminalLines(state) {
-  const guide = getMilAiNextStep(state);
-  const guideLines = buildMilAiGuideLines(guide, state);
-  const dynamic = buildMilAiDynamicAdviceLines(state);
+  if (isMilAiTutorialActive(state)) {
+    return buildTutorialLines(state, t, lang);
+  }
 
+  const advice = pickMilAiLevelAdvice(state, lang);
   return [
-    ...guideLines,
-    '> —— OPERASYONEL TAVSİYE ——',
-    ...dynamic,
+    milAiCommandLine('SİSTEM', t('milAi.tutorial.systemOnline')),
+    milAiCommandLine(lang === 'en' ? 'ADVICE' : 'TAVSİYE', advice ?? t('milAi.advice.stable')),
   ];
 }
+
+/** @deprecated */
+export function buildMilAiDynamicAdviceLines(state, t, lang = 'tr') {
+  return buildMilAiTerminalLines(state, t, lang).filter((line) => (
+    line.includes('TAVSİYE') || line.includes('ADVICE') || line.includes('İSTİHBARAT')
+  ));
+}
+
+export { isQuestComplete };

@@ -7,6 +7,7 @@ import {
   MEYDAN_PREP_SECONDS,
 } from '../lib/meydanBattleConfig';
 import { useActiveCityIdleTroops, useGameStore } from '../stores/gameStore';
+import CustomDropdown from './CustomDropdown';
 
 export default function MeydanBattlePanel() {
   const now = useGameStore((s) => s.now);
@@ -47,26 +48,28 @@ export default function MeydanBattlePanel() {
         <div className="meydan-battle-declare">
           <label className="meydan-battle-field">
             <span>Hedef şehir</span>
-            <select
+            <CustomDropdown
               className="input-text"
               value={targetPick}
-              onChange={(e) => setTargetPick(e.target.value)}
-            >
-              <option value="">Seçin…</option>
-              {targets.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name} ({c.status})
-                </option>
-              ))}
-            </select>
+              onChange={setTargetPick}
+              placeholder="Seçin…"
+              aria-label="Hedef şehir"
+              options={[
+                { value: '', label: 'Seçin…', disabled: true },
+                ...targets.map((c) => ({
+                  value: c.name,
+                  label: `${c.name} (${c.status})`,
+                })),
+              ]}
+            />
           </label>
           <button
             type="button"
-            className="btn btn-danger"
+            className="btn btn-danger btn-sm meydan-battle-declare-btn"
             disabled={!targetPick}
             onClick={() => targetPick && declareMeydanBattle(targetPick)}
           >
-            Meydan Savaşı İlan Et (24 saat hazırlık)
+            Meydan Savaşı İlan Et
           </button>
         </div>
       ) : (

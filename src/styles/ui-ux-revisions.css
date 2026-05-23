@@ -1,15 +1,16 @@
 /* UI/UX revizyon paketi — neon, scrollbar, okunabilirlik, hız */
 
 :root {
-  --neon-green: #39ff14;
-  --neon-green-dim: rgba(57, 255, 20, 0.55);
-  --neon-green-glow: rgba(57, 255, 20, 0.35);
-  --neon-cyan: #00ffcc;
-  --neon-cyan-dim: rgba(0, 255, 204, 0.5);
-  --success: var(--neon-green);
-  --cmd-green: var(--neon-green);
-  --cmd-cyan: var(--neon-cyan);
-  --hud-cyan: var(--neon-cyan);
+  --terminal-neon: #4a7c59;
+  --neon-green: #4a7c59;
+  --neon-green-dim: rgba(74, 124, 89, 0.45);
+  --neon-green-glow: rgba(74, 124, 89, 0.2);
+  --neon-cyan: #4a7c59;
+  --neon-cyan-dim: rgba(74, 124, 89, 0.45);
+  --success: #4a7c59;
+  --cmd-green: #4a7c59;
+  --cmd-cyan: #4a7c59;
+  --hud-cyan: #4a7c59;
 }
 
 /* ── Scrollbar (siber ince) ── */
@@ -20,7 +21,7 @@
 .content-info-modal__body,
 .sidebar-hud .nav-list {
   scrollbar-width: thin;
-  scrollbar-color: rgba(57, 255, 20, 0.45) rgba(4, 10, 16, 0.9);
+  scrollbar-color: #4a7c59 #0a0f0a;
 }
 
 .content-area::-webkit-scrollbar,
@@ -35,24 +36,44 @@
 .content-area--terminal::-webkit-scrollbar-track,
 .terminal-dock-logs__scroll::-webkit-scrollbar-track,
 .content-info-modal__body::-webkit-scrollbar-track {
-  background: rgba(4, 10, 16, 0.95);
+  background: #0a0f0a;
 }
 
 .content-area::-webkit-scrollbar-thumb,
 .content-area--terminal::-webkit-scrollbar-thumb,
 .terminal-dock-logs__scroll::-webkit-scrollbar-thumb,
 .content-info-modal__body::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(57, 255, 20, 0.55), rgba(0, 255, 204, 0.35));
+  background: #4a7c59;
   border-radius: 3px;
 }
 
 /* ── Menü / buton tepki süresi ── */
 .hud-shell .nav-link,
 .bottom-nav-link,
-.btn,
-.hud-button,
-.lang-switcher__btn {
-  transition: all 0.1s ease !important;
+.btn:not(:disabled),
+.hud-button:not(:disabled),
+.lang-switcher__btn,
+.nav-link,
+button.btn-sm,
+.map-cmd-btn,
+.expedition-intent-btn,
+.global-briefing-gov-btn,
+.state-mail-send-btn {
+  transition: all 0.1s ease-in-out !important;
+}
+
+.hud-shell .nav-link:not(:disabled):hover,
+.bottom-nav-link:hover,
+.btn:not(:disabled):hover,
+.hud-button:not(:disabled):hover,
+.lang-switcher__btn:hover,
+.nav-link:not(:disabled):hover,
+button.btn-sm:not(:disabled):hover,
+.map-cmd-btn:not(:disabled):hover,
+.expedition-intent-btn:hover,
+.global-briefing-gov-btn:hover,
+.state-mail-send-btn:hover {
+  box-shadow: 0 0 6px rgba(0, 204, 179, 0.45) !important;
 }
 
 /* ── Neon tutarlılığı (paneller) ── */
@@ -66,7 +87,7 @@
 
 .home-cmd-widget--active .home-cmd-widget__value {
   color: var(--neon-green) !important;
-  text-shadow: 0 0 10px var(--neon-green-glow), 0 0 20px rgba(57, 255, 20, 0.2) !important;
+  text-shadow: 0 0 10px var(--neon-green-glow), 0 0 20px rgba(74, 124, 89, 0.2) !important;
 }
 
 .hud-shell .sidebar-hud .nav-link.active::before {
@@ -159,14 +180,14 @@
   margin-top: 0.5rem;
   flex: 1;
   min-height: 40px;
-  border: 1px solid rgba(0, 255, 204, 0.12);
+  border: 1px solid rgba(74, 124, 89, 0.12);
   background:
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 7px,
-      rgba(0, 255, 204, 0.04) 7px,
-      rgba(0, 255, 204, 0.04) 8px
+      rgba(74, 124, 89, 0.04) 7px,
+      rgba(74, 124, 89, 0.04) 8px
     );
 }
 
@@ -199,9 +220,9 @@
 .page-route-loader__frame {
   text-align: center;
   padding: 1rem 1.5rem;
-  border: 1px solid rgba(0, 255, 204, 0.35);
-  background: rgba(4, 12, 20, 0.92);
-  box-shadow: 0 0 24px rgba(0, 255, 204, 0.12);
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  background: rgba(17, 26, 17, 0.92);
+  box-shadow: 0 0 24px rgba(74, 124, 89, 0.12);
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
 
@@ -210,7 +231,7 @@
   width: 28px;
   height: 28px;
   margin-bottom: 0.5rem;
-  border: 2px solid rgba(0, 255, 204, 0.2);
+  border: 2px solid rgba(74, 124, 89, 0.2);
   border-top-color: var(--neon-cyan);
   border-right-color: var(--neon-green);
   border-radius: 50%;
@@ -226,7 +247,7 @@
   font-size: 0.85rem;
   letter-spacing: 0.14em;
   color: var(--neon-cyan);
-  text-shadow: 0 0 12px rgba(0, 255, 204, 0.45);
+  text-shadow: 0 0 12px rgba(74, 124, 89, 0.45);
 }
 
 .page-route-loader__sub {
@@ -237,31 +258,19 @@
 
 /* ── Kalıcı terminal log paneli ── */
 .terminal-dock-logs__scroll {
-  max-height: min(22vh, 180px);
+  max-height: min(3.25rem, 9vh);
   overflow-y: auto;
   padding: 0.35rem 0.5rem;
 }
 
 .terminal-dock-log-line {
-  display: flex;
-  gap: 0.45rem;
-  align-items: baseline;
   margin: 0 0 0.2rem;
   font-size: 0.72rem;
   line-height: 1.45;
-  color: rgba(160, 255, 176, 0.82);
-}
-
-.terminal-dock-log-line__tag {
-  flex-shrink: 0;
-  color: var(--neon-cyan);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-}
-
-.terminal-dock-log-line__text {
+  color: rgba(160, 255, 176, 0.88);
   font-family: var(--font-mono);
   word-break: break-word;
+  letter-spacing: 0.02em;
 }
 
 /* ── Kaynak barı — geçişte yumuşak senkron (veriler kalır) ── */
@@ -274,7 +283,7 @@
   margin-top: 0.15rem;
   font-size: 0.58rem;
   letter-spacing: 0.1em;
-  color: rgba(0, 255, 204, 0.65);
+  color: rgba(74, 124, 89, 0.65);
   animation: resource-sync-pulse 1.2s ease-in-out infinite;
 }
 
@@ -295,4 +304,55 @@
 /* ── Global briefing — backdrop tıkla kapat ── */
 .global-briefing-backdrop {
   cursor: pointer;
+}
+
+/* ── Rapor detay modalı ── */
+.report-detail-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 11300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(17, 26, 17, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.report-detail-modal {
+  position: relative;
+  width: min(640px, calc(100vw - 2rem));
+  max-height: min(88vh, 820px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(5, 12, 22, 0.94);
+  border: 1px solid rgba(74, 124, 89, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(74, 124, 89, 0.08) inset,
+    0 24px 64px rgba(0, 0, 0, 0.65);
+}
+
+.report-detail-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.15);
+}
+
+.report-detail-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  color: #e8f4ff;
+}
+
+.report-detail-modal__body {
+  overflow-y: auto;
+  padding: 0.85rem 1rem;
+}
+
+.report-detail-modal__foot {
+  padding: 0.65rem 1rem 0.85rem;
+  border-top: 1px solid rgba(74, 124, 89, 0.12);
 }

@@ -5,21 +5,19 @@
 }
 
 .diplomacy-page-header.page-header--alert .page-title {
-  color: #e8f8ff !important;
-  text-shadow:
-    0 0 20px var(--cmd-cyan-glow),
-    0 0 40px rgba(0, 240, 255, 0.15) !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
 }
 
 .diplomacy-page-header .page-feed-line--ready,
 .diplomacy-page-header .page-subtitle--typewriter {
-  color: var(--cmd-green) !important;
-  text-shadow: 0 0 12px rgba(34, 255, 136, 0.55) !important;
+  color: #d4d4aa !important;
+  text-shadow: none !important;
 }
 
 .diplomacy-page-header .page-header__status-dot {
-  background: var(--cmd-green) !important;
-  box-shadow: 0 0 10px rgba(34, 255, 136, 0.55) !important;
+  background: #4a7c59 !important;
+  box-shadow: none !important;
 }
 
 .diplomacy-grid {
@@ -45,8 +43,8 @@
   font-family: var(--cmd-font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(0, 240, 255, 0.75) !important;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+  color: rgba(74, 124, 89, 0.75) !important;
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.25);
 }
 
 .diplomacy-panel__title--pacts {
@@ -65,8 +63,8 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(0, 240, 255, 0.28) 10%,
-    rgba(0, 240, 255, 0.28) 90%,
+    rgba(74, 124, 89, 0.28) 10%,
+    rgba(74, 124, 89, 0.28) 90%,
     transparent 100%
   );
   pointer-events: none;
@@ -139,16 +137,9 @@
   padding: 0.65rem 0.85rem;
   min-width: 0;
   box-sizing: border-box;
-  background: rgba(0, 12, 28, 0.55);
-  border: 1px solid rgba(0, 240, 255, 0.1);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 6px) 0,
-    100% 6px,
-    100% 100%,
-    6px 100%,
-    0 calc(100% - 6px)
-  );
+  background: #111a11;
+  border: 1px solid rgba(74, 124, 89, 0.15);
+  clip-path: none;
 }
 
 .diplomacy-pact-row__dot {
@@ -159,9 +150,9 @@
   border-radius: 50%;
   background: var(--cmd-green);
   box-shadow:
-    0 0 8px rgba(34, 255, 136, 0.75),
-    0 0 16px rgba(34, 255, 136, 0.35);
-  animation: diplomacy-pact-pulse 2s ease-in-out infinite;
+    0 0 8px rgba(74, 124, 89, 0.75),
+    0 0 16px rgba(74, 124, 89, 0.35);
+  animation: none;
 }
 
 @keyframes diplomacy-pact-pulse {
@@ -173,8 +164,8 @@
     opacity: 1;
     transform: scale(1.12);
     box-shadow:
-      0 0 12px rgba(34, 255, 136, 0.9),
-      0 0 22px rgba(34, 255, 136, 0.45);
+      0 0 12px rgba(74, 124, 89, 0.9),
+      0 0 22px rgba(74, 124, 89, 0.45);
   }
 }
 
@@ -193,8 +184,8 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #e2f4ff;
-  text-shadow: 0 0 6px rgba(0, 240, 255, 0.2);
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(74, 124, 89, 0.2);
   line-height: 1.2;
 }
 
@@ -220,9 +211,9 @@
   font-size: 0.56rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(34, 255, 136, 0.85);
+  color: rgba(74, 124, 89, 0.85);
   white-space: nowrap;
-  text-shadow: 0 0 8px rgba(34, 255, 136, 0.35);
+  text-shadow: 0 0 8px rgba(74, 124, 89, 0.35);
   line-height: 1.2;
 }
 
@@ -230,6 +221,11 @@
   flex-shrink: 0;
   align-self: center;
   margin-left: auto;
+  min-height: 1.75rem !important;
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.68rem !important;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 /* ── Şablon butonları ── */

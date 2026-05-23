@@ -17,6 +17,19 @@
   padding-bottom: 0.25rem;
 }
 
+@media (max-width: 900px) {
+  html.mobile-shell-active .map-page-wrapper--tactical {
+    height: auto !important;
+    max-height: none !important;
+    flex: 1 1 auto;
+  }
+}
+
+/* Harita sayfasında çift başlık kaldır — komuta şeridi yeterli */
+.map-page-wrapper--tactical .map-page-compact-header {
+  display: none;
+}
+
 .map-page-compact-header {
   display: flex;
   flex-wrap: wrap;
@@ -45,15 +58,22 @@
 .map-page-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.65rem;
+  align-items: flex-start;
+  gap: 0.35rem 0.5rem;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .map-page-toolbar .map-tactical-command-bar {
   margin-bottom: 0;
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+}
+
+.map-page-toolbar .map-fs-hero-btn--compact {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .map-container--tactical {
@@ -69,6 +89,7 @@
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
+  opacity: 0.45;
 }
 
 .map-tactical-grid {
@@ -148,14 +169,33 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #4ade80;
-  background: rgba(2, 6, 12, 0.94);
+  background: rgba(10, 15, 10, 0.94);
   border: 1px solid rgba(0, 240, 255, 0.45);
   box-shadow:
     0 0 12px rgba(0, 240, 255, 0.2),
     inset 0 0 8px rgba(0, 240, 255, 0.06);
   pointer-events: none;
   white-space: nowrap;
-  transform: translate(12px, -50%);
+  transform: translate(0, -50%);
+  opacity: 1;
+  transition: opacity 0.14s ease-out;
+  will-change: left, top, opacity;
+}
+
+.map-coord-tooltip--fade-out {
+  opacity: 0;
+}
+
+/* Leaflet il tooltip — titreme önleme */
+.leaflet-tooltip.map-tooltip,
+.leaflet-tooltip.map-tooltip--cyber {
+  pointer-events: none !important;
+  transition: opacity 0.12s ease-out;
+}
+
+.leaflet-tooltip.map-tooltip.leaflet-tooltip-fade-out,
+.leaflet-tooltip.map-tooltip--cyber.leaflet-tooltip-fade-out {
+  opacity: 0 !important;
 }
 
 .map-coord-tooltip__city {
@@ -182,80 +222,253 @@
     #556275 !important;
 }
 
-.map-toolbar--console,
-.tactical-console {
-  position: absolute;
-  z-index: 1200;
-  width: min(420px, calc(100vw - 24px));
-  max-width: min(420px, calc(100vw - 24px));
-  overflow: hidden;
-  margin: 0;
-  touch-action: none;
-  padding: 0.65rem 0.75rem 0.75rem !important;
-  border: 2px solid rgba(0, 240, 255, 0.35) !important;
-  background: rgba(3, 8, 16, 0.94) !important;
-  background-image:
-    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px) !important;
-  background-size: 16px 16px !important;
-  clip-path: polygon(
-    0 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% 100%,
-    12px 100%,
-    0 calc(100% - 12px)
-  );
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.55),
-    0 0 20px rgba(0, 240, 255, 0.08),
-    inset 0 0 0 1px rgba(0, 240, 255, 0.08) !important;
-}
-
-.tactical-console--minimized {
-  max-width: 320px;
-}
-
-.tactical-console--minimized .map-console-header {
-  margin-bottom: 0;
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.tactical-console--dragging {
-  opacity: 0.92;
-  cursor: grabbing;
-}
-
-.tactical-console__header {
+/* Harita sürükle-pan */
+.map-container--tactical .leaflet-container.map-pan-grabbable {
   cursor: grab;
+}
+
+.map-container--tactical .leaflet-container.map-pan--grabbing,
+.map-container--tactical .leaflet-container.map-pan--grabbing * {
+  cursor: grabbing !important;
+}
+
+/* Oyuncu arama — sol yüzen slide-out */
+.tactical-console--slideout {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1200;
+  margin: 0;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.tactical-console--collapsed {
+  width: auto;
+  max-width: none;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+}
+
+.tactical-console__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 2.5rem;
+  min-height: 5.5rem;
+  padding: 0.65rem 0.35rem;
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  background: rgba(17, 26, 17, 0.94);
+  color: #d4d4aa;
+  cursor: pointer;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tactical-console__tab:hover {
+  background: #1a2e1a;
+  border-color: #4a7c59;
+  color: #ffffff;
+}
+
+.tactical-console__tab-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #c9a84c;
+}
+
+.tactical-console__tab-label {
+  font-family: var(--cmd-font-mono, monospace);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+.tactical-console--expanded.map-toolbar--console {
+  width: min(248px, calc(100vw - 3rem));
+  max-width: min(248px, calc(100vw - 3rem));
+  overflow: visible;
+  padding: 0.55rem 0.6rem 0.65rem !important;
+  border: 1px solid rgba(74, 124, 89, 0.35) !important;
+  border-left: none !important;
+  border-radius: 0 8px 8px 0;
+  background: rgba(17, 26, 17, 0.96) !important;
+  background-image: none !important;
+  clip-path: none !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45) !important;
+  animation: tactical-console-slide-in 0.22s ease-out;
+}
+
+@keyframes tactical-console-slide-in {
+  from {
+    opacity: 0.65;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.tactical-console--expanded .tactical-console__header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.2);
+  cursor: default;
   user-select: none;
 }
 
-.tactical-console__drag-hint {
-  color: rgba(0, 240, 255, 0.45);
-  font-size: 0.75rem;
-  margin-left: 0.25rem;
+.tactical-console--expanded .map-console-header__title {
+  flex: 1;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
 }
 
-.tactical-console__actions {
-  display: flex;
-  gap: 0.25rem;
-  margin-left: auto;
-}
-
-.tactical-console__btn {
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  background: rgba(0, 20, 40, 0.8);
-  color: rgba(0, 240, 255, 0.9);
-  font-size: 0.62rem;
-  font-family: var(--font-mono);
-  padding: 0.15rem 0.4rem;
+.tactical-console__close {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid rgba(74, 124, 89, 0.3);
+  border-radius: 3px;
+  background: #1a2e1a;
+  color: #d4d4aa;
+  font-size: 1rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.tactical-console__btn:hover {
-  background: rgba(0, 240, 255, 0.12);
+.tactical-console__close:hover {
+  border-color: #4a7c59;
+  color: #ffffff;
+}
+
+.tactical-console__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tactical-console--expanded .map-legend--compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 0.35rem;
+  font-size: 0.58rem;
+}
+
+.tactical-console--expanded .map-search--console {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tactical-console--expanded .map-search-btn {
+  width: 100%;
+  font-size: 0.65rem;
+  padding: 0.4rem;
+}
+
+.map-city-list__all-btn {
+  display: block;
+  width: 100%;
+  margin: 0.2rem 0 0.35rem;
+  padding: 0.42rem 0.55rem;
+  text-align: left;
+  font-family: var(--cmd-font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a7f3d0;
+  background: #0a140a;
+  border: 1px solid rgba(74, 124, 89, 0.45);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.map-city-list__all-btn:hover {
+  border-color: #4a7c59;
+  color: #ffffff;
+}
+
+.map-city-list__all-btn--active {
+  border-color: #4a7c59;
+  background: rgba(74, 124, 89, 0.18);
+  color: #ffffff;
+}
+
+.map-city-list__filter {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+.map-city-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: min(32vh, 240px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  background: #000;
+}
+
+.map-city-list__item {
+  display: block;
+  width: 100%;
+  padding: 0.42rem 0.5rem;
+  text-align: left;
+  font-family: var(--cmd-font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.62rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(167, 243, 208, 0.9);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(74, 124, 89, 0.12);
+  cursor: pointer;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition:
+    background 0.1s ease,
+    color 0.1s ease;
+}
+
+.map-city-list__item:hover {
+  color: #0a140a;
+  background: #4a7c59;
+}
+
+.map-city-list__item--active {
+  color: #ffffff;
+  background: rgba(74, 124, 89, 0.28);
+}
+
+.map-city-list__empty {
+  padding: 0.55rem 0.5rem;
+  font-size: 0.62rem;
+  color: rgba(148, 163, 184, 0.75);
+  text-align: center;
 }
 
 .tactical-console__reset-btn {
@@ -368,7 +581,7 @@
 }
 
 .map-search--console input::placeholder {
-  color: rgba(34, 255, 136, 0.35) !important;
+  color: rgba(74, 124, 89, 0.35) !important;
 }
 
 .map-search-btn {
@@ -404,18 +617,18 @@
 
 .map-focus-crosshair--neon {
   color: #22ff88 !important;
-  border: 1px solid rgba(34, 255, 136, 0.65) !important;
+  border: 1px solid rgba(74, 124, 89, 0.65) !important;
   box-shadow:
-    0 0 20px rgba(34, 255, 136, 0.45),
-    0 0 40px rgba(34, 255, 136, 0.15),
-    inset 0 0 16px rgba(34, 255, 136, 0.08) !important;
+    0 0 20px rgba(74, 124, 89, 0.45),
+    0 0 40px rgba(74, 124, 89, 0.15),
+    inset 0 0 16px rgba(74, 124, 89, 0.08) !important;
 }
 
 .map-focus-crosshair--neon:hover {
   border-color: #4ade80 !important;
   box-shadow:
     0 0 28px rgba(74, 222, 128, 0.65),
-    0 0 48px rgba(34, 255, 136, 0.25) !important;
+    0 0 48px rgba(74, 124, 89, 0.25) !important;
 }
 
 .map-focus-crosshair--neon .map-focus-crosshair__label {
@@ -428,7 +641,7 @@
 }
 
 .map-page--tactical .turkey-map--cyber {
-  z-index: 1;
+  z-index: 3;
   position: relative;
 }
 
@@ -439,9 +652,12 @@
 
 /* —— Harita pin etiketleri (kalıcı şehir + oyuncu adı) —— */
 
-.leaflet-marker-icon.map-marker-icon {
+.leaflet-marker-icon.map-marker-icon,
+.leaflet-marker-icon.map-city-hit-marker {
   background: transparent !important;
   border: none !important;
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
 .map-marker-wrap {
@@ -455,6 +671,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
   filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.35));
 }
 
@@ -528,8 +746,10 @@
 
 .map-city-hit-marker__zone {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  pointer-events: auto;
+  cursor: pointer;
   opacity: 0;
 }
 
@@ -582,7 +802,7 @@
 
 .leaflet-overlay-pane svg path.cyber-route--trade,
 .leaflet-overlay-pane svg path.tactical-route--trade {
-  filter: drop-shadow(0 0 5px #22d3ee);
+  filter: drop-shadow(0 0 5px #4a7c59);
 }
 
 @keyframes tactical-route-flow {
@@ -630,8 +850,8 @@
   font-size: 0.55rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: rgba(34, 255, 136, 0.72);
-  text-shadow: 0 0 6px rgba(34, 255, 136, 0.35);
+  color: rgba(74, 124, 89, 0.72);
+  text-shadow: 0 0 6px rgba(74, 124, 89, 0.35);
   white-space: nowrap;
 }
 
@@ -645,7 +865,7 @@
 .map-command-modal-root {
   position: fixed;
   inset: 0;
-  z-index: 2500;
+  z-index: 14000;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -673,7 +893,7 @@
   flex-shrink: 0;
   overflow-y: auto;
   padding: 1.75rem 2rem 2rem;
-  background: linear-gradient(180deg, rgba(6, 14, 24, 0.98) 0%, rgba(2, 6, 12, 0.99) 100%);
+  background: linear-gradient(180deg, rgba(17, 26, 17, 0.98) 0%, rgba(10, 15, 10, 0.99) 100%);
   border: 3px solid rgba(0, 240, 255, 0.45);
   box-shadow:
     0 0 0 1px rgba(0, 240, 255, 0.12) inset,
@@ -919,6 +1139,17 @@
   color: #eff6ff;
 }
 
+.map-command-modal__intel-locked {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px dashed rgba(0, 240, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: rgba(148, 163, 184, 0.9);
+  font-style: italic;
+}
+
 .map-command-modal__resource-unknown {
   font-size: 0.58rem;
   color: #fbbf24;
@@ -929,9 +1160,14 @@
 }
 
 .map-command-modal__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(0, 240, 255, 0.15);
+  max-height: min(72vh, 640px);
+  min-height: 0;
 }
 
 .map-command-modal__panel h3 {
@@ -945,11 +1181,84 @@
   margin-bottom: 0.5rem;
 }
 
+.expedition-troop-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(38vh, 320px);
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.expedition-troop-accordion__group {
+  border: 1px solid rgba(74, 124, 89, 0.22);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.expedition-troop-accordion__head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  background: rgba(17, 26, 17, 0.85);
+  color: #d4d4aa;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: left;
+}
+
+.expedition-troop-accordion__head:hover {
+  background: rgba(26, 46, 26, 0.95);
+}
+
+.expedition-troop-accordion__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.expedition-troop-accordion__count {
+  font-size: 0.58rem;
+  color: rgba(148, 163, 184, 0.85);
+  font-weight: 500;
+}
+
+.expedition-troop-accordion__chevron {
+  flex-shrink: 0;
+  color: #4ade80;
+}
+
+.expedition-troop-accordion__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.35rem 0.45rem 0.5rem;
+  border-top: 1px solid rgba(74, 124, 89, 0.15);
+}
+
 .map-command-modal__panel-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.65rem;
+}
+
+.map-command-modal__panel-actions--sticky {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(0, 240, 255, 0.18);
+  background: linear-gradient(180deg, rgba(10, 15, 10, 0) 0%, rgba(10, 15, 10, 0.92) 28%);
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .map-command-modal__panel-btn,
@@ -1045,7 +1354,7 @@
   margin-bottom: 0.5rem;
   padding: 0.35rem 0.5rem;
   border: 1px solid rgba(0, 240, 255, 0.15);
-  background: rgba(4, 12, 24, 0.75);
+  background: rgba(17, 26, 17, 0.75);
 }
 
 .map-ideology-toggle.active {
@@ -1172,7 +1481,7 @@ html.map-fs-active .map-intel-sidebar {
   max-height: calc(100% - 56px);
   overflow-y: auto;
   padding: 0.65rem 0.75rem;
-  background: rgba(4, 10, 20, 0.92);
+  background: rgba(17, 26, 17, 0.92);
   border: 1px solid rgba(0, 240, 255, 0.35);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
   pointer-events: auto;
@@ -1186,6 +1495,66 @@ html.map-fs-active .map-intel-sidebar {
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   color: rgba(0, 240, 255, 0.8);
+}
+
+.map-intel-sidebar__head-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.map-intel-sidebar__close {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(0, 240, 255, 0.85);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-intel-sidebar__close:hover {
+  border-color: rgba(0, 240, 255, 0.65);
+  color: #e2e8f0;
+}
+
+.map-intel-sidebar__tab {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.55rem 0.35rem;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  background: rgba(17, 26, 17, 0.92);
+  color: rgba(0, 240, 255, 0.85);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.map-intel-sidebar__tab:hover {
+  border-color: rgba(0, 240, 255, 0.6);
+  color: #e2e8f0;
+}
+
+.map-intel-sidebar__tab-icon {
+  color: #f97316;
+  font-size: 0.65rem;
+}
+
+.map-intel-sidebar__tab-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
 }
 
 .map-intel-sidebar__bolt {
@@ -1257,22 +1626,22 @@ html.map-fs-active .map-intel-sidebar {
 
 .map-intel-feed__tag--cyber {
   color: #39ff14;
-  border-color: rgba(57, 255, 20, 0.5);
+  border-color: rgba(74, 124, 89, 0.5);
   background: rgba(6, 20, 10, 0.6);
-  box-shadow: 0 0 8px rgba(57, 255, 20, 0.2);
+  box-shadow: 0 0 8px rgba(74, 124, 89, 0.2);
 }
 
 .map-intel-feed__tag--news,
 .map-intel-feed__tag--default {
   color: rgba(148, 163, 184, 0.9);
   border-color: rgba(100, 116, 139, 0.35);
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(17, 26, 17, 0.5);
 }
 
 .map-intel-feed__tag--expedition {
   color: #67e8f9;
   border-color: rgba(0, 240, 255, 0.4);
-  background: rgba(4, 16, 28, 0.55);
+  background: rgba(17, 26, 17, 0.55);
 }
 
 .map-intel-feed__tag--report {
@@ -1286,7 +1655,7 @@ html.map-fs-active .map-intel-sidebar {
 .map-intel-feed__tag--front {
   color: rgba(0, 240, 255, 0.85);
   border-color: rgba(0, 240, 255, 0.35);
-  background: rgba(4, 12, 24, 0.55);
+  background: rgba(17, 26, 17, 0.55);
 }
 
 .map-intel-feed__text {
@@ -1352,7 +1721,7 @@ html.map-fs-active .map-intel-sidebar {
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   color: rgba(0, 240, 255, 0.85);
-  background: linear-gradient(0deg, rgba(2, 6, 12, 0.96) 0%, rgba(2, 6, 12, 0.75) 100%);
+  background: linear-gradient(0deg, rgba(10, 15, 10, 0.96) 0%, rgba(10, 15, 10, 0.75) 100%);
   border-top: 1px solid rgba(0, 240, 255, 0.25);
   pointer-events: none;
 }
@@ -1456,11 +1825,21 @@ html.map-fs-active .map-intel-sidebar {
 
 .map-tactical-command-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.55rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
   margin-bottom: 0;
   z-index: 12;
+  width: 100%;
+  max-width: 100%;
+}
+
+.map-tactical-command-bar .map-ideology-toggle {
+  flex-shrink: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
 }
 
 .map-fs-hero-btn {
@@ -1558,10 +1937,14 @@ html.map-fs-active .map-intel-sidebar {
 
 .map-fs-exit-btn {
   position: fixed;
-  top: 0.75rem;
+  top: calc(var(--resource-bar-h, 72px) + 0.35rem);
   right: 0.75rem;
   left: auto;
   z-index: 10050;
+  max-width: min(11rem, 42vw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1589,8 +1972,8 @@ html.map-fs-active .map-intel-sidebar {
 }
 
 /* Taktik konsol (sol üst) ile çakışmayı önle — çıkış sağ üstte kalır */
-html.map-fs-active .tactical-console {
-  max-width: min(420px, calc(100vw - 11rem));
+html.map-fs-active .tactical-console--expanded {
+  max-width: min(220px, calc(100vw - 11rem));
 }
 
 html.map-fs-active .dev-test-mode-banner {
@@ -1635,7 +2018,7 @@ html.map-fs-active .map-page--command-theater,
   max-height: 100vh;
   margin: 0;
   padding: 0;
-  background: #020408;
+  background: #0a0f0a;
   display: flex;
   flex-direction: column;
 }
@@ -1660,7 +2043,7 @@ html.map-fs-active .map-page--command-theater .leaflet-container {
   height: 100vh !important;
   margin: 0 !important;
   padding: 0 !important;
-  background: #020408;
+  background: #0a0f0a;
 }
 
 .map-page--fullscreen .map-tactical-overlay {
