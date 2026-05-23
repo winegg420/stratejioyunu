@@ -2,10 +2,12 @@
 import { useAuth } from '../context/AuthContext';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
-import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { isDepotOverflow, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
-import { formatHourlyProduction } from '../lib/hourlyProduction';
+import { formatHourlyProduction, getHourlyAmount } from '../lib/hourlyProduction';
+import { formatCityOptionLabel } from '../lib/cityManagementUi';
+import { isMainHqCity } from '../lib/worldCitySystem';
 import { enrichResourcesWithEmpireTreasury } from '../lib/empireTreasury';
 import { GAME_NAME } from '../data/placeholder';
 import {
@@ -44,6 +46,8 @@ function ResourceItem({
   const fillClass = FILL_CLASS[resource.id] ?? 'res-fill--default';
   const workforceCut = resource.workforcePenalty && !frozen;
   const hourlyLabel = !frozen ? formatHourlyProduction(resource) : null;
+  const hourlyAmount = !frozen ? getHourlyAmount(resource) : 0;
+  const showHourlyBadge = hourlyAmount > 0 && ['hammadde', 'fuel', 'money', 'food', 'energy'].includes(resource.id);
 
   return (
     <div
@@ -80,7 +84,12 @@ function ResourceItem({
             {t('resourceBar.sharedTreasury')}
           </span>
         )}
-        {hourlyLabel ? (
+        {showHourlyBadge ? (
+          <span className="res-hourly-badge font-hud-data">
+            +{formatCompactNumber(hourlyAmount)}
+            {resource.id === 'energy' ? t('cityManagement.hourlyEnergy') : t('cityManagement.hourlyPerHour')}
+          </span>
+        ) : hourlyLabel ? (
           <span className="res-hourly-live">{hourlyLabel}</span>
         ) : (
           <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
@@ -126,6 +135,14 @@ export default function ResourceBar() {
   const visibleResources = progression?.kbrnUnlocked
     ? resources
     : resources.filter((r) => r.id !== 'uranium');
+
+  const cityCount = playerCities.length;
+  const activeCityIndex = playerCities.findIndex((c) => c.id === activeCityId);
+  const cycleCity = (delta) => {
+    if (cityCount < 2) return;
+    const next = (activeCityIndex + delta + cityCount) % cityCount;
+    setActiveCity(playerCities[next].id);
+  };
 
   const energyRes = resources.find((r) => r.id === 'energy');
   const energyCrisis = energyRes != null && energyRes.current < 0;
@@ -174,20 +191,46 @@ export default function ResourceBar() {
           {!gameReady && hasResources && (
             <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
           )}
-          <label className="city-switcher">
-            <span className="sr-only">{t('resourceBar.activeCity')}</span>
-            <select
-              value={activeCityId}
-              onChange={(e) => setActiveCity(e.target.value)}
-              className="city-switcher-select"
+          <div className="city-switcher-wrap">
+            <button
+              type="button"
+              className="city-cycle-btn"
+              onClick={() => cycleCity(-1)}
+              disabled={cityCount < 2}
+              aria-label={t('cityManagement.prevCity')}
+              title={t('cityManagement.prevCity')}
             >
-              {playerCities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {formatCityOptionLabel(c)}
-                </option>
-              ))}
-            </select>
-          </label>
+              ‹
+            </button>
+            <label className="city-switcher">
+              <span className="sr-only">{t('resourceBar.activeCity')}</span>
+              <select
+                value={activeCityId}
+                onChange={(e) => setActiveCity(e.target.value)}
+                className="city-switcher-select"
+              >
+                {playerCities.map((c) => (
+                  <option
+                    key={c.id}
+                    value={c.id}
+                    className={isMainHqCity(c) ? 'city-option--hq' : undefined}
+                  >
+                    {formatCityOptionLabel(c)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="city-cycle-btn"
+              onClick={() => cycleCity(1)}
+              disabled={cityCount < 2}
+              aria-label={t('cityManagement.nextCity')}
+              title={t('cityManagement.nextCity')}
+            >
+              ›
+            </button>
+          </div>
         </div>
 
         <div className="resources-row resources-row--tactical" role="list" aria-label={t('resourceBar.resources')}>

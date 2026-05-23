@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useActionLock } from '../hooks/useActionLock';
-import { remainingFromEndsAt } from '../lib/gameUtils';
+import { parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { canAffordCost } from '../utils/resourceCosts';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
@@ -24,8 +24,10 @@ import {
 import { resolveBuildingInfoPayload } from '../lib/contentInfoResolver';
 import { formatEmpireSlotHint } from '../lib/empireExpansion';
 import BuildCountdownHud from './BuildCountdownHud';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function BuildingCard({ building, progressionLock = null }) {
+export default function BuildingCard({ building, progressionLock = null, coastalLocked = false }) {
+  const { t } = useLanguage();
   const now = useGameStore((s) => s.now);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -55,7 +57,8 @@ export default function BuildingCard({ building, progressionLock = null }) {
   const isUnbuilt = building.level < 1;
   const isBlocked = !prereqsMet;
   const progressionBlocked = Boolean(progressionLock);
-  const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet && !progressionBlocked;
+  const cannotAfford = Boolean(displayCost) && !canAfford && prereqsMet && !progressionBlocked && !coastalLocked;
+  const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet && !progressionBlocked && !coastalLocked;
   const blockedLabel = unmetPrereqs.length
     ? `[ SEKTÖR KİLİTLİ: ${unmetPrereqs
       .map((req) => `${(BUILDING_LABELS[req.id] ?? req.id).toUpperCase()} SV.${req.level} GEREKLİ`)
@@ -64,6 +67,15 @@ export default function BuildingCard({ building, progressionLock = null }) {
   const currentLevel = building.level ?? 0;
   const targetLevel = nextSpec?.targetLevel ?? currentLevel + 1;
   const queueBadge = queueEntry ? (queueEntry.queued ? 'Sırada' : 'Yükseltiliyor') : null;
+  const totalUpgradeSec = active
+    ? (active.durationSeconds
+      ?? (active.endsAt && active.startedAt
+        ? Math.round((active.endsAt - active.startedAt) / 1000)
+        : parseTimeToSeconds(nextSpec?.time) || 120))
+    : 0;
+  const upgradeProgressPct = totalUpgradeSec > 0
+    ? Math.min(100, Math.max(0, ((totalUpgradeSec - remaining) / totalUpgradeSec) * 100))
+    : 0;
 
   const upgradeLabel = queueFull
     ? 'İnşaat Sırası Dolu'
@@ -120,10 +132,17 @@ export default function BuildingCard({ building, progressionLock = null }) {
         isUnbuilt && 'building-card--unbuilt',
         isUnbuilt && prereqsMet && 'building-card--starter',
         progressionBlocked && 'building-card--progression-locked',
+        cannotAfford && 'building-card--unaffordable',
+        coastalLocked && 'building-card--coastal-locked',
       ]
         .filter(Boolean)
         .join(' ')}
     >
+      {coastalLocked && (
+        <p className="building-coastal-lock" role="status">
+          {t('cityManagement.coastalLock')}
+        </p>
+      )}
       <span className="building-lvl-rozet" aria-label={`Seviye ${currentLevel}`}>
         [ LVL {currentLevel} ]
       </span>
@@ -192,9 +211,30 @@ export default function BuildingCard({ building, progressionLock = null }) {
         </div>
       </button>
       {upgrading && (
-        <p className="content-card__meta">
-          Kalan: <BuildCountdownHud remaining={remaining} />
-        </p>
+        <>
+          <div className="building-level-progress" aria-hidden={false}>
+            <div className="building-level-progress__labels">
+              <span>Sv.{currentLevel}</span>
+              <span>Sv.{targetLevel}</span>
+            </div>
+            <div
+              className="building-level-progress__bar"
+              role="progressbar"
+              aria-valuenow={Math.round(upgradeProgressPct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Sv.${currentLevel} → Sv.${targetLevel}`}
+            >
+              <div
+                className="building-level-progress__fill"
+                style={{ width: `${upgradeProgressPct}%` }}
+              />
+            </div>
+          </div>
+          <p className="content-card__meta">
+            Kalan: <BuildCountdownHud remaining={remaining} />
+          </p>
+        </>
       )}
       {displayCost ? (
         <p className="content-card__meta">
@@ -228,15 +268,15 @@ export default function BuildingCard({ building, progressionLock = null }) {
         <button
           type="button"
           className={`btn btn-hud-primary btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
-          disabled={!canBuild || buildBusy}
+          disabled={!canBuild || buildBusy || coastalLocked}
           onClick={handleUpgrade}
         >
-          {actionLocked ? 'Yükleniyor…' : upgradeLabel}
+          {coastalLocked ? t('cityManagement.coastalBtn') : actionLocked ? t('common.loading') : upgradeLabel}
         </button>
         <button
           type="button"
           className={`btn btn-hud-secondary btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
-          disabled={!canAfford || !prereqsMet || queueFull || actionLocked}
+          disabled={!canAfford || !prereqsMet || queueFull || actionLocked || coastalLocked}
           onClick={handleQueue}
         >
           Kuyruğa Ekle

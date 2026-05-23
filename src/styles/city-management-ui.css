@@ -1,0 +1,243 @@
+/* Şehir & koloni yönetimi UI */
+
+.empire-slot-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 255, 204, 0.35);
+  background: linear-gradient(90deg, rgba(0, 255, 204, 0.08), rgba(57, 255, 20, 0.04));
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.empire-slot-banner__tag {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(0, 255, 204, 0.85);
+  margin-bottom: 0.2rem;
+}
+
+.empire-slot-banner__slots {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--neon-green, #39ff14);
+  text-shadow: 0 0 12px rgba(57, 255, 20, 0.45);
+  letter-spacing: 0.06em;
+}
+
+.empire-slot-banner__hq {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.85);
+  margin-top: 0.15rem;
+}
+
+.empire-slot-banner__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.75);
+  text-align: right;
+  max-width: min(100%, 22rem);
+}
+
+.buildings-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 1rem;
+  margin: -0.25rem 0 0.75rem;
+}
+
+.buildings-queue-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--neon-cyan, #00ffcc);
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(0, 255, 204, 0.35);
+  background: rgba(0, 20, 30, 0.65);
+}
+
+.buildings-page__grid-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .buildings-page__grid-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ana merkez şehir seçici */
+.city-switcher-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.city-cycle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: 1px solid rgba(0, 255, 204, 0.35);
+  background: rgba(0, 12, 22, 0.85);
+  color: var(--neon-cyan, #00ffcc);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.city-cycle-btn:hover:not(:disabled) {
+  border-color: var(--neon-green, #39ff14);
+  color: var(--neon-green, #39ff14);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.35);
+}
+
+.city-cycle-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.city-switcher-select option.city-option--hq {
+  font-weight: 700;
+}
+
+/* Kaynak saatlik üretim */
+.res-hourly-badge {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--neon-green, #39ff14);
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+  letter-spacing: 0.04em;
+}
+
+/* Bina kartı — yetersiz kaynak */
+.building-card--unaffordable {
+  opacity: 0.5 !important;
+  filter: grayscale(0.15);
+  pointer-events: auto;
+}
+
+.building-card--unaffordable .btn-hud-primary {
+  pointer-events: none;
+}
+
+.building-card--coastal-locked {
+  opacity: 0.55;
+}
+
+.building-coastal-lock {
+  margin: 0 0 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  border: 1px dashed rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+/* Seviye ilerleme çubuğu */
+.building-level-progress {
+  margin: 0.35rem 0 0.5rem;
+}
+
+.building-level-progress__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.8);
+  margin-bottom: 0.2rem;
+}
+
+.building-level-progress__bar {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 255, 204, 0.25);
+  overflow: hidden;
+}
+
+.building-level-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-cyan, #00ffcc), var(--neon-green, #39ff14));
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.45);
+  transition: width 0.35s linear;
+}
+
+/* Nüfus dağılımı */
+.population-dist-panel__title {
+  margin-bottom: 0.35rem;
+}
+
+.population-dist-panel__total {
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.population-dist-panel__bar {
+  display: flex;
+  height: 10px;
+  border: 1px solid rgba(0, 255, 204, 0.25);
+  overflow: hidden;
+  margin-bottom: 0.65rem;
+}
+
+.population-dist-panel__segment {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.population-dist-panel__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.population-dist-panel__legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.population-dist-panel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.population-dist-panel__label {
+  flex: 1;
+  color: rgba(203, 213, 225, 0.85);
+}
+
+.population-dist-panel__pct {
+  color: rgba(148, 163, 184, 0.65);
+  font-size: 0.68rem;
+}

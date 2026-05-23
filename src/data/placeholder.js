@@ -24,7 +24,7 @@ export const buildings = [
   { id: 'refinery', name: 'Yakıt Rafinerisi', category: 'Üretim', level: 6, maxLevel: null, desc: 'Temel hammadde ve petrol üretimi. Konvoy ve motorlu birlikler için.', image: '⛽', cost: '3.100 hammadde · 2.200 bütçe', time: '—', producing: true },
   { id: 'plant', name: 'Enerji Santrali', category: 'Üretim', level: 9, maxLevel: null, desc: 'Tüm üssün siber ve fiziksel güç çarpanı. Rafineri ve operasyon hatları için zorunlu.', image: '⚡', cost: '—', time: '—', producing: true },
   { id: 'barracks', name: 'Kara Kuvvetleri', category: 'Askeri', level: 10, maxLevel: null, desc: 'Kara ordusu üretimi ve taktik simülatör.', image: '🪖', cost: '5.200 hammadde', time: '03:20:00', producing: false },
-  { id: 'airport', name: 'Hava Üssü', category: 'Askeri', level: 4, maxLevel: null, desc: 'Hava filolarının konuşlandığı stratejik hat.', image: '✈️', cost: '8.000 hammadde', time: '—', producing: false },
+  { id: 'airport', name: 'Hava Üssü', category: 'Askeri', level: 4, maxLevel: null, desc: 'Hava filolarının konuşlandığı stratejik hat. Havayolu taşımacılığı için Hava Üssü en az Sv.1 olmalıdır.', image: '✈️', cost: '8.000 hammadde', time: '—', producing: false },
   { id: 'shipyard', name: 'Deniz Üssü', category: 'Askeri', level: 3, maxLevel: null, desc: 'Devasa tersane kompleksi — deniz filosu üretimi. Kıyı şehirlerinde.', image: '⚓', cost: '6.500 hammadde', time: '—', producing: false, coastalOnly: true },
   { id: 'intel', name: 'İstihbarat Merkezi', category: 'Teknoloji', level: 6, maxLevel: null, desc: 'Veri sızıntıları, ajan yönetimi ve karşı istihbarat.', image: '📡', cost: '3.400 hammadde', time: '—', producing: false },
   {

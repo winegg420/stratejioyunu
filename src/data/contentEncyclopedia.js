@@ -205,9 +205,9 @@ export const BUILDING_ENCYCLOPEDIA = {
     perLevel: (lv) => `Üretim hızı +${lv * 4}%`,
   },
   airport: {
-    lore: 'Hava filolarının konuşlandığı stratejik hat.',
+    lore: 'Hava filolarının konuşlandığı stratejik hat. Havayolu taşımacılığı için Hava Üssü en az Sv.1 olmalıdır.',
     effectLabel: 'Hava üssü',
-    perLevel: (lv) => `Hava üretim hızı +${lv * 5}%`,
+    perLevel: (lv) => `Hava üretim hızı +${lv * 5}% · Havayolu lojistiği: Sv.${Math.max(1, lv)}`,
   },
   shipyard: {
     lore: 'Devasa tersane kompleksi — deniz filosu üretimi.',

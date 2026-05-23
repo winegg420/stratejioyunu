@@ -4662,11 +4662,7 @@ export function useTroopsAwayMap(cityId) {
   );
 }
 
-export function formatCityOptionLabel(city) {
-  if (city.province) return `${city.name} (${city.province})`;
-  if (city.provinceName) return `${city.name} (${city.provinceName})`;
-  return city.name;
-}
+export { formatCityOptionLabel } from '../lib/cityManagementUi';
 
 /** Ana merkez / özet — şehir adı tekrarlanmaz (provinceName === name ise atlanır). */
 export function formatCitySubtitle(city) {
