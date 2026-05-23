@@ -2,7 +2,7 @@
 
 @media (max-width: 900px) {
   :root {
-    --resource-bar-h: 58px;
+    --resource-bar-h: 78px;
     --bottom-nav-h: 56px;
     --mobile-chrome-h: calc(var(--resource-bar-h) + var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
   }
@@ -95,10 +95,10 @@
     left: 0;
     right: 0;
     z-index: 1210 !important;
-    height: var(--resource-bar-h) !important;
+    height: auto !important;
     min-height: var(--resource-bar-h);
-    max-height: var(--resource-bar-h);
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
   }
 
   .resource-bar-inner {
@@ -113,26 +113,33 @@
     display: grid !important;
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     gap: 0.15rem !important;
-    overflow: hidden;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
     min-width: 0;
   }
 
   .resource-item {
     min-width: 0 !important;
     max-width: none !important;
-    padding: 0.1rem 0.12rem !important;
-    overflow: hidden;
+    padding: 0.15rem 0.2rem !important;
+    overflow: visible !important;
   }
 
   .resource-bar--steel .res-value {
-    font-size: 0.65rem !important;
-    line-height: 1.1;
+    font-size: 0.72rem !important;
+    line-height: 1.15;
   }
 
-  .resource-bar--steel .res-hourly,
-  .resource-item .res-bar,
-  .resource-item .res-rate {
-    display: none !important;
+  .resource-bar--steel .res-hourly-badge,
+  .resource-bar--steel .res-hourly-live {
+    display: block !important;
+    font-size: 0.52rem !important;
+  }
+
+  .resource-item .res-bar {
+    display: block !important;
+    height: 2px !important;
+    margin-top: 0.1rem;
   }
 
   .res-label {

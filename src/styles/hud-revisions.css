@@ -84,7 +84,8 @@ button {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.35rem;
-  overflow: hidden;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
   flex: 1;
   min-width: 0;
 }

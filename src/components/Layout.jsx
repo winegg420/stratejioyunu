@@ -41,11 +41,6 @@ export default function Layout() {
     initWorldSystems();
   }, [initWorldSystems]);
 
-  useEffect(() => {
-    document.documentElement.classList.add('game-shell-scroll-lock');
-    return () => document.documentElement.classList.remove('game-shell-scroll-lock');
-  }, []);
-
   useEffect(() => startTicker(), [startTicker]);
 
   useEffect(() => {
