@@ -15,7 +15,7 @@ input,
 select,
 textarea,
 button {
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
 }
 
 /* Scrollbar — global-hud-polish.css */

@@ -1,15 +1,14 @@
-/* ── Siber-askeri terminal katmanı ── */
+/* ── Siber paneller — okunaklı UI + mono yalnızca terminal/veri ── */
 
 :root {
-  --font-terminal: 'Major Mono Display', 'Share Tech Mono', 'Courier New', monospace;
   --reticle-corner: rgba(0, 240, 255, 0.82);
 }
 
-/* [1] Glass paneller — nişangah köşeleri + agresif terminal fontu */
+/* Glass paneller: Rajdhani taban; Major Mono kullanılmaz */
 .glass-panel {
   position: relative;
-  font-family: var(--font-terminal) !important;
-  letter-spacing: 0.06em;
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
 }
 
 .glass-panel::before {
@@ -33,13 +32,35 @@
 
 .glass-panel .panel-title,
 .glass-panel .home-cmd-widget__label,
-.glass-panel .home-cmd-widget__value,
 .glass-panel .market-exchange-row__label,
-.glass-panel .mil-ai-terminal__line,
-.glass-panel .strat-matrix__title {
-  font-family: var(--font-terminal) !important;
-  letter-spacing: 0.08em;
+.glass-panel .strat-matrix__title,
+.glass-panel .mil-ai-advisor__badge {
+  font-family: var(--font-display) !important;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.glass-panel .home-cmd-widget__value,
+.glass-panel .home-cmd-widget__counter {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.glass-panel .home-cmd-widget__sub {
+  font-family: var(--font-ui) !important;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+.glass-panel .mil-ai-terminal__line,
+.glass-panel .mil-ai-terminal__status,
+.glass-panel .mil-ai-advisor__pending {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 /* [2] Harita — yukarıdan aşağı radar tarama çizgisi */

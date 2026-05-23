@@ -53,8 +53,10 @@
 }
 
 .mil-ai-advisor__badge {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-display, 'Titillium Web', 'Rajdhani', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   color: #93c5fd;
   text-transform: uppercase;
 }
@@ -164,9 +166,9 @@
 .mil-ai-terminal__line {
   margin: 0 0 0.45rem;
   font-family: var(--font-mono, 'Share Tech Mono', monospace);
-  font-size: 0.72rem;
-  line-height: 1.45;
-  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
   color: rgba(57, 255, 136, 0.9);
   text-shadow: 0 0 10px rgba(57, 255, 136, 0.22);
 }

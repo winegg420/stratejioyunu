@@ -363,11 +363,12 @@
 }
 
 .home-cmd-widget__label {
-  font-family: var(--cmd-font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
+  font-family: var(--cmd-font-display);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.7);
+  color: rgba(148, 163, 184, 0.85);
 }
 
 .home-cmd-widget--active .home-cmd-widget__label {
@@ -390,9 +391,11 @@
 }
 
 .home-cmd-widget__sub {
-  font-size: 0.58rem;
-  color: rgba(148, 163, 184, 0.45);
-  font-family: var(--cmd-font-mono);
+  font-size: 0.7rem;
+  color: rgba(148, 163, 184, 0.55);
+  font-family: var(--cmd-font-display);
+  font-weight: 500;
+  text-transform: none;
 }
 
 .home-cmd-widget--active .home-cmd-widget__sub {

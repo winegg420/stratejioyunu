@@ -41,7 +41,7 @@ function QueueItem({ name, detail, endsAt, queued, now }) {
 }
 
 const STAT_ICONS = {
-  'AKTİF SEFER': '⚔',
+  'AKTİF OPERASYON': '⚔',
   'İNŞAAT KUYRUĞU': '🏗',
   'ÜRETİM KUYRUĞU': '⚙',
   'OKUNMAYAN RAPOR': '📡',
@@ -204,9 +204,9 @@ export default function Home() {
 
         <div className="home-cmd-widgets" role="list" aria-label="Komuta özeti">
           <CommandWidget
-            label="AKTİF SEFER"
+            label="AKTİF OPERASYON"
             value={cmdStats.activeExpeditions}
-            sub={cmdStats.live ? 'canlı · sefer' : 'operasyon'}
+            sub={cmdStats.live ? 'canlı · operasyon' : 'operasyon'}
             active={cmdStats.activeExpeditions > 0}
           />
           <CommandWidget

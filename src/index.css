@@ -12,7 +12,8 @@
   --success: #22c55e;
   --danger: #ef4444;
   --warn: #f59e0b;
-  --font-ui: 'Share Tech Mono', 'Courier New', monospace;
+  --font-ui: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Titillium Web', 'Rajdhani', 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', 'Courier New', monospace;
   --resource-bar-h: 58px;
   --bottom-nav-h: 64px;
@@ -20,12 +21,10 @@
   --sidebar-w: 220px;
 }
 
-/* Global tipografi — tüm sans-serif iptal */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  font-family: 'Share Tech Mono', 'Courier New', monospace;
 }
 
 html,
@@ -36,6 +35,11 @@ body,
 }
 
 body {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
   background: #030508;
   color: #a0ffb0;
   background-image:
