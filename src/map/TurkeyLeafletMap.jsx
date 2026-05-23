@@ -24,6 +24,7 @@ import MapMouseCoordinateHud from './MapMouseCoordinateHud';
 import CityDiplomacyBadgeLayer from './CityDiplomacyBadgeLayer';
 import MapFitFlyLayers from './MapFitFlyLayers';
 import MapHexClickPulse from './MapHexClickPulse';
+import MapResizeEffect from './MapResizeEffect';
 import MapCityClickRouter from './MapCityClickRouter';
 
 const TURKEY_CENTER = [39.0, 35.0];
