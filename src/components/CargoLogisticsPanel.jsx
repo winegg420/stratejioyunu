@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useActionLock } from '../hooks/useActionLock';
 import { remainingFromEndsAt, formatSeconds } from '../lib/gameUtils';
 import {
-  AIRBASE_BUILDING_ID,
   CARGO_RESOURCE_ID,
   LOGISTICS_MODE,
   calcAirLogisticsCost,
@@ -15,6 +14,13 @@ import { canAffordEmpireMoney, getEmpireMoneyTotal } from '../lib/empireTreasury
 import { resolveCityCoords } from '../lib/expeditionTravel';
 import { calcTradeDepotOverflow } from '../lib/tradeUtils';
 import { useGameStore } from '../stores/gameStore';
+
+function formatEtaShort(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
 
 export default function CargoLogisticsPanel({
   originCityId,
@@ -48,10 +54,15 @@ export default function CargoLogisticsPanel({
     [targetCityName, playerCities, mapCities],
   );
 
-  const timing = useMemo(
-    () => calcCargoTransferDuration({ originCoords, targetCoords, mode }),
-    [originCoords, targetCoords, mode],
+  const roadTiming = useMemo(
+    () => calcCargoTransferDuration({ originCoords, targetCoords, mode: LOGISTICS_MODE.ROAD }),
+    [originCoords, targetCoords],
   );
+  const airTiming = useMemo(
+    () => calcCargoTransferDuration({ originCoords, targetCoords, mode: LOGISTICS_MODE.AIR }),
+    [originCoords, targetCoords],
+  );
+  const timing = mode === LOGISTICS_MODE.AIR ? airTiming : roadTiming;
 
   const airUnlocked = canUseAirLogistics(originCity, targetCity);
   const airCost = timing.distanceKm != null ? calcAirLogisticsCost(timing.distanceKm) : 0;
@@ -63,6 +74,11 @@ export default function CargoLogisticsPanel({
     if (!targetCity || qty <= 0) return [];
     return calcTradeDepotOverflow(targetCity.resources, { [CARGO_RESOURCE_ID]: qty });
   }, [targetCity, qty]);
+
+  const etaSeconds = mode === LOGISTICS_MODE.AIR ? airTiming.seconds : roadTiming.roadSeconds ?? roadTiming.seconds;
+  const distanceLabel = timing.distanceKm != null
+    ? (timing.distanceKm >= 1 ? `${Math.round(timing.distanceKm)} km` : `${Math.round(timing.distanceKm * 1000)} m`)
+    : '—';
 
   const canSubmit = qty >= 1
     && overflow.length === 0
@@ -90,8 +106,17 @@ export default function CargoLogisticsPanel({
         {' · '}Depoda: <strong>{hammaddeStock.toLocaleString('tr-TR')}</strong>
       </p>
       <p className="map-command-modal__hint map-command-modal__hint--treasury">
-        Ortak dijital bütçe: <strong>{empireMoney.toLocaleString('tr-TR')}</strong> bütçe
+        Ortak dijital bütçe (userBalance): <strong>{empireMoney.toLocaleString('tr-TR')}</strong> bütçe
       </p>
+
+      <div className="cargo-logistics-eta-strip" role="status" aria-live="polite">
+        Mesafe: <strong>{distanceLabel}</strong>
+        {' · '}Varış süresi: <strong>~{formatSeconds(etaSeconds)}</strong>
+        {' '}({formatEtaShort(etaSeconds)})
+        {mode === LOGISTICS_MODE.AIR && airUnlocked && (
+          <> · Havayolu ücreti: <strong>{airCost.toLocaleString('tr-TR')} B</strong></>
+        )}
+      </div>
 
       <label className="cargo-logistics-field">
         <span>Miktar (hammadde)</span>
@@ -123,55 +148,50 @@ export default function CargoLogisticsPanel({
         </div>
       </label>
 
-      <fieldset className="cargo-logistics-modes">
-        <legend className="sr-only">Taşıma modu</legend>
-        <label className={`cargo-logistics-mode${mode === LOGISTICS_MODE.ROAD ? ' cargo-logistics-mode--active' : ''}`}>
-          <input
-            type="radio"
-            name={`cargo-mode-${targetCityId}`}
-            checked={mode === LOGISTICS_MODE.ROAD}
-            onChange={() => setMode(LOGISTICS_MODE.ROAD)}
-          />
-          <span className="cargo-logistics-mode__icon" aria-hidden="true">🚛</span>
-          <span>
-            <strong>Karayolu (Standart)</strong>
-            <small>Maliyet: 0 bütçe · ~{formatSeconds(timing.roadSeconds ?? timing.seconds)}</small>
-          </span>
-        </label>
-
-        <label
+      <div className="cargo-logistics-mode-grid" role="group" aria-label="Taşıma modu">
+        <button
+          type="button"
           className={[
-            'cargo-logistics-mode',
-            mode === LOGISTICS_MODE.AIR ? ' cargo-logistics-mode--active' : '',
-            !airUnlocked ? ' cargo-logistics-mode--locked' : '',
-          ].join('')}
+            'cargo-logistics-cyber-btn',
+            mode === LOGISTICS_MODE.ROAD && 'cargo-logistics-cyber-btn--active',
+          ].filter(Boolean).join(' ')}
+          onClick={() => setMode(LOGISTICS_MODE.ROAD)}
         >
-          <input
-            type="radio"
-            name={`cargo-mode-${targetCityId}`}
-            checked={mode === LOGISTICS_MODE.AIR}
-            disabled={!airUnlocked}
-            onChange={() => setMode(LOGISTICS_MODE.AIR)}
-          />
-          <span className="cargo-logistics-mode__icon" aria-hidden="true">✈️</span>
-          <span>
-            <strong>Havayolu (Ekspres)</strong>
-            <small>
-              {airUnlocked
-                ? `Maliyet: ${airCost.toLocaleString('tr-TR')} bütçe · ~${formatSeconds(timing.seconds)}`
-                : 'Kilitli'}
-            </small>
+          <span className="cargo-logistics-cyber-btn__icon" aria-hidden="true">🚛</span>
+          <span className="cargo-logistics-cyber-btn__label">KARAYOLU</span>
+          <span className="cargo-logistics-cyber-btn__meta">
+            0 Bütçe · ~{formatSeconds(roadTiming.roadSeconds ?? roadTiming.seconds)}
           </span>
-        </label>
-        {!airUnlocked && (
-          <p className="cargo-logistics-air-warn">
-            Her iki şehirde de Hava Üssü inşa edilmiş olmalıdır (her iki şehirde Sv.1+).
-          </p>
-        )}
-        {mode === LOGISTICS_MODE.AIR && airUnlocked && !canAffordAir && (
-          <p className="cargo-logistics-air-warn">Ortak bütçede yeterli nakit yok.</p>
-        )}
-      </fieldset>
+        </button>
+
+        <button
+          type="button"
+          className={[
+            'cargo-logistics-cyber-btn',
+            mode === LOGISTICS_MODE.AIR && 'cargo-logistics-cyber-btn--active',
+            !airUnlocked && 'cargo-logistics-cyber-btn--locked',
+          ].filter(Boolean).join(' ')}
+          disabled={!airUnlocked}
+          onClick={() => setMode(LOGISTICS_MODE.AIR)}
+        >
+          <span className="cargo-logistics-cyber-btn__icon" aria-hidden="true">✈️</span>
+          <span className="cargo-logistics-cyber-btn__label">HAVAYOLU</span>
+          <span className="cargo-logistics-cyber-btn__meta">
+            {airUnlocked
+              ? `${airCost.toLocaleString('tr-TR')} B · ~${formatSeconds(airTiming.seconds)}`
+              : 'KİLİTLİ · Hava Üssü Sv.1+'}
+          </span>
+        </button>
+      </div>
+
+      {!airUnlocked && (
+        <p className="cargo-logistics-air-warn">
+          Her iki şehirde de Hava Üssü inşa edilmiş olmalıdır (her iki şehirde Sv.1+).
+        </p>
+      )}
+      {mode === LOGISTICS_MODE.AIR && airUnlocked && !canAffordAir && (
+        <p className="cargo-logistics-air-warn">Ortak bütçede yeterli nakit yok.</p>
+      )}
 
       {overflow.length > 0 && (
         <p className="city-panel-found-warn">Hedef depo dolu — miktarı azaltın.</p>
@@ -183,7 +203,7 @@ export default function CargoLogisticsPanel({
         disabled={!canSubmit || actionLocked}
         onClick={handleSubmit}
       >
-        [ SEVKİYAT BAŞLAT ]
+        [ SEVKİYAT BAŞLAT ] · ~{formatEtaShort(etaSeconds)}
       </button>
 
       {cargoTransfers.length > 0 && (
@@ -197,7 +217,7 @@ export default function CargoLogisticsPanel({
                   {exp.originCityName} → {exp.target}
                   {' · '}{formatCargoAmount(exp.cargoAmount ?? getCargoAmountFromExp(exp))}
                   {' · '}{formatCargoLogisticsLabel(exp.logisticsMode)}
-                  {rem > 0 && ` · ${formatSeconds(rem)}`}
+                  {rem > 0 && ` · (${formatEtaShort(rem)})`}
                 </li>
               );
             })}

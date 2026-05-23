@@ -4,6 +4,10 @@ function parseHourlyRate(rateStr) {
 }
 
 /** İmparatorluk ortak dijital bütçe havuzu (tüm şehirlerdeki money toplamı). */
+export function getUserBalance(cities = {}) {
+  return getEmpireMoneyTotal(cities);
+}
+
 export function getEmpireMoneyTotal(cities = {}) {
   let total = 0;
   for (const city of Object.values(cities ?? {})) {

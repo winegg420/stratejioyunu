@@ -15,12 +15,17 @@ import { getResourceDisplay } from '../data/resourceCatalog';
 import CyberDataInput from '../components/CyberDataInput';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { useLanguage } from '../context/LanguageContext';
+import { getEmpireMoneyTotal } from '../lib/empireTreasury';
+import MarketPriceChart from '../components/MarketPriceChart';
 
 const EMPTY_QTY = Object.fromEntries(MARKET_TRADABLE_IDS.map((id) => [id, '']));
 
 export default function Market() {
   const { t } = useLanguage();
-  const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const cities = useGameStore((s) => s.cities);
+  const resources = useGameStore((s) => s.cities[activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const userBalance = getEmpireMoneyTotal(cities);
   const market = useGameStore((s) =>
     s.cities[s.activeCityId]?.buildings?.find((b) => b.id === 'market'),
   );
@@ -100,6 +105,7 @@ export default function Market() {
           {' '}
           · Küresel arz endeksi: {openMarketSupplyIndex.toLocaleString('tr-TR')}
         </p>
+        <MarketPriceChart resourceId="hammadde" />
         <div className="market-spot-grid">
           {MARKET_TRADABLE_IDS.map((id) => {
             const spot = openMarketPrices[id];
@@ -119,6 +125,9 @@ export default function Market() {
 
       <section className="panel market-exchange-panel glass-panel">
         <h3 className="panel-title">Kaynak Alım / Satım</h3>
+        <p className="market-exchange-hint">
+          Ortak hesap (userBalance): <strong className="font-hud-data">{userBalance.toLocaleString('tr-TR')}</strong> bütçe
+        </p>
         <p className="market-exchange-hint">
           Fiyatlar Merkez Bankası paritelerine göre güncellenir. Miktar girin ve işlem yapın.
         </p>
@@ -306,10 +315,10 @@ export default function Market() {
                   {o.author === playerName ? (
                     <button
                       type="button"
-                      className="btn btn-hud-secondary btn-sm"
+                      className="btn btn-hud-danger btn-sm market-offer-cancel-btn"
                       onClick={() => cancelMarketOffer(o.id)}
                     >
-                      İptal
+                      [ İLANI İPTAL ET ]
                     </button>
                   ) : (
                     <button

@@ -109,7 +109,7 @@ export default function BlackMarket() {
             {openListings.map((l) => (
               <li key={l.id} className="black-market-card">
                 <strong>{l.title}</strong>
-                <span className="font-hud-data">{l.alias}</span>
+                <span className="font-hud-data black-market-card__alias">{l.alias}</span>
                 <span>{BLACK_MARKET_LABELS[l.type] ?? l.type}</span>
                 <span className="font-hud-data">
                   {l.price.toLocaleString('tr-TR')} Bütçe

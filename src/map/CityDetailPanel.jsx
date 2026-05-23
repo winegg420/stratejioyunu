@@ -38,6 +38,7 @@ import {
 } from '../lib/empireExpansion';
 import { isConquerableMapTarget } from '../lib/worldCitySystem';
 import CargoLogisticsPanel from '../components/CargoLogisticsPanel';
+import CityInflightSupply from '../components/CityInflightSupply';
 import { calcSpyProbeTravelSeconds } from '../utils/spyEngine';
 import {
   useActiveCityIdleTroops,
@@ -400,6 +401,10 @@ function MapCommandModal({ city, onClose }) {
             </div>
           )}
         </div>
+
+        {live?.pc && (
+          <CityInflightSupply cityId={live.pc.id} cityName={live.pc.name} />
+        )}
 
         <section className="map-command-modal__resources" aria-label="Kaynak durumu">
           <h3 className="map-command-modal__section-title">Kaynak Durumu</h3>

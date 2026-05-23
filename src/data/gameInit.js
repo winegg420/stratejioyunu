@@ -47,6 +47,7 @@ import {
 import { applyDevTestModeToState } from '../lib/devTestMode';
 import { loadGameConfig } from '../lib/gameConfig';
 import { tickOpenMarket } from '../lib/openMarket';
+import { seedMarketPriceHistory } from '../lib/marketPriceHistory';
 import { pickMainHqStarter, enrichMapCityWithWorld } from '../lib/worldCitySystem';
 
 export function createCityState(overrides = {}) {
@@ -204,9 +205,11 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     diplomaticCrises: [],
   };
 
+  const marketTick = tickOpenMarket(base);
   const withMarket = {
     ...base,
-    ...tickOpenMarket(base),
+    ...marketTick,
+    marketPriceHistory: seedMarketPriceHistory(marketTick.openMarketPrices),
   };
   return applyDevTestModeToState(withMarket);
 }

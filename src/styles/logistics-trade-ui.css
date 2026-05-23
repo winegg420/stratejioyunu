@@ -1,0 +1,177 @@
+/* Lojistik mod seçici — siber askeri butonlar */
+.cargo-logistics-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.65rem 0;
+}
+
+.cargo-logistics-cyber-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid rgba(0, 255, 204, 0.28);
+  background: linear-gradient(180deg, rgba(0, 18, 28, 0.95), rgba(0, 8, 14, 0.98));
+  color: rgba(148, 163, 184, 0.9);
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition: border-color 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
+}
+
+.cargo-logistics-cyber-btn:hover:not(:disabled) {
+  border-color: rgba(57, 255, 20, 0.55);
+  color: #e2e8f0;
+}
+
+.cargo-logistics-cyber-btn--active {
+  border-color: var(--neon-green, #39ff14);
+  box-shadow: 0 0 14px rgba(57, 255, 20, 0.35), inset 0 0 12px rgba(57, 255, 20, 0.08);
+  color: var(--neon-green, #39ff14);
+}
+
+.cargo-logistics-cyber-btn--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cargo-logistics-cyber-btn__icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.35));
+}
+
+.cargo-logistics-cyber-btn--active .cargo-logistics-cyber-btn__icon {
+  filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.55));
+}
+
+.cargo-logistics-cyber-btn__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.cargo-logistics-cyber-btn__meta {
+  font-size: 0.62rem;
+  color: rgba(148, 163, 184, 0.75);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.cargo-logistics-cyber-btn--active .cargo-logistics-cyber-btn__meta {
+  color: rgba(57, 255, 20, 0.75);
+}
+
+.cargo-logistics-eta-strip {
+  margin: 0.35rem 0 0.65rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(0, 255, 204, 0.25);
+  background: rgba(0, 255, 204, 0.06);
+  color: var(--neon-cyan, #00ffcc);
+}
+
+.cargo-logistics-eta-strip strong {
+  color: var(--neon-green, #39ff14);
+  font-weight: 700;
+}
+
+/* Şehir detay — yoldaki ikmal */
+.city-inflight-supply {
+  margin: 0.75rem 0;
+  padding: 0.55rem 0.65rem;
+  border: 1px dashed rgba(57, 255, 20, 0.35);
+  background: rgba(57, 255, 20, 0.05);
+}
+
+.city-inflight-supply__list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.city-inflight-supply__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.city-inflight-supply__label {
+  color: var(--neon-green, #39ff14);
+  font-weight: 700;
+}
+
+.city-inflight-supply__eta {
+  color: var(--neon-cyan, #00ffcc);
+}
+
+.city-inflight-supply__dir {
+  color: rgba(148, 163, 184, 0.8);
+  font-size: 0.68rem;
+}
+
+/* Pazar fiyat grafiği */
+.market-price-chart {
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.65rem 0.45rem;
+  border: 1px solid rgba(57, 255, 20, 0.28);
+  background: rgba(0, 8, 12, 0.75);
+}
+
+.market-price-chart__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.market-price-chart__label {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.market-price-chart__spot {
+  font-size: 0.9rem;
+  color: var(--neon-green, #39ff14);
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.35);
+}
+
+.market-price-chart__svg {
+  width: 100%;
+  height: 72px;
+  display: block;
+}
+
+.market-price-chart__line {
+  fill: none;
+  stroke: var(--neon-green, #39ff14);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px rgba(57, 255, 20, 0.65));
+}
+
+.market-price-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: rgba(148, 163, 184, 0.65);
+  margin-top: 0.2rem;
+}
+
+.market-offer-cancel-btn {
+  letter-spacing: 0.06em;
+}
+
+.black-market-card__alias {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--neon-cyan, #00ffcc);
+  text-transform: uppercase;
+}

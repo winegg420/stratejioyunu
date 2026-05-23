@@ -790,8 +790,18 @@ export const useGameStore = create((set, get) => ({
     const trade = buildMarketTradeCost(resourceId, amount, mode, state.centralBank);
     if (!trade) return false;
 
-    let resources = city.resources.map((r) => ({ ...r }));
+    const moneyPay = trade.pay.money ?? 0;
+    const moneyRecv = trade.receive.money ?? 0;
+    if (moneyPay > 0 && !canAffordEmpireMoney(state.cities, moneyPay)) {
+      useNotificationStore.getState().addToast('Ortak bütçede yeterli nakit yok.', 'warn');
+      return false;
+    }
+
+    let cities = { ...state.cities };
+    let resources = (cities[cityId]?.resources ?? city.resources).map((r) => ({ ...r }));
+
     for (const [id, pay] of Object.entries(trade.pay)) {
+      if (id === 'money') continue;
       const res = resources.find((r) => r.id === id);
       if (!res || res.current < pay) {
         useNotificationStore.getState().addToast('Yetersiz kaynak — işlem iptal.', 'warn');
@@ -799,21 +809,43 @@ export const useGameStore = create((set, get) => ({
       }
     }
 
+    if (moneyPay > 0) {
+      const treasury = deductEmpireMoney(cities, moneyPay, cityId);
+      cities = treasury.cities;
+      resources = (cities[cityId]?.resources ?? resources).map((r) => ({ ...r }));
+    }
+
     resources = resources.map((r) => {
       const pay = trade.pay[r.id];
-      if (pay) return { ...r, current: Math.max(0, Math.floor(r.current - pay)) };
+      if (pay && r.id !== 'money') return { ...r, current: Math.max(0, Math.floor(r.current - pay)) };
       const recv = trade.receive[r.id];
-      if (recv) {
+      if (recv && r.id !== 'money') {
         const next = r.current + recv;
         return { ...r, current: r.max != null ? Math.min(r.max, next) : next };
       }
       return r;
     });
 
-    patchCity(set, get, cityId, { resources: ensureCityResources(resources) });
+    if (moneyRecv > 0) {
+      cities = {
+        ...cities,
+        [cityId]: { ...cities[cityId], resources: ensureCityResources(resources) },
+      };
+      const credited = creditEmpireMoney(cities, moneyRecv, cityId);
+      cities = credited.cities;
+      resources = (cities[cityId]?.resources ?? resources).map((r) => ({ ...r }));
+    } else {
+      cities = {
+        ...cities,
+        [cityId]: { ...cities[cityId], resources: ensureCityResources(resources) },
+      };
+    }
+
+    set({ cities });
     const { label } = getResourceDisplay(resourceId);
     const verb = mode === 'buy' ? 'Alındı' : 'Satıldı';
     useNotificationStore.getState().addToast(`${verb}: ${label} ×${amount}`, 'success');
+    cloudSync(get, { cityId });
     return true;
   },
 
@@ -940,6 +972,7 @@ export const useGameStore = create((set, get) => ({
       marketOffers: (state.marketOffers ?? []).filter((o) => o.id !== offerId),
       ...tickOpenMarket(get()),
     });
+    useNotificationStore.getState().addToast('[ İLAN İPTAL ] Kaynaklar iade edildi — ceza yok.', 'info');
     return true;
   },
 

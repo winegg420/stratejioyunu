@@ -1,5 +1,6 @@
 import { getMarketUnitPrices } from './marketExchange';
 import { DEFAULT_CENTRAL_BANK } from './adminOverrideEngine';
+import { appendMarketPriceHistory } from './marketPriceHistory';
 
 export const OPEN_MARKET_RESOURCE_IDS = ['hammadde', 'food', 'fuel'];
 export const OPEN_MARKET_REF_SUPPLY = 48_000;
@@ -45,10 +46,16 @@ export function computeOpenMarketPrices(supplyIndex, centralBank = DEFAULT_CENTR
 export function tickOpenMarket(state, now = Date.now()) {
   const supplyIndex = computeGlobalSupplyIndex(state);
   const openMarketPrices = computeOpenMarketPrices(supplyIndex, state.centralBank);
+  const marketPriceHistory = appendMarketPriceHistory(
+    state.marketPriceHistory,
+    openMarketPrices,
+    now,
+  );
   return {
     openMarketSupplyIndex: supplyIndex,
     openMarketPrices,
     openMarketUpdatedAt: now,
+    marketPriceHistory,
   };
 }
 

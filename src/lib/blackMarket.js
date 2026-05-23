@@ -15,13 +15,17 @@ export const BLACK_MARKET_LABELS = {
 /** İşlemde yakalanma olasılığı (0–1) */
 export const BLACK_MARKET_EXPOSURE_CHANCE = 0.14;
 
-const ALIASES = [
-  'Gölge-7', 'Kartal-X', 'Sis-12', 'Köprü-0', 'Karanlık Hat',
-  'Anonim Broker', 'Kuzey Kanalı', 'Delta-9', 'Perde-3',
-];
+/** Kara borsa listesinde görünen anonim kod adı (gerçek oyuncu adı gizlenir). */
+export function blackMarketAgentAlias(sellerId, seed = Date.now()) {
+  const base = String(sellerId ?? 'agent')
+    .split('')
+    .reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const num = ((base + Math.floor(seed)) % 8999) + 1000;
+  return `ANONYMOUS_AGENT_${num}`;
+}
 
-export function randomBlackMarketAlias(seed = Date.now()) {
-  return ALIASES[Math.floor(seed % ALIASES.length)];
+export function randomBlackMarketAlias(sellerId, seed = Date.now()) {
+  return blackMarketAgentAlias(sellerId, seed);
 }
 
 export function createBlackMarketListing({
@@ -40,7 +44,7 @@ export function createBlackMarketListing({
     price: Math.max(0, Math.floor(price)),
     qty: Math.max(1, Math.floor(qty)),
     resourceId,
-    alias: randomBlackMarketAlias(now + Math.random() * 1000),
+    alias: randomBlackMarketAlias(sellerId, now + Math.random() * 1000),
     sellerId,
     status: 'open',
     at: now,
