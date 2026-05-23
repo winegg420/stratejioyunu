@@ -21,6 +21,7 @@ import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { getMapCityDisplayName } from './mapCityDisplayName';
 import { releaseMapSessionLocks } from './mapRouteCleanup';
+import { latLngToLoc } from './MapMouseCoordinateHud';
 
 function MapCoordTooltip({ hover }) {
   if (!hover) return null;
@@ -34,7 +35,10 @@ function MapCoordTooltip({ hover }) {
         <span className="map-coord-tooltip__city">{getMapCityDisplayName(hover.name)}</span>
       )}
       <span>
-        COORD_X: {hover.lat.toFixed(2)} | Y: {hover.lng.toFixed(2)}
+        {(() => {
+          const loc = latLngToLoc(hover.lat, hover.lng);
+          return `LOC: ${loc.x}, ${loc.y}`;
+        })()}
       </span>
     </div>
   );
@@ -95,7 +99,7 @@ export default function TurkeyMap() {
   }, []);
   const botProvinceNamesRef = useRef(new Set());
 
-  const interactionLocked = isMobile ? mapLocked : true;
+  const mapPanEnabled = !isMobile || mapLocked;
 
   const ensureMapBotProvinces = useGameStore((s) => s.ensureMapBotProvinces);
 
@@ -454,7 +458,7 @@ export default function TurkeyMap() {
             fitBounds={fitBounds}
             flyTarget={flyTarget}
             isMobile={isMobile}
-            interactionLocked={interactionLocked}
+            mapPanEnabled={mapPanEnabled}
             hudCollapsed={hudCollapsed}
             onViewportChange={setViewportStable}
             onMapClickPulse={handleMapClickPulse}

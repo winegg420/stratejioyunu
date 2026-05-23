@@ -1734,7 +1734,7 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
-  approveAllianceOperation: (operationId, { troopQty } = {}) => {
+  approveAllianceOperation: (operationId, { troopQty, syncDelayMinutes = 0 } = {}) => {
     const state = get();
     const op = (state.allianceOperations ?? []).find((o) => o.id === operationId);
     if (!op || op.status !== ALLIANCE_OP_STATUS.PLANNING) return false;
@@ -1758,10 +1758,12 @@ export const useGameStore = create((set, get) => ({
       originCityName: latestExp?.originCityName,
     });
     const participants = updated.participants ?? [];
-    const launchAt = computeCoordinatedLaunchAt(participants, latestExp?.endsAt);
+    const baseLaunch = computeCoordinatedLaunchAt(participants, latestExp?.endsAt);
+    const delayMs = Math.max(0, Math.floor(Number(syncDelayMinutes) || 0)) * 60 * 1000;
+    const launchAt = baseLaunch != null ? baseLaunch + delayMs : null;
     const allianceOperations = (state.allianceOperations ?? []).map((o) => (
       o.id === operationId
-        ? { ...updated, launchAt, status: ALLIANCE_OP_STATUS.PLANNING }
+        ? { ...updated, launchAt, syncDelayMinutes, status: ALLIANCE_OP_STATUS.PLANNING }
         : o
     ));
     let patch = { allianceOperations };
@@ -3135,7 +3137,8 @@ export const useGameStore = create((set, get) => ({
       ? evaluateConquestAttempt(state, mapCity)
       : { ok: false };
 
-    if (combat.attackerWon && conquestCheck.ok) {
+    const wantsConquest = exp.attackIntent === 'conquest';
+    if (combat.attackerWon && wantsConquest && conquestCheck.ok) {
       get()._applyColonyConquest({
         expedition: exp,
         mapCity,
@@ -3819,6 +3822,7 @@ export const useGameStore = create((set, get) => ({
     targetCity,
     troopQty,
     mode = 'attack',
+    attackIntent = 'raid',
     newCityName,
     cargoHammadde = 0,
     allianceOperationId = null,
@@ -3934,7 +3938,10 @@ export const useGameStore = create((set, get) => ({
       targetLat: targetCity.lat,
       targetLng: targetCity.lng,
       mode: expeditionMode,
-      type: isSpy ? 'Casusluk Sondası' : conquestMeta.ok ? 'Fetih' : 'Saldırı',
+      type: isSpy
+        ? 'Casusluk Sondası'
+        : (attackIntent === 'conquest' && conquestMeta.ok ? 'Fetih' : 'Yağma'),
+      attackIntent: expeditionMode === 'attack' ? attackIntent : undefined,
       direction: 'outgoing',
       troops: isSpy ? `${spyCount} Casus` : troops,
       troopPayload: isSpy ? { spies: spyCount } : { ...troopQty },

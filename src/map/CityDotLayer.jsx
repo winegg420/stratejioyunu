@@ -1,15 +1,21 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
-import { BOT_MARKER_ORANGE } from './cityMarkerUtils';
+import { BOT_MARKER_ORANGE, EMPIRE_CITY_GLOW } from './cityMarkerUtils';
 import { CITY_STATUS_COLORS } from './mapUtils';
 import { normalizeMapCity } from './botCityUtils';
 
-const DOT_SIZE = 8;
+const DOT_SIZE = 10;
 
-function createDotIcon(color) {
+function createDotIcon({ color, variant }) {
+  const cls = [
+    'map-city-dot',
+    variant === 'own' && 'map-city-dot--own',
+    variant === 'bot' && 'map-city-dot--bot',
+  ].filter(Boolean).join(' ');
+
   return L.divIcon({
-    className: 'map-city-dot',
+    className: cls,
     html: `<span class="map-city-dot__core" style="background:${color}"></span>`,
     iconSize: [DOT_SIZE, DOT_SIZE],
     iconAnchor: [DOT_SIZE / 2, DOT_SIZE / 2],
@@ -41,7 +47,7 @@ function buildCityList(mapCities, playerCities) {
   return [...byName.values()];
 }
 
-/** Zoom out — yalnızca renkli nokta (+ bot için küçük ◆) */
+/** Zoom out — neon noktalar (kendi: yeşil, bot: altın) */
 export default function CityDotLayer({
   mapCities,
   playerCities,
@@ -58,14 +64,20 @@ export default function CityDotLayer({
     <>
       {cities.map((city) => {
         if (city.lat == null || city.lng == null) return null;
-        const color = city.status === 'bot'
-          ? BOT_MARKER_ORANGE
-          : (CITY_STATUS_COLORS[city.status] ?? CITY_STATUS_COLORS.enemy);
+        let variant = 'default';
+        let color = CITY_STATUS_COLORS[city.status] ?? CITY_STATUS_COLORS.enemy;
+        if (city.isOwn || city.status === 'own') {
+          variant = 'own';
+          color = EMPIRE_CITY_GLOW;
+        } else if (city.status === 'bot') {
+          variant = 'bot';
+          color = BOT_MARKER_ORANGE;
+        }
         return (
           <Marker
             key={`dot-${city.name}`}
             position={[city.lat, city.lng]}
-            icon={createDotIcon(color)}
+            icon={createDotIcon({ color, variant })}
             interactive={false}
             zIndexOffset={500}
           />

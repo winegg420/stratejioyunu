@@ -8,6 +8,7 @@ import RouteContentPanel from './RouteContentPanel';
 import PwaUpdateBanner from './PwaUpdateBanner';
 import ContentInfoModal from './ContentInfoModal';
 import CyberShellChrome from './CyberShellChrome';
+import IncomingThreatFlash from './IncomingThreatFlash';
 import { useTerminalLogStore } from '../stores/terminalLogStore';
 import ErrorBoundary from './ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +40,11 @@ export default function Layout() {
   useEffect(() => {
     initWorldSystems();
   }, [initWorldSystems]);
+
+  useEffect(() => {
+    document.documentElement.classList.add('game-shell-scroll-lock');
+    return () => document.documentElement.classList.remove('game-shell-scroll-lock');
+  }, []);
 
   useEffect(() => startTicker(), [startTicker]);
 
@@ -106,6 +112,7 @@ export default function Layout() {
       className={`app-shell hud-shell hud-final${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
       <ResourceBar />
+      <IncomingThreatFlash />
       <PwaUpdateBanner />
       <CyberShellChrome />
       <TerminalBottomDock />

@@ -192,6 +192,7 @@ function MapCommandModal({ city, onClose }) {
   const cyberCapabilities = getCyberCapabilities() ?? [];
 
   const [cargoDestId, setCargoDestId] = useState('');
+  const [attackIntent, setAttackIntent] = useState('raid');
 
   useEffect(() => {
     setActionMode(null);
@@ -208,6 +209,16 @@ function MapCommandModal({ city, onClose }) {
     const others = playerCities.filter((p) => p.id !== activeCityId);
     setCargoDestId(others[0]?.id ?? '');
   }, [city?.name, activeCityId, playerCities]);
+
+  useEffect(() => {
+    if (conquestEval.raidOnly) {
+      setAttackIntent('raid');
+    } else if (conquestEval.ok) {
+      setAttackIntent('conquest');
+    } else {
+      setAttackIntent('raid');
+    }
+  }, [mapCity.name, conquestEval.ok, conquestEval.raidOnly]);
 
   const originCoords = useMemo(
     () => resolveCityCoords(activeCityName, playerCities, mapCities),
@@ -309,7 +320,12 @@ function MapCommandModal({ city, onClose }) {
   const confirmAttack = () => {
     if (!canStartAttack || actionLocked) return;
     runLocked(() => {
-      const ok = startExpedition({ targetCity: mapCity, troopQty, mode: 'attack' });
+      const ok = startExpedition({
+        targetCity: mapCity,
+        troopQty,
+        mode: 'attack',
+        attackIntent,
+      });
       if (ok) onClose();
     });
   };
@@ -528,6 +544,41 @@ function MapCommandModal({ city, onClose }) {
         {actionMode === 'troops' && (
           <section className="map-command-modal__panel">
             <h3>{isConquerTarget && conquestEval.ok ? `Fetih seferi — ${mapCity.name}` : `Ordu kaydırma — ${activeCityName}`}</h3>
+            {!isAnyOwnCity && (
+              <div className="expedition-intent-grid" role="radiogroup" aria-label="Sefer tipi">
+                <button
+                  type="button"
+                  className={[
+                    'expedition-intent-btn',
+                    attackIntent === 'raid' && 'expedition-intent-btn--active',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => setAttackIntent('raid')}
+                >
+                  <span className="expedition-intent-btn__label">YAĞMA (RAID)</span>
+                  <span className="expedition-intent-btn__risk">
+                    Düşük risk · Hammadde ganimeti · Şehir ele geçmez
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={[
+                    'expedition-intent-btn',
+                    attackIntent === 'conquest' && 'expedition-intent-btn--active',
+                  ].filter(Boolean).join(' ')}
+                  disabled={!conquestEval.ok || conquestEval.raidOnly}
+                  onClick={() => setAttackIntent('conquest')}
+                >
+                  <span className="expedition-intent-btn__label">İŞGAL (CONQUEST)</span>
+                  <span className="expedition-intent-btn__risk">
+                    {conquestEval.raidOnly
+                      ? 'Ana Merkez — yalnızca yağma mümkün'
+                      : conquestEval.ok
+                        ? 'Yüksek risk · Koloni kurulumu · Ağır kayıp'
+                        : (conquestEval.reason ?? 'Fetih şartları sağlanmıyor')}
+                  </span>
+                </button>
+              </div>
+            )}
             <ExpeditionEtaStrip durationSeconds={attackDuration} airRush={airRushAttack} />
             {idleTroops.map((t) => (
               <TroopDispatchRow

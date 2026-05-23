@@ -1,0 +1,189 @@
+/* Harita dot parlamaları */
+.map-city-dot__core {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.map-city-dot--own .map-city-dot__core {
+  background: #39ff14 !important;
+  box-shadow:
+    0 0 8px #39ff14,
+    0 0 16px rgba(57, 255, 20, 0.65),
+    0 0 28px rgba(57, 255, 20, 0.35);
+}
+
+.map-city-dot--bot .map-city-dot__core {
+  background: #fbbf24 !important;
+  box-shadow:
+    0 0 8px #fbbf24,
+    0 0 14px rgba(251, 191, 36, 0.6),
+    0 0 24px rgba(251, 191, 36, 0.3);
+}
+
+/* Koordinat HUD */
+.map-loc-hud {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.55rem;
+  z-index: 850;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--neon-cyan, #00ffcc);
+  border: 1px solid rgba(0, 255, 204, 0.35);
+  background: rgba(0, 8, 14, 0.88);
+  pointer-events: none;
+}
+
+.map-loc-hud__idle {
+  opacity: 0.55;
+}
+
+.map-coord-tooltip span:last-child {
+  letter-spacing: 0.08em;
+}
+
+/* İttifak / pakt rozeti */
+.map-treaty-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  font-size: 0.65rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 204, 0.65));
+}
+
+/* Sefer tipi seçimi */
+.expedition-intent-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0.65rem;
+}
+
+.expedition-intent-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  border: 1px solid rgba(0, 255, 204, 0.28);
+  background: rgba(0, 12, 20, 0.85);
+  color: rgba(203, 213, 225, 0.9);
+  cursor: pointer;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+.expedition-intent-btn--active {
+  border-color: var(--neon-green, #39ff14);
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.3);
+  color: var(--neon-green, #39ff14);
+}
+
+.expedition-intent-btn__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.expedition-intent-btn__risk {
+  font-size: 0.62rem;
+  color: rgba(148, 163, 184, 0.85);
+  line-height: 1.3;
+}
+
+.expedition-intent-btn--active .expedition-intent-btn__risk {
+  color: rgba(57, 255, 20, 0.7);
+}
+
+/* INCOMING THREAT */
+.incoming-threat-flash {
+  position: fixed;
+  top: calc(var(--resource-bar-h, 52px) + 0.35rem);
+  right: 0.5rem;
+  z-index: 1205;
+  pointer-events: none;
+}
+
+.incoming-threat-flash__text {
+  display: block;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.92);
+  border: 1px solid #f87171;
+  animation: incoming-threat-blink 0.85s ease-in-out infinite;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.65);
+}
+
+@keyframes incoming-threat-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Savaş raporu özet tablosu */
+.report-battle-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.78rem;
+}
+
+.report-battle-summary-table th,
+.report-battle-summary-table td {
+  border: 1px solid rgba(0, 255, 204, 0.22);
+  padding: 0.4rem 0.55rem;
+  text-align: left;
+}
+
+.report-battle-summary-table th {
+  color: rgba(148, 163, 184, 0.85);
+  font-weight: 600;
+  background: rgba(0, 255, 204, 0.06);
+}
+
+.report-battle-summary-table td {
+  color: #e2e8f0;
+}
+
+.report-battle-summary-table .report-battle-summary-table__winner {
+  color: var(--neon-green, #39ff14);
+  font-weight: 700;
+}
+
+/* İttifak zaman ayarı */
+.alliance-ops-timing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: flex-end;
+  margin: 0.5rem 0;
+}
+
+.alliance-ops-timing label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.alliance-ops-timing input {
+  width: 5.5rem;
+}
+
+/* Marker parlamaları (zoom in) */
+.own-city-marker--empire .map-marker-pin,
+.main-hq-marker .map-marker-pin,
+.colony-marker .map-marker-pin {
+  filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.75));
+}
+
+.map-city-marker--bot .map-marker-pin {
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.7));
+}

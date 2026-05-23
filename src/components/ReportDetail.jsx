@@ -21,6 +21,45 @@ function OperationOutcomeBanner({ report }) {
   );
 }
 
+function BattleReportSummaryTable({ report }) {
+  const won = report.winner === 'player';
+  const attackerLossTotal = (report.attackerLossRows ?? buildLossRows(report.troopPayload, report.attackerLosses))
+    .reduce((sum, row) => sum + (Number(row.lost) || 0), 0);
+  const defenderLossTotal = (report.defenderLossRows ?? [])
+    .reduce((sum, row) => sum + (Number(row.lost) || 0), 0);
+  const lootHammadde = (report.loot ?? []).find((l) =>
+    String(l.label ?? '').toLowerCase().includes('hammadde')
+    || l.id === 'hammadde',
+  );
+  const lootAmount = lootHammadde?.amount
+    ?? (report.loot ?? []).reduce((s, l) => s + (l.amount ?? 0), 0);
+
+  return (
+    <table className="report-battle-summary-table">
+      <tbody>
+        <tr>
+          <th>Kazanan</th>
+          <td className="report-battle-summary-table__winner">
+            {won ? (report.attacker ?? 'Siz') : (report.defender ?? 'Düşman')}
+          </td>
+        </tr>
+        <tr>
+          <th>Kaybedilen asker (siz)</th>
+          <td>{attackerLossTotal.toLocaleString('tr-TR')}</td>
+        </tr>
+        <tr>
+          <th>Kaybedilen asker (düşman)</th>
+          <td>{defenderLossTotal.toLocaleString('tr-TR')}</td>
+        </tr>
+        <tr>
+          <th>Yağmalanan hammadde</th>
+          <td>{won && lootAmount > 0 ? `+${lootAmount.toLocaleString('tr-TR')}` : '—'}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
 function LossBreakdownTable({ title, rows, fallbackText }) {
   const built = rows?.length
     ? rows
@@ -79,6 +118,7 @@ export default function ReportDetail({ report }) {
 
     return (
       <div className="report-detail report-detail--ledger">
+        <BattleReportSummaryTable report={report} />
         {ledger && (
           <div className={`combat-ledger-banner combat-ledger-banner--${ledger.status.toLowerCase()}`}>
             <span className="combat-ledger-tag">

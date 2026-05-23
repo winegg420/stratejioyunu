@@ -34,6 +34,8 @@ import './styles/operational-flow.css';
 import './styles/ui-ux-revisions.css';
 import './styles/city-management-ui.css';
 import './styles/logistics-trade-ui.css';
+import './styles/map-war-ui.css';
+import './styles/layout-scroll-fix.css';
 import App from './App.jsx';
 import { disableDevTestModeLocal } from './lib/devTestMode';
 

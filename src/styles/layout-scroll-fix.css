@@ -1,0 +1,48 @@
+/* Sayfa / ekran kaymasını önle — yalnızca oyun kabuğu (giriş sayfası etkilenmez) */
+html.game-shell-scroll-lock,
+html.game-shell-scroll-lock body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.game-shell-scroll-lock #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-shell.hud-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell .main-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell .content-area {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-shell.route-map .content-area {
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell.route-map .map-page-wrapper {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .app-shell.mobile-app .content-area:not(.route-map .content-area) {
+    padding-bottom: calc(var(--bottom-nav-h, 56px) + 0.5rem);
+  }
+}

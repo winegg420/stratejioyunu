@@ -13,6 +13,7 @@ import { diplomacy } from '../data/placeholder';
 export default function Expeditions() {
   const [launchOpen, setLaunchOpen] = useState(false);
   const [opTarget, setOpTarget] = useState('');
+  const [syncDelayMinutes, setSyncDelayMinutes] = useState(0);
   const now = useGameStore((s) => s.now);
   const expeditions = useGameStore((s) => s.expeditions);
   const mapCities = useGameStore((s) => s.mapCities);
@@ -89,6 +90,22 @@ export default function Expeditions() {
             ))}
           </select>
         </label>
+        <div className="alliance-ops-timing">
+          <label>
+            <span>Geciktirme / Zaman Ayarı (dk)</span>
+            <input
+              type="number"
+              className="input-qty"
+              min={0}
+              max={180}
+              value={syncDelayMinutes}
+              onChange={(e) => setSyncDelayMinutes(Math.max(0, Math.min(180, Number(e.target.value) || 0)))}
+            />
+          </label>
+          <p className="hint">
+            Tüm müttefik ordularının varışını senkronize etmek için ek gecikme eklenir.
+          </p>
+        </div>
         {planningOps.length > 0 ? (
           <ul className="alliance-ops-list">
             {planningOps.map((op) => (
@@ -105,7 +122,10 @@ export default function Expeditions() {
                 <button
                   type="button"
                   className="btn btn-hud-primary btn-sm"
-                  onClick={() => approveAllianceOperation(op.id, { troopQty: { infantry: 25 } })}
+                  onClick={() => approveAllianceOperation(op.id, {
+                    troopQty: { infantry: 25 },
+                    syncDelayMinutes,
+                  })}
                 >
                   [ ONAYLA · KATIL ]
                 </button>
