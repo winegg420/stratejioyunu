@@ -2329,6 +2329,7 @@ export const useGameStore = create((set, get) => ({
     set({
       expeditions: [...state.expeditions, expedition],
       navBadges: { ...state.navBadges, expeditions: true },
+      mapRouteSyncRev: (state.mapRouteSyncRev ?? 0) + 1,
     });
 
     useNotificationStore.getState().addToast(
@@ -3937,6 +3938,7 @@ export const useGameStore = create((set, get) => ({
     const state = get();
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
+    const devBypass = bypassWarLocksForDevTest();
     const isSpy = mode === 'spy';
     const isFound = mode === 'found';
     const spyCount = troopQty?.spies ?? 0;
@@ -3950,7 +3952,7 @@ export const useGameStore = create((set, get) => ({
       if (!applyPeaceForceGate(get, targetCity, peaceMode)) return false;
     }
 
-    if (mode === 'attack' && targetCity.owner) {
+    if (mode === 'attack' && targetCity.owner && !devBypass) {
       const block = isAttackBlockedByTreaties(state.diplomaticTreaties, targetCity.owner);
       if (block.blocked) {
         useNotificationStore.getState().addToast(block.reason, 'warn');
@@ -4000,7 +4002,13 @@ export const useGameStore = create((set, get) => ({
     const conquestMeta = mode === 'attack'
       ? evaluateConquestAttempt(state, targetCity)
       : { ok: false };
-    if (mode === 'attack' && conquestMeta.ok === false && conquestMeta.reason && !conquestMeta.raidOnly) {
+    if (
+      mode === 'attack'
+      && !devBypass
+      && conquestMeta.ok === false
+      && conquestMeta.reason
+      && !conquestMeta.raidOnly
+    ) {
       const defenderPc = findPlayerCityByMapName(state, targetCity.name);
       if (isConquerableMapTarget(targetCity, state) || (targetCity.status === 'bot')) {
         useNotificationStore.getState().addToast(conquestMeta.reason, 'warn');
@@ -4074,6 +4082,7 @@ export const useGameStore = create((set, get) => ({
       },
       expeditions: [...s.expeditions, expedition],
       navBadges: { ...s.navBadges, expeditions: true },
+      mapRouteSyncRev: (s.mapRouteSyncRev ?? 0) + 1,
       ...(isSpy ? { milAiScoutLaunched: true } : {}),
     }));
 

@@ -201,12 +201,12 @@ function MapCommandModal({ city, onClose }) {
   );
   const canAttack = !isAnyOwnCity && (
     devWarBypass
-      ? (isHostileTarget || isConquerTarget)
+      ? mapCity.status !== 'own'
       : isConquerTarget || (mapCity.status !== 'empty' && inRadarRange)
   );
   const canSpy = !isAnyOwnCity && (
     devWarBypass
-      ? isHostileTarget
+      ? mapCity.status !== 'own'
       : (mapCity.status === 'enemy' || mapCity.status === 'bot') && inRadarRange
   );
   const outOfRange = !devWarBypass && !isConquerTarget && mapCity.status !== 'own' && !inRadarRange;
@@ -214,6 +214,16 @@ function MapCommandModal({ city, onClose }) {
 
   const [cargoDestId, setCargoDestId] = useState('');
   const [attackIntent, setAttackIntent] = useState('raid');
+
+  useEffect(() => {
+    if (actionMode !== 'troops' || !devWarBypass) return;
+    const total = Object.values(troopQty).reduce((a, b) => a + (Number(b) || 0), 0);
+    if (total > 0) return;
+    const starter = idleTroops.find((t) => (t.available ?? 0) > 0);
+    if (starter) {
+      setTroopQty({ [starter.id]: 1 });
+    }
+  }, [actionMode, devWarBypass, idleTroops, troopQty]);
 
   useEffect(() => {
     setActionMode(null);
@@ -632,6 +642,13 @@ function MapCommandModal({ city, onClose }) {
               )}
             />
             <div className="map-command-modal__panel-actions map-command-modal__panel-actions--sticky">
+              {!canStartAttack && (
+                <p className="map-command-modal__hint map-command-modal__hint--attack">
+                  {devWarBypass
+                    ? 'En az 1 birlik seçin (admin modunda otomatik önerilir).'
+                    : 'Saldırı için en az 1 boşta birlik seçin — hammadde tek başına yeterli değildir.'}
+                </p>
+              )}
               <button type="button" className="btn btn-hud-primary" disabled={!canStartAttack || actionLocked} onClick={confirmAttack}>
                 {isConquerTarget && conquestEval.ok ? '[ FETİH BAŞLAT ]' : '[ SEFERİ BAŞLAT ]'}
               </button>

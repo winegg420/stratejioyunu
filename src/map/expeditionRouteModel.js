@@ -55,8 +55,14 @@ export function buildExpeditionRoutes(expeditions, mapCities, playerCities) {
 
       if (!shouldDrawExpeditionRoute(exp, mapCities, enemyName)) return null;
 
-      const home = resolveCoords(homeName, mapCities, playerCities, exp.originCityId);
-      const enemy = resolveCoords(enemyName, mapCities, playerCities, exp.originCityId);
+      const home = resolveCoords(homeName, mapCities, playerCities, exp.originCityId)
+        ?? (originPc?.lat != null && originPc?.lng != null
+          ? [originPc.lat, originPc.lng]
+          : null);
+      const enemy = resolveCoords(enemyName, mapCities, playerCities, exp.originCityId)
+        ?? (exp.targetLat != null && exp.targetLng != null
+          ? [exp.targetLat, exp.targetLng]
+          : null);
       if (!home || !enemy) return null;
 
       const positions = isReturn ? [enemy, home] : [home, enemy];

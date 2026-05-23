@@ -19,6 +19,9 @@ export function isCleansedGhostEndpoint(mapCities, name, lat, lng) {
 
 export function shouldDrawExpeditionRoute(exp, mapCities, endpointName) {
   if (!exp || exp.mode === 'found') return true;
+  if (exp.mode === 'cyber' || exp.mode === 'spy') {
+    if (exp.targetLat != null && exp.targetLng != null) return true;
+  }
   if (isCleansedGhostEndpoint(mapCities, endpointName, exp.targetLat, exp.targetLng)) {
     return false;
   }

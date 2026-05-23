@@ -10,11 +10,12 @@ import {
 function routePathOptions(route) {
   return {
     color: route.color,
-    weight: 3.5,
-    opacity: 0.95,
+    weight: 4.5,
+    opacity: 1,
     dashArray: route.dashArray,
     dashOffset: '0',
     lineCap: 'round',
+    lineJoin: 'round',
     className: route.className,
   };
 }
@@ -72,6 +73,9 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
         layer = L.polyline(latlngs, routePathOptions(route));
         layer.__routeEndpoint = route.endpointName;
         layer.addTo(map);
+        if (typeof layer.bringToFront === 'function') {
+          layer.bringToFront();
+        }
         layersRef.current.set(route.id, layer);
         dotsRef.current.set(route.id, createRouteNeonDots(map, route));
       } else {
@@ -80,6 +84,9 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
         layer.__routeEndpoint = route.endpointName;
         if (!map.hasLayer(layer)) {
           layer.addTo(map);
+        }
+        if (typeof layer.bringToFront === 'function') {
+          layer.bringToFront();
         }
         let dots = dotsRef.current.get(route.id);
         if (!dots?.length) {
@@ -99,7 +106,7 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
     }
 
     return undefined;
-  }, [map, routes, mapCities]);
+  }, [map, routes, mapCities, routeSyncRev]);
 
   useEffect(() => {
     if (!map || routes.length === 0) return undefined;

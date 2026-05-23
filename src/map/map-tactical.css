@@ -775,9 +775,12 @@
 }
 
 /* Sefer rotaları — kesik çizgi, ışık huzmesi, tactical-pulse, akan neon noktalar */
-.leaflet-overlay-pane svg path.tactical-route {
+.leaflet-overlay-pane svg path.tactical-route,
+.leaflet-overlay-pane svg path.cyber-route {
   stroke-linecap: round;
   stroke-linejoin: round;
+  stroke-opacity: 0.95 !important;
+  visibility: visible !important;
   animation:
     tactical-route-flow 2.8s linear infinite,
     tactical-pulse 2.4s ease-in-out infinite;
