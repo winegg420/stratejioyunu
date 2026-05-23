@@ -128,11 +128,13 @@ function TurkeyLeafletMap({
         mapCities={filteredCities}
         playerCities={playerCities}
         zoom={mapZoom}
+        onSelectCity={onSelectCity}
       />
       <CityMapLabelsLayer
         mapCities={filteredCities}
         playerCities={playerCities}
         zoom={mapZoom}
+        onSelectCity={onSelectCity}
       />
       <CityMarkers
         mapCities={filteredCities}

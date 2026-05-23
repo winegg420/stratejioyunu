@@ -8,17 +8,20 @@ import { isGameAdmin } from '../lib/adminAccess';
 import { isDevAdminLocalEnabled } from '../lib/devTestMode';
 import { useAuth } from '../context/AuthContext';
 import { useGameStore } from '../stores/gameStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 export default function AdminLog() {
   const { playerName, session } = useAuth();
   const isAdminUser = useGameStore((s) => s.isAdminUser);
+  const devTestModeActive = useGameStore((s) => s.devTestModeActive);
+  const addToast = useNotificationStore((s) => s.addToast);
   const isFounder = isGameAdmin({
     playerName,
     email: session?.user?.email ?? null,
     session,
     profileIsAdmin: isAdminUser,
   });
-  const adminActive = isDevAdminLocalEnabled();
+  const adminActive = devTestModeActive || isDevAdminLocalEnabled();
   const storeLogs = useGameStore((s) => s.adminPublicLogs ?? []);
   const refreshServerBroadcast = useGameStore((s) => s.refreshServerBroadcast);
   const enableAdminMode = useGameStore((s) => s.enableAdminMode);
@@ -45,19 +48,21 @@ export default function AdminLog() {
     setToggleBusy(true);
     try {
       await enableAdminMode();
+      addToast('Admin test modu aktif — bina, kaynak ve birlikler yükseltildi.', 'success');
     } finally {
       setToggleBusy(false);
     }
-  }, []);
+  }, [enableAdminMode, addToast]);
 
   const handleDisableAdmin = useCallback(async () => {
     setToggleBusy(true);
     try {
       await disableAdminMode();
+      addToast('Admin test modu kapatıldı — kayıt geri yüklendi.', 'info');
     } finally {
       setToggleBusy(false);
     }
-  }, []);
+  }, [disableAdminMode, addToast]);
 
   const newsItems = (logs.length ? logs : storeLogs).map(adminLogToNewsItem);
 

@@ -59,6 +59,7 @@ export default function CityMapLabelsLayer({
   mapCities,
   playerCities,
   zoom = 0,
+  onSelectCity,
 }) {
   const show = zoom >= MAP_ZOOM_LABEL_MIN;
 
@@ -78,8 +79,14 @@ export default function CityMapLabelsLayer({
             key={`centroid-label-${city.name}`}
             position={[city.lat, city.lng]}
             icon={createCityLabelIcon(city)}
-            interactive={false}
+            interactive={Boolean(onSelectCity)}
             zIndexOffset={600}
+            eventHandlers={onSelectCity ? {
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+                onSelectCity(city);
+              },
+            } : undefined}
           />
         );
       })}

@@ -1078,6 +1078,7 @@ export const useGameStore = create((set, get) => ({
 
   enableAdminMode: async () => {
     set((state) => enableAdminModeOnState(state));
+    get().applyAdminTestBoost();
     return true;
   },
 

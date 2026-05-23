@@ -182,8 +182,8 @@ export function createMapHitIcon() {
   return L.divIcon({
     className: 'map-city-hit-marker',
     html: '<span class="map-city-hit-marker__zone" aria-hidden="true"></span>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
   });
 }
 

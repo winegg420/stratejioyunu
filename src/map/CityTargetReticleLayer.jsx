@@ -19,9 +19,9 @@ const RETICLE_SVG = (color = '#ff3355', { dim = false } = {}) => `
 function createReticleIcon(color, { bot = false } = {}) {
   return L.divIcon({
     className: `map-target-reticle${bot ? ' map-target-reticle--bot' : ''}`,
-    html: RETICLE_SVG(color, { dim: bot }),
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    html: `<span class="map-target-reticle__hit">${RETICLE_SVG(color, { dim: bot })}</span>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
   });
 }
 
@@ -31,7 +31,12 @@ const BOT_COASTAL = createReticleIcon('#fbbf24', { bot: true });
 const BOT_CAPITAL = createReticleIcon('#f59e0b', { bot: true });
 const OPEN_INLAND = createReticleIcon('#4ade80', { bot: true });
 
-export default function CityTargetReticleLayer({ mapCities, playerCities, zoom = 0 }) {
+export default function CityTargetReticleLayer({
+  mapCities,
+  playerCities,
+  zoom = 0,
+  onSelectCity,
+}) {
   if (zoom < MAP_ZOOM_LABEL_MIN) return null;
   const targets = useMemo(() => {
     const own = new Set(playerCities.map((c) => c.name));
@@ -62,8 +67,15 @@ export default function CityTargetReticleLayer({ mapCities, playerCities, zoom =
                     ? NEUTRAL
                     : HOSTILE
           }
-          interactive={false}
-          zIndexOffset={450}
+          interactive={Boolean(onSelectCity)}
+          zIndexOffset={950}
+          bubblingMouseEvents={false}
+          eventHandlers={onSelectCity ? {
+            click: (e) => {
+              L.DomEvent.stopPropagation(e);
+              onSelectCity(city);
+            },
+          } : undefined}
         />
       ))}
     </>

@@ -32,9 +32,9 @@ export function isDevAdminLocalEnabled() {
 
 /** Varsayılan kapalı — env, dev_test veya admin modu ile açılır. */
 export function isDevTestMode() {
+  if (isDevAdminLocalEnabled()) return true;
   if (import.meta.env.VITE_DEV_TEST_MODE === 'false') return false;
   if (import.meta.env.VITE_DEV_TEST_MODE === 'true') return true;
-  if (isDevAdminLocalEnabled()) return true;
   try {
     return localStorage.getItem(DEV_LS_KEY) === '1';
   } catch {

@@ -118,7 +118,7 @@ export default function CityMarkers({
             key={`${markerRenderKey}-${city.playerId || city.name}-${ownerLabel}-${cyberActive ? 'c' : 'n'}`}
             position={[city.lat, city.lng]}
             icon={icon}
-            zIndexOffset={isActive ? 1200 : city.isOwn ? 400 : 0}
+            zIndexOffset={isActive ? 1400 : 900}
             bubblingMouseEvents={false}
             eventHandlers={{
               click: (e) => {
