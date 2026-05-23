@@ -138,16 +138,9 @@ export function useProvinceMapHandlers({
             status: 'empty',
           };
           if (h.mapTargetPickRequest) {
-            if (city) {
-              h.handleSelectCity(city);
-            } else {
-              h.handleSelectCity({
-                ...highlight,
-                name: provinceName,
-              });
-            }
+            h.handleSelectCity(city ?? { ...highlight, name: provinceName });
           } else {
-            h.openMapCityPanel?.(highlight);
+            h.handleSelectCity?.(city ?? highlight) ?? h.openMapCityPanel?.(highlight);
           }
           setActiveProvinceLayer(layer, h.activeProvinceLayerRef, getProvinceStyle);
         } catch (err) {

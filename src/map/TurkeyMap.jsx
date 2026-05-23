@@ -224,8 +224,8 @@ export default function TurkeyMap() {
       navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
       return;
     }
-    openCityDetail(city);
-  }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate, openCityDetail]);
+    openMapCityPanel(enriched);
+  }, [mapTargetPickRequest, playerCities, fulfillMapTargetPick, navigate, openMapCityPanel]);
 
   const handleProvinceView = useCallback((highlight) => {
     if (mapTargetPickRequest) return;

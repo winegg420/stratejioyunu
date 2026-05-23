@@ -35,7 +35,8 @@ export function enableAdminModeOnState(state) {
   saveAdminSnapshot(state);
   setDevAdminLocalEnabled(true);
   setDevTestModeLocal(true);
-  return applyDevTestModeToState(state);
+  const next = applyDevTestModeToState(state);
+  return { ...next, devTestModeActive: true };
 }
 
 /** Snapshot varsa eski haline döner; yoksa yalnızca bayrakları kapatır. */
