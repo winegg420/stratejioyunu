@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import AuthMapBackground from '../components/AuthMapBackground';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import GlobalBriefingModal from '../components/GlobalBriefingModal';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -57,6 +58,7 @@ export default function AuthPage() {
 
   return (
     <div className="auth-screen auth-page-wrapper">
+      <LanguageSwitcher className="lang-switcher--auth" />
       <AuthMapBackground />
       <div className="auth-overlay" />
       <div className="auth-card">

@@ -14,6 +14,7 @@ import {
   isPeaceForceProtected,
 } from '../lib/progressionSystem';
 import ServerTimeClock from './ServerTimeClock';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 
 const DEPOT_WARN_PCT = 90;
@@ -207,6 +208,7 @@ export default function ResourceBar() {
         </div>
 
         <div className="resource-bar-actions resource-bar-actions--tactical">
+          <LanguageSwitcher className="lang-switcher--bar" />
           <ServerTimeClock />
           <div className="player-block player-desktop">
             <span className="player-name">{playerName}</span>

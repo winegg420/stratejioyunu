@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { TurkeyFlagIcon, UkFlagIcon } from './FlagIcons';
 
@@ -8,7 +6,8 @@ const OPTIONS = [
   { id: 'en', label: 'English', code: 'EN', Flag: UkFlagIcon },
 ];
 
-function LanguageSwitcherUI({ className = '' }) {
+/** TR / UK bayrakları — üst kaynak çubuğunda veya giriş ekranında */
+export default function LanguageSwitcher({ className = '' }) {
   const { lang, setLang } = useLanguage();
 
   return (
@@ -29,7 +28,9 @@ function LanguageSwitcherUI({ className = '' }) {
               'lang-switcher__btn',
               active && 'lang-switcher__btn--active',
               `lang-switcher__btn--${opt.id}`,
-            ].filter(Boolean).join(' ')}
+            ]
+              .filter(Boolean)
+              .join(' ')}
             onClick={() => setLang(opt.id)}
             title={opt.label}
             aria-label={opt.label}
@@ -41,27 +42,5 @@ function LanguageSwitcherUI({ className = '' }) {
         );
       })}
     </div>
-  );
-}
-
-/**
- * Bayraklar her zaman document.body üzerinde — harita/overlay altında kalmaz.
- */
-export default function LanguageSwitcher({ className = '', inline = false }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  if (inline) {
-    return <LanguageSwitcherUI className={className} />;
-  }
-
-  return createPortal(
-    <LanguageSwitcherUI className={['lang-switcher--portal', className].filter(Boolean).join(' ')} />,
-    document.body,
   );
 }
