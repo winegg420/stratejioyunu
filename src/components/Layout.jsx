@@ -6,8 +6,9 @@ import BottomNav from './BottomNav';
 import TerminalBottomDock from './TerminalBottomDock';
 import RouteContentPanel from './RouteContentPanel';
 import PwaUpdateBanner from './PwaUpdateBanner';
-import RouteTransitionLoader from './RouteTransitionLoader';
 import ContentInfoModal from './ContentInfoModal';
+import CyberShellChrome from './CyberShellChrome';
+import { useTerminalLogStore } from '../stores/terminalLogStore';
 import ErrorBoundary from './ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
 import { startSyncPolling, stopSyncPolling } from '../lib/supabaseSync';
@@ -76,6 +77,10 @@ export default function Layout() {
   }, [pathname, clearNavBadge]);
 
   useEffect(() => {
+    useTerminalLogStore.getState().appendRoute(pathname);
+  }, [pathname]);
+
+  useEffect(() => {
     if (!isMobile) {
       document.documentElement.classList.remove(MOBILE_SHELL_CLASS);
       return undefined;
@@ -102,7 +107,7 @@ export default function Layout() {
     >
       <ResourceBar />
       <PwaUpdateBanner />
-      <RouteTransitionLoader />
+      <CyberShellChrome />
       <TerminalBottomDock />
       <ContentInfoModal />
       <div className="main-shell">

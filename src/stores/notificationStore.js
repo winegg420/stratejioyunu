@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const TOAST_MS = 3000;
+const TOAST_MS = 4500;
 
 export const useNotificationStore = create((set, get) => ({
   toasts: [],

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useTerminalLogStore } from '../stores/terminalLogStore';
 
 export const TERMINAL_DOCK_LOGS_ID = 'terminal-dock-logs';
 
@@ -10,12 +10,15 @@ export default function TerminalLogPanel({
   className = '',
   children,
 }) {
-  const { pathname } = useLocation();
-  const [dock, setDock] = useState(null);
+  const append = useTerminalLogStore((s) => s.append);
 
   useEffect(() => {
-    setDock(document.getElementById(TERMINAL_DOCK_LOGS_ID));
-  }, [pathname]);
+    if (title) append(`${tag} :: ${title}`, tag);
+  }, [title, tag, append]);
+
+  const dock = typeof document !== 'undefined'
+    ? document.getElementById(TERMINAL_DOCK_LOGS_ID)
+    : null;
 
   const panel = (
     <section className={`terminal-log-panel${className ? ` ${className}` : ''}`}>

@@ -1,0 +1,298 @@
+/* UI/UX revizyon paketi — neon, scrollbar, okunabilirlik, hız */
+
+:root {
+  --neon-green: #39ff14;
+  --neon-green-dim: rgba(57, 255, 20, 0.55);
+  --neon-green-glow: rgba(57, 255, 20, 0.35);
+  --neon-cyan: #00ffcc;
+  --neon-cyan-dim: rgba(0, 255, 204, 0.5);
+  --success: var(--neon-green);
+  --cmd-green: var(--neon-green);
+  --cmd-cyan: var(--neon-cyan);
+  --hud-cyan: var(--neon-cyan);
+}
+
+/* ── Scrollbar (siber ince) ── */
+.content-area,
+.content-area--terminal,
+.terminal-dock-logs__scroll,
+.terminal-log-panel__body,
+.content-info-modal__body,
+.sidebar-hud .nav-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(57, 255, 20, 0.45) rgba(4, 10, 16, 0.9);
+}
+
+.content-area::-webkit-scrollbar,
+.content-area--terminal::-webkit-scrollbar,
+.terminal-dock-logs__scroll::-webkit-scrollbar,
+.content-info-modal__body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.content-area::-webkit-scrollbar-track,
+.content-area--terminal::-webkit-scrollbar-track,
+.terminal-dock-logs__scroll::-webkit-scrollbar-track,
+.content-info-modal__body::-webkit-scrollbar-track {
+  background: rgba(4, 10, 16, 0.95);
+}
+
+.content-area::-webkit-scrollbar-thumb,
+.content-area--terminal::-webkit-scrollbar-thumb,
+.terminal-dock-logs__scroll::-webkit-scrollbar-thumb,
+.content-info-modal__body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(57, 255, 20, 0.55), rgba(0, 255, 204, 0.35));
+  border-radius: 3px;
+}
+
+/* ── Menü / buton tepki süresi ── */
+.hud-shell .nav-link,
+.bottom-nav-link,
+.btn,
+.hud-button,
+.lang-switcher__btn {
+  transition: all 0.1s ease !important;
+}
+
+/* ── Neon tutarlılığı (paneller) ── */
+.glass-panel,
+.home-cmd-widget--active,
+.res-value__current--pulse,
+.command-ticker__tag,
+.toast-success {
+  --panel-neon: var(--neon-green);
+}
+
+.home-cmd-widget--active .home-cmd-widget__value {
+  color: var(--neon-green) !important;
+  text-shadow: 0 0 10px var(--neon-green-glow), 0 0 20px rgba(57, 255, 20, 0.2) !important;
+}
+
+.hud-shell .sidebar-hud .nav-link.active::before {
+  background: var(--neon-green) !important;
+  box-shadow: 0 0 8px var(--neon-green), 0 0 18px var(--neon-green-glow) !important;
+}
+
+/* ── Bina / birim açıklama okunabilirliği ── */
+.building-card .card-desc,
+.building-card .card-meta,
+.building-card .badge,
+.unit-card .unit-desc,
+.unit-card .unit-meta,
+.unit-card .card-desc,
+.content-card--slim .card-desc,
+.hint,
+.building-req-tooltip-list {
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.building-card .card-header h3,
+.unit-card-header h3 {
+  line-height: 1.35 !important;
+}
+
+.content-info-modal__lore,
+.content-info-modal__section-hint {
+  font-size: 0.92rem !important;
+  line-height: 1.6 !important;
+}
+
+/* ── Yan köşe dekor (geniş ekran) ── */
+.cyber-shell-chrome {
+  display: none;
+  position: fixed;
+  top: calc(var(--resource-bar-h) + 0.5rem);
+  bottom: calc(var(--terminal-dock-ticker-h, 2rem) + var(--terminal-dock-logs-h, 0px) + 0.5rem);
+  width: 88px;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0.5rem;
+  opacity: 0.55;
+}
+
+.cyber-shell-chrome--left {
+  left: calc(var(--sidebar-w, 220px) + 0.35rem);
+}
+
+.cyber-shell-chrome--right {
+  right: 0.35rem;
+}
+
+.cyber-shell-chrome__line {
+  height: 2px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  box-shadow: 0 0 8px var(--neon-cyan-dim);
+}
+
+.cyber-shell-chrome--right .cyber-shell-chrome__line {
+  background: linear-gradient(270deg, transparent, var(--neon-green), transparent);
+}
+
+.cyber-shell-chrome__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.75);
+  margin-bottom: 0.2rem;
+}
+
+.cyber-shell-chrome__stat strong {
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.cyber-shell-chrome__stat strong.is-ok {
+  color: var(--neon-green);
+}
+
+.cyber-shell-chrome__stat strong.is-sync {
+  color: #fbbf24;
+}
+
+.cyber-shell-chrome__grid {
+  margin-top: 0.5rem;
+  flex: 1;
+  min-height: 40px;
+  border: 1px solid rgba(0, 255, 204, 0.12);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 7px,
+      rgba(0, 255, 204, 0.04) 7px,
+      rgba(0, 255, 204, 0.04) 8px
+    );
+}
+
+@media (min-width: 1280px) {
+  .cyber-shell-chrome {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* ── Sayfa içi FETCHING DATA loader ── */
+.page-route-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 5, 8, 0.72);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+  animation: page-route-loader-in 0.12s ease-out;
+}
+
+@keyframes page-route-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-route-loader__frame {
+  text-align: center;
+  padding: 1rem 1.5rem;
+  border: 1px solid rgba(0, 255, 204, 0.35);
+  background: rgba(4, 12, 20, 0.92);
+  box-shadow: 0 0 24px rgba(0, 255, 204, 0.12);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.page-route-loader__spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 0.5rem;
+  border: 2px solid rgba(0, 255, 204, 0.2);
+  border-top-color: var(--neon-cyan);
+  border-right-color: var(--neon-green);
+  border-radius: 50%;
+  animation: page-route-spin 0.7s linear infinite;
+}
+
+@keyframes page-route-spin {
+  to { transform: rotate(360deg); }
+}
+
+.page-route-loader__title {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 12px rgba(0, 255, 204, 0.45);
+}
+
+.page-route-loader__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: rgba(148, 163, 184, 0.65);
+}
+
+/* ── Kalıcı terminal log paneli ── */
+.terminal-dock-logs__scroll {
+  max-height: min(22vh, 180px);
+  overflow-y: auto;
+  padding: 0.35rem 0.5rem;
+}
+
+.terminal-dock-log-line {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(160, 255, 176, 0.82);
+}
+
+.terminal-dock-log-line__tag {
+  flex-shrink: 0;
+  color: var(--neon-cyan);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.terminal-dock-log-line__text {
+  font-family: var(--font-mono);
+  word-break: break-word;
+}
+
+/* ── Kaynak barı — geçişte yumuşak senkron (veriler kalır) ── */
+.resource-bar--soft-sync {
+  opacity: 0.98;
+}
+
+.resource-bar-sync-line--inline {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: rgba(0, 255, 204, 0.65);
+  animation: resource-sync-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes resource-sync-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* ── Route geçişi — kaynak barı donmasın, içerik hafif fade ── */
+.route-content-panel--enter {
+  animation: route-content-fade-in 0.12s ease-out forwards;
+}
+
+.route-content-panel--enter::after {
+  display: none;
+}
+
+/* ── Global briefing — backdrop tıkla kapat ── */
+.global-briefing-backdrop {
+  cursor: pointer;
+}

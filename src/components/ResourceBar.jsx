@@ -130,7 +130,10 @@ export default function ResourceBar() {
   const energyRes = resources.find((r) => r.id === 'energy');
   const energyCrisis = energyRes != null && energyRes.current < 0;
 
-  if (!gameReady) {
+  const hasResources = visibleResources.length > 0;
+  const showSyncOnly = !gameReady && !hasResources;
+
+  if (showSyncOnly) {
     return (
       <header
         className="resource-bar resource-bar--tactical resource-bar--command resource-bar--loading"
@@ -153,6 +156,7 @@ export default function ResourceBar() {
         'resource-bar',
         'resource-bar--tactical',
         'resource-bar--command',
+        !gameReady && hasResources && 'resource-bar--soft-sync',
         workforceShortage && 'resource-bar--workforce-warn',
       ]
         .filter(Boolean)
@@ -167,6 +171,9 @@ export default function ResourceBar() {
       <div className="resource-bar-inner resource-bar-inner--flush">
         <div className="brand-block brand-desktop resource-bar-brand">
           <span className="game-title">{GAME_NAME}</span>
+          {!gameReady && hasResources && (
+            <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
+          )}
           <label className="city-switcher">
             <span className="sr-only">{t('resourceBar.activeCity')}</span>
             <select

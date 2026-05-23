@@ -31,6 +31,7 @@ import './styles/military-terminal-ui.css';
 import './styles/hud-modal-close.css';
 import './styles/sidebar-active.css';
 import './styles/operational-flow.css';
+import './styles/ui-ux-revisions.css';
 import App from './App.jsx';
 import { disableDevTestModeLocal } from './lib/devTestMode';
 

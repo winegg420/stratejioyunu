@@ -30,13 +30,31 @@ export default function GlobalBriefingModal({
     setMounted(true);
   }, []);
 
+  const canAccept = done && (!showIdeologyPick || selectedIdeology);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && canAccept) onAccept?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, canAccept, onAccept]);
+
   if (!mounted || !open) return null;
 
-  const canAccept = done && (!showIdeologyPick || selectedIdeology);
+  const handleBackdrop = () => {
+    if (canAccept) onAccept?.();
+  };
 
   return createPortal(
     <div className="global-briefing-overlay" role="dialog" aria-modal="true" aria-labelledby="global-briefing-title">
-      <div className="global-briefing-backdrop" aria-hidden="true" />
+      <button
+        type="button"
+        className="global-briefing-backdrop"
+        onClick={handleBackdrop}
+        aria-label="Brifingi kapat"
+      />
       <article className="global-briefing-panel">
         <header className="global-briefing-panel__head">
           <span className="global-briefing-panel__eyebrow">[ {GLOBAL_BRIEFING_TITLE} ]</span>
