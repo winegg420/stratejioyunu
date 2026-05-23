@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import AuthMapBackground from '../components/AuthMapBackground';
 import GlobalBriefingModal from '../components/GlobalBriefingModal';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { GAME_NAME } from '../data/placeholder';
@@ -60,7 +59,6 @@ export default function AuthPage() {
     <div className="auth-screen auth-page-wrapper">
       <AuthMapBackground />
       <div className="auth-overlay" />
-      <LanguageSwitcher className="auth-lang-switcher" />
       <div className="auth-card">
         <header className="auth-header">
           <p className="auth-eyebrow">{t('auth.eyebrow')}</p>

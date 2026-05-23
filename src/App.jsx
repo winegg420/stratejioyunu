@@ -26,11 +26,13 @@ import FounderCrisis from './pages/FounderCrisis';
 import AdminLog from './pages/AdminLog';
 import Messages from './pages/Messages';
 import BlackMarket from './pages/BlackMarket';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 export default function App() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
+        <LanguageSwitcher />
         <AuthProvider>
         <BrowserRouter>
         <Routes>
