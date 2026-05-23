@@ -4,7 +4,11 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const md = fs.readFileSync(path.join(root, 'docs', 'Oyun-Tanitim.md'), 'utf8');
+
+const inputArg = process.argv.find((a) => a.startsWith('--input='));
+const mdRel = inputArg ? inputArg.slice('--input='.length) : 'docs/Stratejioyunu-Kapsamli-Tanitim.md';
+const mdPath = path.isAbsolute(mdRel) ? mdRel : path.join(root, mdRel);
+const md = fs.readFileSync(mdPath, 'utf8');
 
 function linkify(text) {
   return text.replace(
@@ -35,6 +39,9 @@ function mdToHtml(src) {
     } else if (t.startsWith('### ')) {
       closeList();
       out.push(`<h3>${linkify(t.slice(4))}</h3>`);
+    } else if (t.startsWith('#### ')) {
+      closeList();
+      out.push(`<h4>${linkify(t.slice(5))}</h4>`);
     } else if (t === '---') {
       closeList();
       out.push('<hr />');
@@ -73,6 +80,7 @@ const html = `<!DOCTYPE html>
     h1 { color: #0a3d5c; border-bottom: 3px solid #00a8cc; padding-bottom: 0.5rem; }
     h2 { color: #0d4a6e; margin-top: 2rem; }
     h3 { color: #1565a8; }
+    h4 { color: #1e6fa8; font-size: 1.05rem; margin-top: 1.25rem; }
     a { color: #0d6efd; font-weight: 600; }
     a:hover { text-decoration: underline; }
     blockquote { border-left: 4px solid #00a8cc; background: #e8f4fc; padding: 0.75rem 1rem; margin: 1rem 0; }
@@ -99,6 +107,9 @@ const html = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const outPath = path.join(root, 'docs', 'Oyun-Tanitim.html');
+const outArg = process.argv.find((a) => a.startsWith('--html='));
+const outPath = outArg
+  ? (path.isAbsolute(outArg.slice(7)) ? outArg.slice(7) : path.join(root, outArg.slice(7)))
+  : path.join(root, 'docs', 'Stratejioyunu-Kapsamli-Tanitim.html');
 fs.writeFileSync(outPath, html, 'utf8');
 console.log(`HTML oluşturuldu: ${outPath}`);

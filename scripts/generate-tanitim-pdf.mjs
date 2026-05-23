@@ -9,8 +9,14 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const htmlPath = path.join(root, 'docs', 'Oyun-Tanitim.html');
-const pdfPath = path.join(root, 'docs', 'Stratejioyunu-Tanitim.pdf');
+const htmlArg = process.argv.find((a) => a.startsWith('--html='));
+const pdfArg = process.argv.find((a) => a.startsWith('--pdf='));
+const htmlPath = htmlArg
+  ? (path.isAbsolute(htmlArg.slice(7)) ? htmlArg.slice(7) : path.join(root, htmlArg.slice(7)))
+  : path.join(root, 'docs', 'Stratejioyunu-Kapsamli-Tanitim.html');
+const pdfPath = pdfArg
+  ? (path.isAbsolute(pdfArg.slice(6)) ? pdfArg.slice(6) : path.join(root, pdfArg.slice(6)))
+  : path.join(root, 'docs', 'Stratejioyunu-Kapsamli-Tanitim.pdf');
 
 if (!fs.existsSync(htmlPath)) {
   console.error('Önce HTML üretin: npm run html:tanitim');

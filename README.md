@@ -6,6 +6,12 @@ Dünya haritası üzerinde çok oyunculu web stratejisi. OGame tarzı panel aray
 
 **https://stratejioyunu.vercel.app**
 
+## Tanıtım PDF (kapsamlı)
+
+`docs/Stratejioyunu-Kapsamli-Tanitim.pdf` — oyun mekaniği, tüm modüller, son revizyonlar, roadmap, AI bağlam belgesi.
+
+Yeniden üretmek için: `npm run tanitim:kapsamli`
+
 ## Geliştirme
 
 ```bash
