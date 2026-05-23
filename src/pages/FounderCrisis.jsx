@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import AdminCrisisPanel from '../components/AdminCrisisPanel';
 import AdminCentralBankPanel from '../components/AdminCentralBankPanel';
 import AdminRegionalIncentivePanel from '../components/AdminRegionalIncentivePanel';
@@ -17,11 +17,7 @@ export default function FounderCrisis() {
 
   return (
     <div className="page page--console founder-crisis-page">
-      <PageHeader
-        title="Kurucu Komuta Merkezi"
-        subtitle="> Kurucu konsol — kriz motoru, merkez bankası ve bölgesel teşvik modülleri..."
-        status="[ GOD MODE ]"
-      />
+      <LocalizedPageHeader pageKey="founderCrisis" />
       <p className="hint founder-admin-hint">
         Müdahaleler <a href="/admin-log">Admin Müdahale Kayıtları</a> sayfasında tüm oyunculara açıktır.
       </p>

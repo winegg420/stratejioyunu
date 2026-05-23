@@ -1,4 +1,4 @@
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import UnitCard from '../components/UnitCard';
 import ActiveQueue from '../components/ActiveQueue';
 import LockedFeatureGate from '../components/LockedFeatureGate';
@@ -10,10 +10,7 @@ export default function Airbase() {
 
   return (
     <div className="page page--console">
-      <PageHeader
-        title="Hava Üssü"
-        subtitle="> Hava sahası kontrolü — üs aktif olduğunda üretim modülü devreye girer..."
-      />
+      <LocalizedPageHeader pageKey="airbase" />
       <ActiveQueue
         title={`Aktif Kuyruk — ${cityName ?? 'Şehir'}`}
         queueType="production"

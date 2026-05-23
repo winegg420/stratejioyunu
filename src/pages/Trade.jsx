@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import {
@@ -76,9 +76,8 @@ export default function Trade() {
 
   return (
     <div className="page page--console">
-      <PageHeader
-        title="Ticaret"
-        subtitle="> Lojistik konvoyları — haritada neon ticaret rotaları canlı izlenir..."
+      <LocalizedPageHeader
+        pageKey="trade"
         action={(
           <Link to="/harita" className="btn btn-primary">
             Haritayı Aç

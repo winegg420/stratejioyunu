@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import UnitCard from '../components/UnitCard';
 import ActiveQueue from '../components/ActiveQueue';
 import BattleSimulator from '../components/BattleSimulator';
@@ -28,10 +28,8 @@ export default function Barracks() {
 
   return (
     <div className="page page--console barracks-page barracks-page--military">
-      <PageHeader
-        title="Kışla"
-        status="[ STATUS: TACTICAL UNITS ]"
-        subtitle="> Kara birlik üretim hattı — kışla seviyesine göre kuyruk açık..."
+      <LocalizedPageHeader
+        pageKey="barracks"
         action={(
           <span className="barracks-agent-counter" title="İstihbarat ve siber virüs operasyonları">
             Mevcut / Boşta Ajan: <strong>{idleAgents}</strong>

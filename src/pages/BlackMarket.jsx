@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { useGameStore } from '../stores/gameStore';
 import { BLACK_MARKET_LABELS, BLACK_MARKET_TYPES } from '../lib/blackMarket';
@@ -37,9 +37,8 @@ export default function BlackMarket() {
 
   return (
     <div className="page page--console black-market-page">
-      <PageHeader
-        title="Kara Borsa"
-        subtitle="> Anonim kanal — kimlik maskeli işlemler · yakalanma riski aktif..."
+      <LocalizedPageHeader
+        pageKey="blackMarket"
         className="black-market-page-header"
       />
 

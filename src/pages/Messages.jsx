@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import { stateMailMessages } from '../data/placeholder';
 import { useAuth } from '../context/AuthContext';
@@ -46,9 +46,8 @@ export default function Messages() {
 
   return (
     <div className="page page--console state-mail-page">
-      <PageHeader
-        title="State Mail"
-        subtitle="> State Mail kanalı şifreli — liderden lidere resmi yazışma protokolü..."
+      <LocalizedPageHeader
+        pageKey="messages"
         status={playerIdeology ? formatIdeologyLabel(playerIdeology) : '[ OTORİTE BEKLENİYOR ]'}
       />
 

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import PageSafe from './components/PageSafe';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
 import AuthPage from './pages/AuthPage';
@@ -29,7 +30,8 @@ import BlackMarket from './pages/BlackMarket';
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
         <BrowserRouter>
         <Routes>
           <Route path="/giris" element={<AuthPage />} />
@@ -65,7 +67,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/giris" replace />} />
         </Routes>
         </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

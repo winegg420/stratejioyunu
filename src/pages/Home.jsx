@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
+import { useLanguage } from '../context/LanguageContext';
 import GlobalBriefingModal from '../components/GlobalBriefingModal';
 import NewsFeed from '../components/NewsFeed';
 import { useAuth } from '../context/AuthContext';
@@ -80,6 +81,7 @@ function CommandWidget({ label, value, sub, active }) {
 }
 
 export default function Home() {
+  const { t } = useLanguage();
   const gameReady = useGameDataReady();
   const { playerName } = useAuth();
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
@@ -151,22 +153,22 @@ export default function Home() {
     ]
       .filter(Boolean)
       .join(' · ')
-    : '[ SİSTEM BAĞLANTISI AKTİLLEŞTİRİLİYOR... ]';
+    : t('resourceBar.syncing');
 
   if (!gameReady) {
     return (
       <div className="page home-page page--command home-page--loading">
         <header className="home-command-head">
-          <PageHeader
+          <LocalizedPageHeader
             className="home-command-page-header"
-            title="Ana Merkez"
+            pageKey="home"
             hideStatus
-            feedLine="[ SİSTEM BAĞLANTISI AKTİLLEŞTİRİLİYOR... ]"
+            feedLine={t('resourceBar.syncing')}
             feedPending
           />
         </header>
         <p className="home-loading-panel" role="status">
-          Komuta verileri senkronize ediliyor…
+          {t('pages.home.loading')}
         </p>
       </div>
     );
@@ -185,9 +187,9 @@ export default function Home() {
 
       <div className="home-command-layout">
         <header className="home-command-head">
-          <PageHeader
+          <LocalizedPageHeader
             className="home-command-page-header"
-            title="Ana Merkez"
+            pageKey="home"
             hideStatus
             feedLine={sectorFeedLine}
             feedPending={!sectorReady}

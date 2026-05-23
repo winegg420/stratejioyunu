@@ -1,4 +1,4 @@
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import UnitCard from '../components/UnitCard';
 import ActiveQueue from '../components/ActiveQueue';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
@@ -14,10 +14,7 @@ export default function Shipyard() {
 
   return (
     <div className="page page--console">
-      <PageHeader
-        title="Tersane"
-        subtitle="> Deniz operasyonları — tersane inşa sonrası filo kuyruğu açılır..."
-      />
+      <LocalizedPageHeader pageKey="shipyard" />
       {!isCoastal ? (
         <MilitaryEmptyState
           variant="panel"

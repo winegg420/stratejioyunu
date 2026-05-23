@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import AuthMapBackground from '../components/AuthMapBackground';
 import GlobalBriefingModal from '../components/GlobalBriefingModal';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { GAME_NAME } from '../data/placeholder';
 
 export default function AuthPage() {
+  const { t } = useLanguage();
   const { isAuthed, authReady, signIn, loginDemo, isSupabaseConfigured } = useAuth();
   const navigate = useNavigate();
   const [playerId, setPlayerId] = useState('');
@@ -17,7 +20,7 @@ export default function AuthPage() {
   if (!authReady) {
     return (
       <div className="auth-loading-screen" aria-live="polite">
-        <p>Oturum kontrol ediliyor…</p>
+        <p>{t('auth.checking')}</p>
       </div>
     );
   }
@@ -36,7 +39,7 @@ export default function AuthPage() {
       await signIn(playerId, password);
       goHome();
     } catch (err) {
-      setError(err.message || 'Giriş yapılamadı.');
+      setError(err.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -57,31 +60,32 @@ export default function AuthPage() {
     <div className="auth-screen auth-page-wrapper">
       <AuthMapBackground />
       <div className="auth-overlay" />
+      <LanguageSwitcher className="auth-lang-switcher" />
       <div className="auth-card">
         <header className="auth-header">
-          <p className="auth-eyebrow">[ KÜRESEL BAŞKANLIK · 2044 ]</p>
+          <p className="auth-eyebrow">{t('auth.eyebrow')}</p>
           <h1 className="auth-title auth-card__title">{GAME_NAME}</h1>
           <p className="auth-subtitle auth-card__sub">
-            Mutlak otorite — tek lider, resmi State Mail, harita üzerinde güç mücadelesi
+            {t('auth.subtitle')}
           </p>
           <button
             type="button"
             className="btn btn-secondary btn-sm auth-briefing-link"
             onClick={() => setPreviewBriefing(true)}
           >
-            [ ULUSAL BRİFİNG ] Oku
+            {t('auth.briefing')}
           </button>
           {isSupabaseConfigured && (
-            <span className="auth-supabase-badge">Supabase bağlı</span>
+            <span className="auth-supabase-badge">{t('auth.supabaseConnected')}</span>
           )}
         </header>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            <span>Oyuncu ID</span>
+            <span>{t('auth.playerId')}</span>
             <input
               type="text"
-              placeholder="istediğiniz bir ad veya e-posta"
+              placeholder={t('auth.placeholderId')}
               value={playerId}
               onChange={(e) => setPlayerId(e.target.value)}
               autoComplete="username"
@@ -89,10 +93,10 @@ export default function AuthPage() {
             />
           </label>
           <label>
-            <span>Şifre</span>
+            <span>{t('auth.password')}</span>
             <input
               type="password"
-              placeholder="istediğiniz bir şifre"
+              placeholder={t('auth.placeholderPassword')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
@@ -100,9 +104,7 @@ export default function AuthPage() {
             />
           </label>
           <p className="auth-hint">
-            {isSupabaseConfigured
-              ? 'Şifre boş bırakılırsa veya Hızlı Giriş ile demo modda girersiniz. Şifre girerseniz Supabase hesabınızla giriş yapılır. Kayıt şu an kapalıdır.'
-              : 'Kayıt gerekmez. Rastgele ID yazıp Hızlı Giriş ile doğrudan oyuna girebilirsiniz. Supabase anahtarları .env dosyasına eklendiğinde gerçek giriş açılır.'}
+            {isSupabaseConfigured ? t('auth.hintConfigured') : t('auth.hintDemo')}
           </p>
           {error && (
             <p className="auth-error" role="alert">
@@ -110,7 +112,7 @@ export default function AuthPage() {
             </p>
           )}
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? 'Giriş yapılıyor…' : 'Oyuna Gir'}
+            {loading ? t('auth.submitting') : t('auth.submit')}
           </button>
           <button
             type="button"
@@ -118,7 +120,7 @@ export default function AuthPage() {
             onClick={handleQuickLogin}
             disabled={loading}
           >
-            Hızlı Giriş (boş bırak)
+            {t('auth.quickLogin')}
           </button>
         </form>
       </div>

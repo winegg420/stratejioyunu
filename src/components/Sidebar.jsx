@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS, SERVER_NAME } from '../data/placeholder';
+import { useLanguage } from '../context/LanguageContext';
 import { getProgressionState } from '../lib/progressionSystem';
+import { getNavItemLabel } from '../lib/navLabels';
 import { useGameStore } from '../stores/gameStore';
 import NavBadge from './NavBadge';
 import NavAttackAlert from './NavAttackAlert';
@@ -11,6 +13,7 @@ import SidebarActiveBeam from './SidebarActiveBeam';
 import { useActiveExpeditionCount, useReportsNavBadge, useUnderAttack } from '../stores/gameStore';
 
 export default function Sidebar() {
+  const { t } = useLanguage();
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const reportsBadge = useReportsNavBadge();
@@ -23,7 +26,7 @@ export default function Sidebar() {
   const navListRef = useRef(null);
 
   const navItems = NAV_ITEMS.map((item) => {
-    if (item.label === 'Siber Operasyon') {
+    if (item.labelKey === 'nav.cyberOps') {
       return {
         ...item,
         locked: !progression.cyberUnlocked,
@@ -41,42 +44,44 @@ export default function Sidebar() {
 
   return (
     <>
-      <nav className="sidebar sidebar-desktop sidebar-hud" aria-label="Tam menü">
+      <nav className="sidebar sidebar-desktop sidebar-hud" aria-label={t('sidebar.fullMenu')}>
         <div className="sidebar-server">
-          <span className="server-label">SUNUCU</span>
+          <span className="server-label">{t('sidebar.server')}</span>
           <span className="server-name">{SERVER_NAME}</span>
           <span className="city-type">{activeCity?.type}</span>
         </div>
         <ul className="nav-list" ref={navListRef}>
           <SidebarActiveBeam listRef={navListRef} />
-          {navItems.map((item) => (
-            <li key={item.path ?? item.label}>
+          {navItems.map((item) => {
+            const label = getNavItemLabel(item, t);
+            return (
+            <li key={item.path ?? item.labelKey}>
               {item.locked ? (
                 <button
                   type="button"
                   className="nav-link nav-link--locked"
-                  onClick={() => setLockedFeature(item.label)}
+                  onClick={() => setLockedFeature(label)}
                 >
                   <span className="nav-icon">
                     {item.icon}
                     <span className="nav-lock-icon" aria-hidden="true">🔒</span>
                   </span>
-                  <span className="nav-label">{item.label}</span>
+                  <span className="nav-label">{label}</span>
                   <span
                     className="nav-badge nav-badge--hq-lock"
                     title={
-                      item.label === 'İttifak'
-                        ? 'KİLİTLİ: HQ SV.1'
+                      item.labelKey === 'nav.alliance'
+                        ? t('sidebar.lockedHq')
                         : item.lockTag
-                          ? `KİLİTLİ: ${item.lockTag}`
-                          : 'KİLİTLİ'
+                          ? t('sidebar.lockedTag', { tag: item.lockTag })
+                          : t('sidebar.locked')
                     }
                   >
-                    {item.label === 'İttifak'
-                      ? '[ KİLİTLİ: HQ SV.1 ]'
+                    {item.labelKey === 'nav.alliance'
+                      ? `[ ${t('sidebar.lockedHq')} ]`
                       : item.lockTag
-                        ? `[ KİLİTLİ: ${item.lockTag} ]`
-                        : '[ KİLİTLİ ]'}
+                        ? `[ ${t('sidebar.lockedTag', { tag: item.lockTag })} ]`
+                        : `[ ${t('sidebar.locked')} ]`}
                   </span>
                 </button>
               ) : (
@@ -88,12 +93,16 @@ export default function Sidebar() {
                   <span className="nav-icon">
                     {item.icon}
                     {item.path === '/seferler' && (
-                      <span className="nav-logistics-badge" aria-hidden="true" title="Lojistik">
+                      <span
+                        className="nav-logistics-badge"
+                        aria-hidden="true"
+                        title={t('navBadge.logisticsTitle')}
+                      >
                         📦
                       </span>
                     )}
                   </span>
-                  <span className="nav-label">{item.label}</span>
+                  <span className="nav-label">{label}</span>
                   {item.path === '/seferler' && (
                     <>
                       <NavExpeditionCount count={expeditionCount} />
@@ -101,17 +110,18 @@ export default function Sidebar() {
                     </>
                   )}
                   {item.path === '/raporlar' && <NavBadge show={reportsBadge} />}
-                  {item.coastal && <span className="nav-badge">Kıyı</span>}
+                  {item.coastal && <span className="nav-badge">{t('navBadge.coastal')}</span>}
                 </NavLink>
               )}
             </li>
-          ))}
+          );
+          })}
         </ul>
       </nav>
       <SystemLockedModal
         open={Boolean(lockedFeature)}
         featureLabel={lockedFeature}
-        variant={lockedFeature === 'Güneş Sistemi' || lockedFeature === 'İttifak' ? 'upgrade' : 'default'}
+        variant={lockedFeature === 'Güneş Sistemi' || lockedFeature === t('nav.alliance') ? 'upgrade' : 'default'}
         onClose={() => setLockedFeature(null)}
       />
     </>

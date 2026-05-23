@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import MarketOffersEmptyState from '../components/MarketOffersEmptyState';
 import MarketPriceTag from '../components/MarketPriceTag';
 import { useMarketTicker } from '../hooks/useMarketTicker';
@@ -14,10 +14,12 @@ import { formatSupplyTrend } from '../lib/openMarket';
 import { getResourceDisplay } from '../data/resourceCatalog';
 import CyberDataInput from '../components/CyberDataInput';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { useLanguage } from '../context/LanguageContext';
 
 const EMPTY_QTY = Object.fromEntries(MARKET_TRADABLE_IDS.map((id) => [id, '']));
 
 export default function Market() {
+  const { t } = useLanguage();
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const market = useGameStore((s) =>
     s.cities[s.activeCityId]?.buildings?.find((b) => b.id === 'market'),
@@ -80,9 +82,8 @@ export default function Market() {
 
   return (
     <div className="page page--console market-page">
-      <PageHeader
-        title="Pazar"
-        subtitle="> Küresel kaynak borsası — Merkez Bankası pariteleri canlı..."
+      <LocalizedPageHeader
+        pageKey="market"
         className="market-page-header"
       />
 

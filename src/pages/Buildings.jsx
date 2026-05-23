@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import BuildingCard from '../components/BuildingCard';
 import ActiveQueue from '../components/ActiveQueue';
 import { getHqLevel, syncCityBuildingsToCatalog } from '../lib/buildingUtils';
@@ -41,10 +41,7 @@ export default function Buildings() {
 
   return (
     <div className="page page-wrapper buildings-page page--console">
-      <PageHeader
-        title="Binalar"
-        subtitle="> İnşaat protokolü: tek aktif yükseltme · kuyruk modülü hazır..."
-      />
+      <LocalizedPageHeader pageKey="buildings" />
       <ActiveQueue
         title={`Aktif Kuyruk — ${cityName}`}
         queueType="construction"

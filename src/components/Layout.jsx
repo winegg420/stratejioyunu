@@ -16,6 +16,7 @@ import { useHudButtonStrokes } from '../hooks/useHudButtonStrokes';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
 import { releaseMapSessionLocks } from '../map/mapRouteCleanup';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const MOBILE_SHELL_CLASS = 'mobile-shell-active';
 
@@ -101,6 +102,7 @@ export default function Layout() {
     <div
       className={`app-shell hud-shell hud-final${isMobile ? ' mobile-app' : ''}${isMapPage ? ' route-map' : ''}${isBuildingsPage ? ' route-buildings' : ''}`}
     >
+      <LanguageSwitcher className="app-lang-switcher" />
       <ResourceBar />
       <PwaUpdateBanner />
       <RouteTransitionLoader />

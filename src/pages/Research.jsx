@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import ResearchRequirementTooltip from '../components/ResearchRequirementTooltip';
 import { resolveResearchInfoPayload } from '../lib/contentInfoResolver';
@@ -150,10 +150,7 @@ export default function Research() {
 
   return (
     <div className="page page--console page--research">
-      <PageHeader
-        title="Araştırma"
-        subtitle="> Ar-Ge modülleri taranıyor — 12 askeri doktrin blueprint veritabanı hazır..."
-      />
+      <LocalizedPageHeader pageKey="research" />
       <section className="research-section">
         <h2 className="panel-title research-section__title">[ STANDART DOKTRİNLER ]</h2>
         <div className="card-grid">

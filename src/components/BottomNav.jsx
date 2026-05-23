@@ -1,10 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { MOBILE_NAV_ITEMS } from '../data/placeholder';
+import { useLanguage } from '../context/LanguageContext';
+import { getNavItemLabel } from '../lib/navLabels';
 import NavAttackAlert from './NavAttackAlert';
 import NavExpeditionCount from './NavExpeditionCount';
 import { useActiveExpeditionCount, useUnderAttack } from '../stores/gameStore';
 
 export default function BottomNav() {
+  const { t } = useLanguage();
   const underAttack = useUnderAttack();
   const expeditionCount = useActiveExpeditionCount();
 
@@ -33,7 +36,7 @@ export default function BottomNav() {
               </>
             )}
           </span>
-          <span className="bottom-nav-label">{item.label}</span>
+          <span className="bottom-nav-label">{getNavItemLabel(item, t)}</span>
         </NavLink>
       ))}
     </nav>

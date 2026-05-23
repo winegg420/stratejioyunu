@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import NewsFeed from '../components/NewsFeed';
 import { ADMIN_LOG_TAG, adminLogToNewsItem } from '../lib/adminOverrideEngine';
 import { fetchAdminLogs } from '../lib/adminBroadcastSync';
@@ -29,9 +29,8 @@ export default function AdminLog() {
 
   return (
     <div className="page page--console admin-log-page">
-      <PageHeader
-        title="Admin Müdahale Kayıtları"
-        subtitle="> Admin override log — tüm müdahaleler şeffaf ve kalıcı kayıt altında..."
+      <LocalizedPageHeader
+        pageKey="adminLog"
         status={ADMIN_LOG_TAG}
       />
       <section className="panel admin-log-intro">

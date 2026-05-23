@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import NewExpeditionModal from '../components/NewExpeditionModal';
@@ -40,11 +40,10 @@ export default function Expeditions() {
 
   return (
     <div className="page page--console expeditions-page">
-      <PageHeader
+      <LocalizedPageHeader
         className="expeditions-page-header"
-        title="Seferler"
+        pageKey="expeditions"
         hideStatus
-        subtitle="> Sefer rotaları hesaplanıyor — kara max 5s · hava 3× hız · meydan savaşı protokolü aktif..."
         action={(
           <>
             <button

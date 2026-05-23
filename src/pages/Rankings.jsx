@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
+import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchLoyaltyLeaderboard } from '../lib/leaderboardApi';
 import { formatLoyaltyScore } from '../lib/loyaltySystem';
@@ -35,10 +36,9 @@ export default function Rankings() {
 
   return (
     <div className="page page--console rankings-page">
-      <PageHeader
-        title="İdeoloji Sıralaması"
-        subtitle="> İdeoloji sadakat tablosu — doktrine bağlı komutanlar sıralanıyor..."
-        status={source === 'live' ? '[ CANLI SUNUCU ]' : '[ DEMO LİSTE ]'}
+      <LocalizedPageHeader
+        pageKey="rankings"
+        status={source === 'live' ? t('pages.rankings.statusLive') : t('pages.rankings.statusDemo')}
       />
 
       <section className="panel rankings-self card">

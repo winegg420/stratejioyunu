@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import { useAuth } from '../context/AuthContext';
 import { isFounderPlayer } from '../lib/adminAccess';
 import { profile } from '../data/placeholder';
@@ -99,9 +99,8 @@ export default function Profile() {
           <p className="profile-vip-reset-msg">SERVER RESET INITIATED</p>
         </div>
       )}
-      <PageHeader
-        title="Profil"
-        subtitle="> Personel dosyası — rütbe, rozetler, VIP ve sezon arşivi yükleniyor..."
+      <LocalizedPageHeader
+        pageKey="profile"
         action={(
           <button type="button" className="btn btn-secondary" onClick={handleLogout}>
             Çıkış Yap

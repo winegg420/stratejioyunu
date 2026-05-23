@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import IntelAccordion from '../components/IntelAccordion';
 import IntelTargetPicker from '../components/IntelTargetPicker';
 import IntelSummaryPanel from '../components/IntelSummaryPanel';
@@ -167,10 +167,7 @@ export default function Intelligence() {
 
   return (
     <div className="page page--console page--intel">
-      <PageHeader
-        title="İstihbarat & Siber Operasyon"
-        subtitle="> İstihbarat ağı çevrimiçi — ajan, siber ve KBRN operasyon modülleri..."
-      />
+      <LocalizedPageHeader pageKey="intelligence" />
 
       <IntelSummaryPanel
         totalAgents={idleAgents}

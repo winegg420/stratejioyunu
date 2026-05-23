@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore, formatCityOptionLabel } from '../stores/gameStore';
-import { isDepotOverflow, WORKFORCE_PENALTY_LABEL, hasWorkforceShortage } from '../lib/resourceProduction';
+import { isDepotOverflow, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
 import { formatHourlyProduction } from '../lib/hourlyProduction';
 import { enrichResourcesWithEmpireTreasury } from '../lib/empireTreasury';
@@ -14,6 +14,7 @@ import {
   isPeaceForceProtected,
 } from '../lib/progressionSystem';
 import ServerTimeClock from './ServerTimeClock';
+import { useLanguage } from '../context/LanguageContext';
 
 const DEPOT_WARN_PCT = 90;
 const DEPOT_BAR_IDS = new Set(['hammadde', 'fuel', 'money']);
@@ -24,7 +25,18 @@ const FILL_CLASS = {
   money: 'res-fill--money',
 };
 
-function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, depotOverflow, energyCrisis }) {
+function ResourceItem({
+  resource,
+  displayLabel,
+  pct,
+  flash,
+  valueFlash,
+  depotWarn,
+  depotFull,
+  depotOverflow,
+  energyCrisis,
+  t,
+}) {
   const hasDepot = resource.max != null;
   const showDepotBar = hasDepot || DEPOT_BAR_IDS.has(resource.id);
   const frozen = resource.productionFrozen || depotOverflow;
@@ -48,13 +60,13 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, 
       ]
         .filter(Boolean)
         .join(' ')}
-      title={`${resource.label}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ' — depo taştı, üretim durdu' : ''}${workforceCut ? ` — ${WORKFORCE_PENALTY_LABEL}` : ''}${energyCrisis ? ' — enerji krizi' : ''}`}
+      title={`${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}`}
     >
       <span className="res-icon" aria-hidden="true">
         {resource.icon}
       </span>
       <div className="res-body">
-        <span className="res-label">{resource.label}</span>
+        <span className="res-label">{displayLabel}</span>
         <span className="res-value">
           <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
             {formatCompactNumber(resource.current)}
@@ -63,13 +75,15 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, 
           {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         </span>
         {resource.empireShared && (
-          <span className="res-empire-badge" title="Tüm kolonilerin ortak dijital bütçesi">ORTAK</span>
+          <span className="res-empire-badge" title={t('resourceBar.sharedTreasuryTitle')}>
+            {t('resourceBar.sharedTreasury')}
+          </span>
         )}
         {hourlyLabel ? (
           <span className="res-hourly-live">{hourlyLabel}</span>
         ) : (
           <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
-            {frozen ? 'DURDU' : '—'}
+            {frozen ? t('resourceBar.stopped') : '—'}
           </span>
         )}
         {showDepotBar && (
@@ -79,7 +93,7 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, 
             aria-valuenow={Math.min(100, pct)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`${resource.label} depo doluluk`}
+            aria-label={`${displayLabel} depo`}
           >
             <div
               className={`res-fill res-fill--command ${fillClass}${depotWarn ? ' warn' : ''}`}
@@ -93,6 +107,7 @@ function ResourceItem({ resource, pct, flash, valueFlash, depotWarn, depotFull, 
 }
 
 export default function ResourceBar() {
+  const { t, resourceLabel } = useLanguage();
   const gameReady = useGameDataReady();
   const { playerName } = useAuth();
   const activeCityId = useGameStore((s) => s.activeCityId);
@@ -124,7 +139,7 @@ export default function ResourceBar() {
         <div className="resource-bar-inner resource-bar-inner--flush">
           <div className="resource-bar-brand resource-bar-brand--loading">
             <span className="game-title">{GAME_NAME}</span>
-            <span className="resource-bar-sync-line">[ SİSTEM BAĞLANTISI AKTİLLEŞTİRİLİYOR... ]</span>
+            <span className="resource-bar-sync-line">{t('resourceBar.syncing')}</span>
           </div>
         </div>
       </header>
@@ -145,14 +160,14 @@ export default function ResourceBar() {
     >
       {workforceShortage && (
         <p className="resource-bar-workforce-warn" role="status">
-          {WORKFORCE_PENALTY_LABEL}
+          {t('workforce.penalty')}
         </p>
       )}
       <div className="resource-bar-inner resource-bar-inner--flush">
         <div className="brand-block brand-desktop resource-bar-brand">
           <span className="game-title">{GAME_NAME}</span>
           <label className="city-switcher">
-            <span className="sr-only">Aktif şehir</span>
+            <span className="sr-only">{t('resourceBar.activeCity')}</span>
             <select
               value={activeCityId}
               onChange={(e) => setActiveCity(e.target.value)}
@@ -167,7 +182,7 @@ export default function ResourceBar() {
           </label>
         </div>
 
-        <div className="resources-row resources-row--tactical" role="list" aria-label="Kaynaklar">
+        <div className="resources-row resources-row--tactical" role="list" aria-label={t('resourceBar.resources')}>
           {visibleResources.map((r) => {
             const pct = r.max ? (r.current / r.max) * 100 : 100;
             const depotOverflow = isDepotOverflow(r);
@@ -177,6 +192,8 @@ export default function ResourceBar() {
               <ResourceItem
                 key={r.id}
                 resource={r}
+                displayLabel={resourceLabel(r.id) || r.label}
+                t={t}
                 pct={pct}
                 flash={Boolean(flashes[r.id])}
                 valueFlash={Boolean(valueFlashes[r.id])}
@@ -196,13 +213,13 @@ export default function ResourceBar() {
             {peaceActive && (
               <span
                 className="protection-badge protection-badge--active"
-                title="Barış Gücü koruması — saldırı, siber ve KBRN size uygulanamaz. Saldırı başlatırsanız kalkan düşer."
+                title={t('resourceBar.peaceForceTitle')}
               >
                 <span className="protection-badge__icon" aria-hidden="true">
                   🕊️
                 </span>
                 <span className="protection-badge__text">
-                  BARIŞ GÜCÜ
+                  {t('resourceBar.peaceForce')}
                   {peaceCountdown ? ` · ${peaceCountdown}` : ''}
                 </span>
               </span>

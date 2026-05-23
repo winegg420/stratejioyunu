@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { diplomacy } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
@@ -10,8 +10,6 @@ import {
   formatTreatyDurationHours,
 } from '../lib/diplomaticAgreements';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
-
-const DIPLOMACY_FEED = '> KÜRESEL DİPLOMASİ HATTI: SENKRONİZE';
 
 function PactRow({ treaty, onBreak }) {
   const endsLabel = treaty.endsAt
@@ -59,11 +57,10 @@ export default function Diplomacy() {
 
   return (
     <div className="page page--console diplomacy-page">
-      <PageHeader
+      <LocalizedPageHeader
         className="diplomacy-page-header"
-        title="Diplomasi"
+        pageKey="diplomacy"
         hideStatus
-        feedLine={DIPLOMACY_FEED}
         feedPending={false}
       />
 

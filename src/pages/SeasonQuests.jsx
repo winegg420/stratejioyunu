@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import HistoryBookPanel from '../components/HistoryBookPanel';
 import { useGameStore } from '../stores/gameStore';
 import { formatIdeologyLabel } from '../lib/ideologySystem';
@@ -91,10 +91,7 @@ export default function SeasonQuests() {
 
   return (
     <div className="page season-quests-page page--console">
-      <PageHeader
-        title="Sezon & Görevler"
-        subtitle="> Sezon motoru aktif — görevler, sıralama ve Devlet Tarih Kitabı senkron..."
-      />
+      <LocalizedPageHeader pageKey="seasonQuests" />
 
       <div className="history-book-tabs" role="tablist">
         <button

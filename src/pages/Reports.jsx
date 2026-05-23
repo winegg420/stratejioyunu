@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import ReportFilters from '../components/ReportFilters';
@@ -88,9 +88,8 @@ export default function Reports() {
 
   return (
     <div className="page page--console">
-      <PageHeader
-        title="Raporlar"
-        subtitle="> İstihbarat akışı — savaş, keşif ve ticaret raporları sıraya alındı..."
+      <LocalizedPageHeader
+        pageKey="reports"
         action={reports.length > 0 ? (
           <div className="report-toolbar-actions">
             <button
