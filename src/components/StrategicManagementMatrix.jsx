@@ -216,7 +216,7 @@ export default function StrategicManagementMatrix() {
               )}
             </div>
             <div className="strat-ops-chip">
-              <span className="strat-ops-chip__label">Seferler</span>
+              <span className="strat-ops-chip__label">Operasyonlar</span>
               <strong>
                 ↗ {outgoing} · ↙ {incoming}
               </strong>

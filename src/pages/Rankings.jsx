@@ -9,6 +9,7 @@ import { useGameStore } from '../stores/gameStore';
 import '../styles/rankings.css';
 
 export default function Rankings() {
+  const { t } = useLanguage();
   const { playerName } = useAuth();
   const myLoyalty = useGameStore((s) => s.loyaltyScore ?? 0);
   const myIdeology = useGameStore((s) => s.playerIdeology);
@@ -67,10 +68,10 @@ export default function Rankings() {
           tamamlama sadakat kazandırır.
         </p>
         {loading ? (
-          <p className="rankings-loading">Sıralama yükleniyor…</p>
+          <p className="rankings-loading">Liderlik tablosu yükleniyor…</p>
         ) : rows.length === 0 ? (
           <p className="rankings-empty">
-            Henüz sıralama oluşmadı — ilk sezonu tamamlayan liderler burada görünecek
+            Henüz liderlik tablosu oluşmadı — ilk sezonu tamamlayan liderler burada görünecek
           </p>
         ) : (
           <div className="rankings-table-wrap">

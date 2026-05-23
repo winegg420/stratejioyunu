@@ -1,7 +1,7 @@
 name: Deploy to Vercel
 
-# Push sonrası build doğrulaması + geçerli VERCEL_TOKEN varsa prod deploy.
-# Token geçersizse workflow uyarı verir; yerel: npm run deploy
+# master push → build + production deploy (stratejioyunu.vercel.app)
+# VERCEL_TOKEN geçersizse iş KIRMIZI kalır — canlı site güncellenmez.
 
 on:
   push:
@@ -9,8 +9,9 @@ on:
   workflow_dispatch:
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_ORG_ID: team_5dtgTzHV3AHu8R8n5jmw9aMt
+  VERCEL_PROJECT_ID: prj_IfcWXhoDC5QPTG7PwQppgA3utOEQ
+  PRODUCTION_URL: https://stratejioyunu.vercel.app
 
 jobs:
   deploy:
@@ -39,14 +40,44 @@ jobs:
 
       - name: Validate Vercel token
         id: vercel-token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          if vercel whoami --token="${{ secrets.VERCEL_TOKEN }}" >/dev/null 2>&1; then
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            echo "::error::VERCEL_TOKEN secret tanımlı değil. docs/DEPLOY.md dosyasına bakın."
+            exit 1
+          fi
+          if vercel whoami --token="$VERCEL_TOKEN" >/dev/null 2>&1; then
             echo "valid=true" >> "$GITHUB_OUTPUT"
+            echo "Vercel token geçerli."
           else
             echo "valid=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::VERCEL_TOKEN geçersiz veya eksik. GitHub Secrets güncellenmeli. Yerel deploy: npm run deploy"
+            echo "::error::VERCEL_TOKEN geçersiz veya süresi dolmuş. Yeni token: https://vercel.com/account/tokens → GitHub Secrets güncelle."
+            exit 1
           fi
 
       - name: Deploy production
-        if: steps.vercel-token.outputs.valid == 'true'
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+
+      - name: Verify live production
+        run: |
+          echo "Canlı site doğrulanıyor: $PRODUCTION_URL"
+          sleep 25
+          HTML=$(curl -fsSL "$PRODUCTION_URL")
+          JS_HASH=$(echo "$HTML" | grep -oE 'assets/index-[^"]+\.js' | head -1 | sed 's|assets/||;s|\.js||')
+          if [ -z "$JS_HASH" ]; then
+            echo "::error::index.html içinde JS bundle bulunamadı."
+            exit 1
+          fi
+          echo "Aktif bundle: ${JS_HASH}.js"
+          BODY=$(curl -fsSL "$PRODUCTION_URL/assets/${JS_HASH}.js")
+          if ! echo "$BODY" | grep -q 'lang-switcher'; then
+            echo "::error::Canlı bundle güncel görünmüyor (lang-switcher yok). Önbellek veya deploy hatası."
+            exit 1
+          fi
+          echo "Canlı production doğrulandı."

@@ -122,7 +122,7 @@ export default function Profile() {
             {' '}
             ·{' '}
             <button type="button" className="link-btn" onClick={() => navigate('/siralama')}>
-              Küresel sıralama
+              Liderlik tablosu
             </button>
           </p>
           <p>

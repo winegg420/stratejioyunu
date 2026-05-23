@@ -3,7 +3,7 @@ import { useActiveCity } from '../stores/gameStore';
 import { getBuildingById, isBuildingLocked } from '../lib/buildingUtils';
 
 const BUILDING_LABELS = {
-  barracks: 'Kışla',
+  barracks: 'Kara Kuvvetleri',
   airport: 'Hava Üssü',
   shipyard: 'Tersane',
 };

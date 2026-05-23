@@ -201,7 +201,7 @@ export const BUILDING_ENCYCLOPEDIA = {
   },
   barracks: {
     lore: 'Kara ordusu üretimi ve taktik simülatör.',
-    effectLabel: 'Kışla verimi',
+    effectLabel: 'Kara Kuvvetleri verimi',
     perLevel: (lv) => `Üretim hızı +${lv * 4}%`,
   },
   airport: {

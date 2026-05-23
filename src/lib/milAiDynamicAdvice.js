@@ -58,7 +58,7 @@ function pickExpeditionAdvice(state) {
   if (idle) {
     return 'Başkan, aktif sefer yok. Haritadan düşman üssü seçerek keşif veya saldırı konvoyu gönderin.';
   }
-  return 'Başkan, sahadaki birlikleriniz beklemede. Yeni operasyon için Seferler veya Harita hattını kullanın.';
+  return 'Başkan, sahadaki birlikleriniz beklemede. Yeni operasyon için Operasyonlar veya Harita hattını kullanın.';
 }
 
 function pickResourceAdvice(city) {
@@ -78,7 +78,7 @@ function pickProductionAdvice(city) {
   const pq = city?.productionQueue ?? [];
   const barracks = getBuildingById(city, 'barracks');
   if ((barracks?.level ?? 0) >= 1 && pq.length === 0) {
-    return 'Başkan, Kışla üretim hattı boş. Kara birliği emri vererek garnizonu güçlendirin.';
+    return 'Başkan, Kara Kuvvetleri üretim hattı boş. Kara birliği emri vererek garnizonu güçlendirin.';
   }
   return null;
 }

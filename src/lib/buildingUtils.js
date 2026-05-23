@@ -28,7 +28,7 @@ export const BUILDING_LABELS = {
   hq: 'Komuta Merkezi',
   refinery: 'Yakıt Rafinerisi',
   plant: 'Enerji Santrali',
-  barracks: 'Kışla',
+  barracks: 'Kara Kuvvetleri',
   airport: 'Hava Üssü',
   shipyard: 'Deniz Üssü',
   research: 'Ar-Ge Merkezi',

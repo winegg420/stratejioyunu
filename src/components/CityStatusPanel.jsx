@@ -91,14 +91,14 @@ export default function CityStatusPanel() {
         <div className="city-status-card">
           <span className="city-status-icon" aria-hidden="true">↗️</span>
           <div>
-            <span className="city-status-label">Giden Seferler</span>
+            <span className="city-status-label">Giden Operasyonlar</span>
             <strong className="city-status-value">{outgoing}</strong>
           </div>
         </div>
         <div className="city-status-card">
           <span className="city-status-icon" aria-hidden="true">↙️</span>
           <div>
-            <span className="city-status-label">Gelen Seferler</span>
+            <span className="city-status-label">Gelen Operasyonlar</span>
             <strong className="city-status-value">{incoming}</strong>
           </div>
         </div>

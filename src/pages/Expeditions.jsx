@@ -120,7 +120,7 @@ export default function Expeditions() {
       <MeydanBattlePanel />
 
       <section className="panel">
-        <h3 className="panel-title">Aktif Seferler</h3>
+        <h3 className="panel-title">Aktif Operasyonlar</h3>
         {hasActive ? (
           <table className="data-table">
             <thead>
@@ -221,7 +221,7 @@ export default function Expeditions() {
       </section>
 
       <section className="panel">
-        <h3 className="panel-title">Geçmiş Seferler</h3>
+        <h3 className="panel-title">Geçmiş Operasyonlar</h3>
         {hasPast ? (
           <table className="data-table">
             <thead>
@@ -251,10 +251,10 @@ export default function Expeditions() {
           <EmptyState
             tag="[ ARŞİV BOŞ ]"
             icon="📜"
-            title="Geçmiş sefer kaydı yok"
+            title="Geçmiş operasyon kaydı yok"
             actionLabel="Haritaya Git"
             actionTo="/harita"
-            description="Tamamlanan seferler burada listelenir."
+            description="Tamamlanan operasyonlar burada listelenir."
           />
         )}
       </section>

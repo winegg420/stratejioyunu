@@ -290,7 +290,7 @@ export default function Home() {
                 <QueueEmptyState
                   tag="[ KUYRUK BOŞ ]"
                   title="Üretim kuyruğu boş"
-                  hint="Kışla, Tersane veya Hava Üssü'nden birim üretin."
+                  hint="Kara Kuvvetleri, Tersane veya Hava Üssü'nden birim üretin."
                   icon="⚙"
                 />
               )}

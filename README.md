@@ -19,10 +19,12 @@ Tarayıcı: http://localhost:5173
 
 `master` branch'e her push → GitHub Actions → Vercel production (`stratejioyunu.vercel.app`).
 
+**İlk kurulum:** GitHub Actions secret `VERCEL_TOKEN` geçerli olmalı. Aksi halde workflow kırmızı kalır ve canlı site güncellenmez. Ayrıntı: [docs/DEPLOY.md](docs/DEPLOY.md)
+
 Manuel deploy:
 
 ```bash
-npx vercel deploy --prod --yes
+npm run deploy
 ```
 
 ## Repo

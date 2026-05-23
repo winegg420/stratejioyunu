@@ -41,7 +41,7 @@ export const SPY_PROBE_MAX_SECONDS = 4 * 3600;
 export const DEFENSE_BUILDING_IDS = ['barracks', 'airport', 'shipyard', 'intel', 'cyber_ops'];
 
 const BUILDING_LABELS = {
-  barracks: 'Kışla',
+  barracks: 'Kara Kuvvetleri',
   airport: 'Hava Üssü',
   shipyard: 'Deniz Üssü',
   intel: 'İstihbarat Merkezi',
@@ -462,7 +462,7 @@ export function generateDefenderBuildings(mapCity) {
     { id: 'hq', name: 'Komuta Merkezi', level: Math.max(1, Math.floor(3 * scale)) },
     { id: 'refinery', name: 'Yakıt Rafinerisi', level: Math.floor(6 * scale) },
     { id: 'plant', name: 'Enerji Santrali', level: Math.floor(5 * scale) },
-    { id: 'barracks', name: 'Kışla', level: Math.floor(7 * scale) },
+    { id: 'barracks', name: 'Kara Kuvvetleri', level: Math.floor(7 * scale) },
     { id: 'airport', name: 'Hava Üssü', level: Math.floor(3 * scale) },
     { id: 'shipyard', name: 'Deniz Üssü', level: Math.floor(3 * scale) },
     { id: 'intel', name: 'İstihbarat Merkezi', level: Math.floor(4 * scale) },
