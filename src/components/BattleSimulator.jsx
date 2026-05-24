@@ -7,6 +7,7 @@ import { getTroopStock } from '../lib/troopStock';
 import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 import CyberDataInput from './CyberDataInput';
 import CyberToggle from './CyberToggle';
+import UnitMilitaryIcon from './UnitMilitaryIcon';
 
 function emptyCounts() {
   return Object.fromEntries(landUnits.map((u) => [u.id, '']));
@@ -32,7 +33,10 @@ function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, sid
               key={key}
               className={`battle-sim-input-row${on ? '' : ' battle-sim-input-row--off'}`}
             >
-              <span>{u.image} {u.name}</span>
+              <span className="battle-sim-unit-label">
+                <UnitMilitaryIcon unitId={u.id} size={20} />
+                {u.name}
+              </span>
               <CyberToggle
                 checked={on}
                 showX

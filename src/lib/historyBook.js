@@ -237,7 +237,8 @@ export function appendChronicle(state, entry) {
 
 export function listSeasonIdsForArchive(state) {
   const ids = new Set(Object.keys(state?.archives ?? {}));
-  if (state?.currentSeasonId) ids.add(state.currentSeasonId);
+  const current = state?.currentSeasonId ?? getCurrentSeasonId();
+  ids.add(current);
   return [...ids].sort().reverse();
 }
 

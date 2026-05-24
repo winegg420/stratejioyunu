@@ -14,7 +14,11 @@ import { useTerminalLogStore } from '../stores/terminalLogStore';
 import ErrorBoundary from './ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../lib/auth';
-import { startSyncPolling, stopSyncPolling } from '../lib/supabaseSync';
+import {
+  registerExpeditionPersistenceGuards,
+  startSyncPolling,
+  stopSyncPolling,
+} from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
@@ -75,10 +79,16 @@ export default function Layout() {
   }, [authMode, session?.user?.id]);
 
   useEffect(() => {
+    if (authMode !== 'supabase') return undefined;
+    return registerExpeditionPersistenceGuards(() => useGameStore.getState());
+  }, [authMode]);
+
+  useEffect(() => {
     const onWake = () => {
       if (document.visibilityState === 'visible') {
         touchPlayerActivity();
         syncTimersOnWake();
+        window.dispatchEvent(new Event('map-layout-changed'));
       }
     };
     document.addEventListener('visibilitychange', onWake);

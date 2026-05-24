@@ -1,0 +1,26 @@
+/* Araştırma sayfası — responsive kart ızgarası */
+
+.page--research .card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .page--research .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .page--research .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .page--research .card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

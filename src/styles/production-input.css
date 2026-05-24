@@ -1,5 +1,12 @@
 /* Kışla / Tersane / Pazar — üretim input HUD */
 
+.barracks-page--military .unit-card-actions .cyber-data-input__field,
+.page--console .unit-card-actions .cyber-data-input__field {
+  min-width: 60px;
+  width: 60px;
+  flex: 0 0 60px;
+}
+
 .barracks-page--military .input-qty,
 .page--console .unit-card .input-qty,
 .page--console .qty-input-wrap .input-qty,

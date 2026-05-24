@@ -178,6 +178,18 @@
   padding: 0.55rem 0.75rem 0.55rem 0.65rem;
 }
 
+.hud-shell .nav-list .nav-link:not(.nav-link--locked),
+.app-shell.hud-shell .nav-list .nav-link:not(.nav-link--locked) {
+  flex-wrap: nowrap;
+}
+
+.nav-badge--coastal {
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: center;
+  white-space: nowrap;
+}
+
 .hud-shell .nav-link.active,
 .app-shell.hud-shell .nav-link.active {
   border-left-color: #4a7c59 !important;

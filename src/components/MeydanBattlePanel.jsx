@@ -7,9 +7,11 @@ import {
   MEYDAN_PREP_SECONDS,
 } from '../lib/meydanBattleConfig';
 import { useActiveCityIdleTroops, useGameStore } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from './CustomDropdown';
 
 export default function MeydanBattlePanel() {
+  const { t } = useLanguage();
   const now = useGameStore((s) => s.now);
   const battle = useGameStore((s) => s.meydanBattle);
   const mapCities = useGameStore((s) => s.mapCities);
@@ -34,6 +36,14 @@ export default function MeydanBattlePanel() {
 
   const handleContribute = () => {
     if (contributeMeydanTroops(troopQty)) setTroopQty({});
+  };
+
+  const handleDeclare = () => {
+    if (!targetPick) return;
+    const ok = window.confirm(
+      t('pages.expeditions.meydanConfirm', { target: targetPick }),
+    );
+    if (ok) declareMeydanBattle(targetPick);
   };
 
   return (
@@ -67,9 +77,9 @@ export default function MeydanBattlePanel() {
             type="button"
             className="btn btn-danger btn-sm meydan-battle-declare-btn"
             disabled={!targetPick}
-            onClick={() => targetPick && declareMeydanBattle(targetPick)}
+            onClick={handleDeclare}
           >
-            Meydan Savaşı İlan Et
+            {t('pages.expeditions.meydanDeclare')}
           </button>
         </div>
       ) : (

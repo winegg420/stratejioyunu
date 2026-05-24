@@ -22,6 +22,7 @@ export function formatMapStatusBadge(city) {
 }
 
 export function formatResourceValue(resource, city) {
+  if (resource?.displayValue) return resource.displayValue;
   if (city?.status === 'bot' || city?.status === 'empty') {
     return RESOURCE_UNKNOWN_LABEL;
   }

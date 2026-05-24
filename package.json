@@ -13,9 +13,11 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && npx vercel deploy --prod --yes",
+    "deploy": "npm run check:guards && npm run build && npx vercel deploy --prod --yes",
     "i18n:sync": "node scripts/sync-i18n.mjs",
     "smoke": "node scripts/smoke-pages.mjs",
+    "check:guards": "node scripts/regression-guards.mjs",
+    "check": "npm run check:guards && npm run build",
     "supabase:connect": "node scripts/supabase-connect.mjs",
     "supabase:migrate": "node scripts/apply-supabase-migration.mjs"
   },

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import CustomDropdown from './CustomDropdown';
+import { getMapCityDisplayName } from '../map/mapCityDisplayName';
 import { useGameStore } from '../stores/gameStore';
 
 export default function IntelTargetPicker({
@@ -27,7 +28,7 @@ export default function IntelTargetPicker({
   const options = targets.length
     ? targets.map((t) => ({
       value: t.name,
-      label: `${t.name}${t.status === 'bot' ? ' [BOT]' : ''}${t.owner ? ` — ${t.owner}` : ''}`,
+      label: getMapCityDisplayName(t.name) || t.name,
     }))
     : [{ value: '', label: 'Hedef yok', disabled: true }];
 

@@ -201,6 +201,13 @@
   align-items: center;
 }
 
+.battle-sim-unit-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .battle-sim-input-row--off .cyber-data-input__field {
   opacity: 0.4;
 }
@@ -321,6 +328,21 @@
 .doctrine-card.is-active {
   border-color: var(--ideology-color, #22ff88);
   box-shadow: 0 0 18px color-mix(in srgb, var(--ideology-color) 35%, transparent);
+}
+
+/* Profil — ideoloji seçimi: altın aktif, koyu gri pasif */
+.profile-ideology-grid--doctrine .doctrine-card {
+  border-color: #333;
+  box-shadow: none;
+}
+
+.profile-ideology-grid--doctrine .doctrine-card.is-active {
+  border-color: #c9a84c;
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.32);
+}
+
+.profile-ideology-grid--doctrine .doctrine-card:not(.is-active):hover:not(:disabled) {
+  border-color: #555;
 }
 
 .doctrine-card.is-disabled,

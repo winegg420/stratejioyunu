@@ -35,6 +35,11 @@ export const UNIT_DISPLAY_BY_ID = {
     designation: 'Forward Operating Base Logistics',
     code: 'MIL-FOB-01',
   },
+  scout: {
+    name: 'Keşif Uçağı',
+    designation: 'Reconnaissance Aircraft',
+    code: 'MIL-REC-03',
+  },
   fighter: {
     name: 'Çok Rollü Muharebe Uçağı',
     designation: 'Multi-role Fighter',

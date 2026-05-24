@@ -61,3 +61,33 @@ export function getChartSeries(history, resourceId = 'hammadde') {
   }));
   return { points, min, max };
 }
+
+/** 24s pencerede 00:00 / 06:00 / 12:00 / 18:00 saat işaretleri (x: 0–100). */
+export function getChartTimeAxisTicks(history, resourceId = 'hammadde') {
+  const rows = history?.[resourceId] ?? [];
+  if (rows.length < 2) return [];
+  const end = rows[rows.length - 1].t;
+  const start = end - HISTORY_MS;
+  const span = Math.max(1, end - start);
+  const hourMarks = [0, 6, 12, 18];
+  const ticks = [];
+
+  for (const hour of hourMarks) {
+    const dayStart = new Date(start);
+    dayStart.setMinutes(0, 0, 0);
+    let tickTime = null;
+    for (let dayOffset = 0; dayOffset <= 1; dayOffset += 1) {
+      const candidate = new Date(dayStart);
+      candidate.setDate(candidate.getDate() + dayOffset);
+      candidate.setHours(hour, 0, 0, 0);
+      const t = candidate.getTime();
+      if (t >= start && t <= end) tickTime = t;
+    }
+    if (tickTime == null) continue;
+    ticks.push({
+      x: ((tickTime - start) / span) * 100,
+      label: `${String(hour).padStart(2, '0')}:00`,
+    });
+  }
+  return ticks;
+}

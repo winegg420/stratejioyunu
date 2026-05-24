@@ -21,6 +21,11 @@ export function useMapFullscreen() {
     const active = Boolean(el && isFullscreenElement(el));
     setIsFullscreen(active);
     document.documentElement.classList.toggle(FS_ROOT_CLASS, active);
+    if (active) {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('map-layout-changed'));
+      });
+    }
   }, []);
 
   useEffect(() => {

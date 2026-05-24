@@ -43,6 +43,7 @@ function TurkeyLeafletMap({
   mapCities,
   playerCities,
   playerIdeology,
+  onFlyComplete,
   activeHighlightCity,
   provinceLayerRef,
   expeditions,
@@ -83,8 +84,9 @@ function TurkeyLeafletMap({
     <MapContainer
       center={TURKEY_CENTER}
       zoom={TURKEY_ZOOM}
-      minZoom={5}
+      minZoom={4}
       maxBounds={TURKEY_MAX_BOUNDS}
+      maxBoundsViscosity={0.05}
       className="turkey-map turkey-map--cyber"
       scrollWheelZoom
       touchZoom
@@ -96,6 +98,7 @@ function TurkeyLeafletMap({
       <MapResizeEffect />
       <MapHexClickPulse onMapClick={onMapClickPulse} />
       <MapCityClickRouter
+        provinces={provinces}
         mapCities={filteredCities}
         playerCities={playerCities}
         onSelectCity={onSelectCity}
@@ -127,6 +130,8 @@ function TurkeyLeafletMap({
       <CityDotLayer
         mapCities={filteredCities}
         playerCities={playerCities}
+        playerIdeology={playerIdeology}
+        ideologyView={ideologyView}
         visible={!showCityLabels}
         renderKey={Math.round((mapZoom ?? 6) * 10)}
       />
@@ -134,6 +139,8 @@ function TurkeyLeafletMap({
       <CityTargetReticleLayer
         mapCities={filteredCities}
         playerCities={playerCities}
+        playerIdeology={playerIdeology}
+        ideologyView={ideologyView}
         zoom={mapZoom}
         onSelectCity={onSelectCity}
       />
@@ -146,6 +153,8 @@ function TurkeyLeafletMap({
       <CityMarkers
         mapCities={filteredCities}
         playerCities={playerCities}
+        playerIdeology={playerIdeology}
+        ideologyView={ideologyView}
         activeCityId={activeCityId}
         underAttack={underAttack}
         incomingAttacks={incomingAttacks}
@@ -156,7 +165,11 @@ function TurkeyLeafletMap({
         markerRenderKey={Math.round((mapZoom ?? 6) * 10)}
       />
       <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
-      <MapFitFlyLayers fitBounds={fitBounds} flyTarget={flyTarget} />
+      <MapFitFlyLayers
+        fitBounds={fitBounds}
+        flyTarget={flyTarget}
+        onFlyComplete={onFlyComplete}
+      />
       {showHud && <HudBridge />}
       {activeLat != null && activeLng != null && (
         <MapHudConnector lat={activeLat} lng={activeLng} />

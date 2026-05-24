@@ -60,6 +60,13 @@
   margin: 0 0 0.35rem;
 }
 
+.daily-quest-progress {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--neon-cyan, #4a7c59);
+}
+
 .watchlist-list,
 .cosmetic-title-list {
   list-style: none;

@@ -1,15 +1,29 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { getDisplayName } from './auth';
 import { getCompetitionDef } from './seasonChampionship';
 
 const DEFAULT_SERVER = 'turkiye-1';
 
 export function resolveProfileDisplayName(profile, fallback = 'Oyuncu') {
-  if (!profile) return fallback;
+  const authFallback = fallback && fallback !== 'Oyuncu' ? fallback : null;
+  if (!profile) return authFallback || fallback;
   const display = profile.display_name?.trim();
   if (display && display !== 'Oyuncu') return display;
   const player = profile.player_name?.trim();
-  if (player) return player;
-  return display || fallback;
+  if (player && player !== 'Oyuncu') return player;
+  return authFallback || display || fallback;
+}
+
+/** Profil başlığı — DB + Supabase auth birleşik. */
+export function resolvePlayerDisplayName({ profile, user, profileDisplayName, playerName } = {}) {
+  if (profileDisplayName?.trim() && profileDisplayName.trim() !== 'Oyuncu') {
+    return profileDisplayName.trim();
+  }
+  const fromProfile = resolveProfileDisplayName(profile, getDisplayName(user));
+  if (fromProfile && fromProfile !== 'Oyuncu') return fromProfile;
+  if (playerName?.trim() && playerName.trim() !== 'Oyuncu') return playerName.trim();
+  const fromAuth = getDisplayName(user);
+  return fromAuth !== 'Oyuncu' ? fromAuth : (playerName?.trim() || 'Oyuncu');
 }
 
 export function resolveProfileIsAdmin(profile, user = null) {

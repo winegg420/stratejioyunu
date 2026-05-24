@@ -17,6 +17,7 @@ const ROUTES = [
   '/diplomasi',
   '/mesajlar',
   '/profil',
+  '/admin-log',
 ];
 
 async function main() {

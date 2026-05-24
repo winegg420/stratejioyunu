@@ -45,7 +45,6 @@ import {
   loadSeasonChronicles,
   loadTreatyBreaks,
 } from '../lib/historyBookStorage';
-import { applyDevTestModeToState } from '../lib/devTestMode';
 import { loadGameConfig } from '../lib/gameConfig';
 import { tickOpenMarket } from '../lib/openMarket';
 import { seedMarketPriceHistory } from '../lib/marketPriceHistory';
@@ -130,13 +129,14 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     ),
     expeditions: [],
     intelOperations: [],
-    reports: reports.map((r) => ({ ...r })),
+    reports: [],
     pastExpeditions: [],
     navBadges: { expeditions: false, reports: false },
     mapFocusRequest: null,
     lastViewedLocation: null,
     mapTargetPickRequest: null,
     mapTargetPickResult: null,
+    mapExpeditionLaunchRequest: null,
     flashes: {},
     budgetSpendFloats: [],
     meydanBattle: null,
@@ -216,5 +216,5 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     ...marketTick,
     marketPriceHistory: seedMarketPriceHistory(marketTick.openMarketPrices),
   };
-  return applyDevTestModeToState(withMarket);
+  return withMarket;
 }

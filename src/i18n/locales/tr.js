@@ -41,7 +41,10 @@ const trBase = {
     activeCity: 'Aktif şehir',
     resources: 'Kaynaklar',
     sharedTreasury: 'ORTAK',
-    sharedTreasuryTitle: 'Tüm kolonilerin ortak dijital bütçesi',
+    sharedTreasuryTitle: 'İttifak ortaklarıyla paylaşılan ortak hazine',
+    serverTimeLabel: 'SUNUCU',
+    serverTimeTitle: 'Küresel sunucu saati',
+    foodHourlyZeroTitle: 'Nüfus doğal olarak artmaz, göç ve yapı bonuslarıyla artar.',
     stopped: 'DURDU',
     depotFull: 'depo taştı, üretim durdu',
     peaceForce: 'BARIŞ GÜCÜ',
@@ -116,6 +119,11 @@ const trBase = {
   },
   auth: {
     checking: 'Oturum kontrol ediliyor…',
+    checkingHint: 'Bu ekran 10 saniyeden uzun sürerse sayfayı yenileyin.',
+    checkTimeout: 'Oturum doğrulanamadı. Bağlantınızı kontrol edip sayfayı yenileyin.',
+    syncTimeout: 'Oyun verileri yüklenemedi. Sayfayı yenileyin veya Ana Merkez\'e dönün.',
+    syncingGame: 'Komuta verileri senkronize ediliyor…',
+    reloadPage: 'Sayfayı yenile',
     eyebrow: '[ KÜRESEL BAŞKANLIK · 2044 ]',
     subtitle: 'Mutlak otorite — tek lider, resmi State Mail, harita üzerinde güç mücadelesi',
     briefing: '[ ULUSAL BRİFİNG ] Oku',
@@ -197,7 +205,7 @@ const trBase = {
     },
     blackMarket: {
       title: 'Kara Borsa',
-      subtitle: '> Anonim kanal — kimlik maskeli işlemler · yakalanma riski aktif...',
+      subtitle: '> Anonim kanal — kimlik maskeli işlemler · Yakalanma riski: %{{risk}}...',
       status: '[ STATUS: BLACK MARKET ]',
     },
     trade: {

@@ -278,10 +278,10 @@ h3,
 }
 
 .nav-expedition-count {
-  background: rgba(74, 124, 89, 0.15) !important;
-  color: #4a7c59 !important;
-  border: 1px solid rgba(74, 124, 89, 0.45) !important;
-  box-shadow: none !important;
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 120, 120, 0.55) !important;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.45) !important;
 }
 
 .nav-attack-alert {

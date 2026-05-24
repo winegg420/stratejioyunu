@@ -41,7 +41,10 @@ const enBase = {
     activeCity: 'Active city',
     resources: 'Resources',
     sharedTreasury: 'SHARED',
-    sharedTreasuryTitle: 'Empire-wide shared digital treasury',
+    sharedTreasuryTitle: 'Shared treasury pooled with alliance partners',
+    serverTimeLabel: 'SERVER',
+    serverTimeTitle: 'Global server time',
+    foodHourlyZeroTitle: 'Population does not grow naturally; it rises via migration and building bonuses.',
     stopped: 'HALTED',
     depotFull: 'depot overflow, production halted',
     peaceForce: 'PEACE FORCE',
@@ -116,6 +119,11 @@ const enBase = {
   },
   auth: {
     checking: 'Checking session…',
+    checkingHint: 'If this screen lasts more than 10 seconds, refresh the page.',
+    checkTimeout: 'Session could not be verified. Check your connection and refresh.',
+    syncTimeout: 'Game data failed to load. Refresh the page or return to Command Center.',
+    syncingGame: 'Syncing command data…',
+    reloadPage: 'Refresh page',
     eyebrow: '[ GLOBAL PRESIDENCY · 2044 ]',
     subtitle: 'Absolute authority — one leader, official State Mail, power struggle on the map',
     briefing: '[ NATIONAL BRIEFING ] Read',
@@ -197,7 +205,7 @@ const enBase = {
     },
     blackMarket: {
       title: 'Black Market',
-      subtitle: '> Anonymous channel — masked deals · exposure risk active...',
+      subtitle: '> Anonymous channel — masked deals · Capture risk: {{risk}}%...',
       status: '[ STATUS: BLACK MARKET ]',
     },
     trade: {

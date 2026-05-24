@@ -3,6 +3,7 @@
  */
 import { localizedBuildingLabel } from '../i18n';
 import { getBuildingById } from './buildingUtils';
+import { pickMilAiLiveAdvice } from './milAiLiveAdvice';
 import {
   getMilAiTutorialProgress,
   getMilAiTutorialQuestTask,
@@ -35,7 +36,7 @@ function buildStandbyLine(t, lang) {
   );
 }
 
-function buildTutorialLines(state, t, lang) {
+function buildTutorialLines(state, t, lang, remote = null) {
   const progress = getMilAiTutorialProgress(state);
   const quest = progress.currentQuest;
   const city = getActiveCity(state);
@@ -43,7 +44,7 @@ function buildTutorialLines(state, t, lang) {
 
   if (progress.allComplete || !quest) {
     lines.push(milAiCommandLine('SİSTEM', t('milAi.tutorial.systemOnline')));
-    const advice = pickMilAiLevelAdvice(state, lang);
+    const advice = pickMilAiLiveAdvice(state, remote, lang) ?? pickMilAiLevelAdvice(state, lang);
     if (advice) {
       lines.push(milAiCommandLine(lang === 'en' ? 'ADVICE' : 'TAVSİYE', advice));
     }
@@ -93,7 +94,7 @@ function buildTutorialLines(state, t, lang) {
 /**
  * @returns {string[]}
  */
-export function buildMilAiTerminalLines(state, t, lang = 'tr') {
+export function buildMilAiTerminalLines(state, t, lang = 'tr', remote = null) {
   if (!isMilAiAdvisorOnline(state)) {
     return [buildStandbyLine(t, lang)];
   }
@@ -105,15 +106,15 @@ export function buildMilAiTerminalLines(state, t, lang = 'tr') {
         lang === 'en' ? 'COMPLETE' : 'GÖREV TAMAMLANDI',
         t(celebration.messageKey),
       ),
-      ...buildTutorialLines(state, t, lang).slice(0, 2),
+      ...buildTutorialLines(state, t, lang, remote).slice(0, 2),
     ];
   }
 
   if (isMilAiTutorialActive(state)) {
-    return buildTutorialLines(state, t, lang);
+    return buildTutorialLines(state, t, lang, remote);
   }
 
-  const advice = pickMilAiLevelAdvice(state, lang);
+  const advice = pickMilAiLiveAdvice(state, remote, lang) ?? pickMilAiLevelAdvice(state, lang);
   return [
     milAiCommandLine('SİSTEM', t('milAi.tutorial.systemOnline')),
     milAiCommandLine(lang === 'en' ? 'ADVICE' : 'TAVSİYE', advice ?? t('milAi.advice.stable')),

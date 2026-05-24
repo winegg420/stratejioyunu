@@ -87,8 +87,12 @@ export function syncCityBuildingsToCatalog(buildings = [], { useDemoLevels = fal
     const base = {
       ...def,
       level,
-      cost: levelOne?.cost ?? def?.cost,
-      time: levelOne?.time ?? def?.time,
+      cost: (levelOne?.cost && levelOne.cost !== '—')
+        ? levelOne.cost
+        : (def?.cost && def.cost !== '—' ? def.cost : levelOne?.cost ?? def?.cost),
+      time: (levelOne?.time && levelOne.time !== '—')
+        ? levelOne.time
+        : (def?.time && def.time !== '—' ? def.time : levelOne?.time ?? def?.time),
       upgrading: prev?.upgrading ?? false,
       producing: prev?.producing ?? false,
       locked: level < 1 && PANEL_LOCKED_BUILDING_IDS.includes(id),
@@ -157,7 +161,7 @@ export function getBuildingById(city, buildingId) {
 export { getStarterResources, ensureCityResources, normalizeResourceRow } from '../data/resourceCatalog';
 
 export function getStarterIdleTroops() {
-  return [
+  const land = [
     { id: 'infantry', name: getUnitDisplayName('infantry', 'Piyade'), icon: '🪖', available: 0 },
     { id: 'armor', name: getUnitDisplayName('armor', 'Zırhlı Araç'), icon: '🚛', available: 0 },
     { id: 'tank', name: getUnitDisplayName('tank', 'Tank'), icon: '🛡️', available: 0 },
@@ -166,6 +170,31 @@ export function getStarterIdleTroops() {
     { id: 'special', name: 'Özel Tim', icon: '⚔️', available: 0 },
     { id: 'colonist', name: 'Göçmen / İnşaat Aracı', icon: '🏙️', available: 0 },
   ];
+  const air = ['scout', 'fighter', 'bomber', 'drone'].map((id) => ({
+    id,
+    name: getUnitDisplayName(id, id),
+    icon: '✈️',
+    available: 0,
+  }));
+  const sea = ['patrol', 'frigate', 'sub'].map((id) => ({
+    id,
+    name: getUnitDisplayName(id, id),
+    icon: '⚓',
+    available: 0,
+  }));
+  return [...land, ...air, ...sea];
+}
+
+/** Mevcut şehir asker listesini kara/hava/deniz kataloğuyla hizalar. */
+export function mergeCityIdleTroops(existing = []) {
+  const byId = new Map((existing ?? []).map((t) => [t.id, { ...t }]));
+  for (const template of getStarterIdleTroops()) {
+    const prev = byId.get(template.id);
+    byId.set(template.id, prev
+      ? { ...template, ...prev, name: template.name }
+      : { ...template });
+  }
+  return [...byId.values()];
 }
 
 export function createStarterResearches() {

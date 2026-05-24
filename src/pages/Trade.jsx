@@ -6,16 +6,19 @@ import EmptyState from '../components/EmptyState';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import {
   calcTradeDepotOverflow,
+  getTradeDepotLabel,
   sumTradeAmounts,
 } from '../lib/tradeUtils';
 import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 const SENDABLE_IDS = ['food', 'fuel', 'hammadde', 'money'];
 
 const EMPTY_AMOUNTS = { food: 0, fuel: 0, hammadde: 0, money: 0 };
 
 export default function Trade() {
+  const { lang } = useLanguage();
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -139,10 +142,10 @@ export default function Trade() {
                   className={`trade-resource-row${over ? ' trade-resource-row--overflow' : ''}`}
                 >
                   <span className="trade-res-label">
-                    {res.icon} {res.label}
+                    {res.icon} {getTradeDepotLabel(id, lang)}
                   </span>
                   <span className="trade-res-stock">
-                    Depo: {res.current.toLocaleString('tr-TR')}
+                    Stok: {res.current.toLocaleString('tr-TR')}
                     {res.max != null && ` / ${res.max.toLocaleString('tr-TR')}`}
                   </span>
                   <div className="trade-res-inputs">
@@ -158,7 +161,8 @@ export default function Trade() {
                       type="button"
                       className="btn btn-secondary btn-sm trade-half-btn"
                       onClick={() => halveResource(id)}
-                      title="Mevcut stoğun yarısını yaz"
+                      title="Mevcut miktarın yarısını gönder"
+                      aria-label="Mevcut miktarın yarısını gönder"
                     >
                       1/2
                     </button>

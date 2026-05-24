@@ -145,6 +145,15 @@ export function resolveNextConstructionSpec(building) {
     };
   }
 
+  const levelOne = getLevelOneSpec(building.id);
+  if (levelOne?.cost && levelOne.cost !== '—') {
+    return {
+      cost: levelOne.cost,
+      time: levelOne.time ?? '00:02:00',
+      targetLevel,
+    };
+  }
+
   return null;
 }
 

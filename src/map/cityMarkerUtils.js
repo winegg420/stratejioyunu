@@ -9,7 +9,8 @@ export const EMPIRE_CITY_GLOW = HQ_GREEN;
 export const BOT_MARKER_ORANGE = '#f97316';
 
 const MARKER_PIN_SIZE = 16;
-const MARKER_LABEL_WIDTH = 68;
+const MARKER_LABEL_WIDTH = 72;
+const MARKER_LABEL_STACK_HEIGHT = 28;
 
 function escapeHtml(text) {
   return String(text ?? '')
@@ -34,8 +35,7 @@ function buildLabelStack(city, ownerLabel, { cyberActive = false } = {}) {
 function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
   const pinH = options.pinHeight ?? MARKER_PIN_SIZE;
   const showLabels = options.showLabels !== false;
-  const hasOwner = ownerLabel && city.status !== 'bot';
-  const labelH = showLabels ? (hasOwner ? 22 : 14) : 0;
+  const labelH = showLabels ? MARKER_LABEL_STACK_HEIGHT : 0;
   const totalH = pinH + labelH + (showLabels ? 4 : 0);
 
   return {
@@ -192,11 +192,13 @@ export function createCityMarkerIcon(city, {
   ownerLabel,
   cyberActive = false,
   showLabels = true,
+  colorOverride = null,
 } = {}) {
   const isBot = city.status === 'bot';
-  const color = underAttack
-    ? '#ef4444'
-    : (isBot ? BOT_MARKER_ORANGE : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy));
+  const color = colorOverride
+    ?? (underAttack
+      ? '#ef4444'
+      : (isBot ? BOT_MARKER_ORANGE : (CITY_STATUS_COLORS[city.status] || CITY_STATUS_COLORS.enemy)));
   const size = MARKER_PIN_SIZE;
   const opacity = isBot ? 0.42 : 0.9;
 

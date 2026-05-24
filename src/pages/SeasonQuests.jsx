@@ -13,7 +13,12 @@ import {
   getPlayerSeasonScore,
   SEASON_PERIOD,
 } from '../lib/seasonChampionship';
-import { formatDailyResetCountdown } from '../lib/dailyQuests';
+import {
+  buildDailyQuestContext,
+  formatDailyQuestProgressLine,
+  formatDailyResetCountdown,
+} from '../lib/dailyQuests';
+import { useLanguage } from '../context/LanguageContext';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 
 function SeasonBlock({ period, block, seasonStats, onClaim }) {
@@ -97,17 +102,35 @@ function SeasonBlock({ period, block, seasonStats, onClaim }) {
 
 export default function SeasonQuests() {
   const [activeTab, setActiveTab] = useState('quests');
+  const { lang } = useLanguage();
 
   const playerIdeology = useGameStore((s) => s.playerIdeology);
   const loyaltyScore = useGameStore((s) => s.loyaltyScore ?? 0);
   const seasonEngagement = useGameStore((s) => s.seasonEngagement);
-  const seasonStats = useGameStore((s) => s.seasonStats);
   const dailyQuests = useGameStore((s) => s.dailyQuests);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const cities = useGameStore((s) => s.cities);
+  const seasonStats = useGameStore((s) => s.seasonStats);
+  const dailyQuestFlags = useGameStore((s) => s.dailyQuestFlags);
+  const researches = useGameStore((s) => s.researches);
+  const activeCityHappiness = useGameStore((s) => s.cities[s.activeCityId]?.happiness);
   const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? []);
   const watchlist = useGameStore((s) => s.watchlist ?? []);
   const claimDailyQuestReward = useGameStore((s) => s.claimDailyQuestReward);
   const claimSeasonPrize = useGameStore((s) => s.claimSeasonPrize);
   const removeWatchTarget = useGameStore((s) => s.removeWatchTarget);
+
+  const dailyQuestCtx = useMemo(
+    () => buildDailyQuestContext({
+      activeCityId,
+      cities,
+      seasonStats,
+      dailyQuestFlags,
+      researches,
+      activeCityHappiness: activeCityHappiness ?? cities[activeCityId]?.happiness ?? 0,
+    }),
+    [activeCityId, cities, seasonStats, dailyQuestFlags, researches, activeCityHappiness],
+  );
 
   return (
     <div className="page season-quests-page page--console">
@@ -163,7 +186,9 @@ export default function SeasonQuests() {
           · Sadakat: <span className="font-hud-data">{formatLoyaltyScore(loyaltyScore)}</span>
         </p>
         <ul className="daily-quest-list">
-          {(dailyQuests?.quests ?? []).map((q) => (
+          {(dailyQuests?.quests ?? []).map((q) => {
+            const progressLine = formatDailyQuestProgressLine(q, dailyQuestCtx, lang);
+            return (
             <li
               key={q.id}
               className={[
@@ -175,6 +200,11 @@ export default function SeasonQuests() {
                 .join(' ')}
             >
               <h4>{q.title}</h4>
+              {progressLine && (
+                <p className="daily-quest-progress font-hud-data" role="status">
+                  {progressLine}
+                </p>
+              )}
               <p className="hint">{q.hint}</p>
               {q.completed && !q.claimed && (
                 <button
@@ -187,7 +217,8 @@ export default function SeasonQuests() {
               )}
               {q.claimed && <span className="badge badge--ok">Alındı</span>}
             </li>
-          ))}
+            );
+          })}
         </ul>
       </section>
 

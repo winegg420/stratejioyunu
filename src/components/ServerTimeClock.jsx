@@ -1,4 +1,5 @@
 import { useGameStore } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
 
 function formatServerTime(now) {
   const d = new Date(now);
@@ -8,10 +9,14 @@ function formatServerTime(now) {
 
 export default function ServerTimeClock() {
   const now = useGameStore((s) => s.now);
+  const { t } = useLanguage();
 
   return (
-    <div className="server-time-clock server-time-clock--terminal" title="Küresel sunucu saati">
-      <span className="server-time-label">Sunucu</span>
+    <div
+      className="server-time-clock server-time-clock--terminal server-time-clock--bar"
+      title={t('resourceBar.serverTimeTitle')}
+    >
+      <span className="server-time-label">{t('resourceBar.serverTimeLabel')}</span>
       <time className="server-time-value" dateTime={new Date(now).toISOString()}>
         {formatServerTime(now)}
       </time>

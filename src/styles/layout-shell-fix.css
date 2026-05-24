@@ -233,11 +233,20 @@
   margin: 0 !important;
   padding-top: 0.1rem;
   white-space: normal !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
   line-height: 1.45 !important;
   position: relative !important;
   top: auto !important;
+}
+
+.home-command-page-header .page-subtitle--typewriter:not(.page-subtitle--typewriter-done) {
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+.home-command-page-header .page-subtitle--typewriter-done,
+.home-command-page-header .page-feed-line--ready.page-subtitle--typewriter-done {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-shell.hud-shell:not(.route-map) .content-area {

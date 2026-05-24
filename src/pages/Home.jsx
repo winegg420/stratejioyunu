@@ -55,14 +55,16 @@ const WIDGET_ICONS = {
 
 function CommandWidget({ label, value, sub, active, iconKey }) {
   const icon = WIDGET_ICONS[iconKey] ?? '◈';
-  const isActive = active ?? (typeof value === 'number' ? value > 0 : false);
   const numeric = typeof value === 'number';
+  const isZero = numeric && value === 0;
+  const isActive = active ?? (numeric ? value > 0 : false);
   return (
     <div
       className={[
         'home-cmd-widget',
         'glass-panel',
         isActive && 'home-cmd-widget--active',
+        isZero && 'home-cmd-widget--zero',
       ]
         .filter(Boolean)
         .join(' ')}

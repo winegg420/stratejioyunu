@@ -50,7 +50,10 @@ import './styles/layout-bar-terminal-fix.css';
 import './styles/premium-diamonds.css';
 import './styles/resource-bar-grid-final.css';
 import './styles/resource-bar-five-grid.css';
+import './styles/global-ui-ux-revision.css';
 import App from './App.jsx';
+import { purgeStaleDevTestFlags } from './lib/devTestMode';
+purgeStaleDevTestFlags();
 
 const rootEl = document.getElementById('root');
 

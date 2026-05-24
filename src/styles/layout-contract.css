@@ -69,6 +69,14 @@
   position: relative;
   top: auto;
   white-space: normal;
+}
+
+.home-command-page-header .page-subtitle--typewriter:not(.page-subtitle--typewriter-done) {
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.home-command-page-header .page-subtitle--typewriter-done {
   overflow: hidden;
   text-overflow: ellipsis;
 }

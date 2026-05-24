@@ -1,4 +1,6 @@
 import CostParts from './CostParts';
+import ContentInfoResearchFooter from './ContentInfoResearchFooter';
+import UnitMilitaryIcon from './UnitMilitaryIcon';
 import { useModalDismiss, stopModalPropagation } from '../hooks/useModalDismiss';
 import { useGameStore } from '../stores/gameStore';
 
@@ -142,6 +144,7 @@ export default function ContentInfoModal() {
   if (!data) return null;
 
   const isUnit = data.kind === 'unit';
+  const isResearch = data.kind === 'research';
 
   return (
     <div
@@ -160,6 +163,8 @@ export default function ContentInfoModal() {
           <div className="content-info-modal__visual">
             {data.image && !isUnit ? (
               <img src={data.image} alt="" className="content-info-modal__img" />
+            ) : isUnit && data.id ? (
+              <UnitMilitaryIcon unitId={data.id} className="content-info-modal__unit-icon" size={56} />
             ) : (
               <span className="content-info-modal__emoji" aria-hidden="true">
                 {data.emoji}
@@ -187,6 +192,10 @@ export default function ContentInfoModal() {
         <div className="content-info-modal__body">
           {isUnit ? <UnitBody data={data} /> : <BuildingResearchBody data={data} />}
         </div>
+
+        {isResearch && data.id && (
+          <ContentInfoResearchFooter researchId={data.id} onClose={closeContentInfo} />
+        )}
       </div>
     </div>
   );

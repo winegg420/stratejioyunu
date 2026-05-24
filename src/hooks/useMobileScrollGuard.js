@@ -12,6 +12,8 @@ const SCROLL_ALLOW_SELECTORS = [
   '.report-detail--ledger',
   '.map-city-select',
   '.map-intel-sidebar',
+  '.tactical-console',
+  '.tactical-console__body',
   '.input-qty',
   'textarea',
   'select',

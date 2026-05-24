@@ -195,11 +195,25 @@
   display: none;
 }
 
+.terminal-dock-logs__portals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.65rem;
+}
+
+.terminal-log-panel--peace {
+  margin-bottom: 0.75rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
 .terminal-log-panel--crisis .crisis-response-panel,
 .terminal-log-panel--peace .peace-force-banner {
-  margin: 0;
+  margin: 0 0 0.65rem !important;
   border: none;
   box-shadow: none;
+  padding-bottom: 0.75rem !important;
+  border-bottom: 1px dashed rgba(74, 124, 89, 0.28) !important;
 }
 
 .terminal-log-panel--intel .intel-status-strip {

@@ -18,6 +18,11 @@ const QUEST_POOLS = {
       hint: 'Müttefik şehrine toplam 800+ kaynak gönder (ticaret seferi).',
       check: (ctx) => (ctx.seasonStats?.tradeVolume ?? 0) >= 800 && ctx.flags?.socialistAidSent,
       target: 800,
+      progress: (ctx) => ({
+        current: (ctx.seasonStats?.tradeVolume ?? 0).toLocaleString('tr-TR'),
+        target: '800',
+        unit: 'kaynak',
+      }),
       reward: { loyalty: 85, hammadde: 400, fuel: 300 },
     },
     {
@@ -25,6 +30,12 @@ const QUEST_POOLS = {
       title: 'Refah Hattı',
       hint: 'Aktif şehirde mutluluğu %85 üzerinde tut.',
       check: (ctx) => (ctx.activeCity?.happiness ?? 0) >= 85,
+      progress: (ctx) => ({
+        current: Math.round(ctx.activeCity?.happiness ?? 0),
+        target: 85,
+        unit: 'mutluluk',
+        format: 'percent',
+      }),
       reward: { loyalty: 70, money: 600 },
     },
     {
@@ -35,6 +46,11 @@ const QUEST_POOLS = {
         const t = ctx.activeCity?.taxRate ?? 15;
         return t >= 12 && t <= 18;
       },
+      progress: (ctx) => ({
+        current: `%${Math.round(ctx.activeCity?.taxRate ?? 15)}`,
+        target: '%12–%18',
+        unit: 'vergi',
+      }),
       reward: { loyalty: 55, food: 500 },
     },
   ],
@@ -47,6 +63,14 @@ const QUEST_POOLS = {
         const money = ctx.activeCity?.resources?.find((r) => r.id === 'money');
         return (money?.current ?? 0) >= 25000;
       },
+      progress: (ctx) => {
+        const money = ctx.activeCity?.resources?.find((r) => r.id === 'money');
+        return {
+          current: (money?.current ?? 0).toLocaleString('tr-TR'),
+          target: '25.000',
+          unit: 'bütçe',
+        };
+      },
       reward: { loyalty: 90, money: 1200 },
     },
     {
@@ -54,6 +78,11 @@ const QUEST_POOLS = {
       title: 'Ticaret Konvoyu',
       hint: 'En az bir ticaret seferi tamamla.',
       check: (ctx) => (ctx.seasonStats?.tradeVolume ?? 0) >= 200,
+      progress: (ctx) => ({
+        current: (ctx.seasonStats?.tradeVolume ?? 0).toLocaleString('tr-TR'),
+        target: '200',
+        unit: 'kaynak',
+      }),
       reward: { loyalty: 75, fuel: 500 },
     },
     {
@@ -61,6 +90,11 @@ const QUEST_POOLS = {
       title: 'Sanayi Çıktısı',
       hint: '500+ hammadde üret (haftalık sayaç).',
       check: (ctx) => (ctx.seasonStats?.hammaddeProduced ?? 0) >= 500,
+      progress: (ctx) => ({
+        current: (ctx.seasonStats?.hammaddeProduced ?? 0).toLocaleString('tr-TR'),
+        target: '500',
+        unit: 'hammadde',
+      }),
       reward: { loyalty: 65, hammadde: 700 },
     },
   ],
@@ -70,6 +104,11 @@ const QUEST_POOLS = {
       title: 'Ordu Mobilizasyonu',
       hint: 'Toplam 40+ askeri birim üret.',
       check: (ctx) => (ctx.seasonStats?.unitsTrained ?? 0) >= 40,
+      progress: (ctx) => ({
+        current: String(ctx.seasonStats?.unitsTrained ?? 0),
+        target: '40',
+        unit: 'birim',
+      }),
       reward: { loyalty: 95, hammadde: 600, fuel: 400 },
     },
     {
@@ -77,6 +116,11 @@ const QUEST_POOLS = {
       title: 'Cephe Baskını',
       hint: 'Haritada başarılı saldırı seferi tamamla.',
       check: (ctx) => (ctx.seasonStats?.attackWins ?? 0) >= 1,
+      progress: (ctx) => ({
+        current: String(ctx.seasonStats?.attackWins ?? 0),
+        target: '1',
+        unit: 'zafer',
+      }),
       reward: { loyalty: 110, money: 800 },
     },
     {
@@ -84,6 +128,11 @@ const QUEST_POOLS = {
       title: 'Sefer Disiplini',
       hint: '3 saldırı/casus seferi başlat.',
       check: (ctx) => (ctx.seasonStats?.expeditionsLaunched ?? 0) >= 3,
+      progress: (ctx) => ({
+        current: String(ctx.seasonStats?.expeditionsLaunched ?? 0),
+        target: '3',
+        unit: 'sefer',
+      }),
       reward: { loyalty: 60, fuel: 350 },
     },
   ],
@@ -93,6 +142,11 @@ const QUEST_POOLS = {
       title: 'Siber Protokol',
       hint: 'Başarılı siber operasyon tamamla.',
       check: (ctx) => (ctx.seasonStats?.cyberOpsCount ?? 0) >= 1,
+      progress: (ctx) => ({
+        current: String(ctx.seasonStats?.cyberOpsCount ?? 0),
+        target: '1',
+        unit: 'operasyon',
+      }),
       reward: { loyalty: 100, energy: 400 },
     },
     {
@@ -100,6 +154,11 @@ const QUEST_POOLS = {
       title: 'YZ Çevrimiçi',
       hint: 'Yapay Zeka Merkezini çalışır durumda tut.',
       check: (ctx) => isAiCenterOperational(ctx.activeCity),
+      progress: (ctx) => ({
+        current: isAiCenterOperational(ctx.activeCity) ? 'Çevrimiçi' : 'Kapalı',
+        target: 'Çevrimiçi',
+        unit: 'YZ merkezi',
+      }),
       reward: { loyalty: 80, hammadde: 500 },
     },
     {
@@ -107,6 +166,11 @@ const QUEST_POOLS = {
       title: 'Ar-Ge İlerlemesi',
       hint: 'Bir araştırmayı tamamla veya yükselt.',
       check: (ctx) => (ctx.seasonStats?.researchCompleted ?? 0) >= 1,
+      progress: (ctx) => ({
+        current: String(ctx.seasonStats?.researchCompleted ?? 0),
+        target: '1',
+        unit: 'araştırma',
+      }),
       reward: { loyalty: 70, money: 900 },
     },
   ],
@@ -210,12 +274,43 @@ export function applyQuestResourceReward(resources, reward) {
 
 export function buildDailyQuestContext(state) {
   const activeCity = state.cities?.[state.activeCityId];
+  const happiness = state.activeCityHappiness ?? activeCity?.happiness ?? 0;
   return {
-    activeCity,
+    activeCity: activeCity ? { ...activeCity, happiness } : null,
     seasonStats: state.seasonStats,
     flags: state.dailyQuestFlags ?? {},
     researches: state.researches,
   };
+}
+
+function findQuestTemplate(templateId) {
+  return Object.values(QUEST_POOLS)
+    .flat()
+    .find((t) => t.id === templateId);
+}
+
+/** Günlük görev kartı için "Mevcut X / Hedef Y" satırı. */
+export function formatDailyQuestProgressLine(quest, ctx, lang = 'tr') {
+  const template = findQuestTemplate(quest?.templateId);
+  if (!template?.progress) return null;
+  const raw = template.progress(ctx);
+  if (!raw) return null;
+  if (raw.format === 'percent' || raw.unit === 'mutluluk') {
+    const current = typeof raw.current === 'number'
+      ? raw.current
+      : parseInt(String(raw.current).replace(/\D/g, ''), 10) || 0;
+    const target = typeof raw.target === 'number'
+      ? raw.target
+      : parseInt(String(raw.target).replace(/\D/g, ''), 10) || 0;
+    if (lang === 'en') {
+      return `Current: %${current} / Target: %${target}`;
+    }
+    return `Mevcut: %${current} / Hedef: %${target}`;
+  }
+  if (lang === 'en') {
+    return `Current ${raw.current} / Target ${raw.target}`;
+  }
+  return `Mevcut: ${raw.current} / Hedef: ${raw.target}`;
 }
 
 export function markSocialistAidFlag(flags, sendAmounts) {

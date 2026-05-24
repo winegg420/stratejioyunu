@@ -202,9 +202,10 @@ button.btn-primary {
 }
 
 .nav-expedition-count {
-  color: #39ff14 !important;
-  background: rgba(74, 124, 89, 0.12) !important;
-  border: 1px solid rgba(74, 124, 89, 0.4) !important;
+  color: #fff !important;
+  background: #dc2626 !important;
+  border: 1px solid rgba(255, 120, 120, 0.55) !important;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.45) !important;
 }
 
 .nav-attack-alert {

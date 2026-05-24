@@ -1,4 +1,50 @@
-import { RESOURCE_IDS, getResourceDisplay } from '../data/resourceCatalog';
+import { RESOURCE_IDS, getResourceDisplay, resolveResourceId } from '../data/resourceCatalog';
+
+const TRADE_DEPOT_LABELS = {
+  tr: {
+    food: 'Nüfus Deposu',
+    fuel: 'Petrol Deposu',
+    hammadde: 'Hammadde Deposu',
+    money: 'Bütçe',
+  },
+  en: {
+    food: 'Population Depot',
+    fuel: 'Fuel Depot',
+    hammadde: 'Raw Materials Depot',
+    money: 'Budget',
+  },
+};
+
+const GLUED_DEPOT_LABELS = {
+  nüfusdepo: 'Nüfus Deposu',
+  petroldepo: 'Petrol Deposu',
+  hammaddedepo: 'Hammadde Deposu',
+  populationdepot: 'Population Depot',
+  fueldepot: 'Fuel Depot',
+  rawmaterialsdepot: 'Raw Materials Depot',
+};
+
+/** Eski kayıt / birleşik yazım: NüfusDepo → Nüfus Deposu */
+export function normalizeTradeDepotLabel(text) {
+  if (!text || typeof text !== 'string') return text;
+  const trimmed = text.trim();
+  const glued = GLUED_DEPOT_LABELS[trimmed.toLowerCase()];
+  if (glued) return glued;
+  if (/^nüfus\s*depo$/i.test(trimmed)) return 'Nüfus Deposu';
+  if (/^petrol\s*depo$/i.test(trimmed)) return 'Petrol Deposu';
+  if (/^hammadde\s*depo$/i.test(trimmed)) return 'Hammadde Deposu';
+  return trimmed;
+}
+
+/** Ticaret formunda okunabilir depo etiketi (camelCase / birleşik yazım yerine). */
+export function getTradeDepotLabel(resourceId, lang = 'tr') {
+  const id = resolveResourceId(resourceId);
+  const locale = lang === 'en' ? 'en' : 'tr';
+  if (TRADE_DEPOT_LABELS[locale][id]) return TRADE_DEPOT_LABELS[locale][id];
+  const { label } = getResourceDisplay(id);
+  const base = normalizeTradeDepotLabel(label) || label;
+  return locale === 'en' ? `${base} Depot` : `${base} Deposu`;
+}
 
 export function sumTradeAmounts(amounts = {}) {
   return RESOURCE_IDS.reduce((sum, id) => sum + Math.max(0, Number(amounts[id]) || 0), 0);

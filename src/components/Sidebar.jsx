@@ -105,12 +105,17 @@ export default function Sidebar() {
                   <span className="nav-label">{label}</span>
                   {item.path === '/seferler' && (
                     <>
-                      <NavExpeditionCount count={expeditionCount} />
+                      <NavExpeditionCount
+                        count={expeditionCount}
+                        title={`${expeditionCount} aktif operasyon`}
+                      />
                       <NavAttackAlert show={underAttack} />
                     </>
                   )}
                   {item.path === '/raporlar' && <NavBadge show={reportsBadge} />}
-                  {item.coastal && <span className="nav-badge">{t('navBadge.coastal')}</span>}
+                  {item.coastal && (
+                    <span className="nav-badge nav-badge--coastal">{t('navBadge.coastal')}</span>
+                  )}
                 </NavLink>
               )}
             </li>

@@ -8,7 +8,6 @@ export default function MapHudControls() {
 
   return (
     <div className="map-hud-panel" aria-label="Harita kontrolleri">
-      <span className="map-hud-label">TACTICAL HUD</span>
       <button type="button" className="map-hud-btn" onClick={zoomIn} aria-label="Yakınlaştır">
         +
       </button>

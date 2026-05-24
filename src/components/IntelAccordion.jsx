@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 export default function IntelAccordion({
+  id,
   title,
   icon = '◈',
   defaultOpen = false,
@@ -12,7 +13,7 @@ export default function IntelAccordion({
 
   if (alwaysOpen) {
     return (
-      <section className="intel-accordion intel-accordion--always-open">
+      <section id={id} className="intel-accordion intel-accordion--always-open">
         <div className="intel-accordion__head intel-accordion__head--static" aria-hidden="false">
           <span className="intel-accordion__icon" aria-hidden="true">
             {icon}
@@ -28,7 +29,7 @@ export default function IntelAccordion({
   }
 
   return (
-    <section className={`intel-accordion${open ? ' intel-accordion--open' : ''}`}>
+    <section id={id} className={`intel-accordion${open ? ' intel-accordion--open' : ''}`}>
       <button
         type="button"
         className="intel-accordion__head"

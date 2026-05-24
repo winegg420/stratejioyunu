@@ -38,6 +38,7 @@ export async function fetchHomeCommandStatsFromServer(profileId) {
 
     return {
       activeExpeditions: expRes.count ?? 0,
+      activeOperations: expRes.count ?? 0,
       constructionCount,
       productionCount,
       unreadReports,

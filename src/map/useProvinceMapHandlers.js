@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import L from 'leaflet';
-import { enrichMapCityWithProvince, resolveCityProvinceName } from './cityProvinceMatch';
+import { enrichMapCityWithProvince } from './cityProvinceMatch';
+import { findCityForProvinceFeature, buildMapTargetFromProvince } from './mapProvincePick';
 import { getHoverStyle, getProvinceStyle } from './mapUtils';
 import { getBotProvinceStyle } from '../lib/botProvincePulse';
 import { setActiveProvinceLayer } from './ProvinceHighlightSync';
@@ -123,24 +124,24 @@ export function useProvinceMapHandlers({
       });
       layer.on('click', (e) => {
         try {
+          const map = layer?._map;
+          if (map?._suppressMapClickUntil && Date.now() < map._suppressMapClickUntil) return;
           L.DomEvent.stopPropagation(e);
           e?.originalEvent?.stopPropagation?.();
           const h = handlersRef.current;
-          const city = findCityForProvince(feature);
-          const provinceName = feature.properties?.shapeName ?? 'Bölge';
           const center = layer.getBounds?.()?.getCenter?.();
-          const highlight = city ?? {
-            name: provinceName,
-            provinceName,
-            province: feature.properties?.shapeISO,
-            lat: center?.lat,
-            lng: center?.lng,
-            status: 'empty',
-          };
-          if (h.mapTargetPickRequest) {
-            h.handleSelectCity(city ?? { ...highlight, name: provinceName });
+          const clickLatLng = e?.latlng ?? center;
+          const target = buildMapTargetFromProvince(
+            feature,
+            clickLatLng,
+            h.mapCities,
+            h.playerCities,
+          );
+          const enriched = enrichMapCityWithProvince(target, h.playerCities);
+          if (h.mapTargetPickRequest || h.expeditionLaunchMode) {
+            h.handleSelectCity(enriched);
           } else {
-            h.handleSelectCity?.(city ?? highlight) ?? h.openMapCityPanel?.(highlight);
+            h.openMapCityPanel(enriched);
           }
           setActiveProvinceLayer(layer, h.activeProvinceLayerRef, getProvinceStyle);
         } catch (err) {

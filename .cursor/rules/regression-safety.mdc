@@ -1,0 +1,28 @@
+# Regresyon güvenliği
+
+Büyük UI revizyonlarından sonra başka özelliklerin kırılmaması için:
+
+## Her anlamlı değişiklikten sonra
+
+1. `npm run build`
+2. `npm run check:guards` (statik korumalar)
+3. Mümkünse `npm run smoke` (yerel `npm run dev` açıkken)
+
+## Global davranış eklerken
+
+- **PageSessionGate** / **PageRouteLoader**: Salt okuma veya admin sayfalarını `src/lib/routeSessionPolicy.js` içinde `LIGHT_SESSION_ROUTES` ile işaretle; tam `useGameDataReady` bekletme.
+- **window.location.reload()**: Admin modu, auth veya route geçişlerinde kullanma; Zustand state + `hydrateFromSupabase` yeterli.
+- **CSS**: Mümkünse sayfa-özel sınıf; `!important` yığınını artırma. Son katman: `global-ui-ux-revision.css`.
+- **Admin snapshot**: Sahip anahtarı `sb:<userId>` — `getLastSyncUserId()` hydrate öncesi güvenilmez; `session.user.id` geçir.
+
+## Kırılmaya yatkın dosyalar
+
+| Alan | Dosyalar |
+|------|----------|
+| Oturum kapısı | `PageSessionGate.jsx`, `RouteContentPanel.jsx`, `routeSessionPolicy.js` |
+| Admin modu | `gameStore.js`, `adminModeControl.js`, `adminModeSnapshot.js`, `AdminLog.jsx` |
+| Hydrate | `AuthContext.jsx`, `supabaseSync.js`, `Layout.jsx` |
+
+## Deploy
+
+`npm run deploy` öncesi `check:guards` geçmeli. Kullanıcı commit istemedikçe commit atma.

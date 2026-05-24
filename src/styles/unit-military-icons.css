@@ -5,6 +5,11 @@
   flex-shrink: 0;
 }
 
+.unit-card-visual.card-visual {
+  font-size: 0;
+  line-height: 0;
+}
+
 .unit-card-visual {
   display: flex;
   align-items: center;

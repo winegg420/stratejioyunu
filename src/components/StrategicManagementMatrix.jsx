@@ -1,4 +1,5 @@
-﻿import { Link } from 'react-router-dom';
+﻿import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { formatHappinessLabel } from '../lib/happinessSystem';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
@@ -119,6 +120,7 @@ function ProductionRow({ resource, cityReady, t, resourceLabel }) {
 
 export default function StrategicManagementMatrix() {
   const { t, lang, resourceLabel } = useLanguage();
+  const [taxSliderOpen, setTaxSliderOpen] = useState(false);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -267,21 +269,35 @@ export default function StrategicManagementMatrix() {
         </div>
       </div>
 
-      <div className="strat-matrix__tax">
-        <div className="strat-tax__head">
+      <div className={`strat-matrix__tax${taxSliderOpen ? ' strat-matrix__tax--open' : ''}`}>
+        <button
+          type="button"
+          className="strat-tax__toggle"
+          onClick={() => setTaxSliderOpen((v) => !v)}
+          aria-expanded={taxSliderOpen}
+          aria-controls="strat-tax-slider"
+        >
           <span className="strat-tax__label">{t('pages.home.stratMatrix.taxRate')}</span>
           <strong className="strat-tax__value font-hud-data">%{city?.taxRate ?? 15}</strong>
-        </div>
-        <input
-          type="range"
-          className="strat-tax__slider"
-          min="5"
-          max="40"
-          step="1"
-          value={city?.taxRate ?? 15}
-          onChange={(e) => setCityTaxRate(Number(e.target.value))}
-          aria-label={t('pages.home.stratMatrix.taxAria')}
-        />
+        </button>
+        {taxSliderOpen && (
+          <div id="strat-tax-slider" className="strat-tax__slider-wrap">
+            <input
+              type="range"
+              className="strat-tax__slider"
+              min="0"
+              max="30"
+              step="1"
+              value={city?.taxRate ?? 15}
+              onChange={(e) => setCityTaxRate(Number(e.target.value))}
+              aria-label={t('pages.home.stratMatrix.taxAria')}
+            />
+            <div className="strat-tax__scale" aria-hidden="true">
+              <span>0%</span>
+              <span>30%</span>
+            </div>
+          </div>
+        )}
         <span className="strat-tax__hint">{t('pages.home.stratMatrix.taxHint')}</span>
       </div>
 

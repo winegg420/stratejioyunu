@@ -5,8 +5,10 @@ import {
   getMilAiTutorialProgress,
   isMilAiAdvisorOnline,
   isMilAiTutorialActive,
+  resolveMilAiCompletedStatusLabel,
 } from '../lib/milAiTutorialQuests';
 import { useLanguage } from '../context/LanguageContext';
+import { useMilAiLiveContext } from '../hooks/useMilAiLiveContext';
 
 function lineClassName(line) {
   if (line.startsWith('[ GÖREV') || line.startsWith('[ GÖREV-') || /^GÖREV-\d+/.test(line)) {
@@ -50,6 +52,7 @@ export default function MilAiAdvisor() {
   const milAiCompleted = useGameStore((s) => s.milAiCompleted);
   const milAiCelebration = useGameStore((s) => s.milAiCelebration);
   const milAiScoutLaunched = useGameStore((s) => s.milAiScoutLaunched);
+  const milAiRemote = useMilAiLiveContext();
 
   const guideState = useMemo(
     () => ({
@@ -69,9 +72,14 @@ export default function MilAiAdvisor() {
   const progress = useMemo(() => getMilAiTutorialProgress(guideState), [guideState]);
   const tutorialActive = useMemo(() => isMilAiTutorialActive(guideState), [guideState]);
 
+  const completedStatusLabel = useMemo(
+    () => resolveMilAiCompletedStatusLabel(guideState, t),
+    [guideState, t],
+  );
+
   const lines = useMemo(
-    () => buildMilAiTerminalLines(guideState, t, lang),
-    [guideState, t, lang],
+    () => buildMilAiTerminalLines(guideState, t, lang, milAiRemote),
+    [guideState, t, lang, milAiRemote],
   );
 
   const toggle = () => setExpanded((v) => !v);
@@ -103,6 +111,8 @@ export default function MilAiAdvisor() {
           <span className="mil-ai-terminal__status font-hud-data" aria-live="polite">
             {!online ? (
               <span className="mil-ai-terminal__status-label">{t('milAi.standby.short')}</span>
+            ) : (progress.tutorialComplete || milAiCelebration) && completedStatusLabel ? (
+              completedStatusLabel
             ) : progress.tutorialComplete ? (
               t('components.milAi.statusComplete')
             ) : (

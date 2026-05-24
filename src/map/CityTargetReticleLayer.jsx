@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { getIdeologyProfile, resolveCityIdeology } from '../lib/ideologySystem';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { WORLD_ROLES } from '../data/worldCitiesCatalog';
 import { normalizeMapCity } from './botCityUtils';
 import { MAP_ZOOM_LABEL_MIN } from './mapZoomConfig';
@@ -31,12 +33,25 @@ const BOT_COASTAL = createReticleIcon('#fbbf24', { bot: true });
 const BOT_CAPITAL = createReticleIcon('#f59e0b', { bot: true });
 const OPEN_INLAND = createReticleIcon('#4ade80', { bot: true });
 
+const reticleIconCache = new Map();
+
+function getReticleIconForColor(color, { bot = false } = {}) {
+  const key = `${color}-${bot ? 'b' : 'n'}`;
+  if (!reticleIconCache.has(key)) {
+    reticleIconCache.set(key, createReticleIcon(color, { bot }));
+  }
+  return reticleIconCache.get(key);
+}
+
 export default function CityTargetReticleLayer({
   mapCities,
   playerCities,
+  playerIdeology = null,
+  ideologyView = false,
   zoom = 0,
   onSelectCity,
 }) {
+  const playerName = getCurrentPlayerName();
   if (zoom < MAP_ZOOM_LABEL_MIN) return null;
   const targets = useMemo(() => {
     const own = new Set(playerCities.map((c) => c.name));
@@ -56,17 +71,18 @@ export default function CityTargetReticleLayer({
         <Marker
           key={`reticle-${city.name}`}
           position={[city.lat, city.lng]}
-          icon={
-            city.worldRole === WORLD_ROLES.BOT_CAPITAL
-              ? BOT_CAPITAL
-              : city.worldRole === WORLD_ROLES.BOT_COASTAL || city.status === 'bot'
-                ? BOT_COASTAL
-                : city.worldRole === WORLD_ROLES.OPEN_INLAND
-                  ? OPEN_INLAND
-                  : city.status === 'empty'
-                    ? NEUTRAL
-                    : HOSTILE
-          }
+          icon={(() => {
+            if (ideologyView) {
+              const ideology = resolveCityIdeology(city, playerName, playerIdeology);
+              const color = getIdeologyProfile(ideology)?.color ?? '#94a3b8';
+              return getReticleIconForColor(color, { bot: city.status === 'bot' });
+            }
+            if (city.worldRole === WORLD_ROLES.BOT_CAPITAL) return BOT_CAPITAL;
+            if (city.worldRole === WORLD_ROLES.BOT_COASTAL || city.status === 'bot') return BOT_COASTAL;
+            if (city.worldRole === WORLD_ROLES.OPEN_INLAND) return OPEN_INLAND;
+            if (city.status === 'empty') return NEUTRAL;
+            return HOSTILE;
+          })()}
           interactive={Boolean(onSelectCity)}
           zIndexOffset={950}
           bubblingMouseEvents={false}

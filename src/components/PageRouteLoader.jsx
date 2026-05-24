@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGameStore } from '../stores/gameStore';
 import { useGameDataReady } from '../hooks/useGameDataReady';
+import { routeNeedsGameData } from '../lib/routeSessionPolicy';
 
 const MIN_VISIBLE_MS = 280;
 const HYDRATION_WAIT_MS = 3000;
@@ -15,7 +16,7 @@ export default function PageRouteLoader() {
   const [tick, setTick] = useState(0);
   const [hydrationWait, setHydrationWait] = useState(false);
 
-  const needsGameData = pathname !== '/giris' && pathname !== '/';
+  const needsGameData = routeNeedsGameData(pathname);
   const waitingData = needsGameData && !ready && hydrationWait;
 
   useEffect(() => {

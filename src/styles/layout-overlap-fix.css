@@ -138,6 +138,53 @@
   min-width: 10rem;
 }
 
+/* ── Dil + saat — bayraklar saat kutusunun solunda, çakışmasın ── */
+.resource-bar-lang-clock {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-shrink: 0;
+}
+
+.resource-bar-lang-clock .lang-switcher--bar {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+  gap: 0.28rem !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.resource-bar-lang-clock .lang-switcher--bar.lang-switcher--bar-compact {
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0.1rem 0.18rem !important;
+  gap: 0.2rem !important;
+}
+
+.resource-bar-lang-clock .lang-switcher--bar.lang-switcher--bar-compact .lang-switcher__btn {
+  min-width: 1.55rem !important;
+  min-height: 1.35rem !important;
+  max-width: none !important;
+  padding: 0.06rem 0.16rem !important;
+}
+
+.resource-bar-lang-clock .lang-switcher--bar.lang-switcher--bar-compact .lang-switcher__code {
+  font-size: 0.62rem !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.resource-bar-lang-clock .server-time-clock {
+  flex-shrink: 0;
+  margin: 0 !important;
+}
+
 /* ── Sağ blok: dil + saat + oyuncu — sıkışmayı önle ── */
 .resource-bar-actions,
 .resource-bar-actions--tactical {
@@ -171,17 +218,16 @@
   white-space: nowrap;
 }
 
-/* ── Dil seçici (TR / EN bayrakları) ── */
-.lang-switcher--bar {
-  display: inline-grid !important;
-  grid-template-columns: auto repeat(2, minmax(2.6rem, 1fr));
-  grid-template-rows: auto;
-  align-items: center;
-  gap: 0.2rem 0.28rem !important;
-  padding: 0.22rem 0.38rem !important;
-  min-width: 7.75rem;
-  max-width: 9.5rem;
-  flex-shrink: 0;
+/* ── Dil seçici (TR / EN kodları) ── */
+.lang-switcher--bar.lang-switcher--bar-compact {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0.1rem 0.2rem !important;
+  grid-template-columns: none !important;
 }
 
 .lang-switcher--bar .lang-switcher__title {

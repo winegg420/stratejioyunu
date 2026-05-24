@@ -15,6 +15,17 @@ export const BLACK_MARKET_LABELS = {
 /** İşlemde yakalanma olasılığı (0–1) */
 export const BLACK_MARKET_EXPOSURE_CHANCE = 0.14;
 
+/**
+ * Kara borsa yakalanma riski (%) — (mesafe_km / 1000) × ajan_sayısı × 5, üst sınır %95.
+ * @param {{ agentCount?: number, distanceKm?: number }} params
+ */
+export function calcBlackMarketCaptureRiskPct({ agentCount = 0, distanceKm = 0 } = {}) {
+  const agents = Math.max(0, Math.floor(Number(agentCount) || 0));
+  const km = Math.max(0, Number(distanceKm) || 0);
+  const pct = (km / 1000) * agents * 5;
+  return Math.round(Math.min(95, Math.max(0, pct)));
+}
+
 /** Kara borsa listesinde görünen anonim kod adı (gerçek oyuncu adı gizlenir). */
 export function blackMarketAgentAlias(sellerId, seed = Date.now()) {
   const base = String(sellerId ?? 'agent')

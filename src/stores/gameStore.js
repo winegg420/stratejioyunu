@@ -31,7 +31,9 @@ import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   BUILDING_RESOURCE_MAP,
   createQueueTiming,
+  floorResourceCurrent,
   formatSeconds,
+  formatReadableDuration,
   genId,
   nowReportDate,
   parseTimeToSeconds,
@@ -39,7 +41,7 @@ import {
   recalculateResourceRates,
   remainingFromEndsAt,
 } from '../lib/gameUtils';
-import { ALLIANCE, diplomacy, landUnits } from '../data/placeholder';
+import { ALLIANCE, diplomacy, landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
 import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
 import {
@@ -175,7 +177,7 @@ import { canAffordCost, deductCost, parseUnitCost } from '../utils/resourceCosts
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
 import { syncResearchesToCatalog } from '../data/researchCatalog';
-import { syncAllCityBuildings } from '../lib/buildingUtils';
+import { mergeCityIdleTroops, syncAllCityBuildings } from '../lib/buildingUtils';
 import {
   loadMilAiCompleted,
   loadProtectionEndsAt,
@@ -192,13 +194,14 @@ import {
   applyDevTestModeToState,
   bypassWarLocksForDevTest,
   getDevTestCyberCapabilities,
+  isDevAdminLocalEnabled,
   isDevTestMode,
 } from '../lib/devTestMode';
 import {
   disableAdminModeOnState,
   enableAdminModeOnState,
 } from '../lib/adminModeControl';
-import { translate, LANG_STORAGE_KEY } from '../i18n';
+import { countActiveExpeditions, filterActiveExpeditions } from '../lib/gameUtils';
 import {
   getNextAutoTutorialQuest,
   isQuestComplete,
@@ -352,6 +355,8 @@ import {
   getLastSyncUserId,
   hydrateGameStore,
   isSyncEnabled,
+  refreshReportsFromServer,
+  refreshPastExpeditionsFromServer,
   saveGameStateNow,
   scheduleSaveGameState,
   syncExpeditionsFromServer,
@@ -1071,27 +1076,41 @@ export const useGameStore = create((set, get) => ({
   },
 
   applyAdminTestBoost: () => {
-    if (!isDevTestMode()) return false;
+    if (!isDevAdminLocalEnabled()) return false;
     set((state) => applyDevTestModeToState(state));
     return true;
   },
 
-  enableAdminMode: async () => {
-    set((state) => enableAdminModeOnState(state));
+  enableAdminMode: async (sessionUserId = null) => {
+    const userId = sessionUserId || getLastSyncUserId();
+    set((state) => enableAdminModeOnState(state, userId));
     get().applyAdminTestBoost();
-    return true;
-  },
-
-  disableAdminMode: async () => {
-    set((state) => disableAdminModeOnState(state));
-    const userId = getLastSyncUserId();
     if (userId && get()._supabaseHydrated) {
       await saveGameStateNow(get(), {
         profileId: userId,
+        saveAllCities: true,
         saveAllUnits: true,
         researches: true,
       });
     }
+    get().initWorldSystems();
+    await get().refreshServerBroadcast();
+    return true;
+  },
+
+  disableAdminMode: async (sessionUserId = null) => {
+    const userId = sessionUserId || getLastSyncUserId();
+    set((state) => disableAdminModeOnState(state, userId));
+    if (userId && get()._supabaseHydrated) {
+      await saveGameStateNow(get(), {
+        profileId: userId,
+        saveAllCities: true,
+        saveAllUnits: true,
+        researches: true,
+      });
+    }
+    get().initWorldSystems();
+    await get().refreshServerBroadcast();
     return true;
   },
 
@@ -1107,7 +1126,9 @@ export const useGameStore = create((set, get) => ({
     );
     syncRegistryFromMap(mapCities);
     set({ ...catalogPatch, mapCities });
-    get().applyAdminTestBoost();
+    if (isDevAdminLocalEnabled()) {
+      get().applyAdminTestBoost();
+    }
     get()._runServerCleansing(false);
     get().touchPlayerActivity();
     get().refreshServerBroadcast();
@@ -1172,7 +1193,9 @@ export const useGameStore = create((set, get) => ({
       });
       if (result?.ok) {
         set((prev) => renormalizeCatalogState(prev));
-        get().applyAdminTestBoost();
+        if (isDevAdminLocalEnabled()) {
+          get().applyAdminTestBoost();
+        }
         get().initWorldSystems();
         await get().refreshServerBroadcast();
       }
@@ -2499,12 +2522,16 @@ export const useGameStore = create((set, get) => ({
       const increment = ratePerSecond(r.rate);
       let next = r.current + increment;
       if (r.max != null) next = Math.min(r.max, next);
-      const rounded = Math.floor(next);
-      if (rounded > Math.floor(r.current)) flashes[r.id] = true;
+      const rounded = floorResourceCurrent(next, r.max);
+      if (rounded > floorResourceCurrent(r.current, r.max)) flashes[r.id] = true;
       return { ...r, current: rounded };
     });
     resources = applyAiCenterEnergyDrain(resources, activeCity, tickElapsed);
     resources = applyAiResourceAutoBalanceTick(resources, activeCity, tickElapsed);
+    resources = resources.map((r) => ({
+      ...r,
+      current: floorResourceCurrent(r.current, r.max),
+    }));
     if (flashes.hammadde) {
       const metalRate = activeCity.resources.find((r) => r.id === 'hammadde')?.rate ?? '+0/sa';
       get().bumpSeasonStat('hammaddeProduced', Math.max(1, Math.floor(ratePerSecond(metalRate) * tickElapsed)));
@@ -3317,15 +3344,17 @@ export const useGameStore = create((set, get) => ({
       ];
     }
 
+    const pastEntry = {
+      id: expeditionId,
+      target: exp.target,
+      result: combat.attackerWon ? 'Zafer' : 'Yenilgi',
+      loot: loot.length ? loot.map((l) => `${l.amount} ${l.label}`).join(', ') : '—',
+      date: report.date,
+      completedAt: Date.now(),
+    };
     const pastExpeditions = [
-      {
-        id: genId('past'),
-        target: exp.target,
-        result: combat.attackerWon ? 'Zafer' : 'Yenilgi',
-        loot: loot.length ? loot.map((l) => `${l.amount} ${l.label}`).join(', ') : '—',
-        date: report.date,
-      },
-      ...state.pastExpeditions,
+      pastEntry,
+      ...state.pastExpeditions.filter((p) => p.id !== expeditionId),
     ];
 
     set({
@@ -3344,7 +3373,18 @@ export const useGameStore = create((set, get) => ({
         : '[ COMBAT LEDGER ]: LOSS — Birlikler geri çekiliyor',
       combat.attackerWon ? 'success' : 'danger',
     );
-    syncExp({ reports: [report] });
+    syncExp({
+      reports: [report],
+      expeditionCompletions: [{
+        id: expeditionId,
+        result: {
+          outcome: pastEntry.result,
+          loot: pastEntry.loot,
+          date: pastEntry.date,
+          type: exp.type,
+        },
+      }],
+    });
   },
 
   _applyColonyConquest: ({ expedition: exp, mapCity, combat, mapPlotMatch }) => {
@@ -3759,6 +3799,16 @@ export const useGameStore = create((set, get) => ({
     );
   },
 
+  refreshReportsFromServer: async () => {
+    if (!isSyncEnabled()) return { ok: false };
+    return refreshReportsFromServer(get, set);
+  },
+
+  refreshPastExpeditionsFromServer: async () => {
+    if (!isSyncEnabled()) return { ok: false };
+    return refreshPastExpeditionsFromServer(get, set);
+  },
+
   markReportsRead: (reportIds) => {
     const state = get();
     const idSet = new Set(reportIds);
@@ -3847,8 +3897,11 @@ export const useGameStore = create((set, get) => ({
       constructionQueue: [...city.constructionQueue, item],
     });
 
+    const durationLabel = formatReadableDuration(duration);
     useNotificationStore.getState().addToast(
-      queued ? `${building.name} kuyruğa eklendi` : `${building.name} yükseltmesi başladı`,
+      queued
+        ? `${building.name} kuyruğa eklendi`
+        : `Yükseltme başlatıldı — ${durationLabel}`,
       'success',
     );
     cloudSync(get, { cityId });
@@ -3859,14 +3912,20 @@ export const useGameStore = create((set, get) => ({
     const state = get();
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
-    const unitDef = city.idleTroops.find((t) => t.id === unitId);
+    const idleTroops = mergeCityIdleTroops(city.idleTroops);
+    const unitDef = idleTroops.find((t) => t.id === unitId);
     if (!unitDef || !count || count <= 0) return false;
 
-    const barracks = city.buildings.find((b) => b.id === 'barracks');
-    if (!barracks || barracks.level < 1) return false;
-
-    const unitMeta = landUnits.find((u) => u.id === unitId);
+    const landMeta = landUnits.find((u) => u.id === unitId);
+    const airMeta = airUnits.find((u) => u.id === unitId);
+    const seaMeta = seaUnits.find((u) => u.id === unitId);
+    const unitMeta = landMeta ?? airMeta ?? seaMeta;
     if (!unitMeta) return false;
+
+    const buildingId = landMeta ? 'barracks' : airMeta ? 'airport' : 'shipyard';
+    const facility = city.buildings.find((b) => b.id === buildingId);
+    if (!facility || facility.level < 1) return false;
+
     const costStr = unitMeta.cost;
 
     if (!canAffordCost(costStr, count, city.resources)) return false;
@@ -3909,6 +3968,7 @@ export const useGameStore = create((set, get) => ({
     patchCity(set, get, cityId, {
       resources: withPop.resources,
       idlePopulation: withPop.idlePopulation,
+      idleTroops,
       productionQueue: [...city.productionQueue, item],
     });
 
@@ -4470,6 +4530,17 @@ export const useGameStore = create((set, get) => ({
 
   clearMapTargetPickResult: () => set({ mapTargetPickResult: null }),
 
+  setIntelTargetFromMap: (field, cityName) => {
+    if (!cityName) return;
+    set({ mapTargetPickResult: { field, cityName } });
+  },
+
+  requestMapExpeditionLaunch: () => {
+    set({ mapExpeditionLaunchRequest: { at: Date.now() } });
+  },
+
+  clearMapExpeditionLaunchRequest: () => set({ mapExpeditionLaunchRequest: null }),
+
   speedUpConstruction: (queueId) => {
     const cityId = get().activeCityId;
     const city = get().cities[cityId];
@@ -4677,7 +4748,7 @@ export const useGameStore = create((set, get) => ({
     });
 
     useNotificationStore.getState().addToast(
-      queued ? `${research.name} kuyruğa eklendi` : `${research.name} araştırması başladı`,
+      queued ? 'Araştırma kuyruğa eklendi.' : `${research.name} araştırması başladı`,
       'success',
     );
     cloudSync(get, { cityId, researches: true });
@@ -4834,7 +4905,24 @@ export function getExpeditionOriginLabel(exp, playerCities) {
 }
 
 export function useActiveExpeditionCount() {
-  return useGameStore((s) => s.expeditions.length);
+  return useGameStore((s) => {
+    void (s.mapRouteSyncRev ?? 0);
+    void s.expeditions?.length;
+    return countActiveExpeditions(s.expeditions, s.now);
+  });
+}
+
+/** Aktif sefer listesi — harita/operasyonlar ile aynı store aboneliği */
+export function useActiveExpeditions() {
+  return useGameStore(
+    useShallow((s) => {
+  void (s.mapRouteSyncRev ?? 0);
+      void s.now;
+      const list = s.expeditions ?? [];
+      void list.length;
+      return filterActiveExpeditions(list, s.now);
+    }),
+  );
 }
 
 export function useConstructionQueueFull() {

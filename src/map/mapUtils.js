@@ -1,4 +1,5 @@
 import { WORLD_ROLES } from '../data/worldCitiesCatalog';
+import { getIdeologyProfile, resolveCityIdeology } from '../lib/ideologySystem';
 
 export const CITY_STATUS_COLORS = {
   own: '#22ff88',
@@ -17,8 +18,14 @@ export const WORLD_ROLE_COLORS = {
   [WORLD_ROLES.WORLD_EMPTY]: '#64748b',
 };
 
-export function getMapCityDisplayColor(city) {
+export function getMapCityDisplayColor(city, options = {}) {
   if (!city) return CITY_STATUS_COLORS.empty;
+  const { ideologyView = false, playerName, playerIdeology } = options;
+  if (ideologyView && playerName) {
+    const ideology = resolveCityIdeology(city, playerName, playerIdeology);
+    const profile = getIdeologyProfile(ideology);
+    if (profile?.color) return profile.color;
+  }
   if (city.status === 'own') return CITY_STATUS_COLORS.own;
   if (city.worldRole && WORLD_ROLE_COLORS[city.worldRole]) {
     return WORLD_ROLE_COLORS[city.worldRole];

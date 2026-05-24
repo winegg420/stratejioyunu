@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import ProfileMedalIcon from '../components/ProfileMedalIcon';
@@ -25,12 +25,43 @@ import {
 import { PROTECTION_DAYS } from '../data/placeholder';
 import { getProgressionState } from '../lib/progressionSystem';
 import { useGameStore } from '../stores/gameStore';
+import { getAuthUser } from '../lib/auth';
+import { fetchUserProfile, resolvePlayerDisplayName } from '../lib/profileApi';
 
 export default function Profile() {
   const { logout, playerName, session } = useAuth();
   const profileDisplayName = useGameStore((s) => s.profileDisplayName);
+  const profilePlayerName = useGameStore((s) => s.profilePlayerName);
   const isAdminUser = useGameStore((s) => s.isAdminUser);
-  const displayName = profileDisplayName || playerName;
+  const [profileRow, setProfileRow] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      setProfileRow(null);
+      setAuthUser(null);
+      return undefined;
+    }
+    let cancelled = false;
+    fetchUserProfile(userId).then((row) => {
+      if (!cancelled) setProfileRow(row);
+    });
+    getAuthUser().then((user) => {
+      if (!cancelled) setAuthUser(user);
+    });
+    return () => { cancelled = true; };
+  }, [session?.user?.id]);
+
+  const displayName = useMemo(
+    () => resolvePlayerDisplayName({
+      profile: profileRow,
+      user: authUser ?? session?.user,
+      profileDisplayName: profileDisplayName || profilePlayerName,
+      playerName,
+    }),
+    [profileRow, authUser, session?.user, profileDisplayName, profilePlayerName, playerName],
+  );
   const showAdminPanel = isGameAdmin({
     playerName,
     email: session?.user?.email,

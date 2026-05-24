@@ -85,7 +85,12 @@ export default function MapMiniMap({ viewport, activeCity, mapCities }) {
           })}
           {activeCity && (() => {
             const { x, y } = toPercent(activeCity.lat, activeCity.lng);
-            return <circle cx={x} cy={y} r={2} className="map-minimap-dot--active" />;
+            return (
+              <>
+                <circle cx={x} cy={y} r={3.2} className="map-minimap-dot--active-halo" />
+                <circle cx={x} cy={y} r={2.2} className="map-minimap-dot--active" />
+              </>
+            );
           })()}
           {viewportRect && (
             <rect

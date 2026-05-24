@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
@@ -7,16 +7,32 @@ import ReportDetailModal from '../components/ReportDetailModal';
 import CyberToggle from '../components/CyberToggle';
 import { isOperationReport } from '../data/intelOperationsCatalog';
 import { useGameStore } from '../stores/gameStore';
+import PageSessionGate from '../components/PageSessionGate';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Reports() {
   const { t } = useLanguage();
   const reports = useGameStore((s) => s.reports);
+  const gameHydrating = useGameStore((s) => s.gameHydrating);
+  const refreshReportsFromServer = useGameStore((s) => s.refreshReportsFromServer);
   const markReportsRead = useGameStore((s) => s.markReportsRead);
   const deleteReports = useGameStore((s) => s.deleteReports);
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [reportsLoading, setReportsLoading] = useState(false);
+
+  useEffect(() => {
+    if (gameHydrating) return undefined;
+    let cancelled = false;
+    setReportsLoading(true);
+    refreshReportsFromServer()
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setReportsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [gameHydrating, refreshReportsFromServer]);
 
   const counts = useMemo(
     () => ({
@@ -94,6 +110,7 @@ export default function Reports() {
   };
 
   return (
+    <PageSessionGate loadingMessageKey="auth.syncingGame">
     <div className="page page--console">
       <LocalizedPageHeader
         pageKey="reports"
@@ -206,12 +223,17 @@ export default function Reports() {
         <EmptyState
           tag="[ RAPOR ARŞİVİ BOŞ ]"
           icon="📋"
-          title="Henüz raporunuz yok"
-          description="Sefer, keşif ve casusluk operasyonları tamamlandığında detaylı raporlar burada görünür."
-          actionLabel="Haritaya Git"
-          actionTo="/harita"
+          title={reportsLoading ? 'Raporlar yükleniyor…' : 'Henüz raporunuz yok'}
+          description={
+            reportsLoading
+              ? 'Sunucudaki savaş ve operasyon raporları senkronize ediliyor.'
+              : 'Sefer, keşif ve casusluk operasyonları tamamlandığında detaylı raporlar burada görünür.'
+          }
+          actionLabel={reportsLoading ? undefined : 'Haritaya Git'}
+          actionTo={reportsLoading ? undefined : '/harita'}
         />
       )}
     </div>
+    </PageSessionGate>
   );
 }

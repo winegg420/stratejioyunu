@@ -1,14 +1,14 @@
 import L from 'leaflet';
 
 /**
- * Harita görünüm kutusu — Türkiye + komşu tampon (Yunanistan kıyısı – İran sınırı).
- * Kamera bu alanda serbest kayar; Türkiye dışı maske ayrı katmanda.
+ * Harita görünüm kutusu — Türkiye + geniş tampon (Akdeniz / Karadeniz / komşu ülkeler).
+ * Oyuncu haritayı serbestçe kaydırabilir; sert geri çekme yok.
  */
 export const TURKEY_BOUNDS = {
-  south: 34.5,
-  north: 42.6,
-  west: 22.0,
-  east: 48.5,
+  south: 30.5,
+  north: 45.5,
+  west: 17.0,
+  east: 52.5,
 };
 
 export const TURKEY_MAX_BOUNDS = L.latLngBounds(

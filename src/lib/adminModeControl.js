@@ -29,10 +29,19 @@ export function setDevAdminLocalEnabled(enabled) {
   }
 }
 
-/** Admin modu açıkken mevcut state üzerine test boost uygular (yenileme gerekmez). */
-export function enableAdminModeOnState(state) {
+/** Supabase kaydı — admin boost DB'ye yazılmasın; snapshot kullanılır. */
+export function resolveStateForCloudSave(state) {
+  if (!state || !isDevAdminLocalEnabled()) return state;
+  const slice = loadAdminSnapshot();
+  if (!slice) return state;
+  return applyAdminRestorableSlice(state, slice);
+}
+
+/** Admin modu açıkken mevcut state üzerine test boost uygular (sayfa yenilemesi gerekmez). */
+export function enableAdminModeOnState(state, sessionUserId = null) {
   if (!state) return state;
-  saveAdminSnapshot(state);
+  const ownerId = sessionUserId ? `sb:${sessionUserId}` : undefined;
+  saveAdminSnapshot(state, ownerId);
   setDevAdminLocalEnabled(true);
   setDevTestModeLocal(true);
   const next = applyDevTestModeToState(state);
@@ -40,12 +49,13 @@ export function enableAdminModeOnState(state) {
 }
 
 /** Snapshot varsa eski haline döner; yoksa yalnızca bayrakları kapatır. */
-export function disableAdminModeOnState(state) {
+export function disableAdminModeOnState(state, sessionUserId = null) {
   if (!state) return state;
-  const slice = loadAdminSnapshot();
+  const ownerId = sessionUserId ? `sb:${sessionUserId}` : undefined;
+  const slice = loadAdminSnapshot(ownerId);
   setDevAdminLocalEnabled(false);
   setDevTestModeLocal(false);
-  clearAdminSnapshot();
+  clearAdminSnapshot(ownerId);
   if (slice) {
     return applyAdminRestorableSlice(state, slice);
   }

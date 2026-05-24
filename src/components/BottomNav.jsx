@@ -31,7 +31,10 @@ export default function BottomNav() {
             </span>
             {item.path === '/seferler' && (
               <>
-                <NavExpeditionCount count={expeditionCount} />
+                <NavExpeditionCount
+                  count={expeditionCount}
+                  title={`${expeditionCount} aktif operasyon`}
+                />
                 <NavAttackAlert show={underAttack} />
               </>
             )}

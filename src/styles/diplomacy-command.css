@@ -20,6 +20,31 @@
   box-shadow: none !important;
 }
 
+.diplomacy-ceasefire-expired-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.diplomacy-ceasefire-expired-banner {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(248, 113, 113, 0.65);
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.55) 0%, rgba(69, 10, 10, 0.4) 100%);
+  color: #fecaca;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.22);
+}
+
+.diplomacy-ceasefire-expired-banner strong {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
 .diplomacy-grid {
   gap: 1rem;
 }

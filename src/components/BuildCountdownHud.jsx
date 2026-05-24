@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { formatSeconds } from '../lib/gameUtils';
+import { formatReadableDuration } from '../lib/gameUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 const SPINNER_FRAMES = ['|', '/', '-', '\\'];
 
 export default function BuildCountdownHud({ remaining }) {
+  const { lang } = useLanguage();
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -18,7 +20,9 @@ export default function BuildCountdownHud({ remaining }) {
       <span className="build-countdown-hud__spinner font-hud-data" aria-hidden="true">
         {SPINNER_FRAMES[frame]}
       </span>
-      <span className="build-countdown-hud__time font-hud-data">{formatSeconds(remaining)}</span>
+      <span className="build-countdown-hud__time font-hud-data">
+        {formatReadableDuration(remaining, lang)}
+      </span>
     </div>
   );
 }

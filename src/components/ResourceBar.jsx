@@ -41,9 +41,11 @@ function renderResourceItems({
   t,
 }) {
   return items.map((r) => {
-    const pct = r.max ? (r.current / r.max) * 100 : 100;
+    const current = Math.floor(r.current ?? 0);
+    const max = r.max != null ? Math.floor(r.max) : null;
+    const pct = max ? (current / max) * 100 : 100;
     const depotOverflow = isDepotOverflow(r);
-    const depotFull = r.max != null && r.current >= r.max;
+    const depotFull = max != null && current >= max;
     const depotWarn = r.max != null && pct >= DEPOT_WARN_PCT && !depotFull;
     return (
       <ResourceItem
@@ -86,6 +88,9 @@ function ResourceItem({
   const hourlyZeroLabel = resource.id === 'energy'
     ? `+0${t('cityManagement.hourlyEnergy')}`
     : t('common.perHourZero');
+  const foodHourlyTitle = resource.id === 'food' && !frozen && !showHourlyBadge && !hourlyLabel
+    ? t('resourceBar.foodHourlyZeroTitle')
+    : undefined;
 
   return (
     <div
@@ -145,7 +150,10 @@ function ResourceItem({
         ) : hourlyLabel ? (
           <span className="res-hourly-live">{hourlyLabel}</span>
         ) : (
-          <span className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}>
+          <span
+            className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}
+            title={foodHourlyTitle}
+          >
             {frozen ? t('resourceBar.stopped') : hourlyZeroLabel}
           </span>
         )}
@@ -240,8 +248,15 @@ export default function ResourceBar() {
           {t('workforce.penalty')}
         </p>
       )}
-      <div className="resource-bar-inner resource-bar-inner--flush resource-bar-inner--tiered">
-        <div className="resource-bar-tier resource-bar-tier--top">
+      <div
+        className={[
+          'resource-bar-inner',
+          'resource-bar-inner--flush',
+          'resource-bar-inner--grid',
+          peaceActive && 'resource-bar-inner--has-peace',
+        ].filter(Boolean).join(' ')}
+      >
+        <div className="resource-bar-meta-row">
           <div className="resource-bar-top-col resource-bar-top-col--left">
             <div className="brand-block brand-desktop resource-bar-brand">
               <span className="game-title">{GAME_NAME}</span>
@@ -249,71 +264,68 @@ export default function ResourceBar() {
                 <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
               )}
             </div>
-            <div className="city-switcher-wrap">
-              <button
-                type="button"
-                className="city-cycle-btn"
-                onClick={() => cycleCity(-1)}
-                disabled={cityCount < 2}
-                aria-label={t('cityManagement.prevCity')}
-                title={t('cityManagement.prevCity')}
-              >
-                ‹
-              </button>
-              <label className="city-switcher">
-                <span className="sr-only">{t('resourceBar.activeCity')}</span>
-                <CustomDropdown
-                  className="city-switcher-select"
-                  value={activeCityId}
-                  onChange={setActiveCity}
-                  aria-label={t('resourceBar.activeCity')}
-                  options={playerCities.map((c) => ({
-                    value: c.id,
-                    label: formatCityOptionLabel(c),
-                  }))}
-                />
-              </label>
-              <button
-                type="button"
-                className="city-cycle-btn"
-                onClick={() => cycleCity(1)}
-                disabled={cityCount < 2}
-                aria-label={t('cityManagement.nextCity')}
-                title={t('cityManagement.nextCity')}
-              >
-                ›
-              </button>
-            </div>
-          </div>
-
-          <div className="resource-bar-top-col resource-bar-top-col--center">
-            {peaceActive && (
-              <span
-                className="protection-badge protection-badge--active protection-badge--bar-center"
-                title={t('resourceBar.peaceForceTitle')}
-              >
-                <span className="protection-badge__icon" aria-hidden="true">
-                  🕊️
-                </span>
-                <span className="protection-badge__text">
-                  {t('resourceBar.peaceForce')}
-                  {peaceCountdown ? ` · ${peaceCountdown}` : ''}
-                </span>
-              </span>
-            )}
-          </div>
-
-          <div className="resource-bar-top-col resource-bar-top-col--right resource-bar-actions resource-bar-actions--tactical">
-            <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
-            <ServerTimeClock />
-            <div className="player-block player-desktop">
-              <span className="player-name">{playerName}</span>
-            </div>
           </div>
         </div>
 
-        <div className="resource-bar-tier resource-bar-tier--resources">
-          <div className="resource-bar-resources" aria-label={t('resourceBar.resources')}>
+        {peaceActive && (
+          <div className="resource-bar-peace-row" role="status">
+            <span
+              className="protection-badge protection-badge--active protection-badge--bar-inline"
+              title={t('resourceBar.peaceForceTitle')}
+            >
+              <span className="protection-badge__icon" aria-hidden="true">
+                🕊️
+              </span>
+              <span className="protection-badge__text">
+                {t('resourceBar.peaceForce')}
+                {peaceCountdown ? ` · ${peaceCountdown}` : ''}
+              </span>
+            </span>
+          </div>
+        )}
+
+        <div className="resource-bar-lang-clock resource-bar-lang-clock--dock" aria-label="Dil ve sunucu saati">
+          <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
+          <ServerTimeClock />
+        </div>
+
+        <div className="resource-bar-main-row">
+          <div id="resource-bar-city-switch" className="city-switcher-wrap resource-bar-city-col">
+            <button
+              type="button"
+              className="city-cycle-btn"
+              onClick={() => cycleCity(-1)}
+              disabled={cityCount < 2}
+              aria-label={t('cityManagement.prevCity')}
+              title={t('cityManagement.prevCity')}
+            >
+              ‹
+            </button>
+            <label className="city-switcher">
+              <span className="sr-only">{t('resourceBar.activeCity')}</span>
+              <CustomDropdown
+                className="city-switcher-select"
+                value={activeCityId}
+                onChange={setActiveCity}
+                aria-label={t('resourceBar.activeCity')}
+                options={playerCities.map((c) => ({
+                  value: c.id,
+                  label: formatCityOptionLabel(c),
+                }))}
+              />
+            </label>
+            <button
+              type="button"
+              className="city-cycle-btn"
+              onClick={() => cycleCity(1)}
+              disabled={cityCount < 2}
+              aria-label={t('cityManagement.nextCity')}
+              title={t('cityManagement.nextCity')}
+            >
+              ›
+            </button>
+          </div>
+          <div className="resource-bar-resources resource-bar-resources--strip" aria-label={t('resourceBar.resources')}>
             <div className="resources-row resources-row--single" role="list">
               {renderResourceItems({ items: rowResources, ...resourceRenderProps })}
             </div>

@@ -343,6 +343,13 @@ a {
   color: var(--text-muted);
   border-left: 3px solid transparent;
   transition: background 0.15s, color 0.15s;
+  min-height: 2.25rem;
+}
+
+.nav-link .nav-badge:not(.nav-expedition-count):not(.nav-attack-alert):not(.nav-badge--hq-lock) {
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .nav-link:hover {
@@ -357,9 +364,17 @@ a {
 }
 
 .nav-icon {
-  font-size: 1rem;
-  width: 1.25rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
   text-align: center;
+  overflow: hidden;
 }
 
 .nav-label {
@@ -410,9 +425,15 @@ a {
   }
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1200px) {
   .buildings-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .buildings-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -3210,8 +3231,10 @@ body.map-scroll-locked {
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #3b82f6;
+  background: #dc2626;
   color: #fff;
+  border: 1px solid rgba(255, 120, 120, 0.55);
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.45);
   font-size: 10px;
   font-weight: 700;
   line-height: 16px;
@@ -3673,12 +3696,12 @@ body.map-scroll-locked {
   right: 12px;
   bottom: 12px;
   z-index: 1000;
-  width: 168px;
+  width: 160px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(34, 211, 238, 0.5);
-  box-shadow: 0 0 24px rgba(34, 211, 238, 0.2);
-  background: rgba(3, 10, 24, 0.95);
+  border: 1px solid rgba(57, 255, 20, 0.45);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
+  background: rgba(6, 12, 10, 0.96);
 }
 
 .map-minimap-label {
@@ -3693,9 +3716,9 @@ body.map-scroll-locked {
 }
 
 .map-minimap-canvas {
-  width: 100%;
-  height: 112px;
-  background: #0a0f0a;
+  width: 160px;
+  height: 120px;
+  background: linear-gradient(180deg, #0c1410 0%, #060a08 100%);
 }
 
 .map-minimap-svg {
@@ -3705,9 +3728,9 @@ body.map-scroll-locked {
 }
 
 .map-minimap-land {
-  fill: rgba(30, 41, 59, 0.9);
-  stroke: rgba(34, 211, 238, 0.25);
-  stroke-width: 0.15;
+  fill: rgba(36, 52, 44, 0.95);
+  stroke: rgba(74, 124, 89, 0.35);
+  stroke-width: 0.2;
 }
 
 .map-minimap-dot--own {
@@ -3718,10 +3741,16 @@ body.map-scroll-locked {
   fill: #f87171;
 }
 
+.map-minimap-dot--active-halo {
+  fill: rgba(57, 255, 20, 0.28);
+  stroke: none;
+}
+
 .map-minimap-dot--active {
-  fill: #4a7c59;
-  stroke: #fff;
-  stroke-width: 0.3;
+  fill: #39ff14;
+  stroke: #0a1408;
+  stroke-width: 0.45;
+  filter: drop-shadow(0 0 3px rgba(57, 255, 20, 0.85));
 }
 
 .map-minimap-viewport {
@@ -4393,16 +4422,13 @@ body.map-scroll-locked {
 }
 
 /* Nav lojistik */
-.nav-icon {
-  position: relative;
-}
-
 .nav-logistics-badge {
   position: absolute;
-  right: -6px;
-  bottom: -4px;
-  font-size: 0.55rem;
+  right: -4px;
+  bottom: -2px;
+  font-size: 0.45rem;
   line-height: 1;
+  pointer-events: none;
 }
 
 .barracks-agent-counter,
@@ -4672,6 +4698,17 @@ body.map-scroll-locked {
 .lang-switcher__btn--en.lang-switcher__btn--active {
   border-color: #6b9fff;
   box-shadow: 0 0 10px rgba(1, 33, 105, 0.55);
+}
+
+.lang-switcher--compact .lang-switcher__btn {
+  min-width: 1.85rem;
+  padding: 0.1rem 0.22rem;
+}
+
+.lang-switcher--compact .lang-switcher__code {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .lang-switcher__svg {

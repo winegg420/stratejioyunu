@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuth } from '../context/AuthContext';
+import { countHomeActiveOperations } from '../lib/activeOperationsCount';
 import { fetchHomeCommandStatsFromServer } from '../lib/homeCommandStats';
 import { getLastSyncUserId } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
@@ -16,28 +18,39 @@ function sumQueuesAcrossCities(cities = {}) {
   return { constructionCount, productionCount };
 }
 
-function countActiveExpeditions(expeditions = []) {
-  return expeditions.filter((e) => e.status === 'active' || !e.status).length;
-}
-
 /**
- * Yerel store + Supabase poll — widget'larda gerçek sayılar.
+ * Yerel store (anlık) + Supabase poll — aktif operasyon: sefer, siber, istihbarat.
  */
 export function useHomeCommandStats() {
   const { session } = useAuth();
-  const expeditions = useGameStore((s) => s.expeditions);
-  const reports = useGameStore((s) => s.reports);
-  const cities = useGameStore((s) => s.cities);
-  const gameHydrating = useGameStore((s) => s.gameHydrating);
-  const _supabaseHydrated = useGameStore((s) => s._supabaseHydrated);
+  const { now, expeditions, intelOperations, reports, cities, gameHydrating, _supabaseHydrated, mapRouteSyncRev } = useGameStore(
+    useShallow((s) => ({
+      now: s.now,
+      expeditions: s.expeditions,
+      intelOperations: s.intelOperations,
+      reports: s.reports,
+      cities: s.cities,
+      gameHydrating: s.gameHydrating,
+      _supabaseHydrated: s._supabaseHydrated,
+      mapRouteSyncRev: s.mapRouteSyncRev ?? 0,
+    })),
+  );
 
   const localQueues = sumQueuesAcrossCities(cities);
-  const localFallback = {
-    activeExpeditions: countActiveExpeditions(expeditions),
-    constructionCount: localQueues.constructionCount,
-    productionCount: localQueues.productionCount,
-    unreadReports: (reports ?? []).filter((r) => r.isNew).length,
-  };
+  const localActiveOps = useMemo(
+    () => countHomeActiveOperations({ expeditions, intelOperations, now }),
+    [expeditions, intelOperations, now, mapRouteSyncRev],
+  );
+
+  const localFallback = useMemo(
+    () => ({
+      activeOperations: localActiveOps,
+      constructionCount: localQueues.constructionCount,
+      productionCount: localQueues.productionCount,
+      unreadReports: (reports ?? []).filter((r) => r.isNew).length,
+    }),
+    [localActiveOps, localQueues, reports],
+  );
 
   const [remote, setRemote] = useState(null);
 
@@ -53,17 +66,17 @@ export function useHomeCommandStats() {
     refresh();
     const timer = setInterval(refresh, POLL_MS);
     return () => clearInterval(timer);
-  }, [refresh, gameHydrating, _supabaseHydrated]);
+  }, [refresh, gameHydrating, _supabaseHydrated, localActiveOps]);
 
-  const merged = remote
-    ? {
-        activeExpeditions: remote.activeExpeditions,
-        constructionCount: remote.constructionCount,
-        productionCount: remote.productionCount,
-        unreadReports: remote.unreadReports,
-        live: true,
-      }
-    : { ...localFallback, live: false };
-
-  return merged;
+  return useMemo(
+    () => ({
+      activeExpeditions: localActiveOps,
+      activeOperations: localActiveOps,
+      constructionCount: remote?.constructionCount ?? localFallback.constructionCount,
+      productionCount: remote?.productionCount ?? localFallback.productionCount,
+      unreadReports: remote?.unreadReports ?? localFallback.unreadReports,
+      live: Boolean(remote),
+    }),
+    [localActiveOps, localFallback, remote],
+  );
 }

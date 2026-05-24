@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import PageRouteLoader from './PageRouteLoader';
+import PageSessionGate from './PageSessionGate';
 import { useHydrationTimeout } from '../hooks/useHydrationTimeout';
 
 export default function RouteContentPanel() {
@@ -25,7 +26,9 @@ export default function RouteContentPanel() {
         .join(' ')}
     >
       <PageRouteLoader />
-      <Outlet />
+      <PageSessionGate>
+        <Outlet />
+      </PageSessionGate>
     </div>
   );
 }

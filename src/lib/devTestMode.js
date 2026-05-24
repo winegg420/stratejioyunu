@@ -5,7 +5,8 @@
  */
 import { buildings as buildingDefs, landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { RESOURCE_CATALOG, RESOURCE_IDS, ensureCityResources } from '../data/resourceCatalog';
-import { createStarterBuildings, createStarterResearches } from './buildingUtils';
+import { createStarterBuildings, createStarterResearches, getStarterResources } from './buildingUtils';
+import { createCityState } from '../data/gameInit';
 import { getUnitDisplayName } from '../data/unitCatalog';
 import { CYBER_ABILITIES } from './cyberOps';
 import { MIL_AI_TUTORIAL_QUEST_IDS } from './milAiTutorialQuests';
@@ -30,9 +31,14 @@ export function isDevAdminLocalEnabled() {
   }
 }
 
-/** Varsayılan kapalı — env, dev_test veya admin modu ile açılır. */
+/**
+ * Admin test boost yalnızca açıkça etkinleştirildiğinde.
+ * Prod: strateji_dev_admin=1 (Admin Log → Admin moduna geç).
+ * Yerel dev: VITE_DEV_TEST_MODE veya strateji_dev_test=1.
+ */
 export function isDevTestMode() {
   if (isDevAdminLocalEnabled()) return true;
+  if (!import.meta.env.DEV) return false;
   if (import.meta.env.VITE_DEV_TEST_MODE === 'false') return false;
   if (import.meta.env.VITE_DEV_TEST_MODE === 'true') return true;
   try {
@@ -40,6 +46,13 @@ export function isDevTestMode() {
   } catch {
     return false;
   }
+}
+
+/** Prod oturumunda eski dev bayraklarını temizle (admin kapalıyken). */
+export function purgeStaleDevTestFlags() {
+  if (import.meta.env.DEV) return;
+  if (isDevAdminLocalEnabled()) return;
+  setDevTestModeLocal(false);
 }
 
 /** Geliştirici test modunu kapatır (bir kerelik temizlik). */
@@ -181,6 +194,59 @@ export function getDevTestCyberCapabilities() {
     name: a.name,
     minLevel: 0,
   }));
+}
+
+export function stateLooksLikeDevTestBoost(state) {
+  const cities = Object.values(state?.cities ?? {});
+  if (!cities.length) return false;
+  return cities.some((city) => {
+    const buildings = city.buildings ?? [];
+    const highLevel = buildings.filter((b) => (b.level ?? 0) >= DEV_TEST_BUILDING_LEVEL).length;
+    const resources = city.resources ?? [];
+    const filled = resources.filter(
+      (r) => (r.current ?? 0) >= DEV_TEST_RESOURCE_FILL * 0.95
+        && (r.max ?? 0) >= DEV_TEST_RESOURCE_FILL * 0.95,
+    ).length;
+    return highLevel >= 6 && filled >= 4;
+  });
+}
+
+/** Admin kapalıyken DB'den gelen kazara boost'u starter seviyeye indirir. */
+export function stripAccidentalDevBoost(state) {
+  if (!state || isDevAdminLocalEnabled()) return state;
+  if (!stateLooksLikeDevTestBoost(state)) return state;
+
+  const cities = {};
+  for (const [cityId, city] of Object.entries(state.cities ?? {})) {
+    const reset = createCityState({
+      buildings: createStarterBuildings(),
+      resources: getStarterResources(),
+      idleTroops: city.idleTroops?.map((t) => ({ ...t, available: t.available ?? 0 })),
+      idleSpies: city.idleSpies ?? 0,
+      idleAgents: city.idleAgents ?? 0,
+      happiness: city.happiness ?? 72,
+      taxRate: city.taxRate ?? 15,
+      idlePopulation: city.idlePopulation,
+      constructionQueue: city.constructionQueue ?? [],
+      productionQueue: city.productionQueue ?? [],
+    });
+    cities[cityId] = {
+      ...city,
+      ...reset,
+      buildings: reset.buildings,
+      resources: reset.resources,
+      idleTroops: reset.idleTroops,
+      idleSpies: reset.idleSpies ?? 0,
+      idleAgents: reset.idleAgents ?? 0,
+    };
+  }
+
+  return {
+    ...state,
+    cities,
+    researches: createStarterResearches().map((r) => ({ ...r })),
+    devTestModeActive: false,
+  };
 }
 
 export function getDevTestModeBannerText() {

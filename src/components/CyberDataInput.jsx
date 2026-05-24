@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { toRawInputNumber } from '../lib/formatNumber';
 
 function toDisplayValue(value) {
   if (value === '' || value == null) return '';
@@ -75,6 +76,19 @@ export default function CyberDataInput({
     setDraft(toDisplayValue(value));
   };
 
+  const handleKeyDown = (e) => {
+    if (disabled || placeholder) return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const step = e.shiftKey ? 10 : 1;
+    const floor = min ?? 0;
+    const current = Math.floor(Number(toRawInputNumber(draft) || 0));
+    let next = e.key === 'ArrowUp' ? current + step : current - step;
+    next = Math.max(floor, next);
+    if (max != null && Number.isFinite(max)) next = Math.min(max, next);
+    emitChange(String(next));
+  };
+
   return (
     <div className={['cyber-data-input', className].filter(Boolean).join(' ')}>
       <input
@@ -85,7 +99,9 @@ export default function CyberDataInput({
         max={max}
         disabled={disabled}
         placeholder={placeholder}
+        step={placeholder ? undefined : 1}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
       />

@@ -30,12 +30,6 @@ export default function Barracks() {
   return (
     <div className="page page--console barracks-page barracks-page--military">
       <LocalizedPageHeader pageKey="barracks" />
-      <ActiveQueue
-        key={productionQueueKey}
-        title={t('pages.barracks.queueTitle', { city: cityName })}
-        queueType="production"
-        emptyText={t('pages.barracks.queueEmpty')}
-      />
       <section className="barracks-production-section" aria-labelledby="barracks-production-heading">
         <h2 id="barracks-production-heading" className="barracks-section-title">
           {t('pages.barracks.productionSection')}
@@ -43,11 +37,21 @@ export default function Barracks() {
         <div className="card-grid barracks-production-grid">
           {landUnits.map((u) => (
             <LockedFeatureGate key={u.id} buildingId="barracks" featureName={unitName(u.id, u.name)}>
-              <UnitCard unit={{ ...u, name: unitName(u.id, u.name) }} awayMap={awayMap} />
+              <UnitCard
+                unit={{ ...u, name: unitName(u.id, u.name) }}
+                awayMap={awayMap}
+                iconDomain="land"
+              />
             </LockedFeatureGate>
           ))}
         </div>
       </section>
+      <ActiveQueue
+        key={productionQueueKey}
+        title={t('pages.barracks.queueTitle', { city: cityName })}
+        queueType="production"
+        emptyText={t('pages.barracks.queueEmpty')}
+      />
       <BattleSimulator />
     </div>
   );

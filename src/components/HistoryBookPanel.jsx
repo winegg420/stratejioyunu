@@ -114,10 +114,14 @@ export default function HistoryBookPanel() {
 
       <div className="history-book-scroll">
         {entries.length === 0 ? (
-          <p className="history-book-empty">
-            Bu sezon için henüz kronik kaydı yok. Büyük savaşlar, rejim değişimleri ve pakt ihanetleri
-            otomatik olarak buraya yazılacak.
-          </p>
+          <div className="history-book-empty" role="status">
+            <p className="history-book-empty__lead">
+              Tarih kitabı boş. Sezon tamamlandığında olaylar burada kayıt altına alınır.
+            </p>
+            <p className="history-book-empty__hint">
+              Büyük savaşlar, rejim değişimleri ve pakt ihanetleri otomatik olarak derlenir.
+            </p>
+          </div>
         ) : (
           entries.map((entry) => (
             <article key={entry.id} className="history-book-entry">

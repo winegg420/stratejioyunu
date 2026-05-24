@@ -13,6 +13,7 @@ export default function MilitaryEmptyState({
   actionLabel,
   actionTo,
   onAction,
+  footer,
   as = 'div',
   className = '',
   role = 'status',
@@ -71,6 +72,7 @@ export default function MilitaryEmptyState({
           {actionLabel}
         </button>
       )}
+      {footer}
     </Tag>
   );
 }

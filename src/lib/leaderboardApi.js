@@ -32,6 +32,7 @@ export async function fetchLoyaltyLeaderboard(serverId = DEFAULT_SERVER) {
     .eq('server_id', serverId)
     .order('loyalty_score', { ascending: false })
     .order('rank_score', { ascending: false })
+    .order('player_name', { ascending: true })
     .limit(100);
 
   if (error) {

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { diplomacy } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
+import PageSessionGate from '../components/PageSessionGate';
 import { useLanguage } from '../context/LanguageContext';
 
 function confirmBreakTreaty(partner, t) {
@@ -13,6 +14,7 @@ import {
   TREATY_LABELS,
   TREATY_STATUS,
   formatTreatyDurationHours,
+  isTreatyActive,
 } from '../lib/diplomaticAgreements';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 
@@ -42,9 +44,15 @@ function PactRow({ treaty, onBreak, t }) {
   );
 }
 
+function isCeasefireTreaty(treaty) {
+  const kind = treaty.kind ?? (treaty.type === 'Ateşkes' ? TREATY_KIND.CEASEFIRE : null);
+  return kind === TREATY_KIND.CEASEFIRE || treaty.type === TREATY_LABELS[TREATY_KIND.CEASEFIRE];
+}
+
 export default function Diplomacy() {
   const { t } = useLanguage();
   const { alliance, votes } = diplomacy;
+  const now = useGameStore((s) => s.now);
   const diplomaticTreaties = useGameStore((s) => s.diplomaticTreaties ?? []);
   const breakDiplomaticTreaty = useGameStore((s) => s.breakDiplomaticTreaty);
   const proposeDiplomaticAgreement = useGameStore((s) => s.proposeDiplomaticAgreement);
@@ -64,7 +72,20 @@ export default function Diplomacy() {
     (t) => t.status === TREATY_STATUS.PENDING && t.proposer === playerName,
   );
 
+  const expiredCeasefires = useMemo(
+    () => (diplomaticTreaties ?? []).filter((treaty) => {
+      if (!isCeasefireTreaty(treaty)) return false;
+      if (treaty.status === TREATY_STATUS.EXPIRED) return true;
+      if (treaty.status === TREATY_STATUS.ACTIVE && treaty.endsAt != null && treaty.endsAt <= now) {
+        return true;
+      }
+      return false;
+    }),
+    [diplomaticTreaties, now],
+  );
+
   return (
+    <PageSessionGate loadingMessageKey="auth.syncingGame">
     <div className="page page--console diplomacy-page">
       <LocalizedPageHeader
         className="diplomacy-page-header"
@@ -72,6 +93,18 @@ export default function Diplomacy() {
         hideStatus
         feedPending={false}
       />
+
+      {expiredCeasefires.length > 0 && (
+        <div className="diplomacy-ceasefire-expired-banners" role="alert">
+          {expiredCeasefires.map((treaty) => (
+            <p key={treaty.id ?? `${treaty.partner}-ceasefire-expired`} className="diplomacy-ceasefire-expired-banner">
+              <strong>{treaty.partner}</strong>
+              {' '}
+              ile ateşkes sona erdi — yenile veya boz
+            </p>
+          ))}
+        </div>
+      )}
 
       <div className="diplomacy-grid two-col">
         <section className="panel diplomacy-panel diplomacy-panel--alliance">
@@ -93,9 +126,9 @@ export default function Diplomacy() {
           <p className="hint diplomacy-panel__hint">
             Ateşkes ve saldırmazlık pakti bağlayıcıdır. Bozmak veya saldırmak itibar kaybettirir.
           </p>
-          {activeTreaties.length > 0 ? (
+          {activeTreaties.filter((t) => isTreatyActive(t, now)).length > 0 ? (
             <ul className="diplomacy-pact-list treaty-list">
-              {activeTreaties.map((treaty) => (
+              {activeTreaties.filter((t) => isTreatyActive(t, now)).map((treaty) => (
                 <PactRow
                   key={treaty.id ?? treaty.partner}
                   treaty={treaty}
@@ -236,9 +269,15 @@ export default function Diplomacy() {
             </div>
           ))
         ) : (
-          <EmptyState tag="[ OYLAMA YOK ]" icon="🗳️" title="Aktif oylama yok" />
+          <EmptyState
+            tag="[ OYLAMA YOK ]"
+            icon="🗳️"
+            title="Aktif oylama yok"
+            description="Oy kullanmak için ittifak üyelerinin önerdiği oylamalara katıl"
+          />
         )}
       </section>
     </div>
+    </PageSessionGate>
   );
 }

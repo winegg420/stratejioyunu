@@ -7,7 +7,9 @@ import { pruneCyberEffects } from '../lib/happinessSystem';
 import { useGameStore } from '../stores/gameStore';
 import { getCityOwnerLabel } from './mapOwnership';
 import { PLAYER_CITY_ROLES } from '../data/worldCitiesCatalog';
+import { getIdeologyProfile, resolveCityIdeology } from '../lib/ideologySystem';
 import {
+  createCityMarkerIcon,
   createColonyIcon,
   createMainHqIcon,
   createMapHitIcon,
@@ -58,6 +60,8 @@ export default function CityMarkers({
   onCityHoverEnd,
   showPinLabels = true,
   markerRenderKey = 0,
+  ideologyView = false,
+  playerIdeology = null,
 }) {
   const storeCities = useGameStore((s) => s.cities);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
@@ -100,6 +104,10 @@ export default function CityMarkers({
           ?? (city.isOwn ? PLAYER_CITY_ROLES.COLONY : null);
         const isMainHq = role === PLAYER_CITY_ROLES.MAIN_HQ;
 
+        const ideologyColor = ideologyView
+          ? getIdeologyProfile(resolveCityIdeology(markerCity, playerName, playerIdeology))?.color
+          : null;
+
         const icon = city.isOwn
           ? (isMainHq
             ? createMainHqIcon(markerCity, ownerLabel, { showLabels: showPinLabels, isActive })
@@ -111,7 +119,13 @@ export default function CityMarkers({
               showLabels: showPinLabels,
               isActive,
             }))
-          : createMapHitIcon();
+          : (ideologyView && ideologyColor
+            ? createCityMarkerIcon(markerCity, {
+              ownerLabel,
+              showLabels: showPinLabels,
+              colorOverride: ideologyColor,
+            })
+            : createMapHitIcon());
 
         return (
           <Marker

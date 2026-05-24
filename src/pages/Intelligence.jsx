@@ -31,9 +31,12 @@ import {
 } from '../utils/cbrnEngine';
 import { getProgressionState } from '../lib/progressionSystem';
 import { resolveCityCoords } from '../lib/expeditionTravel';
+import { getMapCityDisplayName } from '../map/mapCityDisplayName';
+import { useLanguage } from '../context/LanguageContext';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
 
 export default function Intelligence() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const now = useGameStore((s) => s.now);
@@ -159,9 +162,17 @@ export default function Intelligence() {
     });
   };
 
+  const confirmIntelSend = (cityName, operationName) => {
+    const displayCity = getMapCityDisplayName(cityName) || cityName;
+    return window.confirm(
+      t('pages.intelligence.sendConfirm', { city: displayCity, operation: operationName }),
+    );
+  };
+
   const handleAgentSend = (op) => {
     const target = resolvedAgentName || cyberTargets[0]?.name;
     if (!target || !op) return;
+    if (!confirmIntelSend(target, op.name)) return;
     sendIntelOperation({ target, opType: op.name, opId: op.id, agentCount: 1 });
   };
 
@@ -169,10 +180,22 @@ export default function Intelligence() {
 
   const handleCyberSend = (abilityId) => {
     if (!selectedTarget) return;
+    const ability = CYBER_ABILITIES.find((a) => a.id === abilityId);
+    if (!ability) return;
+    if (!confirmIntelSend(selectedTarget.name, ability.name)) return;
     startCyberVirusExpedition({
       targetCity: selectedTarget,
       abilityId,
       agentCount,
+    });
+  };
+
+  const handleKbrnSend = () => {
+    if (!kbrnResolvedTarget) return;
+    if (!confirmIntelSend(kbrnResolvedTarget.name, KBRN_CHEM_PRESSURE_OP.name)) return;
+    startKbrnChemExpedition({
+      targetCity: kbrnResolvedTarget,
+      agentCount: kbrnAgents,
     });
   };
 
@@ -188,7 +211,23 @@ export default function Intelligence() {
         enemySpyWarning={enemySpyWarning}
       />
 
+      <nav className="intel-section-nav" aria-label={t('pages.intelligence.sectionNavAria')}>
+        <a href="#intel-ops-active" className="intel-section-nav__link">
+          {t('pages.intelligence.navActive')}
+        </a>
+        <a href="#intel-agents" className="intel-section-nav__link">
+          {t('pages.intelligence.navAgents')}
+        </a>
+        <a href="#intel-cyber" className="intel-section-nav__link">
+          {t('pages.intelligence.navCyber')}
+        </a>
+        <a href="#intel-kbrn" className="intel-section-nav__link">
+          {t('pages.intelligence.navKbrn')}
+        </a>
+      </nav>
+
       <IntelAccordion
+        id="intel-ops-active"
         title="Aktif Operasyonlar"
         icon="📡"
         defaultOpen
@@ -235,7 +274,7 @@ export default function Intelligence() {
       </IntelAccordion>
 
       <LockedFeatureGate buildingId="intel" featureName="Ajan operasyonları">
-        <IntelAccordion title="Ajan Operasyonları" icon="🕵️" defaultOpen>
+        <IntelAccordion id="intel-agents" title="Ajan Operasyonları" icon="🕵️" defaultOpen>
           {!hasAgents ? (
             <IntelNoAgentsAlert />
           ) : (
@@ -283,13 +322,13 @@ export default function Intelligence() {
       </LockedFeatureGate>
 
       {!progression.cyberUnlocked ? (
-        <section className="panel intel-progression-lock">
+        <section id="intel-cyber" className="panel intel-progression-lock intel-section-anchor">
           <h3 className="panel-title">Siber Operasyonlar</h3>
           <p className="hint">🔒 {progression.locks.cyber}</p>
         </section>
       ) : (
         <LockedFeatureGate buildingId="cyber_ops" featureName="Siber operasyonlar">
-          <IntelAccordion title="Siber Operasyonlar" icon="💻" alwaysOpen>
+          <IntelAccordion id="intel-cyber" title="Siber Operasyonlar" icon="💻" alwaysOpen>
             {cyberTargets.length === 0 ? (
               <MilitaryEmptyState
                 variant="inline"
@@ -345,13 +384,13 @@ export default function Intelligence() {
       )}
 
       {!progression.kbrnUnlocked ? (
-        <section className="panel intel-progression-lock">
+        <section id="intel-kbrn" className="panel intel-progression-lock intel-section-anchor">
           <h3 className="panel-title">KBRN Operasyonları</h3>
           <p className="hint">🔒 {progression.locks.kbrn}</p>
         </section>
       ) : (
         <LockedFeatureGate buildingId="research" featureName="KBRN operasyonu">
-          <IntelAccordion title="KBRN Operasyonları" icon="☢️" alwaysOpen>
+          <IntelAccordion id="intel-kbrn" title="KBRN Operasyonları" icon="☢️" alwaysOpen>
             {!chemUnlocked ? (
               <MilitaryEmptyState
                 variant="inline"
@@ -409,10 +448,7 @@ export default function Intelligence() {
                   <IntelOpActionButton
                     variant="danger"
                     locked={!kbrnBranchOk || idleAgents < kbrnAgents || !kbrnResolvedTarget}
-                    onClick={() => kbrnResolvedTarget && startKbrnChemExpedition({
-                      targetCity: kbrnResolvedTarget,
-                      agentCount: kbrnAgents,
-                    })}
+                    onClick={handleKbrnSend}
                   >
                     Gönder
                   </IntelOpActionButton>

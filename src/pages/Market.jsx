@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
+import PageSessionGate from '../components/PageSessionGate';
 import MarketOffersEmptyState from '../components/MarketOffersEmptyState';
 import MarketPriceTag from '../components/MarketPriceTag';
 import ProcessingActionButton from '../components/ProcessingActionButton';
@@ -98,6 +99,7 @@ export default function Market() {
   };
 
   return (
+    <PageSessionGate>
     <div className="page page--console market-page">
       <LocalizedPageHeader
         pageKey="market"
@@ -196,8 +198,9 @@ export default function Market() {
                       processing={isProcessing(`trade-${id}-buy`)}
                       disabled={!marketReady || isBusy}
                       onClick={() => handleTrade(id, 'buy')}
+                      aria-label={`${label} satın al`}
                     >
-                      Satın Al
+                      SATIN AL
                     </ProcessingActionButton>
                   </label>
                   <label className="market-exchange-field">
@@ -226,8 +229,9 @@ export default function Market() {
                       processing={isProcessing(`trade-${id}-sell`)}
                       disabled={!marketReady || isBusy}
                       onClick={() => handleTrade(id, 'sell')}
+                      aria-label={`${label} sat`}
                     >
-                      Sat
+                      SAT
                     </ProcessingActionButton>
                   </label>
                 </div>
@@ -272,6 +276,7 @@ export default function Market() {
                   inputClassName="market-input-qty"
                   value={offerQty}
                   min={1}
+                  placeholder="Miktar girin"
                   disabled={!marketReady}
                   onChange={(e) => setOfferQty(e.target.value)}
                 />
@@ -352,5 +357,6 @@ export default function Market() {
         )}
       </section>
     </div>
+    </PageSessionGate>
   );
 }

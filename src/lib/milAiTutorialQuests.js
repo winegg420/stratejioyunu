@@ -247,6 +247,38 @@ export function isMilAiTutorialActive(state) {
   return !getMilAiTutorialProgress(state).tutorialComplete;
 }
 
+/** Üst başlık: "GÖREV TAMAMLANDI: YZ Merkezi kuruldu" */
+export function formatMilAiQuestCompletedStatus(quest, t) {
+  if (!quest || typeof t !== 'function') return null;
+  if (quest.completeStatusKey) {
+    return t('components.milAi.questCompletedStatus', { detail: t(quest.completeStatusKey) });
+  }
+  const name = t(quest.titleKey);
+  if (quest.buildingId) {
+    return t('components.milAi.questCompletedStatus', {
+      detail: t('components.milAi.questBuilt', { name }),
+    });
+  }
+  return t('components.milAi.questCompletedStatus', {
+    detail: t('components.milAi.questDone', { name }),
+  });
+}
+
+export function resolveMilAiCompletedStatusLabel(state, t) {
+  const celebration = state?.milAiCelebration;
+  if (celebration?.questId) {
+    const quest = MIL_AI_TUTORIAL_QUESTS.find((q) => q.id === celebration.questId);
+    const label = formatMilAiQuestCompletedStatus(quest, t);
+    if (label) return label;
+  }
+  const progress = getMilAiTutorialProgress(state);
+  if (progress.lastCompleted) {
+    const label = formatMilAiQuestCompletedStatus(progress.lastCompleted, t);
+    if (label) return label;
+  }
+  return null;
+}
+
 export function isTutorialBuildingVisible(buildingId, state) {
   if (!isMilAiTutorialActive(state)) return true;
   const city = getActiveCity(state);
@@ -359,7 +391,7 @@ export function pickMilAiLevelAdvice(state, lang = 'tr') {
     candidates.push(translate(lang, 'milAi.advice.stable'));
   }
 
-  const tick = Math.floor((state.now ?? Date.now()) / 15000);
+  const tick = Math.floor((state.now ?? Date.now()) / (5 * 60 * 1000));
   return candidates[tick % candidates.length];
 }
 

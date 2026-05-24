@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { BOT_MARKER_ORANGE, EMPIRE_CITY_GLOW } from './cityMarkerUtils';
-import { CITY_STATUS_COLORS } from './mapUtils';
+import { getMapCityDisplayColor } from './mapUtils';
 import { normalizeMapCity } from './botCityUtils';
 
 const DOT_SIZE = 10;
@@ -51,9 +52,12 @@ function buildCityList(mapCities, playerCities) {
 export default function CityDotLayer({
   mapCities,
   playerCities,
+  playerIdeology = null,
+  ideologyView = false,
   visible = true,
   renderKey = 0,
 }) {
+  const playerName = getCurrentPlayerName();
   const cities = useMemo(
     () => buildCityList(mapCities, playerCities),
     [mapCities, playerCities],
@@ -66,13 +70,19 @@ export default function CityDotLayer({
       {cities.map((city) => {
         if (city.lat == null || city.lng == null) return null;
         let variant = 'default';
-        let color = CITY_STATUS_COLORS[city.status] ?? CITY_STATUS_COLORS.enemy;
-        if (city.isOwn || city.status === 'own') {
+        let color = getMapCityDisplayColor(city, { ideologyView, playerName, playerIdeology });
+        if (!ideologyView) {
+          if (city.isOwn || city.status === 'own') {
+            variant = 'own';
+            color = EMPIRE_CITY_GLOW;
+          } else if (city.status === 'bot') {
+            variant = 'bot';
+            color = BOT_MARKER_ORANGE;
+          }
+        } else if (city.isOwn || city.status === 'own') {
           variant = 'own';
-          color = EMPIRE_CITY_GLOW;
         } else if (city.status === 'bot') {
           variant = 'bot';
-          color = BOT_MARKER_ORANGE;
         }
         return (
           <Marker

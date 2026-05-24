@@ -12,7 +12,7 @@ export function clampHappiness(value) {
 }
 
 export function clampTaxRate(value) {
-  return Math.max(5, Math.min(45, Math.round(Number(value) || DEFAULT_TAX_RATE)));
+  return Math.max(0, Math.min(30, Math.round(Number(value) || DEFAULT_TAX_RATE)));
 }
 
 export function createDefaultCityVitality(overrides = {}) {

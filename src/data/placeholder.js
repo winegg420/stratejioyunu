@@ -81,10 +81,10 @@ const landUnitsBase = [
 export const landUnits = applyUnitDisplayList(landUnitsBase);
 
 const airUnitsBase = [
-  { id: 'scout', name: 'Keşif Uçağı', attack: 0, defense: 5, cost: '200 hammadde · 100 petrol', time: '00:12:00', count: 12, image: '🔭', desc: 'Keşif yapar, savaşmaz.' },
-  { id: 'fighter', name: 'Savaş Uçağı', attack: 55, defense: 30, cost: '1.200 hammadde · 600 petrol', time: '00:55:00', count: 28, image: '✈️', desc: 'Kara birlikleri ve gemilere karşı güçlü.' },
-  { id: 'bomber', name: 'Bombardıman', attack: 70, defense: 15, cost: '1.800 hammadde · 900 petrol', time: '01:10:00', count: 8, image: '💣', desc: 'Binalara ve kara birliklerine karşı etkili.' },
-  { id: 'drone', name: 'Drone', attack: 20, defense: 18, cost: '400 hammadde · 200 petrol', time: '00:15:00', count: 35, image: '🛸', desc: 'Piyade ve keşif uçaklarına karşı etkili.' },
+  { id: 'scout', name: 'Keşif Uçağı', attack: 0, defense: 5, cost: '200 hammadde · 100 petrol · 40 enerji', time: '00:12:00', count: 12, image: '🔭', desc: 'Keşif yapar, savaşmaz.' },
+  { id: 'fighter', name: 'Savaş Uçağı', attack: 55, defense: 30, cost: '1.200 hammadde · 600 petrol · 280 enerji', time: '00:55:00', count: 28, image: '✈️', desc: 'Kara birlikleri ve gemilere karşı güçlü.' },
+  { id: 'bomber', name: 'Bombardıman', attack: 70, defense: 15, cost: '1.800 hammadde · 900 petrol · 420 enerji', time: '01:10:00', count: 8, image: '💣', desc: 'Binalara ve kara birliklerine karşı etkili.' },
+  { id: 'drone', name: 'Drone', attack: 20, defense: 18, cost: '400 hammadde · 200 petrol · 120 enerji', time: '00:15:00', count: 35, image: '🛸', desc: 'Piyade ve keşif uçaklarına karşı etkili.' },
 ];
 
 export const airUnits = applyUnitDisplayList(airUnitsBase);
@@ -243,34 +243,19 @@ export const newsFeed = [
   { type: 'meydan', text: '[KaraKurt] Meydan Savaşı ilan etti — Hedef: Bursa', time: '16:00' },
 ];
 
-/** State Mail — liderden lidere resmi şifreli yazışmalar */
-export const stateMailMessages = [
+/** State Mail — canlı oyuncu yazışmaları (demo içerik kaldırıldı). */
+export const stateMailMessages = [];
+
+/** Eski demo mesajlar — yalnızca geliştirme / test referansı. */
+export const DEMO_STATE_MAIL_MESSAGES = [
   {
     id: 'sm1',
     fromPresident: 'President_Volkov · Doğu Paktı',
     subject: 'Gizli Kanal — enerji koridoru anlaşması',
     encryption: 'QUANTUM-SHIELD · ALLIANCE-CHAN',
     time: '2044-05-18 14:22 UTC',
-    body: 'Sayın Başkan,\n\nBölgesel denge değişiyor. Petrol koridorunuz bizim için kritik. Karşılıklı saldırmazlık ve 72 saatlik konvoy güvencesi teklif ediyoruz. Yanıtınızı bu kanal üzerinden bekliyoruz.\n\n— Office of President Volkov',
+    body: 'Sayın Başkan,\n\nBölgesel denge değişiyor. Petrol koridorunuz bizim için kritik.',
     unread: true,
-  },
-  {
-    id: 'sm2',
-    fromPresident: 'President_Chen · Pasifik Birliği',
-    subject: 'Uyarı: sınır ihlali raporu',
-    encryption: 'BURN-AFTER-READ · RED-CHANNEL',
-    time: '2044-05-17 09:01 UTC',
-    body: 'Resmi kayıtlarımıza göre birlikleriniz doğu sektöründe izinsiz hareket etti. 24 saat içinde geri çekilmezse karşı tedbir devreye alınacaktır.\n\nBu mesaj okunduktan sonra şifreli kopya imha edilir.',
-    unread: true,
-  },
-  {
-    id: 'sm3',
-    fromPresident: 'President_Mercer · Atlantik Konseyi',
-    subject: 'Ticaret rotası — karşılıklı tanıma',
-    encryption: 'AES-256 · STATE-MAIL',
-    time: '2044-05-15 22:40 UTC',
-    body: 'Merhaba Başkan,\n\nKonvoy rotalarınızı haritada gördük. Ortak ticaret hattı öneriyoruz: %12 vergi indirimi karşılığında 30 gün koridor güvenliği. Detaylar ekte (simülasyon).\n\nSaygılarımla,\nMercer',
-    unread: false,
   },
 ];
 

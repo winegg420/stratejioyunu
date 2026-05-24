@@ -9,6 +9,7 @@ import { getProgressionState } from '../lib/progressionSystem';
 import { isTutorialBuildingVisible, isMilAiTutorialActive } from '../lib/milAiTutorialQuests';
 import { isCoastalPlayerCity, getConstructionQueueSummary } from '../lib/cityManagementUi';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
+import PageSessionGate from '../components/PageSessionGate';
 import { useLanguage } from '../context/LanguageContext';
 
 function scrollToBuildingFromHash(hash) {
@@ -50,15 +51,18 @@ export default function Buildings() {
 
   if (!city) {
     return (
-      <div className="page page-wrapper buildings-page page--console">
-        <LocalizedPageHeader pageKey="buildings" />
-        <p className="buildings-page-loading" role="status">{t('pages.buildings.loading')}</p>
-      </div>
+      <PageSessionGate loadingMessageKey="pages.buildings.loading">
+        <div className="page page-wrapper buildings-page page--console">
+          <LocalizedPageHeader pageKey="buildings" />
+          <p className="buildings-page-loading" role="status">{t('pages.buildings.loading')}</p>
+        </div>
+      </PageSessionGate>
     );
   }
 
   return (
-    <div className="page page-wrapper buildings-page page--console">
+    <PageSessionGate loadingMessageKey="pages.buildings.loading">
+      <div className="page page-wrapper buildings-page page--console">
       <LocalizedPageHeader pageKey="buildings" />
       <EmpireSlotBanner />
       <div className="buildings-page__toolbar">
@@ -105,6 +109,7 @@ export default function Buildings() {
           })}
         </div>
       </div>
-    </div>
+      </div>
+    </PageSessionGate>
   );
 }

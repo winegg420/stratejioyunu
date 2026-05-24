@@ -1,4 +1,5 @@
-﻿import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
+﻿import { Link } from 'react-router-dom';
+import { useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -56,11 +57,11 @@ function ExpeditionRow({ expedition, now, originLabel, onRecall, t }) {
 export default function ExpeditionTrackerPanel() {
   const { t } = useLanguage();
   const now = useGameStore((s) => s.now);
-  const expeditions = useGameStore((s) => s.expeditions);
+  const activeExpeditions = useActiveExpeditions();
   const playerCities = useGameStore((s) => s.playerCities);
   const recallExpedition = useGameStore((s) => s.recallExpedition);
 
-  if (!expeditions.length) {
+  if (!activeExpeditions.length) {
     return (
       <section className="expedition-tracker-panel expedition-tracker-panel--empty panel glass-panel">
         <h3 className="expedition-tracker-title expedition-tracker-title--overlay">
@@ -76,8 +77,10 @@ export default function ExpeditionTrackerPanel() {
           </div>
           <div className="expedition-empty-radar__copy">
             <span className="expedition-empty-radar__tag">{t('pages.home.expedition.emptyTag')}</span>
-            <p className="expedition-empty-radar__title">{t('pages.home.expedition.emptyTitle')}</p>
             <p className="expedition-empty-radar__hint">{t('pages.home.expedition.emptyHint')}</p>
+            <Link to="/harita" className="btn btn-hud-primary btn-sm expedition-empty-radar__cta">
+              {t('common.openMap')}
+            </Link>
           </div>
         </div>
       </section>
@@ -89,11 +92,11 @@ export default function ExpeditionTrackerPanel() {
       <div className="expedition-tracker-header">
         <h3 className="expedition-tracker-title">{t('pages.home.expedition.title')}</h3>
         <span className="expedition-tracker-count">
-          {t('pages.home.expedition.activeCount', { count: expeditions.length })}
+          {t('pages.home.expedition.activeCount', { count: activeExpeditions.length })}
         </span>
       </div>
       <ul className="expedition-tracker-list">
-        {expeditions.map((e) => (
+        {activeExpeditions.map((e) => (
           <ExpeditionRow
             key={e.id}
             expedition={e}

@@ -1,34 +1,40 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import MilitaryEmptyState from '../components/MilitaryEmptyState';
-import NewExpeditionModal from '../components/NewExpeditionModal';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import OperationsMetropolisAlert from '../components/OperationsMetropolisAlert';
 import CustomDropdown from '../components/CustomDropdown';
-import { useGameStore, getExpeditionOriginLabel } from '../stores/gameStore';
+import { useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
 import { ALLIANCE_OP_STATUS } from '../lib/allianceOperation';
 import { diplomacy } from '../data/placeholder';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Expeditions() {
   const { t } = useLanguage();
-  const [launchOpen, setLaunchOpen] = useState(false);
   const [opTarget, setOpTarget] = useState('');
   const [syncDelayMinutes, setSyncDelayMinutes] = useState(0);
   const now = useGameStore((s) => s.now);
-  const expeditions = useGameStore((s) => s.expeditions);
+  const activeExpeditions = useActiveExpeditions();
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
   const pastExpeditions = useGameStore((s) => s.pastExpeditions);
+  const gameHydrating = useGameStore((s) => s.gameHydrating);
+  const refreshPastExpeditionsFromServer = useGameStore((s) => s.refreshPastExpeditionsFromServer);
   const allianceOperations = useGameStore((s) => s.allianceOperations ?? []);
   const recallExpedition = useGameStore((s) => s.recallExpedition);
   const createAllianceOperation = useGameStore((s) => s.createAllianceOperation);
   const approveAllianceOperation = useGameStore((s) => s.approveAllianceOperation);
   const requestMapTradeFocus = useGameStore((s) => s.requestMapTradeFocus);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (gameHydrating) return undefined;
+    refreshPastExpeditionsFromServer().catch(() => {});
+    return undefined;
+  }, [gameHydrating, refreshPastExpeditionsFromServer]);
 
   const opTargets = useMemo(
     () => mapCities.filter((c) => c.status !== 'own' && c.status !== 'empty').map((c) => c.name),
@@ -40,7 +46,11 @@ export default function Expeditions() {
     requestMapTradeFocus(expeditionId);
     navigate('/harita');
   };
-  const hasActive = expeditions.length > 0;
+
+  const openMapExpeditionLaunch = () => {
+    navigate('/harita?mode=expedition');
+  };
+  const hasActive = activeExpeditions.length > 0;
   const hasPast = pastExpeditions.length > 0;
 
   return (
@@ -54,7 +64,7 @@ export default function Expeditions() {
             <button
               type="button"
               className="btn btn-hud-primary"
-              onClick={() => setLaunchOpen(true)}
+              onClick={openMapExpeditionLaunch}
             >
               {t('pages.expeditions.newExpedition')}
             </button>
@@ -73,76 +83,7 @@ export default function Expeditions() {
         )}
       />
 
-      <NewExpeditionModal open={launchOpen} onClose={() => setLaunchOpen(false)} />
-
       <OperationsMetropolisAlert />
-
-      <section className="panel alliance-ops-panel">
-        <h3 className="panel-title">{t('pages.expeditions.allianceTitle')}</h3>
-        <p className="hint">
-          {t('pages.expeditions.allianceDesc', { name: diplomacy.alliance.name })}
-        </p>
-        <label className="alliance-ops-field">
-          <span>{t('pages.expeditions.table.target')}</span>
-          <CustomDropdown
-            className="expedition-launch-select"
-            value={opTarget}
-            onChange={setOpTarget}
-            aria-label={t('pages.expeditions.allianceTargetAria')}
-            options={[
-              { value: '', label: t('common.select'), disabled: true },
-              ...opTargets.map((name) => ({ value: name, label: name })),
-            ]}
-          />
-        </label>
-        <div className="alliance-ops-timing">
-          <label>
-            <span>Geciktirme / Zaman Ayarı (dk)</span>
-            <input
-              type="number"
-              className="input-qty"
-              min={0}
-              max={180}
-              value={syncDelayMinutes}
-              onChange={(e) => setSyncDelayMinutes(Math.max(0, Math.min(180, Number(e.target.value) || 0)))}
-            />
-          </label>
-          <p className="hint">
-            Tüm müttefik ordularının varışını senkronize etmek için ek gecikme eklenir.
-          </p>
-        </div>
-        {planningOps.length > 0 ? (
-          <ul className="alliance-ops-list">
-            {planningOps.map((op) => (
-              <li key={op.id} className="alliance-ops-card">
-                <strong>{op.targetName}</strong>
-                <span className="font-hud-data">
-                  Lider: {op.leader} · Katılımcı: {(op.participants ?? []).filter((p) => p.approved).length}
-                </span>
-                {op.launchAt && (
-                  <span className="timer">
-                    Koordinasyon: {formatSeconds(remainingFromEndsAt(op.launchAt, now))}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-hud-primary btn-sm"
-                  onClick={() => approveAllianceOperation(op.id, {
-                    troopQty: { infantry: 25 },
-                    syncDelayMinutes,
-                  })}
-                >
-                  [ ONAYLA · KATIL ]
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="muted">Planlanmış operasyon yok.</p>
-        )}
-      </section>
-
-      <MeydanBattlePanel />
 
       <section className="panel">
         <h3 className="panel-title">Aktif Operasyonlar</h3>
@@ -159,7 +100,7 @@ export default function Expeditions() {
               </tr>
             </thead>
             <tbody>
-              {expeditions.map((e) => {
+              {activeExpeditions.map((e) => {
                 const origin = getExpeditionOriginLabel(e, playerCities);
                 const isReturn = e.direction === 'returning' || e.recalled;
                 return (
@@ -242,6 +183,73 @@ export default function Expeditions() {
             actionLabel="Haritayı Aç"
             actionTo="/harita"
           />
+        )}
+      </section>
+
+      <MeydanBattlePanel />
+
+      <section className="panel alliance-ops-panel">
+        <h3 className="panel-title">{t('pages.expeditions.allianceTitle')}</h3>
+        <p className="hint">
+          {t('pages.expeditions.allianceDesc', { name: diplomacy.alliance.name })}
+        </p>
+        <label className="alliance-ops-field">
+          <span>{t('pages.expeditions.table.target')}</span>
+          <CustomDropdown
+            className="expedition-launch-select"
+            value={opTarget}
+            onChange={setOpTarget}
+            aria-label={t('pages.expeditions.allianceTargetAria')}
+            options={[
+              { value: '', label: t('common.select'), disabled: true },
+              ...opTargets.map((name) => ({ value: name, label: name })),
+            ]}
+          />
+        </label>
+        <div className="alliance-ops-timing">
+          <label>
+            <span>Geciktirme / Zaman Ayarı (dk)</span>
+            <input
+              type="number"
+              className="input-qty"
+              min={0}
+              max={180}
+              value={syncDelayMinutes}
+              onChange={(e) => setSyncDelayMinutes(Math.max(0, Math.min(180, Number(e.target.value) || 0)))}
+            />
+          </label>
+          <p className="hint">
+            Tüm müttefik ordularının varışını senkronize etmek için ek gecikme eklenir.
+          </p>
+        </div>
+        {planningOps.length > 0 ? (
+          <ul className="alliance-ops-list">
+            {planningOps.map((op) => (
+              <li key={op.id} className="alliance-ops-card">
+                <strong>{op.targetName}</strong>
+                <span className="font-hud-data">
+                  Lider: {op.leader} · Katılımcı: {(op.participants ?? []).filter((p) => p.approved).length}
+                </span>
+                {op.launchAt && (
+                  <span className="timer">
+                    Koordinasyon: {formatSeconds(remainingFromEndsAt(op.launchAt, now))}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-hud-primary btn-sm"
+                  onClick={() => approveAllianceOperation(op.id, {
+                    troopQty: { infantry: 25 },
+                    syncDelayMinutes,
+                  })}
+                >
+                  [ ONAYLA · KATIL ]
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">Planlanmış operasyon yok.</p>
         )}
       </section>
 

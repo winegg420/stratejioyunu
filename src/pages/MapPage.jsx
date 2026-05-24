@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import MapErrorBoundary from '../components/MapErrorBoundary';
 import TurkeyMap from '../map/TurkeyMap';
 import { useLanguage } from '../context/LanguageContext';
@@ -8,8 +8,15 @@ import { useGameStore } from '../stores/gameStore';
 export default function MapPage() {
   const { t } = useLanguage();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const mapTargetPickRequest = useGameStore((s) => s.mapTargetPickRequest);
   const requestMapTargetPick = useGameStore((s) => s.requestMapTargetPick);
+  const requestMapExpeditionLaunch = useGameStore((s) => s.requestMapExpeditionLaunch);
+
+  useEffect(() => {
+    if (searchParams.get('mode') !== 'expedition') return;
+    requestMapExpeditionLaunch();
+  }, [searchParams, requestMapExpeditionLaunch]);
 
   useEffect(() => {
     const field = location.state?.mapPickField;

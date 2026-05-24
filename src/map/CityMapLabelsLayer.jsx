@@ -25,8 +25,8 @@ function createCityLabelIcon(city) {
         <span class="map-city-centroid-label__name">${escapeHtml(displayName)}</span>
       </div>
     `,
-    iconSize: [80, 18],
-    iconAnchor: [40, 9],
+    iconSize: [88, 22],
+    iconAnchor: [44, 11],
   });
 }
 

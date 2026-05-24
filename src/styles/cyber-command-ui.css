@@ -91,6 +91,15 @@ body::before {
   margin-left: 1px;
 }
 
+.page-subtitle--typewriter-done .page-subtitle__cursor {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.page-subtitle--typewriter:not(.page-subtitle--typewriter-done) .page-subtitle__cursor {
+  visibility: visible;
+}
+
 @keyframes cmd-cursor-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }

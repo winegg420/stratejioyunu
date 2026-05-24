@@ -6,14 +6,66 @@ import { getLastSyncUserId } from './supabaseSync';
 
 const SNAPSHOT_PREFIX = 'strateji_admin_snapshot_';
 
-export function getAdminSnapshotOwnerId() {
+/** Hydrate öncesi enableAdminMode — session.user.id ile set edilir. */
+let snapshotOwnerHint = null;
+
+export function setAdminSnapshotOwnerHint(userId) {
+  snapshotOwnerHint = userId ? String(userId) : null;
+}
+
+export function clearAdminSnapshotOwnerHint() {
+  snapshotOwnerHint = null;
+}
+
+export function resolveAdminSnapshotOwnerId(sessionUserId = null) {
+  const hinted = sessionUserId ?? snapshotOwnerHint;
+  if (hinted) return `sb:${hinted}`;
   const uid = getLastSyncUserId();
   if (uid) return `sb:${uid}`;
   return `demo:${getCurrentPlayerName().toLowerCase()}`;
 }
 
+/** @deprecated resolveAdminSnapshotOwnerId kullanın */
+export function getAdminSnapshotOwnerId() {
+  return resolveAdminSnapshotOwnerId();
+}
+
 function storageKey(ownerId) {
   return `${SNAPSHOT_PREFIX}${ownerId}`;
+}
+
+function demoOwnerId() {
+  return `demo:${getCurrentPlayerName().toLowerCase()}`;
+}
+
+function readSliceFromKey(ownerId) {
+  try {
+    const raw = localStorage.getItem(storageKey(ownerId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.slice ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** demo:* anahtarından sb:* anahtarına tek seferlik taşıma */
+function migrateDemoSnapshotTo(ownerId) {
+  if (!ownerId?.startsWith('sb:')) return;
+  const demoId = demoOwnerId();
+  if (demoId === ownerId) return;
+  if (readSliceFromKey(ownerId)) return;
+  const demoSlice = readSliceFromKey(demoId);
+  if (!demoSlice) return;
+  try {
+    localStorage.setItem(
+      storageKey(ownerId),
+      JSON.stringify({ savedAt: Date.now(), slice: demoSlice, migratedFrom: demoId }),
+    );
+    localStorage.removeItem(storageKey(demoId));
+  } catch (err) {
+    console.warn('[adminSnapshot] migrate failed', err);
+  }
 }
 
 export function extractAdminRestorableSlice(state) {
@@ -42,7 +94,7 @@ export function applyAdminRestorableSlice(state, slice) {
   };
 }
 
-export function hasAdminSnapshot(ownerId = getAdminSnapshotOwnerId()) {
+export function hasAdminSnapshot(ownerId = resolveAdminSnapshotOwnerId()) {
   try {
     return Boolean(localStorage.getItem(storageKey(ownerId)));
   } catch {
@@ -50,8 +102,9 @@ export function hasAdminSnapshot(ownerId = getAdminSnapshotOwnerId()) {
   }
 }
 
-export function saveAdminSnapshot(state, ownerId = getAdminSnapshotOwnerId()) {
+export function saveAdminSnapshot(state, ownerId = resolveAdminSnapshotOwnerId()) {
   if (!ownerId || !state) return false;
+  migrateDemoSnapshotTo(ownerId);
   if (hasAdminSnapshot(ownerId)) return true;
   try {
     const payload = {
@@ -66,20 +119,22 @@ export function saveAdminSnapshot(state, ownerId = getAdminSnapshotOwnerId()) {
   }
 }
 
-export function loadAdminSnapshot(ownerId = getAdminSnapshotOwnerId()) {
-  try {
-    const raw = localStorage.getItem(storageKey(ownerId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.slice ?? null;
-  } catch {
-    return null;
+export function loadAdminSnapshot(ownerId = resolveAdminSnapshotOwnerId()) {
+  migrateDemoSnapshotTo(ownerId);
+  const slice = readSliceFromKey(ownerId);
+  if (slice) return slice;
+  if (ownerId.startsWith('sb:')) {
+    return readSliceFromKey(demoOwnerId());
   }
+  return null;
 }
 
-export function clearAdminSnapshot(ownerId = getAdminSnapshotOwnerId()) {
+export function clearAdminSnapshot(ownerId = resolveAdminSnapshotOwnerId()) {
   try {
     localStorage.removeItem(storageKey(ownerId));
+    if (ownerId.startsWith('sb:')) {
+      localStorage.removeItem(storageKey(demoOwnerId()));
+    }
   } catch {
     /* ignore */
   }

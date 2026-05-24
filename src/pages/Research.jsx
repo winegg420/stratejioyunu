@@ -11,12 +11,13 @@ import {
 } from '../lib/kbrnResearch';
 import { ADVANCED_RESEARCH_CATEGORY } from '../data/researchCatalog';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import { canAffordCost } from '../utils/resourceCosts';
-import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { formatReadableDuration, remainingFromEndsAt } from '../lib/gameUtils';
 import ResearchBlueprintIcon from '../components/ResearchBlueprintIcon';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/research-blueprint-icons.css';
-import UraniumContextPanel from '../components/UraniumContextPanel';
+import '../styles/research-page-grid.css';
 
 function AdvancedLockWarn() {
   const { t } = useLanguage();
@@ -36,7 +37,7 @@ function AdvancedLockWarn() {
 }
 
 function ResearchCard({ item, advancedLocked }) {
-  const { t, researchName } = useLanguage();
+  const { t, researchName, lang } = useLanguage();
   const displayName = researchName(item.id, item.name);
   const now = useGameStore((s) => s.now);
   const city = useActiveCity();
@@ -52,10 +53,11 @@ function ResearchCard({ item, advancedLocked }) {
 
   const hasActive = researches.some((r) => r.active);
   const remaining = item.active ? remainingFromEndsAt(item.endsAt, now) : 0;
-  const canAfford = displayCost !== '—' && canAffordCost(displayCost, 1, resources);
+  const atMaxLevel = (item.level ?? 0) >= (item.max ?? 15);
+  const canAfford = !atMaxLevel && displayCost !== '—' && canAffordCost(displayCost, 1, resources);
   const branchBlocked = isAdvanced && advancedLocked;
-  const canStart = !branchBlocked && !item.active && !item.queued && canAfford && !hasActive;
-  const canQueue = !branchBlocked && !item.active && !item.queued && canAfford && hasActive;
+  const canStart = !atMaxLevel && !branchBlocked && !item.active && !item.queued && canAfford && !hasActive;
+  const canQueue = !atMaxLevel && !branchBlocked && !item.active && !item.queued && canAfford && hasActive;
 
   const openInfo = () => {
     if (city) openContentInfo(resolveResearchInfoPayload(item, city));
@@ -70,6 +72,7 @@ function ResearchCard({ item, advancedLocked }) {
         isAdvanced && 'content-card--research-advanced',
         item.active && 'upgrading',
         item.queued && 'is-queued',
+        atMaxLevel && 'content-card--research-max',
         branchBlocked && 'card--kbrn-locked',
       ].filter(Boolean).join(' ')}
     >
@@ -87,17 +90,29 @@ function ResearchCard({ item, advancedLocked }) {
         <div className="content-card__head">
           <h3>{displayName}</h3>
           <span className="badge">{t('common.levelShort')} {item.level} / {item.max}</span>
-          {item.active && <span className="timer-badge">{formatSeconds(remaining)}</span>}
+          {item.active && (
+            <span className="timer-badge">{formatReadableDuration(remaining, lang)}</span>
+          )}
           {item.queued && <span className="timer-badge">{t('pages.research.queued')}</span>}
         </div>
       </button>
-      {!branchBlocked && (
+      {!branchBlocked && !atMaxLevel && (
         <p className="content-card__meta">
           {t('pages.research.cost')} <strong>{displayCost}</strong>
         </p>
       )}
       <div className="card-actions">
-        {item.queued ? (
+        {atMaxLevel ? (
+          <button
+            type="button"
+            className="btn btn-primary btn--research-max"
+            onClick={() => {
+              useNotificationStore.getState().addToast(t('pages.research.maxLevelReached'), 'info');
+            }}
+          >
+            {t('pages.research.maxLevel')}
+          </button>
+        ) : item.queued ? (
           <button
             type="button"
             className="btn btn-primary"
@@ -115,7 +130,12 @@ function ResearchCard({ item, advancedLocked }) {
           type="button"
           className="btn btn-secondary"
           disabled={!canQueue || item.active || item.queued || branchBlocked}
-          onClick={() => enqueueResearch(item.id, { addToQueue: true })}
+          onClick={() => {
+            const ok = enqueueResearch(item.id, { addToQueue: true });
+            if (!ok) {
+              useNotificationStore.getState().addToast('Kuyruğa eklenemedi.', 'warn');
+            }
+          }}
         >
           {t('common.queueAdd')}
         </button>
@@ -162,7 +182,6 @@ export default function Research() {
   return (
     <div className="page page--console page--research">
       <LocalizedPageHeader pageKey="research" />
-      <UraniumContextPanel />
       <section className="research-section">
         <h2 className="panel-title research-section__title">{t('pages.research.standardSection')}</h2>
         <div className="card-grid">

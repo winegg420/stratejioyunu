@@ -1,5 +1,5 @@
 /** index.html — build meta + tek seferlik PWA temizliği (kullanıcı müdahalesi yok) */
-const SW_PURGE_VERSION = '13';
+const SW_PURGE_VERSION = '45';
 
 export function injectBuildMeta() {
   const buildId = new Date().toISOString();

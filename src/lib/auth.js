@@ -26,15 +26,44 @@ export function toAuthEmail(playerId) {
   return resolveAuthEmail(playerId);
 }
 
+/** Auth kullanıcısından görünen ad — username, display_name, e-posta öneki. */
 export function getDisplayName(user) {
   if (!user) return 'Oyuncu';
-  const metaName = user.user_metadata?.display_name || user.user_metadata?.player_name;
-  if (metaName?.trim()) return metaName.trim();
-  const local = user.email?.split('@')[0];
-  if (local && !local.endsWith('.stratejioyunu.local') && local !== 'oyuncu') {
-    return local;
+
+  const username = user.user_metadata?.username?.trim();
+  if (username && username !== 'Oyuncu') return username;
+
+  const metaName = user.user_metadata?.display_name?.trim()
+    || user.user_metadata?.player_name?.trim();
+  if (metaName && metaName !== 'Oyuncu') return metaName;
+
+  const email = user.email?.trim();
+  if (email?.includes('@')) {
+    const [local, domain] = email.split('@');
+    const emailLocal = local?.trim();
+    if (emailLocal && emailLocal !== 'oyuncu') {
+      if (domain === AUTH_EMAIL_DOMAIN) {
+        return emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
+      }
+      const isSynthetic = emailLocal.endsWith('.stratejioyunu.local');
+      if (!isSynthetic) {
+        return emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
+      }
+    }
   }
+
   return 'Oyuncu';
+}
+
+/** Oturum kullanıcısını taze meta ile getir (profil başlığı vb.). */
+export async function getAuthUser() {
+  if (!isSupabaseConfigured || !supabase) return null;
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.warn('[auth] getUser', error);
+    return null;
+  }
+  return data.user ?? null;
 }
 
 function mapAuthError(error) {
@@ -80,6 +109,7 @@ export async function signUp(playerId, password, displayName) {
     password: pwd,
     options: {
       data: {
+        username: rawId.split('@')[0] || label,
         display_name: label,
         player_name: label,
       },

@@ -17,10 +17,10 @@ function useTelemetry() {
   return { latency, coreTemp };
 }
 
-function CornerPanel({ side }) {
+function CornerPanel({ side, className = '' }) {
   const { latency, coreTemp } = useTelemetry();
   return (
-    <div className={`cyber-shell-chrome cyber-shell-chrome--${side}`} aria-hidden="true">
+    <div className={['cyber-shell-chrome', `cyber-shell-chrome--${side}`, className].filter(Boolean).join(' ')} aria-hidden="true">
       <div className="cyber-shell-chrome__line" />
       <div className="cyber-shell-chrome__stat font-hud-data">
         <span>SYS_STATUS</span>
@@ -43,12 +43,12 @@ function CornerPanel({ side }) {
   );
 }
 
-/** Geniş ekranlarda yan boşluklara dekoratif terminal verisi */
+/** Geniş ekranlarda yan boşluklara dekoratif terminal verisi — tam ekran haritada gizli */
 export default function CyberShellChrome() {
   return (
     <>
-      <CornerPanel side="left" />
-      <CornerPanel side="right" />
+      <CornerPanel side="left" className="cyber-shell-chrome--map-deco" />
+      <CornerPanel side="right" className="cyber-shell-chrome--map-deco" />
     </>
   );
 }

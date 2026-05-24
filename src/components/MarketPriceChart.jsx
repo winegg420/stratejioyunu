@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../stores/gameStore';
-import { getChartSeries } from '../lib/marketPriceHistory';
+import { getChartSeries, getChartTimeAxisTicks } from '../lib/marketPriceHistory';
 
 export default function MarketPriceChart({ resourceId = 'hammadde', className = '' }) {
   const history = useGameStore((s) => s.marketPriceHistory);
@@ -8,6 +8,11 @@ export default function MarketPriceChart({ resourceId = 'hammadde', className = 
 
   const { points, min, max } = useMemo(
     () => getChartSeries(history, resourceId),
+    [history, resourceId],
+  );
+
+  const timeTicks = useMemo(
+    () => getChartTimeAxisTicks(history, resourceId),
     [history, resourceId],
   );
 
@@ -49,6 +54,19 @@ export default function MarketPriceChart({ resourceId = 'hammadde', className = 
           </>
         )}
       </svg>
+      {timeTicks.length > 0 && (
+        <div className="market-price-chart__time-axis" aria-hidden="true">
+          {timeTicks.map((tick) => (
+            <span
+              key={tick.label}
+              className="market-price-chart__time-tick font-hud-data"
+              style={{ left: `${tick.x}%` }}
+            >
+              {tick.label}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="market-price-chart__axis">
         <span>{min.toLocaleString('tr-TR')}</span>
         <span>24 saat</span>

@@ -1,8 +1,8 @@
 /** Araştırma kartları — neon mavi/yeşil askeri blueprint SVG ikonları */
 
-const STROKE = '#4a7c59';
+const STROKE = '#5a9a6a';
 const ACCENT = '#c9a84c';
-const DIM = 'rgba(0, 240, 255, 0.35)';
+const DIM = 'rgba(74, 124, 89, 0.45)';
 
 function BlueprintSvg({ children, viewBox = '0 0 64 64' }) {
   return (
@@ -13,7 +13,16 @@ function BlueprintSvg({ children, viewBox = '0 0 64 64' }) {
       aria-hidden="true"
       focusable="false"
     >
-      <rect x="4" y="4" width="56" height="56" fill="none" stroke={DIM} strokeWidth="0.75" strokeDasharray="3 2" />
+      <rect x="4" y="4" width="56" height="56" fill="rgba(17, 26, 17, 0.55)" stroke={DIM} strokeWidth="1" strokeDasharray="4 3" />
+      <line x1="4" y1="4" x2="12" y2="4" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="4" y1="4" x2="4" y2="12" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="60" y1="4" x2="52" y2="4" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="60" y1="4" x2="60" y2="12" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="4" y1="60" x2="12" y2="60" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="4" y1="60" x2="4" y2="52" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="60" y1="60" x2="52" y2="60" stroke={ACCENT} strokeWidth="1.2" />
+      <line x1="60" y1="60" x2="60" y2="52" stroke={ACCENT} strokeWidth="1.2" />
+      <text x="8" y="11" fill={DIM} fontSize="4" fontFamily="monospace">BP</text>
       {children}
     </svg>
   );

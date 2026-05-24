@@ -211,6 +211,82 @@
   padding: 0.75rem 0;
 }
 
+.shipyard-inland-guide {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(74, 124, 89, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.shipyard-inland-guide__text {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(212, 212, 170, 0.88);
+}
+
+.shipyard-inland-guide__arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  color: #4ade80;
+  animation: shipyard-guide-bounce 1.6s ease-in-out infinite;
+}
+
+.shipyard-inland-guide__arrow-line {
+  display: block;
+  width: 2px;
+  height: 2.25rem;
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.85) 100%);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
+}
+
+.shipyard-inland-guide__arrow-head {
+  font-size: 1rem;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.55);
+}
+
+.shipyard-inland-guide__target-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(74, 124, 89, 0.45);
+  background: rgba(17, 26, 17, 0.9);
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a7f3d0;
+}
+
+.shipyard-inland-guide__target-label::after {
+  content: '▼';
+  font-size: 0.55rem;
+  opacity: 0.85;
+}
+
+@keyframes shipyard-guide-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+#resource-bar-city-switch.shipyard-city-highlight {
+  outline: 1px solid rgba(74, 222, 128, 0.55);
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.25);
+}
+
 @media (max-width: 900px) {
   .military-empty--panel {
     padding: 1.35rem 0.85rem;

@@ -1,5 +1,6 @@
 ﻿import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useActionLock } from '../hooks/useActionLock';
 import { formatHappinessLabel, pruneCyberEffects } from '../lib/happinessSystem';
@@ -10,8 +11,9 @@ import {
   calcCyberVirusTravelSeconds,
   resolveDefenderCyberOpsLevel,
 } from '../utils/spyEngine';
+import { getRegionForCoords } from '../utils/cbrnEngine';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
-import { findSpyReportForCity } from '../lib/spyIntel';
+import { findSpyReportForCity, getMapResourceRowsFromIntel } from '../lib/spyIntel';
 import { useLanguage } from '../context/LanguageContext';
 import {
   calcAttackerIntelPower,
@@ -121,14 +123,15 @@ function useLiveMapCity(mapCity) {
   }, [mapCity, mapCities, playerCities, cities, playerName]);
 }
 
-export default function CityDetailPanel({ city, onClose }) {
+export default function CityDetailPanel({ city, onClose, initialActionMode = null }) {
   if (!city) return null;
-  return <MapCommandModal city={city} onClose={onClose} />;
+  return <MapCommandModal city={city} onClose={onClose} initialActionMode={initialActionMode} />;
 }
 
-function MapCommandModal({ city, onClose }) {
+function MapCommandModal({ city, onClose, initialActionMode = null }) {
+  const navigate = useNavigate();
   const { t } = useLanguage();
-  const [actionMode, setActionMode] = useState(null);
+  const [actionMode, setActionMode] = useState(initialActionMode);
   const [troopQty, setTroopQty] = useState({});
   const [spyQty, setSpyQty] = useState(1);
   const [cyberAgentQty, setCyberAgentQty] = useState(1);
@@ -157,6 +160,7 @@ function MapCommandModal({ city, onClose }) {
   const awayMap = useTroopsAwayMap(activeCityId);
   const startExpedition = useGameStore((s) => s.startExpedition);
   const startCyberVirusExpedition = useGameStore((s) => s.startCyberVirusExpedition);
+  const setIntelTargetFromMap = useGameStore((s) => s.setIntelTargetFromMap);
   const getCyberCapabilities = useGameStore((s) => s.getCyberCapabilities);
   const mapCities = useGameStore((s) => s.mapCities);
   const playerCities = useGameStore((s) => s.playerCities);
@@ -185,6 +189,7 @@ function MapCommandModal({ city, onClose }) {
   };
 
   const mapCity = display.live;
+  const mapRegion = getRegionForCoords(mapCity.lat ?? 0, mapCity.lng ?? 0);
   const targetIdeology = mapCity.ownerIdeology ?? null;
   const naturalAlly = playerIdeology && targetIdeology
     && isNaturalAlly(playerIdeology, targetIdeology)
@@ -226,7 +231,7 @@ function MapCommandModal({ city, onClose }) {
   }, [actionMode, devWarBypass, idleTroops, troopQty]);
 
   useEffect(() => {
-    setActionMode(null);
+    setActionMode(initialActionMode ?? null);
     setTroopQty({});
     setSpyQty(1);
     const onKey = (e) => {
@@ -234,7 +239,7 @@ function MapCommandModal({ city, onClose }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [city?.name, onClose]);
+  }, [city?.name, initialActionMode, onClose]);
 
   useEffect(() => {
     const others = playerCities.filter((p) => p.id !== activeCityId);
@@ -242,14 +247,14 @@ function MapCommandModal({ city, onClose }) {
   }, [city?.name, activeCityId, playerCities]);
 
   useEffect(() => {
-    if (conquestEval.raidOnly) {
-      setAttackIntent('raid');
-    } else if (conquestEval.ok) {
-      setAttackIntent('conquest');
-    } else {
-      setAttackIntent('raid');
-    }
-  }, [mapCity.name, conquestEval.ok, conquestEval.raidOnly]);
+    if (actionMode !== 'troops') return;
+    setAttackIntent('raid');
+  }, [mapCity.name, actionMode]);
+
+  const selectAttackIntent = (intent) => {
+    if (intent === 'conquest' && (!conquestEval.ok || conquestEval.raidOnly)) return;
+    setAttackIntent(intent);
+  };
 
   const originCoords = useMemo(
     () => resolveCityCoords(activeCityName, playerCities, mapCities),
@@ -348,6 +353,12 @@ function MapCommandModal({ city, onClose }) {
   const showCargoHub = isAnyOwnCity && mapCity.name === activeCityName && otherColonies.length > 0;
   const cargoDestCity = playerCities.find((p) => p.id === cargoDestId);
 
+  const handleCyberRedirect = () => {
+    setIntelTargetFromMap('cyber', mapCity.name);
+    onClose();
+    navigate('/istihbarat');
+  };
+
   const confirmAttack = () => {
     if (!canStartAttack || actionLocked) return;
     runLocked(() => {
@@ -374,13 +385,18 @@ function MapCommandModal({ city, onClose }) {
     [reports, mapCity.name],
   );
 
+  const intelResourceRows = useMemo(
+    () => getMapResourceRowsFromIntel(spyReport),
+    [spyReport],
+  );
+
   const hasResourceIntel = Boolean(
     isAnyOwnCity
     || display.resources
-    || spyReport,
+    || intelResourceRows?.length,
   );
 
-  const resourceList = display.resources ?? [
+  const resourceList = display.resources ?? intelResourceRows ?? [
     { id: 'food', label: 'Nüfus', icon: '👥' },
     { id: 'fuel', label: 'Petrol', icon: '🛢️' },
     { id: 'hammadde', label: 'Hammadde', icon: '🧱' },
@@ -447,9 +463,9 @@ function MapCommandModal({ city, onClose }) {
             </strong>
           </div>
           <div className="map-command-modal__stat">
-            <span className="map-command-modal__stat-label">Koordinat</span>
+            <span className="map-command-modal__stat-label">Bölge</span>
             <strong className="font-hud-data">
-              {mapCity.lat?.toFixed(2)}, {mapCity.lng?.toFixed(2)}
+              {mapRegion.name}
             </strong>
           </div>
           {display.cyberActive && (
@@ -582,8 +598,8 @@ function MapCommandModal({ city, onClose }) {
             <button
               type="button"
               className="map-cmd-btn map-cmd-btn--cyber"
-              disabled={outOfRange || cyberCapabilities.length === 0}
-              onClick={() => setActionMode('cyber')}
+              disabled={outOfRange}
+              onClick={handleCyberRedirect}
             >
               [ SİBER OPERASYON BAŞLAT ]
             </button>
@@ -597,11 +613,16 @@ function MapCommandModal({ city, onClose }) {
               <div className="expedition-intent-grid" role="radiogroup" aria-label="Sefer tipi">
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={attackIntent === 'raid'}
                   className={[
                     'expedition-intent-btn',
                     attackIntent === 'raid' && 'expedition-intent-btn--active',
                   ].filter(Boolean).join(' ')}
-                  onClick={() => setAttackIntent('raid')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectAttackIntent('raid');
+                  }}
                 >
                   <span className="expedition-intent-btn__label">YAĞMA (RAID)</span>
                   <span className="expedition-intent-btn__risk">
@@ -610,12 +631,18 @@ function MapCommandModal({ city, onClose }) {
                 </button>
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={attackIntent === 'conquest'}
                   className={[
                     'expedition-intent-btn',
                     attackIntent === 'conquest' && 'expedition-intent-btn--active',
                   ].filter(Boolean).join(' ')}
                   disabled={!conquestEval.ok || conquestEval.raidOnly}
-                  onClick={() => setAttackIntent('conquest')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectAttackIntent('conquest');
+                  }}
                 >
                   <span className="expedition-intent-btn__label">İŞGAL (CONQUEST)</span>
                   <span className="expedition-intent-btn__risk">

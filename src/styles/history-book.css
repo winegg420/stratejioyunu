@@ -108,7 +108,21 @@
   text-align: center;
   padding: 2rem 1rem;
   color: var(--scroll-muted);
+}
+
+.history-book-empty__lead {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--scroll-ink);
+  font-style: normal;
+}
+
+.history-book-empty__hint {
+  margin: 0;
+  font-size: 0.8rem;
   font-style: italic;
+  opacity: 0.85;
 }
 
 .history-book-entry {

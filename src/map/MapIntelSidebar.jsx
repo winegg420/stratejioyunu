@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchLoyaltyLeaderboard } from '../lib/leaderboardApi';
-import { buildMapIntelFeed } from '../lib/mapIntelFeed';
+import { buildMapIntelFeed, buildSpyProbeFeedItems } from '../lib/mapIntelFeed';
+import { fetchSpyProbeReportsFromServer, getLastSyncUserId } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { useLanguage } from '../context/LanguageContext';
-import IntelListRow from '../components/IntelListRow';
+import MapIntelFeedItem from './MapIntelFeedItem';
 
 const INTEL_SIDEBAR_KEY = 'map-intel-sidebar-expanded';
 
@@ -21,32 +22,86 @@ export default function MapIntelSidebar() {
   const newsLog = useGameStore((s) => s.newsLog);
   const expeditions = useGameStore((s) => s.expeditions);
   const reports = useGameStore((s) => s.reports);
+  const gameHydrating = useGameStore((s) => s.gameHydrating);
+  const refreshReportsFromServer = useGameStore((s) => s.refreshReportsFromServer);
+  const now = useGameStore((s) => s.now);
+  const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
   const playerName = getCurrentPlayerName();
 
   const [expanded, setExpanded] = useState(readIntelSidebarExpanded);
   const [rankRows, setRankRows] = useState([]);
-  const [rankLoading, setRankLoading] = useState(true);
+  const [rankSource, setRankSource] = useState('loading');
+  const [reportsSyncing, setReportsSyncing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(INTEL_SIDEBAR_KEY, expanded ? '1' : '0');
   }, [expanded]);
 
   useEffect(() => {
+    if (!expanded || gameHydrating) return undefined;
     let cancelled = false;
-    (async () => {
-      setRankLoading(true);
-      const result = await fetchLoyaltyLeaderboard();
-      if (!cancelled) {
-        setRankRows((result.rows ?? []).slice(0, 5));
-        setRankLoading(false);
-      }
-    })();
+    setReportsSyncing(true);
+
+    const syncIntel = async () => {
+      const profileId = getLastSyncUserId();
+      await refreshReportsFromServer().catch(() => {});
+      if (cancelled || !profileId) return;
+      const probes = await fetchSpyProbeReportsFromServer(profileId).catch(() => []);
+      if (!cancelled) setSpyProbeReports(probes);
+    };
+
+    syncIntel().finally(() => {
+      if (!cancelled) setReportsSyncing(false);
+    });
     return () => { cancelled = true; };
+  }, [expanded, gameHydrating, refreshReportsFromServer]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId;
+
+    const loadRanks = async () => {
+      setRankSource((prev) => (prev === 'live' ? 'live' : 'loading'));
+      const result = await fetchLoyaltyLeaderboard();
+      if (cancelled) return;
+      setRankRows((result.rows ?? []).slice(0, 5));
+      setRankSource(result.source ?? 'empty');
+    };
+
+    loadRanks();
+    intervalId = window.setInterval(loadRanks, 45_000);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadRanks();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
+  const feedLabels = useMemo(
+    () => ({
+      etaRemaining: t('map.intelSidebar.etaRemaining'),
+      etaArriving: t('map.intelSidebar.etaArriving'),
+    }),
+    [t],
+  );
+
+  const spyProbeItems = useMemo(() => {
+    const merged = [...(spyProbeReports ?? [])];
+    for (const r of reports ?? []) {
+      if (!merged.some((m) => m.id === r.id)) merged.push(r);
+    }
+    return buildSpyProbeFeedItems(merged, 10);
+  }, [reports, spyProbeReports]);
+
   const feed = useMemo(
-    () => buildMapIntelFeed({ newsLog, expeditions, reports }),
-    [newsLog, expeditions, reports],
+    () => buildMapIntelFeed({ newsLog, expeditions, reports, labels: feedLabels, now }),
+    [newsLog, expeditions, reports, feedLabels, now, mapRouteSyncRev],
   );
 
   const toggle = useCallback(() => setExpanded((v) => !v), []);
@@ -55,13 +110,14 @@ export default function MapIntelSidebar() {
     return (
       <button
         type="button"
-        className="map-intel-sidebar__tab"
+        className="map-intel-sidebar__reopen"
         onClick={toggle}
         aria-expanded={false}
+        aria-label={t('map.intelSidebar.open')}
         title={t('map.intelSidebar.open')}
       >
-        <span className="map-intel-sidebar__tab-icon" aria-hidden="true">◆</span>
-        <span className="map-intel-sidebar__tab-label">{t('map.intelSidebar.tab')}</span>
+        <span className="map-intel-sidebar__reopen-icon" aria-hidden="true">📡</span>
+        <span className="map-intel-sidebar__reopen-label">İSTİHBARAT</span>
       </button>
     );
   }
@@ -83,18 +139,33 @@ export default function MapIntelSidebar() {
       </header>
 
       <section className="map-intel-sidebar__section">
+        <h3 className="map-intel-sidebar__title">Casusluk Sondası</h3>
+        {reportsSyncing && spyProbeItems.length === 0 ? (
+          <p className="map-intel-rank__empty">Raporlar senkronize ediliyor…</p>
+        ) : spyProbeItems.length === 0 ? (
+          <p className="map-intel-rank__empty">Tamamlanan casusluk sondası yok.</p>
+        ) : (
+          <ul className="map-intel-feed map-intel-feed--spy">
+            {spyProbeItems.map((item) => (
+              <li key={item.id} className="map-intel-feed__spy-row">
+                <MapIntelFeedItem item={item} />
+                {item.detail && (
+                  <p className="map-intel-feed__spy-detail">{item.detail}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="map-intel-sidebar__section">
         <h3 className="map-intel-sidebar__title">{t('map.intelSidebar.liveFeed')}</h3>
         {feed.length === 0 ? (
           <p className="map-intel-rank__empty">{t('map.intelSidebar.feedEmpty')}</p>
         ) : (
           <ul className="map-intel-feed">
             {feed.map((item) => (
-              <IntelListRow key={item.id} seedKey={item.id} className="map-intel-feed__item">
-                <span className={['map-intel-feed__tag', item.tagClass].filter(Boolean).join(' ')}>
-                  {item.tag}
-                </span>
-                <span className="map-intel-feed__text">{item.text}</span>
-              </IntelListRow>
+              <MapIntelFeedItem key={item.id} item={item} />
             ))}
           </ul>
         )}
@@ -102,7 +173,7 @@ export default function MapIntelSidebar() {
 
       <section className="map-intel-sidebar__section">
         <h3 className="map-intel-sidebar__title">{t('map.intelSidebar.rankings')}</h3>
-        {rankLoading ? (
+        {rankSource === 'loading' ? (
           <p className="map-intel-rank__empty">{t('map.intelSidebar.rankLoading')}</p>
         ) : rankRows.length === 0 ? (
           <p className="map-intel-rank__empty">{t('map.intelSidebar.rankEmpty')}</p>

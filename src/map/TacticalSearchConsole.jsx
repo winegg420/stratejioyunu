@@ -21,6 +21,7 @@ export default function TacticalSearchConsole({
   cityPick,
   setCityPick,
   onCitySelect,
+  onFlyToCity,
   search,
   setSearch,
   searchCoord,
@@ -30,6 +31,7 @@ export default function TacticalSearchConsole({
   onResetFilter,
   hasActiveFilter = false,
   liveStats = null,
+  forceExpanded = false,
 }) {
   const [expanded, setExpanded] = useState(readExpanded);
   const [cityListFilter, setCityListFilter] = useState('');
@@ -40,8 +42,21 @@ export default function TacticalSearchConsole({
     localStorage.setItem(EXPANDED_KEY, expanded ? '1' : '0');
   }, [expanded]);
 
-  const open = useCallback(() => setExpanded(true), []);
-  const close = useCallback(() => setExpanded(false), []);
+  useEffect(() => {
+    if (forceExpanded) setExpanded(true);
+  }, [forceExpanded]);
+
+  const open = useCallback(() => {
+    setExpanded(true);
+    window.dispatchEvent(new CustomEvent('map-layout-changed'));
+  }, []);
+
+  const close = useCallback((e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    setExpanded(false);
+    window.dispatchEvent(new CustomEvent('map-layout-changed'));
+  }, []);
 
   const formatCityOption = (c) => {
     const owner = getCityOwnerLabel(c, playerName);
@@ -56,9 +71,7 @@ export default function TacticalSearchConsole({
     if (!q) return cityOptions;
     return cityOptions.filter((c) => {
       const name = getMapCityDisplayName(c.name).toLowerCase();
-      const owner = (getCityOwnerLabel(c, playerName) || '').toLowerCase();
-      const province = String(c.provinceName || '').toLowerCase();
-      return name.includes(q) || owner.includes(q) || province.includes(q);
+      return name.includes(q);
     });
   }, [cityOptions, cityListFilter, playerName]);
 
@@ -66,6 +79,30 @@ export default function TacticalSearchConsole({
     setCityPick(city.name);
     onCitySelect(city);
   }, [setCityPick, onCitySelect]);
+
+  const flyToCityFromSearch = useCallback(() => {
+    const q = cityListFilter.trim().toLowerCase();
+    if (!q) return;
+    const exact = cityOptions.find(
+      (c) => getMapCityDisplayName(c.name).toLowerCase() === q,
+    );
+    const partial = filteredCityList[0]
+      ?? cityOptions.find((c) => getMapCityDisplayName(c.name).toLowerCase().includes(q));
+    const target = exact ?? partial;
+    if (!target) return;
+    setCityPick(target.name);
+    if (onFlyToCity) {
+      onFlyToCity(target);
+    } else {
+      onCitySelect(target);
+    }
+  }, [cityListFilter, cityOptions, filteredCityList, onFlyToCity, onCitySelect, setCityPick]);
+
+  const handleCitySearchKeyDown = useCallback((e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    flyToCityFromSearch();
+  }, [flyToCityFromSearch]);
 
   const handleShowAllCities = useCallback(() => {
     setCityPick('');
@@ -110,6 +147,7 @@ export default function TacticalSearchConsole({
           type="button"
           className="tactical-console__close"
           onClick={close}
+          onPointerDown={(e) => e.stopPropagation()}
           aria-label="Arama panelini kapat"
           title="Kapat"
         >
@@ -122,6 +160,19 @@ export default function TacticalSearchConsole({
           <label className="map-city-search-label tactical-terminal-label" htmlFor="map-city-list-filter">
             Şehirler
           </label>
+          <div className="tactical-terminal-field map-city-search__filter-wrap">
+            <input
+              id="map-city-list-filter"
+              type="search"
+              className="map-city-list__filter tactical-terminal-input"
+              placeholder="Şehir adı ara… (Enter)"
+              value={cityListFilter}
+              onChange={(e) => setCityListFilter(e.target.value)}
+              onKeyDown={handleCitySearchKeyDown}
+              aria-label="Şehir adına göre filtrele"
+              autoComplete="off"
+            />
+          </div>
           <button
             type="button"
             id="map-city-list-all"
@@ -131,17 +182,6 @@ export default function TacticalSearchConsole({
           >
             Tüm şehirler ({cityOptions.length})
           </button>
-          <div className="tactical-terminal-field">
-            <input
-              id="map-city-list-filter"
-              type="text"
-              className="map-city-list__filter tactical-terminal-input"
-              placeholder="Listede ara..."
-              value={cityListFilter}
-              onChange={(e) => setCityListFilter(e.target.value)}
-              aria-label="Şehir listesinde ara"
-            />
-          </div>
           <ul className="map-city-list" role="listbox" aria-labelledby="map-city-list-all">
             {filteredCityList.length === 0 ? (
               <li className="map-city-list__empty" role="presentation">

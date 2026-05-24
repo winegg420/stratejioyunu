@@ -10,7 +10,7 @@ import CyberDataInput from './CyberDataInput';
 import ProcessingActionButton from './ProcessingActionButton';
 import UnitMilitaryIcon from './UnitMilitaryIcon';
 
-export default function UnitCard({ unit, awayMap }) {
+export default function UnitCard({ unit, awayMap, iconDomain }) {
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const activeCityId = useGameStore((s) => s.activeCityId);
@@ -74,7 +74,13 @@ export default function UnitCard({ unit, awayMap }) {
           aria-label={`${unit.name} ansiklopedi`}
         >
           <div className="card-visual unit-card-visual">
-            <UnitMilitaryIcon unitId={unit.id} className="unit-military-icon--card" title={unit.name} />
+            <UnitMilitaryIcon
+              unitId={unit.id}
+              domain={iconDomain}
+              className="unit-military-icon--card"
+              title={unit.name}
+              size={52}
+            />
           </div>
           <div className="content-card__head unit-card-header">
             <h3>{unit.name}</h3>

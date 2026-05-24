@@ -78,6 +78,12 @@
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
 }
 
+.expedition-intent-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .expedition-intent-btn--active {
   border-color: var(--neon-green, #4a7c59);
   box-shadow: 0 0 12px rgba(74, 124, 89, 0.3);

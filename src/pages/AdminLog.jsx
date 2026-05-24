@@ -6,6 +6,11 @@ import { ADMIN_LOG_TAG, adminLogToNewsItem } from '../lib/adminOverrideEngine';
 import { fetchAdminLogs } from '../lib/adminBroadcastSync';
 import { isGameAdmin } from '../lib/adminAccess';
 import { isDevAdminLocalEnabled } from '../lib/devTestMode';
+import {
+  isAdminPanelUnlocked,
+  matchesAdminUnlockPair,
+  setAdminPanelUnlocked,
+} from '../lib/adminUnlock';
 import { useAuth } from '../context/AuthContext';
 import { useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
@@ -29,6 +34,13 @@ export default function AdminLog() {
   const [logs, setLogs] = useState(storeLogs);
   const [loading, setLoading] = useState(true);
   const [toggleBusy, setToggleBusy] = useState(false);
+  const [unlockUser, setUnlockUser] = useState('test@');
+  const [unlockCode, setUnlockCode] = useState('aktif@');
+  const [panelUnlocked, setPanelUnlocked] = useState(
+    () => isAdminPanelUnlocked() || isDevAdminLocalEnabled(),
+  );
+
+  const canUseAdminToggle = isFounder || panelUnlocked || adminActive;
 
   useEffect(() => {
     let cancelled = false;
@@ -44,25 +56,42 @@ export default function AdminLog() {
     return () => { cancelled = true; };
   }, [refreshServerBroadcast]);
 
+  const sessionUserId = session?.user?.id ?? null;
+
   const handleEnableAdmin = useCallback(async () => {
+    if (!canUseAdminToggle) {
+      addToast('Önce test@ / aktif@ ile paneli açın.', 'warn');
+      return;
+    }
     setToggleBusy(true);
     try {
-      await enableAdminMode();
-      addToast('Admin test modu aktif — bina, kaynak ve birlikler yükseltildi.', 'success');
+      await enableAdminMode(sessionUserId);
+      addToast('Admin test modu etkin — sayfa yenilenmedi.', 'success');
     } finally {
       setToggleBusy(false);
     }
-  }, [enableAdminMode, addToast]);
+  }, [enableAdminMode, addToast, canUseAdminToggle, sessionUserId]);
 
   const handleDisableAdmin = useCallback(async () => {
     setToggleBusy(true);
     try {
-      await disableAdminMode();
-      addToast('Admin test modu kapatıldı — kayıt geri yüklendi.', 'info');
+      await disableAdminMode(sessionUserId);
+      addToast('Admin test modu kapatıldı — kaydınız geri yüklendi.', 'success');
     } finally {
       setToggleBusy(false);
     }
-  }, [disableAdminMode, addToast]);
+  }, [disableAdminMode, sessionUserId, addToast]);
+
+  const handleUnlockPanel = useCallback((e) => {
+    e.preventDefault();
+    if (matchesAdminUnlockPair(unlockUser, unlockCode)) {
+      setAdminPanelUnlocked(true);
+      setPanelUnlocked(true);
+      addToast('Admin paneli açıldı — modu başlatmak için butona basın.', 'success');
+    } else {
+      addToast('Geçersiz kod. Kullanıcı: test@ · Kod: aktif@', 'error');
+    }
+  }, [unlockUser, unlockCode, addToast]);
 
   const newsItems = (logs.length ? logs : storeLogs).map(adminLogToNewsItem);
 
@@ -85,8 +114,8 @@ export default function AdminLog() {
               </span>
               <p className="hint admin-log-dev-hint">
                 {adminActive
-                  ? 'Hesabınız test güçleriyle yükseltildi. Kapatınca admin moduna girmeden önceki kayıt geri yüklenir.'
-                  : 'Admin moduna geçince anında Sv.15 bina, dolu kaynak ve 100 birlik; kapatınca eski halinize dönersiniz.'}
+                  ? 'Hesabınız test güçleriyle yükseltildi. Durdurunca normal kaydınız anında geri yüklenir.'
+                  : 'Admin modu: Sv.15 bina, dolu kaynak, 100 birlik — sayfa yenilenmeden uygulanır.'}
               </p>
               <div className="admin-log-dev-actions__row">
                 {adminActive ? (
@@ -116,14 +145,69 @@ export default function AdminLog() {
               </div>
             </>
           ) : (
-            <button
-              type="button"
-              className="btn btn-hud-primary admin-log-dev-unlock"
-              onClick={handleEnableAdmin}
-              disabled={toggleBusy}
-            >
-              {toggleBusy ? 'Aktifleştiriliyor…' : 'Admin Moduna Geç (test)'}
-            </button>
+            <>
+              {!canUseAdminToggle && !adminActive && (
+                <form className="admin-log-unlock" onSubmit={handleUnlockPanel}>
+                  <p className="hint admin-log-dev-hint">
+                    Admin test modu yalnızca bu panelden açılır. Kod: <strong>test@</strong> / <strong>aktif@</strong>
+                  </p>
+                  <div className="admin-log-unlock__row">
+                    <input
+                      type="text"
+                      className="admin-log-unlock__input"
+                      value={unlockUser}
+                      onChange={(e) => setUnlockUser(e.target.value)}
+                      placeholder="test@"
+                      autoComplete="off"
+                    />
+                    <input
+                      type="text"
+                      className="admin-log-unlock__input"
+                      value={unlockCode}
+                      onChange={(e) => setUnlockCode(e.target.value)}
+                      placeholder="aktif@"
+                      autoComplete="off"
+                    />
+                    <button type="submit" className="btn btn-hud-secondary btn-sm">
+                      Paneli aç
+                    </button>
+                  </div>
+                </form>
+              )}
+              {canUseAdminToggle && (
+                <>
+                  <span className="admin-log-dev-badge">
+                    {adminActive ? 'Admin test modu aktif' : 'Panel açık — mod kapalı'}
+                  </span>
+                  <p className="hint admin-log-dev-hint">
+                    {adminActive
+                      ? 'Durdurunca normal oyuncu kaydınız anında geri yüklenir.'
+                      : 'Admin moduna geçince test güçleri anında yüklenir (sayfa yenilenmez).'}
+                  </p>
+                  <div className="admin-log-dev-actions__row">
+                    {adminActive ? (
+                      <button
+                        type="button"
+                        className="btn btn-hud-secondary btn-sm"
+                        onClick={handleDisableAdmin}
+                        disabled={toggleBusy}
+                      >
+                        {toggleBusy ? 'Geri yükleniyor…' : 'Admin modunu durdur'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-hud-primary admin-log-dev-unlock"
+                        onClick={handleEnableAdmin}
+                        disabled={toggleBusy}
+                      >
+                        {toggleBusy ? 'Aktifleştiriliyor…' : 'Admin moduna geç'}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
       </section>

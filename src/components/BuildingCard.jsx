@@ -1,6 +1,6 @@
-﻿import { useEffect, useState } from 'react';
-import { useActionLock } from '../hooks/useActionLock';
-import { parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+﻿import { useActionLock } from '../hooks/useActionLock';
+import { formatReadableDuration, parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { applyConstructionDurationSeconds } from '../lib/aiCenterEngine';
 import { canAffordCost } from '../utils/resourceCosts';
 import BuildingRequirementTooltip from './BuildingRequirementTooltip';
 import { STORE_EMPTY_ARRAY, useGameStore, useConstructionQueueFull } from '../stores/gameStore';
@@ -11,12 +11,6 @@ import {
   areTutorialPrerequisitesMet,
   getUnmetTutorialPrerequisites,
 } from '../lib/milAiTutorialQuests';
-import {
-  BUILDING_ASSET_VERSION,
-  BUILDING_IMAGE_PUBLIC_FALLBACK,
-  BUILDING_PLACEHOLDER_IMAGE,
-  getBuildingVisual,
-} from '../data/buildingVisualCatalog';
 import { resolveNextConstructionSpec } from '../data/buildingCatalog';
 import {
   AI_CENTER_BUILDING_ID,
@@ -31,7 +25,7 @@ import { calcConstructionSpeedupDiamondCost } from '../lib/premiumDiamonds';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function BuildingCard({ building, progressionLock = null, coastalLocked = false }) {
-  const { t, buildingLabel } = useLanguage();
+  const { t, buildingLabel, lang } = useLanguage();
   const buildingName = buildingLabel(building.id, building.name);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
@@ -63,6 +57,14 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const unmetPrereqs = getUnmetTutorialPrerequisites(city, building.id, tutorialState);
   const nextSpec = resolveNextConstructionSpec(building);
   const displayCost = nextSpec?.cost ?? null;
+  const displayTimeSec = nextSpec?.time
+    ? applyConstructionDurationSeconds(parseTimeToSeconds(nextSpec.time) || 120, city)
+    : 0;
+  const displayTimeLabel = displayTimeSec > 0
+    ? formatReadableDuration(displayTimeSec, lang)
+    : null;
+  const atMaxLevel = building.maxLevel != null
+    && (building.level ?? 0) >= building.maxLevel;
   const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
   const isUnbuilt = building.level < 1;
   const isBlocked = !prereqsMet;
@@ -108,29 +110,6 @@ export default function BuildingCard({ building, progressionLock = null, coastal
     runLocked(() => enqueueConstruction(building.id, { addToQueue: true }));
   };
   const buildBusy = actionLocked || upgrading;
-  const visual = getBuildingVisual(building.id);
-  const [imgFailed, setImgFailed] = useState(false);
-
-  useEffect(() => {
-    setImgFailed(false);
-  }, [building.id, visual?.image]);
-
-  const imageUrl = visual?.image ?? '';
-  const imgFallbacks = [
-    BUILDING_IMAGE_PUBLIC_FALLBACK[building.id],
-    BUILDING_PLACEHOLDER_IMAGE,
-  ].filter(Boolean);
-
-  const handleImgError = (e) => {
-    const img = e.currentTarget;
-    const step = Number(img.dataset.fallbackStep || '0');
-    if (step < imgFallbacks.length) {
-      img.dataset.fallbackStep = String(step + 1);
-      img.src = `${imgFallbacks[step]}?v=${BUILDING_ASSET_VERSION}`;
-      return;
-    }
-    setImgFailed(true);
-  };
 
   const openInfo = () => {
     if (city) openContentInfo(resolveBuildingInfoPayload(building, city));
@@ -173,32 +152,14 @@ export default function BuildingCard({ building, progressionLock = null, coastal
         </p>
       )}
       <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${building.name} ansiklopedi`}>
-        <div className={`card-visual${visual ? ' card-visual--building' : ''}`}>
-          {visual && !imgFailed ? (
-            <div
-              className={[
-                'building-img-wrap',
-                'building-img-wrap--cell-grid',
-                `building-img-wrap--${building.id}`,
-              ].join(' ')}
-              style={{ '--building-card-bg': `url("${imageUrl}")` }}
-            >
-              <img
-                src={imageUrl}
-                alt=""
-                className="building-card__img"
-                loading="lazy"
-                decoding="async"
-                onError={handleImgError}
-              />
-            </div>
-          ) : visual ? (
-            <div className="building-img-wrap building-card__silhouette-fallback" aria-hidden="true">
-              {building.image}
-            </div>
-          ) : (
-            <span className="building-card__emoji">{building.image}</span>
-          )}
+        <div className="card-visual card-visual--building card-visual--placeholder">
+          <div
+            className={`building-card__placeholder building-card__placeholder--${building.id}`}
+            aria-hidden="true"
+          >
+            <span className="building-card__placeholder-icon">{building.image}</span>
+            <span className="building-card__placeholder-name">{buildingName}</span>
+          </div>
         </div>
         <div className="content-card__head">
           <h3>{building.name}</h3>
@@ -254,11 +215,15 @@ export default function BuildingCard({ building, progressionLock = null, coastal
       )}
       {displayCost ? (
         <p className="content-card__meta">
-          {isUnbuilt ? 'İnşaat' : 'Yükseltme'} maliyeti: <strong>{displayCost}</strong>
-          {nextSpec?.time ? ` · ${nextSpec.time}` : ''}
+          {isUnbuilt ? t('components.buildingCard.buildCost') : t('components.buildingCard.upgradeCost')}
+          {' '}
+          <strong>{displayCost}</strong>
+          {displayTimeLabel ? ` · ${displayTimeLabel}` : ''}
         </p>
+      ) : atMaxLevel ? (
+        <p className="content-card__meta">{t('components.buildingCard.maxLevelReached')}</p>
       ) : (
-        <p className="content-card__meta">Maliyet tanımlı değil</p>
+        <p className="content-card__meta">{t('components.buildingCard.costUndefined')}</p>
       )}
       {building.id === AI_CENTER_BUILDING_ID && getAiCenterLevel(city) >= 1 && (
         <p className="content-card__meta content-card__meta--ai">

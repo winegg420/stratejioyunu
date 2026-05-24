@@ -1,30 +1,47 @@
 /** Kara / hava / deniz birim kartları — taktik SVG silüetler (emoji yerine). */
 
+const LAND_UNITS = new Set([
+  'infantry', 'armor', 'tank', 'airdefense', 'sniper', 'special', 'colonist',
+]);
+const AIR_UNITS = new Set(['scout', 'fighter', 'bomber', 'drone']);
+const SEA_UNITS = new Set(['patrol', 'frigate', 'sub']);
+
+export function resolveUnitIconDomain(unitId, domain) {
+  if (domain === 'land' || domain === 'air' || domain === 'sea') return domain;
+  if (AIR_UNITS.has(unitId)) return 'air';
+  if (SEA_UNITS.has(unitId)) return 'sea';
+  if (LAND_UNITS.has(unitId)) return 'land';
+  return 'land';
+}
+
 const ICONS = {
   infantry: (
     <>
-      <path d="M12 4.5 13.8 7h2.7l-2.2 1.6.8 2.7L12 10.2 9.7 11.3l.8-2.7-2.2-1.6h2.7L12 4.5Z" fill="currentColor" />
-      <path d="M8 12.5h8v1.8H8V12.5Zm1.2 2.2h5.6v5.3H9.2v-5.3Z" fill="currentColor" opacity="0.9" />
-      <path d="M10 18.2h4v1.3h-4v-1.3Z" fill="currentColor" />
+      <circle cx="12" cy="5.5" r="2.2" fill="currentColor" />
+      <path d="M9.5 8h5v2.5h-1.2l-.8 3.2h-1l-.8-3.2H9.5V8Z" fill="currentColor" />
+      <path d="M8.5 11.2h7v1.5H8.5v-1.5Z" fill="currentColor" opacity="0.85" />
+      <path d="M7.5 13.5h9v4.5c0 .8-.7 1.5-1.5 1.5h-6c-.8 0-1.5-.7-1.5-1.5v-4.5Z" fill="currentColor" />
+      <path d="M9 18.5h1.5v2H9v-2Zm4.5 0H15v2h-1.5v-2Z" fill="currentColor" />
     </>
   ),
   armor: (
     <>
-      <rect x="5" y="11" width="14" height="5.5" rx="1" fill="currentColor" opacity="0.85" />
-      <path d="M7 9.5h10l1.5 1.5H5.5L7 9.5Z" fill="currentColor" />
-      <circle cx="8" cy="17.5" r="1.6" fill="#0a0f0a" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="16" cy="17.5" r="1.6" fill="#0a0f0a" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M9 13h6v1.5H9V13Z" fill="#0a0f0a" opacity="0.5" />
+      <path d="M5 12.5h14v4.5H5v-4.5Z" fill="currentColor" opacity="0.9" />
+      <path d="M7 10h10l1.8 2.5H5.2L7 10Z" fill="currentColor" />
+      <rect x="9" y="13" width="6" height="2" rx="0.3" fill="#0a0f0a" opacity="0.45" />
+      <circle cx="7.5" cy="17.5" r="1.5" fill="currentColor" />
+      <circle cx="16.5" cy="17.5" r="1.5" fill="currentColor" />
     </>
   ),
   tank: (
     <>
-      <path d="M4 14h16v3H4v-3Z" fill="currentColor" opacity="0.9" />
-      <path d="M6 10.5h12l2 3.5H4l2-3.5Z" fill="currentColor" />
-      <rect x="10" y="7" width="4" height="4" rx="0.5" fill="currentColor" />
-      <circle cx="7" cy="17.5" r="1.5" fill="currentColor" />
-      <circle cx="12" cy="17.5" r="1.5" fill="currentColor" />
-      <circle cx="17" cy="17.5" r="1.5" fill="currentColor" />
+      <path d="M3.5 14.5h17v3H3.5v-3Z" fill="currentColor" opacity="0.92" />
+      <path d="M5.5 11h13l2 3.5H3.5l2-3.5Z" fill="currentColor" />
+      <rect x="9.5" y="7.5" width="5" height="4" rx="0.4" fill="currentColor" />
+      <path d="M14.5 9.5h5.5l1 2h-6.5v-2Z" fill="currentColor" />
+      <circle cx="7" cy="17.8" r="1.4" fill="currentColor" />
+      <circle cx="12" cy="17.8" r="1.4" fill="currentColor" />
+      <circle cx="17" cy="17.8" r="1.4" fill="currentColor" />
     </>
   ),
   airdefense: (
@@ -58,43 +75,80 @@ const ICONS = {
     </>
   ),
   scout: (
-    <path d="M4 14h16l-2-5H6l-2 5Zm8-8 3 4h-6l3-4Z" fill="currentColor" />
+    <>
+      <path d="M2 13.5 12 7.5l10 6-3.2-1.2 1.8 3.7h-3.2l-2 3.5-2-3.5H7.4l1.8-3.7L2 13.5Z" fill="currentColor" />
+      <path d="M10.5 10.5h3v1.8h-3v-1.8Z" fill="currentColor" opacity="0.4" />
+    </>
   ),
   fighter: (
-    <path d="M3 13 12 6l9 7-3-1 2 4h-4l-2 4-2-4H7l2-4-3 1Z" fill="currentColor" />
+    <path d="M2.5 13.5 12 6.5l9.5 7-3.2-1.2 2.2 4.2h-4l-2.2 4.2-2.2-4.2H5.5l2.2-4.2-3.2 1.2Z" fill="currentColor" />
   ),
   bomber: (
-  <>
-    <path d="M2 13h20l-3-4H5l-3 4Z" fill="currentColor" />
-    <ellipse cx="12" cy="15" rx="3" ry="1.2" fill="currentColor" opacity="0.5" />
-  </>
+    <>
+      <path d="M1.5 13.5 12 7l10.5 6.5-2.8-1 2 3.8h-3.8l-1.8 3.5-1.8-3.5H8.3l2-3.8-2.8 1Z" fill="currentColor" />
+      <ellipse cx="12" cy="15.2" rx="3.2" ry="1.1" fill="currentColor" opacity="0.45" />
+    </>
   ),
   drone: (
     <>
-      <circle cx="8" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="16" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M10 10h4M8 10v5M16 10v5M10 15h4" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="7" y="11" width="10" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+      <circle cx="8" cy="9" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="16" cy="9" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M10 9h4M8 9v2M16 9v2" stroke="currentColor" strokeWidth="1.1" />
     </>
   ),
   patrol: (
-    <path d="M5 14h14l-1.5-3H6.5L5 14Zm7-7v4M9 9h6" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.2" />
+    <>
+      <path d="M4 14.5h16l-2.2-3.5H6.2L4 14.5Z" fill="currentColor" />
+      <path d="M10 8.5h4v3h-4v-3Z" fill="currentColor" opacity="0.55" />
+      <path d="M12 6.5v2" stroke="currentColor" strokeWidth="1.2" />
+    </>
   ),
   frigate: (
-    <path d="M3 15h18L18 9H6L3 15Zm6-6h6v2H9V9Z" fill="currentColor" />
+    <>
+      <path d="M3 15h18L17.5 9H6.5L3 15Zm5-5h8v2.5H8V10Z" fill="currentColor" />
+      <path d="M11 7h2v2h-2V7Z" fill="currentColor" />
+    </>
   ),
   sub: (
     <>
-      <ellipse cx="12" cy="13" rx="8" ry="3" fill="currentColor" opacity="0.85" />
-      <path d="M6 13h12M8 10h8l1-2H7l1 2Z" fill="currentColor" />
+      <ellipse cx="12" cy="13.5" rx="8.5" ry="3.2" fill="currentColor" opacity="0.88" />
+      <path d="M6 13.5h12M8.5 10.5h7l1.2-2H7.3l1.2 2Z" fill="currentColor" />
       <rect x="11" y="8" width="2" height="3" fill="currentColor" />
+    </>
+  ),
+  aircraft: (
+    <path d="M2.5 13.5 12 6.5l9.5 7-3.2-1.2 2.2 4.2h-4l-2.2 4.2-2.2-4.2H5.5l2.2-4.2-3.2 1.2Z" fill="currentColor" />
+  ),
+  ship: (
+    <>
+      <path d="M3.5 15h17l-2.5-4H6L3.5 15Z" fill="currentColor" />
+      <path d="M10 9.5h4v3.5h-4V9.5Z" fill="currentColor" opacity="0.5" />
+      <path d="M12 7v2.5" stroke="currentColor" strokeWidth="1.2" />
     </>
   ),
 };
 
-const DEFAULT_ICON = ICONS.infantry;
+const DOMAIN_FALLBACK = {
+  land: ICONS.infantry,
+  air: ICONS.aircraft,
+  sea: ICONS.ship,
+};
 
-export default function UnitMilitaryIcon({ unitId, className = '', title, size = 48 }) {
-  const content = ICONS[unitId] ?? DEFAULT_ICON;
+function resolveIconContent(unitId, domain) {
+  if (ICONS[unitId]) return ICONS[unitId];
+  const resolved = resolveUnitIconDomain(unitId, domain);
+  return DOMAIN_FALLBACK[resolved] ?? ICONS.infantry;
+}
+
+export default function UnitMilitaryIcon({
+  unitId,
+  domain,
+  className = '',
+  title,
+  size = 48,
+}) {
+  const content = resolveIconContent(unitId, domain);
 
   return (
     <svg

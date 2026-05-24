@@ -14,6 +14,24 @@ export function formatSeconds(total) {
   return [h, m, sec].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
+/** Okunabilir süre: "56 dk", "1 sa 10 dk" */
+export function formatReadableDuration(totalSeconds, lang = 'tr') {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (lang === 'en') {
+    if (h > 0 && m > 0) return `${h} hr ${m} min`;
+    if (h > 0) return `${h} hr`;
+    if (m > 0) return `${m} min`;
+    return `${Math.max(1, sec)} sec`;
+  }
+  if (h > 0 && m > 0) return `${h} sa ${m} dk`;
+  if (h > 0) return `${h} sa`;
+  if (m > 0) return `${m} dk`;
+  return `${Math.max(1, sec)} sn`;
+}
+
 export function formatRate(hourly) {
   return `+${Math.round(hourly)}/sa`;
 }
@@ -102,6 +120,15 @@ export function createQueueTiming(durationSeconds) {
   };
 }
 
+/** Depo miktarını tam sayıya yuvarlar; max’a çok yakınsa tam doldurur (float sapması). */
+export function floorResourceCurrent(current, max = null) {
+  const c = Number(current) || 0;
+  if (max == null) return Math.floor(c);
+  const cap = Math.floor(max);
+  if (c >= cap - 0.001) return cap;
+  return Math.min(cap, Math.max(0, Math.floor(c)));
+}
+
 export function remainingFromEndsAt(endsAt, now = Date.now()) {
   if (endsAt == null || Number.isNaN(endsAt)) return 0;
   return Math.max(0, Math.ceil((endsAt - now) / 1000));
@@ -113,6 +140,21 @@ export function progressFromTiming(startedAt, endsAt, now = Date.now()) {
   if (!total || total <= 0) return 100;
   const elapsed = now - startedAt;
   return Math.min(100, Math.max(0, (elapsed / total) * 100));
+}
+
+export function isActiveExpedition(exp, now = Date.now()) {
+  if (!exp?.id) return false;
+  if (exp.status === 'completed') return false;
+  if (exp.endsAt != null && exp.endsAt <= now) return false;
+  return true;
+}
+
+export function filterActiveExpeditions(expeditions, now = Date.now()) {
+  return (expeditions ?? []).filter((e) => isActiveExpedition(e, now));
+}
+
+export function countActiveExpeditions(expeditions, now = Date.now()) {
+  return filterActiveExpeditions(expeditions, now).length;
 }
 
 export function nowReportDate() {

@@ -1,18 +1,17 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 
+/** Yalnızca UI kontrolleri — il poligonları ve marker üzerinden de pan mümkün */
 const IGNORE_SELECTOR = [
   '.leaflet-control',
   '.leaflet-popup',
   '.leaflet-marker-icon',
-  '.leaflet-interactive',
   '.map-marker-wrap',
   '.map-marker-pin',
-  '.map-marker-label-stack',
-  '.map-target-reticle',
-  '.map-target-reticle__hit',
-  '.map-city-hit-marker',
+  '.map-city-dot',
   '.map-city-centroid-label',
+  '.map-hud-panel',
+  '.map-focus-crosshair',
   'button',
   'input',
   'select',
@@ -84,6 +83,9 @@ export default function MapDragPanController({ enabled = true }) {
         container.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
+      }
+      if (isPanning) {
+        map._suppressMapClickUntil = Date.now() + 450;
       }
       activePointer = null;
       isPanning = false;

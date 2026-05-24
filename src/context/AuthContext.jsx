@@ -12,6 +12,8 @@ import {
 import { stopSyncPolling } from '../lib/supabaseSync';
 import { fetchUserProfile, resolveProfileDisplayName, resolveProfileIsAdmin } from '../lib/profileApi';
 import { useGameStore } from '../stores/gameStore';
+import { PAGE_SESSION_TIMEOUT_MS } from '../components/PageSessionGate';
+import { refreshSessionIfNeeded, startSessionKeeper } from '../lib/sessionKeeper';
 
 const PLAYER_IDENTITY_KEY = 'strateji_player_name';
 
@@ -104,7 +106,7 @@ export function AuthProvider({ children }) {
           const existing = await Promise.race([
             getSession(),
             new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Oturum zaman aşımı')), 8000);
+              setTimeout(() => reject(new Error('Oturum zaman aşımı')), 14000);
             }),
           ]);
           if (!cancelled && existing) {
@@ -144,12 +146,20 @@ export function AuthProvider({ children }) {
     const { data } = onAuthStateChange((event, nextSession) => {
       if (cancelled) return;
       setAuthReady(true);
-      setSession(nextSession);
       if (nextSession?.user) {
+        setSession(nextSession);
         setIsDemo(false);
         clearDemoAuth();
-        hydratedUserRef.current = null;
-        hydrateGameForUser(nextSession.user);
+        const userId = nextSession.user.id;
+        const shouldHydrate = event === 'SIGNED_IN'
+          || event === 'INITIAL_SESSION'
+          || hydratedUserRef.current !== userId;
+        if (shouldHydrate) {
+          if (event !== 'TOKEN_REFRESHED') {
+            hydratedUserRef.current = null;
+          }
+          hydrateGameForUser(nextSession.user);
+        }
         return;
       }
       if (event === 'SIGNED_OUT') {
@@ -161,6 +171,11 @@ export function AuthProvider({ children }) {
           profilePlayerName: null,
           isAdminUser: false,
         });
+        setSession(null);
+        return;
+      }
+      if (!nextSession && event !== 'SIGNED_OUT') {
+        refreshSessionIfNeeded().catch(() => {});
       }
     });
 
@@ -171,8 +186,13 @@ export function AuthProvider({ children }) {
   }, [hydrateGameForUser, applyProfileIdentity]);
 
   useEffect(() => {
-    const unlock = window.setTimeout(() => setAuthReady(true), 6000);
+    const unlock = window.setTimeout(() => setAuthReady(true), PAGE_SESSION_TIMEOUT_MS);
     return () => window.clearTimeout(unlock);
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+    return startSessionKeeper();
   }, []);
 
   const loginDemo = useCallback((name = 'Oyuncu') => {
@@ -210,8 +230,9 @@ export function AuthProvider({ children }) {
     if (nextSession?.user) {
       await hydrateGameForUser(nextSession.user);
     }
+    setAuthReady(true);
     return { mode: 'supabase' };
-  }, [loginDemo, hydrateGameForUser, applyProfileIdentity]);
+  }, [loginDemo, hydrateGameForUser]);
 
   const register = useCallback(async (playerId, password, displayName) => {
     if (!isSupabaseConfigured) {
@@ -227,6 +248,7 @@ export function AuthProvider({ children }) {
       await hydrateGameForUser(nextSession.user);
       return { mode: 'supabase', needsEmailConfirm: false };
     }
+    setAuthReady(true);
     return { mode: 'supabase', needsEmailConfirm: true };
   }, [hydrateGameForUser]);
 

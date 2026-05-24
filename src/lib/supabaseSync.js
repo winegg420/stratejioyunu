@@ -43,7 +43,9 @@ async function purgeLegacyMetalResourceRows(profileId, cityIds) {
     console.warn('[sync] legacy metal purge:', error.message);
   }
 }
-import { applyDevTestModeToState } from './devTestMode';
+import { applyDevTestModeToState, isDevAdminLocalEnabled, stripAccidentalDevBoost } from './devTestMode';
+import { resolveStateForCloudSave } from './adminModeControl';
+import { applyAdminRestorableSlice, loadAdminSnapshot } from './adminModeSnapshot';
 
 const LAND_UNIT_IDS = new Set(landUnits.map((u) => u.id));
 const AIR_UNIT_IDS = new Set(airUnits.map((u) => u.id));
@@ -190,6 +192,147 @@ function mergeResearches(dbRows) {
   return mergeResearchProgress(savedById);
 }
 
+function formatPastExpeditionDate(completedAtIso, lang = 'tr') {
+  if (!completedAtIso) return '—';
+  const d = new Date(completedAtIso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString(lang === 'en' ? 'en-GB' : 'tr-TR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function dbRowToPastExpedition(row, lang = 'tr') {
+  const result = row.result ?? {};
+  const completedAt = fromIso(row.completed_at);
+  const loot = result.loot ?? result.lootSummary ?? result.ganimet;
+  const outcome = result.outcome
+    ?? result.result
+    ?? (result.attackerWon === true ? 'Zafer' : result.attackerWon === false ? 'Yenilgi' : null)
+    ?? row.expedition_type
+    ?? 'Tamamlandı';
+
+  return {
+    id: row.id,
+    target: row.target_city_name ?? '—',
+    result: outcome,
+    loot: typeof loot === 'string' ? loot : '—',
+    date: result.date ?? formatPastExpeditionDate(row.completed_at, lang),
+    completedAt,
+    type: row.expedition_type,
+    mode: row.mode,
+  };
+}
+
+function mergePastExpeditionLists(localList = [], remoteList = []) {
+  const byId = new Map();
+  for (const entry of remoteList ?? []) {
+    if (entry?.id) byId.set(entry.id, entry);
+  }
+  for (const entry of localList ?? []) {
+    if (!entry?.id) continue;
+    const prev = byId.get(entry.id);
+    byId.set(entry.id, prev ? { ...prev, ...entry } : entry);
+  }
+  return [...byId.values()].sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+}
+
+const EXPEDITION_STASH_PREFIX = 'strateji_exp_stash_';
+
+function expeditionStashKey(userId) {
+  return `${EXPEDITION_STASH_PREFIX}${userId}`;
+}
+
+/** Aktif seferleri yenileme öncesi sessionStorage'a yazar. */
+export function stashActiveExpeditionsForRecovery(userId, expeditions = []) {
+  if (!userId || !expeditions?.length) return;
+  try {
+    const active = expeditions.filter((e) => e?.id && !e.recalled);
+    if (!active.length) return;
+    sessionStorage.setItem(
+      expeditionStashKey(userId),
+      JSON.stringify({ savedAt: Date.now(), expeditions: active }),
+    );
+  } catch (err) {
+    console.warn('[supabaseSync] expedition stash', err);
+  }
+}
+
+export function readStashedExpeditions(userId) {
+  if (!userId) return [];
+  try {
+    const raw = sessionStorage.getItem(expeditionStashKey(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.expeditions) ? parsed.expeditions : [];
+  } catch {
+    return [];
+  }
+}
+
+export function clearStashedExpeditions(userId) {
+  if (!userId) return;
+  try {
+    sessionStorage.removeItem(expeditionStashKey(userId));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Yerel + sunucu aktif seferlerini birleştirir (uzun süre öncelikli). */
+export function mergeActiveExpeditionLists(local = [], remote = []) {
+  const byId = new Map();
+  for (const exp of remote ?? []) {
+    if (exp?.id) byId.set(exp.id, exp);
+  }
+  for (const exp of local ?? []) {
+    if (!exp?.id) continue;
+    const prev = byId.get(exp.id);
+    if (!prev) {
+      byId.set(exp.id, exp);
+      continue;
+    }
+    const endsLocal = exp.endsAt ?? 0;
+    const endsRemote = prev.endsAt ?? 0;
+    const winner = endsLocal >= endsRemote ? { ...prev, ...exp } : { ...exp, ...prev };
+    byId.set(exp.id, winner);
+  }
+  return [...byId.values()];
+}
+
+/** Sekme kapanırken / gizlenirken seferleri kaydet. */
+export function flushExpeditionsBeforeHide(state) {
+  if (!isSyncEnabled() || !state?._supabaseHydrated) return;
+  const userId = lastSyncUserId;
+  const list = state.expeditions ?? [];
+  if (!userId || !list.length) return;
+  stashActiveExpeditionsForRecovery(userId, list);
+  saveGameStateNow(state, { profileId: userId, syncAllExpeditions: true }).catch((err) => {
+    console.warn('[supabaseSync] flush expeditions', err);
+  });
+}
+
+export function registerExpeditionPersistenceGuards(getState) {
+  if (!isSyncEnabled() || typeof getState !== 'function') return () => {};
+
+  const onHide = () => {
+    if (document.visibilityState !== 'hidden') return;
+    flushExpeditionsBeforeHide(getState());
+  };
+
+  const onPageHide = () => flushExpeditionsBeforeHide(getState());
+
+  document.addEventListener('visibilitychange', onHide);
+  window.addEventListener('pagehide', onPageHide);
+  return () => {
+    document.removeEventListener('visibilitychange', onHide);
+    window.removeEventListener('pagehide', onPageHide);
+  };
+}
+
 function dbRowToExpedition(row) {
   const payload = row.troop_payload ?? {};
   const mode = payload?.kbrn ? 'kbrn' : payload?.cyberVirus ? 'cyber' : row.mode;
@@ -245,10 +388,11 @@ function expeditionToDbRow(exp, profileId) {
 
 function dbRowToReport(row) {
   const payload = row.payload ?? {};
+  const filterType = payload.filterType ?? row.filter_type ?? 'battle';
   return {
     ...payload,
     id: row.id,
-    filterType: payload.filterType ?? row.filter_type,
+    filterType,
     type: row.report_type,
     title: row.title,
     preview: row.preview ?? payload.preview,
@@ -258,6 +402,25 @@ function dbRowToReport(row) {
     winner: row.winner ?? payload.winner,
     isNew: !row.is_read,
   };
+}
+
+function reportSortKey(report) {
+  const raw = report?.date ?? '';
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/** Sunucu + yerel raporları birleştirir (sunucu kaydı öncelikli). */
+export function mergeReportLists(local = [], remote = []) {
+  if (!remote?.length) return [...(local ?? [])];
+  const byId = new Map();
+  for (const r of local ?? []) {
+    if (r?.id) byId.set(r.id, r);
+  }
+  for (const r of remote) {
+    if (r?.id) byId.set(r.id, r);
+  }
+  return [...byId.values()].sort((a, b) => reportSortKey(b) - reportSortKey(a));
 }
 
 function reportToDbRow(report, profileId) {
@@ -287,13 +450,14 @@ export async function saveGameState(state, options = {}) {
   const profileId = options.profileId ?? await getSyncUserId();
   if (!profileId) return { ok: false, skipped: true };
 
-  const nowIso = toIso(state.now ?? Date.now());
+  const persisted = resolveStateForCloudSave(state);
+  const nowIso = toIso(persisted.now ?? Date.now());
 
-  if (options.saveAllCities && state.cities) {
-    const rows = Object.entries(state.cities).map(([id, city]) => ({
+  if (options.saveAllCities && persisted.cities) {
+    const rows = Object.entries(persisted.cities).map(([id, city]) => ({
       profile_id: profileId,
       id,
-      city_name: state.playerCities?.find((c) => c.id === id)?.name ?? id,
+      city_name: persisted.playerCities?.find((c) => c.id === id)?.name ?? id,
       last_tick_at: nowIso,
       idle_spies: city.idleSpies ?? 0,
       idle_agents: city.idleAgents ?? 0,
@@ -310,7 +474,7 @@ export async function saveGameState(state, options = {}) {
     }));
     const resourceRows = [];
     const buildingRows = [];
-    for (const [id, city] of Object.entries(state.cities)) {
+    for (const [id, city] of Object.entries(persisted.cities)) {
       for (const r of city.resources ?? []) {
         resourceRows.push({
           profile_id: profileId,
@@ -355,7 +519,7 @@ export async function saveGameState(state, options = {}) {
       diplomaticTreaties: state.diplomaticTreaties ?? [],
       treatyBreaks: state.treatyBreaks ?? [],
     };
-    const cityIds = Object.keys(state.cities ?? {});
+    const cityIds = Object.keys(persisted.cities ?? {});
     const tasks = [
       supabase.from('cities').upsert(rows, { onConflict: 'profile_id,id' }),
       resourceRows.length
@@ -366,14 +530,14 @@ export async function saveGameState(state, options = {}) {
         : Promise.resolve({ error: null }),
       supabase.from('profiles').update({
         player_meta: meta,
-        ideology: state.playerIdeology ?? null,
-        protection_ends_at: state.protectionEndsAt ?? null,
-        loyalty_score: Math.max(0, Math.floor(state.loyaltyScore ?? 0)),
+        ideology: persisted.playerIdeology ?? null,
+        protection_ends_at: persisted.protectionEndsAt ?? null,
+        loyalty_score: Math.max(0, Math.floor(persisted.loyaltyScore ?? 0)),
         updated_at: nowIso,
       }).eq('id', profileId),
     ];
-    if (options.researches && state.researches?.length) {
-      const researchRows = state.researches.map((r) => ({
+    if (options.researches && persisted.researches?.length) {
+      const researchRows = persisted.researches.map((r) => ({
         profile_id: profileId,
         research_id: r.id,
         level: r.level ?? 0,
@@ -392,14 +556,14 @@ export async function saveGameState(state, options = {}) {
     return error ? { ok: false, error } : { ok: true };
   }
 
-  const cityId = options.cityId ?? state.activeCityId;
-  const city = state.cities?.[cityId];
+  const cityId = options.cityId ?? persisted.activeCityId;
+  const city = persisted.cities?.[cityId];
   if (!city) return { ok: false, error: 'city_missing' };
 
   const cityRow = {
     profile_id: profileId,
     id: cityId,
-    city_name: state.playerCities?.find((c) => c.id === cityId)?.name ?? cityId,
+    city_name: persisted.playerCities?.find((c) => c.id === cityId)?.name ?? cityId,
     last_tick_at: nowIso,
     idle_spies: city.idleSpies ?? 0,
     idle_agents: city.idleAgents ?? 0,
@@ -482,18 +646,18 @@ export async function saveGameState(state, options = {}) {
     };
     tasks.push(
       supabase.from('profiles').update({
-        active_city_id: state.activeCityId,
+        active_city_id: persisted.activeCityId,
         player_meta: meta,
-        ideology: state.playerIdeology ?? null,
-        protection_ends_at: state.protectionEndsAt ?? null,
-        loyalty_score: Math.max(0, Math.floor(state.loyaltyScore ?? 0)),
+        ideology: persisted.playerIdeology ?? null,
+        protection_ends_at: persisted.protectionEndsAt ?? null,
+        loyalty_score: Math.max(0, Math.floor(persisted.loyaltyScore ?? 0)),
         updated_at: nowIso,
       }).eq('id', profileId),
     );
   }
 
-  if (options.researches && state.researches?.length) {
-    const researchRows = state.researches.map((r) => ({
+  if (options.researches && persisted.researches?.length) {
+    const researchRows = persisted.researches.map((r) => ({
       profile_id: profileId,
       research_id: r.id,
       level: r.level ?? 0,
@@ -521,12 +685,21 @@ export async function saveGameState(state, options = {}) {
     );
   }
 
-  if (options.expeditionIdsToComplete?.length) {
+  const expeditionCompletions = options.expeditionCompletions?.length
+    ? options.expeditionCompletions
+    : (options.expeditionIdsToComplete ?? []).map((id) => ({ id, result: null }));
+
+  for (const completion of expeditionCompletions) {
+    if (!completion?.id) continue;
+    const patch = {
+      status: 'completed',
+      completed_at: nowIso,
+    };
+    if (completion.result) patch.result = completion.result;
     tasks.push(
-      supabase.from('expeditions').update({
-        status: 'completed',
-        completed_at: nowIso,
-      }).in('id', options.expeditionIdsToComplete).eq('profile_id', profileId),
+      supabase.from('expeditions').update(patch)
+        .eq('id', completion.id)
+        .eq('profile_id', profileId),
     );
   }
 
@@ -613,14 +786,21 @@ export async function loadGameState(userId, { playerName } = {}) {
 
   const cityIds = cityRows.map((c) => c.id);
 
-  const [resRes, bldRes, unitRes, researchRes, expRes, reportRes] = await Promise.all([
+  const [resRes, bldRes, unitRes, researchRes, expRes, pastExpRes, reportRes] = await Promise.all([
     supabase.from('city_resources').select('*').eq('profile_id', userId).in('city_id', cityIds),
     supabase.from('city_buildings').select('*').eq('profile_id', userId).in('city_id', cityIds),
     supabase.from('city_units').select('*').eq('profile_id', userId).in('city_id', cityIds),
     supabase.from('player_researches').select('*').eq('profile_id', userId),
     supabase.from('expeditions').select('*').eq('profile_id', userId).eq('status', 'active'),
+    supabase.from('expeditions').select('*').eq('profile_id', userId).eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(60),
     supabase.from('game_reports').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(80),
   ]);
+
+  if (reportRes.error) {
+    console.warn('[supabaseSync] game_reports load', reportRes.error);
+  }
 
   const resourcesByCity = groupBy(cityIds, resRes.data ?? [], 'city_id');
   const buildingsByCity = groupBy(cityIds, bldRes.data ?? [], 'city_id');
@@ -692,7 +872,8 @@ export async function loadGameState(userId, { playerName } = {}) {
 
   const researches = mergeResearches(researchRes.data);
   const expeditions = (expRes.data ?? []).map(dbRowToExpedition);
-  const reports = (reportRes.data ?? []).map(dbRowToReport);
+  const pastExpeditions = (pastExpRes.data ?? []).map((row) => dbRowToPastExpedition(row));
+  const reports = (reportRes.error ? [] : (reportRes.data ?? [])).map(dbRowToReport);
 
   const activeCrisis = playerMeta.activeCrisis ?? null;
   const crisisPatches = rehydrateCrisisCityEffects(
@@ -767,6 +948,7 @@ export async function loadGameState(userId, { playerName } = {}) {
     cities,
     researches,
     expeditions,
+    pastExpeditions,
     reports,
     mapCities: mapCitiesSynced,
     lastTickAt: Date.now(),
@@ -795,6 +977,238 @@ function groupBy(cityIds, rows, key) {
  * Süresi dolmuş seferleri işler; raporları DB'ye yazar.
  * Tarayıcı kapalıyken biten seferler bir sonraki açılış / poll'da tamamlanır.
  */
+function isMissingTableError(error) {
+  const code = error?.code ?? '';
+  const msg = String(error?.message ?? '').toLowerCase();
+  return code === '42P01' || code === 'PGRST205' || msg.includes('does not exist');
+}
+
+function rowToReportFromExpeditionTable(row) {
+  const payload = row.payload ?? row.meta ?? row.result ?? {};
+  const filterType = payload.filterType
+    ?? (row.mode === 'spy' ? 'spy' : row.mode === 'cyber' || row.mode === 'kbrn' ? row.mode : 'battle');
+  return {
+    ...payload,
+    id: row.id ?? payload.id ?? `exp-rpt-${row.expedition_id ?? row.created_at}`,
+    filterType,
+    type: row.report_type ?? row.expedition_type ?? payload.type ?? 'Sefer Raporu',
+    title: row.title ?? payload.title ?? row.expedition_type ?? 'Sefer Raporu',
+    preview: row.preview ?? payload.preview ?? row.target_city_name ?? '—',
+    date: row.report_date ?? payload.date ?? row.completed_at ?? row.created_at,
+    targetCity: row.target_city_name ?? payload.targetCity,
+    isNew: row.is_read != null ? !row.is_read : (payload.isNew ?? false),
+    reportCategory: payload.reportCategory ?? 'expedition',
+  };
+}
+
+function rowToReportFromOperationTable(row) {
+  const payload = row.payload ?? row.meta ?? row.result ?? {};
+  return {
+    ...payload,
+    id: row.id ?? payload.id ?? `op-rpt-${row.created_at}`,
+    filterType: payload.filterType ?? (row.operation_type === 'cyber' ? 'cyber' : row.operation_type === 'kbrn' ? 'kbrn' : 'spy'),
+    type: row.report_type ?? row.operation_type ?? payload.type ?? 'Ajan Operasyonu',
+    title: row.title ?? payload.title ?? 'Operasyon Raporu',
+    preview: row.preview ?? payload.preview ?? '—',
+    date: row.report_date ?? payload.date ?? row.completed_at ?? row.created_at,
+    targetCity: row.target_city_name ?? payload.targetCity,
+    isNew: row.is_read != null ? !row.is_read : (payload.isNew ?? false),
+    reportCategory: 'operation',
+  };
+}
+
+function completedExpeditionToReport(row) {
+  const result = row.result ?? {};
+  const mode = row.mode === 'spy' ? 'spy' : 'attack';
+  return {
+    id: `exp-done-${row.id}`,
+    filterType: mode,
+    type: row.expedition_type ?? 'Sefer',
+    title: result.outcome ?? row.expedition_type ?? 'Sefer tamamlandı',
+    preview: result.loot ?? result.preview ?? row.target_city_name ?? '—',
+    date: result.date ?? row.completed_at,
+    targetCity: row.target_city_name,
+    winner: result.winner ?? payloadWinnerFromResult(result),
+    isNew: false,
+    reportCategory: 'expedition',
+  };
+}
+
+function payloadWinnerFromResult(result) {
+  if (result?.attackerWon === true) return 'attacker';
+  if (result?.attackerWon === false) return 'defender';
+  return result?.winner ?? null;
+}
+
+async function fetchOptionalReportTable(table, profileId) {
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('created_at', { ascending: false })
+    .limit(80);
+  if (!error) return data ?? [];
+  if (isMissingTableError(error)) return [];
+  console.warn(`[supabaseSync] ${table}`, error);
+  return [];
+}
+
+/** Supabase rapor tablolarından (game_reports + isteğe bağlı sefer/operasyon) yeniler. */
+export async function refreshReportsFromServer(getState, setState) {
+  if (!isSyncEnabled() || typeof getState !== 'function' || typeof setState !== 'function') {
+    return { ok: false };
+  }
+
+  const profileId = await getSyncUserId();
+  if (!profileId) return { ok: false };
+
+  const [gameRows, expReportRows, opReportRows, completedExpRows] = await Promise.all([
+    supabase
+      .from('game_reports')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(80)
+      .then((res) => {
+        if (res.error) {
+          console.warn('[supabaseSync] game_reports', res.error);
+          return [];
+        }
+        return res.data ?? [];
+      }),
+    fetchOptionalReportTable('expedition_reports', profileId),
+    fetchOptionalReportTable('operation_reports', profileId),
+    supabase
+      .from('expeditions')
+      .select('*')
+      .eq('profile_id', profileId)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(40)
+      .then((res) => (res.error ? [] : (res.data ?? []))),
+  ]);
+
+  const remote = [
+    ...gameRows.map(dbRowToReport),
+    ...expReportRows.map(rowToReportFromExpeditionTable),
+    ...opReportRows.map(rowToReportFromOperationTable),
+    ...completedExpRows.map(completedExpeditionToReport),
+  ];
+
+  const merged = mergeReportLists(getState().reports, remote);
+  const hasUnread = merged.some((r) => r.isNew);
+  setState({
+    reports: merged,
+    navBadges: {
+      ...getState().navBadges,
+      reports: hasUnread,
+    },
+  });
+  return { ok: true, count: merged.length };
+}
+
+function archiveRowToPastExpedition(row, lang = 'tr') {
+  return dbRowToPastExpedition({
+    id: row.id ?? row.expedition_id,
+    target_city_name: row.target_city_name ?? row.target ?? row.target_name,
+    expedition_type: row.expedition_type ?? row.type,
+    completed_at: row.completed_at ?? row.ended_at ?? row.created_at,
+    result: row.result ?? row.payload ?? row.outcome ?? {},
+    mode: row.mode,
+  }, lang);
+}
+
+async function fetchOptionalPastExpeditionTable(table, profileId) {
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('completed_at', { ascending: false })
+    .limit(60);
+  if (!error) return data ?? [];
+  if (isMissingTableError(error)) return [];
+  console.warn(`[supabaseSync] ${table}`, error);
+  return [];
+}
+
+/** Tamamlanan casusluk sondaları — harita Cephe İstihbaratı paneli. */
+export async function fetchSpyProbeReportsFromServer(profileId) {
+  if (!isSyncEnabled() || !profileId) return [];
+
+  const [reportRes, spyExpRes] = await Promise.all([
+    supabase
+      .from('game_reports')
+      .select('*')
+      .eq('profile_id', profileId)
+      .eq('filter_type', 'spy')
+      .order('created_at', { ascending: false })
+      .limit(40),
+    supabase
+      .from('expeditions')
+      .select('*')
+      .eq('profile_id', profileId)
+      .eq('mode', 'spy')
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(25),
+  ]);
+
+  const fromReports = (reportRes.error ? [] : (reportRes.data ?? [])).map(dbRowToReport);
+  if (reportRes.error) {
+    console.warn('[supabaseSync] spy game_reports', reportRes.error);
+  }
+
+  const fromExpeditions = (spyExpRes.error ? [] : (spyExpRes.data ?? [])).map((row) => {
+    const result = row.result ?? {};
+    return {
+      id: row.id ?? `spy-exp-${row.completed_at}`,
+      filterType: 'spy',
+      mode: 'spy',
+      type: 'Casusluk Sondası',
+      title: `${row.target_city_name ?? 'Hedef'} — Casusluk Sondası`,
+      preview: result.findings ?? result.outcome ?? result.preview ?? row.troops_summary ?? 'Tamamlandı',
+      targetCity: row.target_city_name,
+      date: result.date ?? formatPastExpeditionDate(row.completed_at),
+      isNew: false,
+    };
+  });
+
+  return mergeReportLists(fromReports, fromExpeditions);
+}
+
+export async function refreshPastExpeditionsFromServer(getState, setState) {
+  if (!isSyncEnabled() || typeof getState !== 'function' || typeof setState !== 'function') {
+    return { ok: false };
+  }
+
+  const profileId = await getSyncUserId();
+  if (!profileId) return { ok: false };
+
+  let remote = [];
+  const archiveRows = await fetchOptionalPastExpeditionTable('completed_expeditions', profileId);
+  if (archiveRows.length > 0) {
+    remote = archiveRows.map((row) => archiveRowToPastExpedition(row));
+  } else {
+    const { data, error } = await supabase
+      .from('expeditions')
+      .select('*')
+      .eq('profile_id', profileId)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(60);
+
+    if (error) {
+      console.warn('[supabaseSync] past expeditions', error);
+      return { ok: false, error };
+    }
+    remote = (data ?? []).map((row) => dbRowToPastExpedition(row));
+  }
+
+  const merged = mergePastExpeditionLists(getState().pastExpeditions, remote);
+  setState({ pastExpeditions: merged });
+  return { ok: true, count: merged.length };
+}
+
 export async function syncExpeditionsFromServer(getState, setState, completeExpedition) {
   if (!isSyncEnabled() || typeof completeExpedition !== 'function') {
     return { completed: 0 };
@@ -825,15 +1239,26 @@ export async function syncExpeditionsFromServer(getState, setState, completeExpe
 
   let state = getState();
   const dbActive = (activeRows ?? []).map(dbRowToExpedition);
-  const localIds = new Set(state.expeditions.map((e) => e.id));
-  const merged = [...state.expeditions];
-
+  const byId = new Map((state.expeditions ?? []).map((exp) => [exp.id, exp]));
   for (const exp of dbActive) {
-    if (!localIds.has(exp.id)) merged.push(exp);
+    if (!byId.has(exp.id)) {
+      byId.set(exp.id, exp);
+      continue;
+    }
+    const local = byId.get(exp.id);
+    if ((local.endsAt ?? 0) < (exp.endsAt ?? 0)) {
+      byId.set(exp.id, { ...local, ...exp });
+    }
   }
+  const merged = [...byId.values()];
+  const changed = merged.length !== (state.expeditions?.length ?? 0)
+    || merged.some((exp, i) => exp.id !== state.expeditions[i]?.id);
 
-  if (merged.length !== state.expeditions.length) {
-    setState({ expeditions: merged });
+  if (changed) {
+    setState({
+      expeditions: merged,
+      mapRouteSyncRev: (state.mapRouteSyncRev ?? 0) + 1,
+    });
     state = getState();
   }
 
@@ -858,7 +1283,14 @@ export async function syncExpeditionsFromServer(getState, setState, completeExpe
       profileId,
       cityId: exp.originCityId || afterState.activeCityId,
       immediate: true,
-      expeditionIdsToComplete: [exp.id],
+      expeditionCompletions: [{
+        id: exp.id,
+        result: {
+          outcome: exp.type ?? 'Tamamlandı',
+          loot: '—',
+          date: formatPastExpeditionDate(new Date().toISOString()),
+        },
+      }],
       reports: newReports,
       saveAllUnits: true,
       syncAllExpeditions: true,
@@ -912,12 +1344,49 @@ export async function hydrateGameStore(userId, { playerName, getState, setState,
   const patch = await loadGameState(userId, { playerName });
   if (!patch) return { ok: false };
 
-  setState((prev) => applyDevTestModeToState({ ...prev, ...patch }));
+  const stashed = readStashedExpeditions(userId);
+
+  setState((prev) => {
+    const mergedExpeditions = mergeActiveExpeditionLists(
+      mergeActiveExpeditionLists(prev.expeditions, stashed),
+      patch.expeditions,
+    );
+    let merged = {
+      ...prev,
+      ...patch,
+      expeditions: mergedExpeditions,
+      reports: mergeReportLists(prev.reports, patch.reports),
+      pastExpeditions: mergePastExpeditionLists(prev.pastExpeditions, patch.pastExpeditions),
+      navBadges: {
+        ...prev.navBadges,
+        ...patch.navBadges,
+        expeditions: mergedExpeditions.length > 0,
+      },
+      devTestModeActive: false,
+    };
+    const snapshot = loadAdminSnapshot();
+    if (snapshot && !isDevAdminLocalEnabled()) {
+      merged = applyAdminRestorableSlice(merged, snapshot);
+    } else if (!isDevAdminLocalEnabled()) {
+      merged = stripAccidentalDevBoost(merged);
+    }
+    if (isDevAdminLocalEnabled()) {
+      merged = applyDevTestModeToState({ ...merged, devTestModeActive: true });
+    }
+    return merged;
+  });
+  clearStashedExpeditions(userId);
   if (typeof getState().tick === 'function') getState().tick();
 
   await syncExpeditionsFromServer(getState, setState, completeExpedition);
 
-  scheduleSaveGameState(getState(), { profileId: userId, saveAllUnits: true, researches: true });
+  const afterSync = getState();
+  scheduleSaveGameState(afterSync, {
+    profileId: userId,
+    saveAllUnits: true,
+    researches: true,
+    syncAllExpeditions: (afterSync.expeditions?.length ?? 0) > 0,
+  });
 
   const state = getState();
   return {
