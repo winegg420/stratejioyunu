@@ -184,11 +184,7 @@
   }
 }
 
-/* Üst toast / zil gizle — akış altta */
-.toast-stack {
-  display: none !important;
-}
-
+/* Zil gizli — bildirimler toast + terminal ticker */
 .resource-bar-actions .notification-bell {
   display: none !important;
 }

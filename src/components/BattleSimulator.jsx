@@ -4,7 +4,10 @@ import { simulateBattle } from '../lib/battleSimulator';
 import { extractCityFromReportTitle, findSpyReportForCity, getEnemyTroopsFromReport } from '../lib/spyIntel';
 import { toRawInputNumber } from '../lib/formatNumber';
 import { getTroopStock } from '../lib/troopStock';
-import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { mergeCityIdleTroops } from '../lib/buildingUtils';
+import { useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { useNotificationStore } from '../stores/notificationStore';
+import { useLanguage } from '../context/LanguageContext';
 import CyberDataInput from './CyberDataInput';
 import CyberToggle from './CyberToggle';
 import UnitMilitaryIcon from './UnitMilitaryIcon';
@@ -20,7 +23,9 @@ function sanitizeQtyInput(raw) {
   return String(n);
 }
 
-function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, side = 'u', readOnly = false }) {
+function TroopInputGrid({
+  title, counts, onChange, enabled, onToggleEnabled, side = 'u', readOnly = false, t, unitName,
+}) {
   return (
     <fieldset className="battle-sim-fieldset">
       <legend>{title}</legend>
@@ -28,6 +33,7 @@ function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, sid
         {landUnits.map((u) => {
           const key = `${side}-${u.id}`;
           const on = enabled[key] !== false;
+          const label = unitName(u.id, u.name);
           return (
             <div
               key={key}
@@ -35,14 +41,14 @@ function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, sid
             >
               <span className="battle-sim-unit-label">
                 <UnitMilitaryIcon unitId={u.id} size={20} />
-                {u.name}
+                {label}
               </span>
               <CyberToggle
                 checked={on}
                 showX
-                activeLabel="DAHİL"
-                lockedLabel="KİLİTLİ"
-                aria-label={`${u.name} simülasyona dahil`}
+                activeLabel={t('components.battleSimulator.toggleActive')}
+                lockedLabel={t('components.battleSimulator.toggleLocked')}
+                aria-label={t('components.battleSimulator.includeInSim', { name: label })}
                 onChange={(v) => onToggleEnabled?.(key, v)}
               />
               <CyberDataInput
@@ -60,9 +66,14 @@ function TroopInputGrid({ title, counts, onChange, enabled, onToggleEnabled, sid
 }
 
 export default function BattleSimulator({ defaultTargetCity = '' }) {
+  const { t, unitName } = useLanguage();
   const reports = useGameStore((s) => s.reports);
   const activeCityId = useGameStore((s) => s.activeCityId);
-  const idleTroops = useActiveCityIdleTroops();
+  const rawIdleTroops = useGameStore((s) => s.cities[s.activeCityId]?.idleTroops);
+  const idleTroops = useMemo(
+    () => mergeCityIdleTroops(rawIdleTroops ?? []),
+    [rawIdleTroops],
+  );
   const awayMap = useTroopsAwayMap(activeCityId);
 
   const [targetCity, setTargetCity] = useState(defaultTargetCity);
@@ -84,11 +95,32 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
 
   const fillFromGarrison = () => {
     const next = emptyCounts();
-    idleTroops.forEach((t) => {
-      const idle = getTroopStock(t, awayMap).idle;
-      if (idle > 0) next[t.id] = toRawInputNumber(idle);
+    const troopById = Object.fromEntries(idleTroops.map((t) => [t.id, t]));
+    let filled = 0;
+
+    landUnits.forEach((u) => {
+      const troop = troopById[u.id];
+      if (!troop) return;
+      const idle = getTroopStock(troop, awayMap).idle;
+      if (idle > 0) {
+        next[u.id] = String(idle);
+        filled += 1;
+      }
     });
+
+    if (!filled) {
+      useNotificationStore.getState().addToast(t('components.battleSimulator.noIdleTroops'), 'warn');
+      return;
+    }
+
     setAttacker(next);
+    setUnitEnabled((prev) => {
+      const patch = { ...prev };
+      landUnits.forEach((u) => {
+        if (next[u.id]) patch[`atk-${u.id}`] = true;
+      });
+      return patch;
+    });
     setSimulated(false);
     setShowResults(false);
   };
@@ -169,19 +201,25 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
     setShowResults(false);
   };
 
+  const outcomeLabel = result?.outcome === 'win'
+    ? t('components.battleSimulator.outcomeWin')
+    : result?.outcome === 'loss'
+      ? t('components.battleSimulator.outcomeLoss')
+      : t('components.battleSimulator.outcomeUncertain');
+
   return (
     <section className="panel battle-simulator-panel">
-      <h3 className="panel-title">Savaş Simülatörü</h3>
+      <h3 className="panel-title">{t('components.battleSimulator.title')}</h3>
       <p className="battle-sim-hint">
-        Kendi birlikleriniz ve hedef garnizon tahminiyle savaş sonucunu önceden görün.
+        {t('components.battleSimulator.hint')}
       </p>
 
       <label className="battle-sim-target">
-        Hedef şehir
+        {t('components.battleSimulator.targetCity')}
         <input
           type="text"
           className="input-text"
-          placeholder="Örn: Ankara"
+          placeholder={t('components.battleSimulator.targetPlaceholder')}
           value={targetCity}
           onChange={(e) => {
             setTargetCity(e.target.value);
@@ -193,30 +231,34 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
 
       <div className="battle-sim-actions-row">
         <button type="button" className="btn btn-secondary btn-sm" onClick={fillFromGarrison}>
-          Boştaki Askerlerimle Doldur
+          {t('components.battleSimulator.fillGarrison')}
         </button>
         {spyReport && (
           <button type="button" className="btn btn-primary btn-sm" onClick={fillFromSpyReport}>
-            Rapora Göre Simüle Et
+            {t('components.battleSimulator.fillFromReport')}
           </button>
         )}
       </div>
 
       <TroopInputGrid
-        title="Saldıran (siz)"
+        title={t('components.battleSimulator.attackerTitle')}
         side="atk"
         counts={attacker}
         enabled={unitEnabled}
         onToggleEnabled={(id, v) => setUnitEnabled((prev) => ({ ...prev, [id]: v }))}
         onChange={setAttackerVal}
+        t={t}
+        unitName={unitName}
       />
       <TroopInputGrid
-        title="Savunan (düşman)"
+        title={t('components.battleSimulator.defenderTitle')}
         side="def"
         counts={defender}
         enabled={unitEnabled}
         onToggleEnabled={(id, v) => setUnitEnabled((prev) => ({ ...prev, [id]: v }))}
         onChange={setDefenderVal}
+        t={t}
+        unitName={unitName}
       />
 
       <div className="battle-sim-actions-row">
@@ -226,14 +268,14 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
           disabled={!canSimulate}
           onClick={handleSimulate}
         >
-          Simüle Et
+          {t('components.battleSimulator.simulate')}
         </button>
         <button type="button" className="btn btn-secondary" onClick={handleClear}>
-          Temizle
+          {t('components.battleSimulator.clear')}
         </button>
       </div>
       {!canSimulate && (
-        <p className="battle-sim-hint">Simülasyon için her iki tarafta da en az 1 birlik girin.</p>
+        <p className="battle-sim-hint">{t('components.battleSimulator.minUnitsHint')}</p>
       )}
 
       {showResults && result && (
@@ -247,36 +289,36 @@ export default function BattleSimulator({ defaultTargetCity = '' }) {
                 result.outcome === 'loss' && 'battle-sim-outcome-card--loss',
               ].filter(Boolean).join(' ')}
             >
-              <span className="battle-sim-outcome-card__tag">SONUÇ</span>
+              <span className="battle-sim-outcome-card__tag">{t('components.battleSimulator.outcomeTag')}</span>
               <strong className="battle-sim-outcome-card__value" title={result.outcomeLabel}>
-                {result.outcome === 'win' ? 'BAŞARILI' : result.outcome === 'loss' ? 'KAYIP RİSKİ' : 'BELİRSİZ'}
+                {outcomeLabel}
               </strong>
             </article>
             <article className="battle-sim-outcome-card">
-              <span className="battle-sim-outcome-card__tag">ZAFER OLASILIĞI</span>
+              <span className="battle-sim-outcome-card__tag">{t('components.battleSimulator.winChance')}</span>
               <strong className="battle-sim-outcome-card__value">%{result.winProbability}</strong>
             </article>
             <article className="battle-sim-outcome-card battle-sim-outcome-card--loss">
-              <span className="battle-sim-outcome-card__tag">KAYIP (SİZ)</span>
+              <span className="battle-sim-outcome-card__tag">{t('components.battleSimulator.lossYou')}</span>
               <strong className="battle-sim-outcome-card__value">~%{result.attackerLossPct}</strong>
             </article>
             <article className="battle-sim-outcome-card">
-              <span className="battle-sim-outcome-card__tag">KAYIP (DÜŞMAN)</span>
+              <span className="battle-sim-outcome-card__tag">{t('components.battleSimulator.lossEnemy')}</span>
               <strong className="battle-sim-outcome-card__value">~%{result.defenderLossPct}</strong>
             </article>
           </div>
           <dl className="battle-sim-stats">
             <div>
-              <dt>Saldırı gücü</dt>
-              <dd title={String(result.attackerPower)}>{result.attackerPower.toLocaleString('tr-TR')}</dd>
+              <dt>{t('components.battleSimulator.attackPower')}</dt>
+              <dd title={String(result.attackerPower)}>{result.attackerPower.toLocaleString()}</dd>
             </div>
             <div>
-              <dt>Savunma gücü</dt>
-              <dd title={String(result.defenderPower)}>{result.defenderPower.toLocaleString('tr-TR')}</dd>
+              <dt>{t('components.battleSimulator.defensePower')}</dt>
+              <dd title={String(result.defenderPower)}>{result.defenderPower.toLocaleString()}</dd>
             </div>
           </dl>
           <p className="battle-sim-disclaimer">
-            {result.outcomeLabel} — Simülasyon tahminidir; gerçek savaşta teknoloji ve şans faktörleri etkili olabilir.
+            {t('components.battleSimulator.disclaimer', { label: outcomeLabel })}
           </p>
         </div>
       )}

@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
@@ -50,6 +50,7 @@ import ExpeditionTroopAccordion from '../components/ExpeditionTroopAccordion';
 import CustomDropdown from '../components/CustomDropdown';
 import { calcSpyProbeTravelSeconds } from '../utils/spyEngine';
 import {
+  STORE_EMPTY_ARRAY,
   useActiveCityIdleTroops,
   useActiveCityResources,
   useGameStore,
@@ -123,12 +124,24 @@ function useLiveMapCity(mapCity) {
   }, [mapCity, mapCities, playerCities, cities, playerName]);
 }
 
-export default function CityDetailPanel({ city, onClose, initialActionMode = null }) {
+export default function CityDetailPanel({
+  city,
+  onClose,
+  initialActionMode = null,
+  portalRoot = null,
+}) {
   if (!city) return null;
-  return <MapCommandModal city={city} onClose={onClose} initialActionMode={initialActionMode} />;
+  return (
+    <MapCommandModal
+      city={city}
+      onClose={onClose}
+      initialActionMode={initialActionMode}
+      portalRoot={portalRoot}
+    />
+  );
 }
 
-function MapCommandModal({ city, onClose, initialActionMode = null }) {
+function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot = null }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [actionMode, setActionMode] = useState(initialActionMode);
@@ -166,8 +179,8 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
   const playerCities = useGameStore((s) => s.playerCities);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
   const researches = useGameStore((s) => s.researches);
-  const watchlist = useGameStore((s) => s.watchlist ?? []);
-  const reports = useGameStore((s) => s.reports ?? []);
+  const watchlist = useGameStore((s) => s.watchlist ?? STORE_EMPTY_ARRAY);
+  const reports = useGameStore((s) => s.reports ?? STORE_EMPTY_ARRAY);
   const addWatchTarget = useGameStore((s) => s.addWatchTarget);
   const playerName = getCurrentPlayerName();
   const gameStateSlice = useGameStore(
@@ -219,6 +232,15 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
 
   const [cargoDestId, setCargoDestId] = useState('');
   const [attackIntent, setAttackIntent] = useState('raid');
+  const lastTroopTargetRef = useRef('');
+
+  useEffect(() => {
+    if (actionMode !== 'troops') return;
+    const targetName = mapCity.name;
+    if (lastTroopTargetRef.current === targetName) return;
+    lastTroopTargetRef.current = targetName;
+    setAttackIntent('raid');
+  }, [mapCity.name, actionMode]);
 
   useEffect(() => {
     if (actionMode !== 'troops' || !devWarBypass) return;
@@ -234,6 +256,7 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
     setActionMode(initialActionMode ?? null);
     setTroopQty({});
     setSpyQty(1);
+    lastTroopTargetRef.current = '';
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
@@ -245,11 +268,6 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
     const others = playerCities.filter((p) => p.id !== activeCityId);
     setCargoDestId(others[0]?.id ?? '');
   }, [city?.name, activeCityId, playerCities]);
-
-  useEffect(() => {
-    if (actionMode !== 'troops') return;
-    setAttackIntent('raid');
-  }, [mapCity.name, actionMode]);
 
   const selectAttackIntent = (intent) => {
     if (intent === 'conquest' && (!conquestEval.ok || conquestEval.raidOnly)) return;
@@ -405,8 +423,19 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
     { id: 'uranium', label: 'Uranyum', icon: '☢️' },
   ];
 
+  const mountNode = portalRoot
+    ?? (typeof document !== 'undefined' ? document.body : null);
+  if (!mountNode) return null;
+
   return createPortal(
-    <div className="map-command-modal-root map-command-modal-root--portaled" role="presentation">
+    <div
+      className={[
+        'map-command-modal-root',
+        portalRoot ? 'map-command-modal-root--theater' : 'map-command-modal-root--portaled',
+      ].join(' ')}
+      role="presentation"
+      data-map-no-pan
+    >
       <button
         type="button"
         className="map-command-modal__backdrop"
@@ -638,6 +667,13 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
                     attackIntent === 'conquest' && 'expedition-intent-btn--active',
                   ].filter(Boolean).join(' ')}
                   disabled={!conquestEval.ok || conquestEval.raidOnly}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (conquestEval.ok && !conquestEval.raidOnly) {
+                      selectAttackIntent('conquest');
+                    }
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -781,6 +817,6 @@ function MapCommandModal({ city, onClose, initialActionMode = null }) {
         )}
       </div>
     </div>,
-    document.body,
+    mountNode,
   );
 }

@@ -23,6 +23,7 @@ import MapDragPanController from './MapDragPanController';
 import MapMouseCoordinateHud from './MapMouseCoordinateHud';
 import CityDiplomacyBadgeLayer from './CityDiplomacyBadgeLayer';
 import MapFitFlyLayers from './MapFitFlyLayers';
+import MapRestoreViewport from './MapRestoreViewport';
 import MapHexClickPulse from './MapHexClickPulse';
 import MapResizeEffect from './MapResizeEffect';
 import MapCityClickRouter from './MapCityClickRouter';
@@ -37,6 +38,7 @@ function HudBridge() {
 function TurkeyLeafletMap({
   provinces,
   botProvinceNames,
+  ownProvinceNames,
   onEachProvince,
   ideologyView,
   filteredCities,
@@ -58,11 +60,14 @@ function TurkeyLeafletMap({
   activeLng,
   fitBounds,
   flyTarget,
+  restoreViewport,
   isMobile,
   mapPanEnabled = true,
   hudCollapsed,
   onViewportChange,
   onMapClickPulse,
+  isFullscreen = false,
+  showLocHud = true,
 }) {
   const showHud = !isMobile || !hudCollapsed;
   const showCityLabels = mapZoom >= MAP_ZOOM_LABEL_MIN;
@@ -99,19 +104,21 @@ function TurkeyLeafletMap({
       <MapHexClickPulse onMapClick={onMapClickPulse} />
       <MapCityClickRouter
         provinces={provinces}
-        mapCities={filteredCities}
+        mapCities={mapCities}
         playerCities={playerCities}
         onSelectCity={onSelectCity}
         enabled={Boolean(onSelectCity)}
       />
       <MapPanZoomController enabled={mapPanEnabled} />
       <MapDragPanController enabled={mapPanEnabled} />
-      <MapMouseCoordinateHud />
+      <MapMouseCoordinateHud visible={showLocHud && !isFullscreen} />
       <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
       <ProvinceRadarLayer
         provinces={provinces}
         botProvinceNames={botProvinceNames}
+        ownProvinceNames={ownProvinceNames}
         onEachFeature={onEachProvince}
+        layerRef={provinceLayerRef}
       />
       {ideologyLayer}
       <ProvinceHighlightSync
@@ -119,6 +126,8 @@ function TurkeyLeafletMap({
         provinces={provinces}
         playerCities={playerCities}
         layerRef={provinceLayerRef}
+        ownProvinceNames={ownProvinceNames}
+        botProvinceNames={botProvinceNames}
       />
       <MapPlayerDataLinks playerCities={playerCities} />
       <MapBoundsReporter onViewportChange={onViewportChange} />
@@ -137,21 +146,15 @@ function TurkeyLeafletMap({
       />
       <CityDiplomacyBadgeLayer mapCities={filteredCities} visible={showCityLabels} />
       <CityTargetReticleLayer
-        mapCities={filteredCities}
+        mapCities={mapCities}
         playerCities={playerCities}
         playerIdeology={playerIdeology}
         ideologyView={ideologyView}
         zoom={mapZoom}
         onSelectCity={onSelectCity}
       />
-      <CityMapLabelsLayer
-        mapCities={filteredCities}
-        playerCities={playerCities}
-        zoom={mapZoom}
-        onSelectCity={onSelectCity}
-      />
       <CityMarkers
-        mapCities={filteredCities}
+        mapCities={mapCities}
         playerCities={playerCities}
         playerIdeology={playerIdeology}
         ideologyView={ideologyView}
@@ -164,12 +167,20 @@ function TurkeyLeafletMap({
         showPinLabels={showCityLabels}
         markerRenderKey={Math.round((mapZoom ?? 6) * 10)}
       />
+      <CityMapLabelsLayer
+        mapCities={mapCities}
+        playerCities={playerCities}
+        provinces={provinces}
+        zoom={mapZoom}
+        onSelectCity={onSelectCity}
+      />
       <ActiveCityMapFocus lat={activeLat} lng={activeLng} activeCityId={activeCityId} />
       <MapFitFlyLayers
         fitBounds={fitBounds}
         flyTarget={flyTarget}
         onFlyComplete={onFlyComplete}
       />
+      {restoreViewport && <MapRestoreViewport snapshot={restoreViewport} />}
       {showHud && <HudBridge />}
       {activeLat != null && activeLng != null && (
         <MapHudConnector lat={activeLat} lng={activeLng} />

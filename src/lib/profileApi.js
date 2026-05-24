@@ -3,27 +3,40 @@ import { getDisplayName } from './auth';
 import { getCompetitionDef } from './seasonChampionship';
 
 const DEFAULT_SERVER = 'turkiye-1';
+const GENERIC_PLAYER_LABEL = 'Oyuncu';
 
-export function resolveProfileDisplayName(profile, fallback = 'Oyuncu') {
-  const authFallback = fallback && fallback !== 'Oyuncu' ? fallback : null;
+function isUsablePlayerLabel(value) {
+  const trimmed = String(value ?? '').trim();
+  return Boolean(trimmed) && trimmed !== GENERIC_PLAYER_LABEL;
+}
+
+export function resolveProfileDisplayName(profile, fallback = GENERIC_PLAYER_LABEL) {
+  const authFallback = isUsablePlayerLabel(fallback) ? fallback.trim() : null;
   if (!profile) return authFallback || fallback;
   const display = profile.display_name?.trim();
-  if (display && display !== 'Oyuncu') return display;
+  if (isUsablePlayerLabel(display)) return display;
   const player = profile.player_name?.trim();
-  if (player && player !== 'Oyuncu') return player;
-  return authFallback || display || fallback;
+  if (isUsablePlayerLabel(player)) return player;
+  return authFallback || (isUsablePlayerLabel(display) ? display : null) || fallback;
 }
 
 /** Profil başlığı — DB + Supabase auth birleşik. */
 export function resolvePlayerDisplayName({ profile, user, profileDisplayName, playerName } = {}) {
-  if (profileDisplayName?.trim() && profileDisplayName.trim() !== 'Oyuncu') {
-    return profileDisplayName.trim();
+  const authName = getDisplayName(user);
+  const candidates = [
+    profileDisplayName,
+    profile?.display_name,
+    profile?.player_name,
+    playerName,
+    authName,
+  ];
+  for (const candidate of candidates) {
+    if (isUsablePlayerLabel(candidate)) return String(candidate).trim();
   }
-  const fromProfile = resolveProfileDisplayName(profile, getDisplayName(user));
-  if (fromProfile && fromProfile !== 'Oyuncu') return fromProfile;
-  if (playerName?.trim() && playerName.trim() !== 'Oyuncu') return playerName.trim();
-  const fromAuth = getDisplayName(user);
-  return fromAuth !== 'Oyuncu' ? fromAuth : (playerName?.trim() || 'Oyuncu');
+  if (isUsablePlayerLabel(authName)) return authName;
+  const fromProfile = resolveProfileDisplayName(profile, authName);
+  if (isUsablePlayerLabel(fromProfile)) return fromProfile;
+  return playerName?.trim() || authName || GENERIC_PLAYER_LABEL;
 }
 
 export function resolveProfileIsAdmin(profile, user = null) {

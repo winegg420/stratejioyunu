@@ -1,5 +1,6 @@
 import { useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { isMapClickSuppressed } from './mapPanClick';
 import { findMapCityNearPointer } from './mapCityClick';
 import { findProvinceAtLatLng, buildMapTargetFromProvince } from './mapProvincePick';
 
@@ -19,7 +20,7 @@ export default function MapCityClickRouter({
   useMapEvents({
     click(e) {
       if (!enabled) return;
-      if (map._suppressMapClickUntil && Date.now() < map._suppressMapClickUntil) return;
+      if (isMapClickSuppressed(map)) return;
 
       const zoom = map.getZoom();
       const radius = Math.max(32, 58 - (zoom - 5) * 6);

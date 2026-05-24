@@ -31,10 +31,15 @@
 }
 
 .terminal-dock-logs:not(.terminal-dock-logs--hidden) {
-  max-height: min(28vh, 220px);
+  max-height: min(22vh, 180px);
   overflow-y: auto;
   background: #111a11;
   border-bottom: 1px solid rgba(74, 124, 89, 0.15);
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden):has(.terminal-log-panel--peace):not(:has(.terminal-log-panel--queue)) {
+  max-height: min(4.75rem, 12vh);
+  overflow: hidden;
 }
 
 .terminal-dock-logs__portals {

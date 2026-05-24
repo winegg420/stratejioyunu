@@ -15,6 +15,7 @@ export default function CyberDataInput({
   value,
   onChange,
   onValueChange,
+  onBlur,
   onMax,
   min = 0,
   max,
@@ -51,7 +52,7 @@ export default function CyberDataInput({
     focusedRef.current = true;
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e) => {
     focusedRef.current = false;
     const parentVal = toDisplayValue(value);
     if (draft !== parentVal) {
@@ -61,6 +62,7 @@ export default function CyberDataInput({
       });
     }
     setDraft(toDisplayValue(value ?? draft));
+    onBlur?.(e);
   };
 
   const handleMaxClick = () => {

@@ -141,13 +141,15 @@ export default function Trade() {
                   key={id}
                   className={`trade-resource-row${over ? ' trade-resource-row--overflow' : ''}`}
                 >
-                  <span className="trade-res-label">
-                    {res.icon} {getTradeDepotLabel(id, lang)}
-                  </span>
-                  <span className="trade-res-stock">
-                    Stok: {res.current.toLocaleString('tr-TR')}
-                    {res.max != null && ` / ${res.max.toLocaleString('tr-TR')}`}
-                  </span>
+                  <div className="trade-resource-row__head">
+                    <span className="trade-res-label">
+                      {res.icon} {getTradeDepotLabel(id, lang)}
+                    </span>
+                    <span className="trade-res-stock">
+                      Stok: {res.current.toLocaleString('tr-TR')}
+                      {res.max != null && ` / ${res.max.toLocaleString('tr-TR')}`}
+                    </span>
+                  </div>
                   <div className="trade-res-inputs">
                     <input
                       type="number"
@@ -157,15 +159,20 @@ export default function Trade() {
                       value={amounts[id] || 0}
                       onChange={(e) => setAmount(id, e.target.value)}
                     />
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm trade-half-btn"
-                      onClick={() => halveResource(id)}
-                      title="Mevcut miktarın yarısını gönder"
-                      aria-label="Mevcut miktarın yarısını gönder"
+                    <span
+                      className="trade-half-btn-wrap"
+                      data-tooltip="Mevcut stokun yarısını konvoya yükle"
                     >
-                      1/2
-                    </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm trade-half-btn"
+                        onClick={() => halveResource(id)}
+                        title="Mevcut stokun yarısını konvoya yükle"
+                        aria-label="Mevcut stokun yarısını konvoya yükle"
+                      >
+                        1/2
+                      </button>
+                    </span>
                   </div>
                   {over && (
                     <p className="trade-overflow-warn" role="alert">

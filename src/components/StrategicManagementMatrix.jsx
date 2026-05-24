@@ -1,6 +1,6 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { filterActiveExpeditions, formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { formatHappinessLabel } from '../lib/happinessSystem';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
 import { formatHourlyProduction, getHourlyAmount } from '../lib/hourlyProduction';
@@ -121,12 +121,23 @@ function ProductionRow({ resource, cityReady, t, resourceLabel }) {
 export default function StrategicManagementMatrix() {
   const { t, lang, resourceLabel } = useLanguage();
   const [taxSliderOpen, setTaxSliderOpen] = useState(false);
+  const [taxDraft, setTaxDraft] = useState(15);
+  const [taxDirty, setTaxDirty] = useState(false);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => s.cities[activeCityId]);
   const expeditions = useGameStore((s) => s.expeditions);
+  const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
   const setCityTaxRate = useGameStore((s) => s.setCityTaxRate);
+
+  const savedTaxRate = city?.taxRate ?? 15;
+
+  useEffect(() => {
+    if (!taxSliderOpen) return;
+    setTaxDraft(savedTaxRate);
+    setTaxDirty(false);
+  }, [taxSliderOpen, activeCityId, savedTaxRate]);
 
   const activeCity = playerCities.find((c) => c.id === activeCityId);
   const resources = city?.resources ?? [];
@@ -148,8 +159,16 @@ export default function StrategicManagementMatrix() {
   const activeBuild = city?.constructionQueue?.find((q) => !q.queued);
   const queuedBuilds = city?.constructionQueue?.filter((q) => q.queued).length ?? 0;
   const buildRemaining = activeBuild ? remainingFromEndsAt(activeBuild.endsAt, now) : 0;
-  const outgoing = expeditions.filter((e) => e.direction === 'outgoing').length;
-  const incoming = expeditions.filter((e) => e.direction === 'returning').length;
+  const activeExpeditions = useMemo(
+    () => filterActiveExpeditions(expeditions ?? [], now),
+    [expeditions, now, mapRouteSyncRev],
+  );
+  const outgoing = activeExpeditions.filter(
+    (e) => e.direction === 'outgoing' && !e.recalled,
+  ).length;
+  const incoming = activeExpeditions.filter(
+    (e) => e.direction === 'returning' || e.recalled,
+  ).length;
   const cyberFx = (city?.cyberEffects ?? []).filter((fx) => !fx.endsAt || fx.endsAt > now).length;
   const cityReady = Boolean(city && resources.length > 0);
   const productionRows = PRIMARY_PRODUCTION_IDS.map((id) => {
@@ -241,9 +260,16 @@ export default function StrategicManagementMatrix() {
             </div>
             <div className="strat-ops-chip">
               <span className="strat-ops-chip__label">{t('pages.home.stratMatrix.operations')}</span>
-              <strong>
-                ↗ {outgoing} · ↙ {incoming}
+              <strong className="strat-ops-chip__counts">
+                <span title={t('pages.home.stratMatrix.outgoingTip')}>
+                  {t('pages.home.stratMatrix.outgoingShort', { count: outgoing })}
+                </span>
+                <span className="strat-ops-chip__sep" aria-hidden="true">·</span>
+                <span title={t('pages.home.stratMatrix.incomingTip')}>
+                  {t('pages.home.stratMatrix.incomingShort', { count: incoming })}
+                </span>
               </strong>
+              <span className="strat-ops-chip__meta">{t('pages.home.stratMatrix.opsLegend')}</span>
               {cyberFx > 0 && (
                 <span className="strat-ops-chip__meta strat-ops-chip__meta--alert">
                   {t('pages.home.stratMatrix.cyberPressure', { count: cyberFx })}
@@ -278,7 +304,7 @@ export default function StrategicManagementMatrix() {
           aria-controls="strat-tax-slider"
         >
           <span className="strat-tax__label">{t('pages.home.stratMatrix.taxRate')}</span>
-          <strong className="strat-tax__value font-hud-data">%{city?.taxRate ?? 15}</strong>
+          <strong className="strat-tax__value font-hud-data">%{savedTaxRate}</strong>
         </button>
         {taxSliderOpen && (
           <div id="strat-tax-slider" className="strat-tax__slider-wrap">
@@ -288,13 +314,36 @@ export default function StrategicManagementMatrix() {
               min="0"
               max="30"
               step="1"
-              value={city?.taxRate ?? 15}
-              onChange={(e) => setCityTaxRate(Number(e.target.value))}
+              value={taxDraft}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                setTaxDraft(next);
+                setTaxDirty(next !== savedTaxRate);
+              }}
               aria-label={t('pages.home.stratMatrix.taxAria')}
             />
             <div className="strat-tax__scale" aria-hidden="true">
               <span>0%</span>
+              <span className="strat-tax__preview font-hud-data">%{taxDraft}</span>
               <span>30%</span>
+            </div>
+            <div className="strat-tax__actions">
+              <button
+                type="button"
+                className="btn btn-hud-primary btn-sm"
+                disabled={!taxDirty}
+                onClick={() => {
+                  setCityTaxRate(taxDraft);
+                  setTaxDirty(false);
+                }}
+              >
+                {t('pages.home.stratMatrix.taxApply')}
+              </button>
+              {taxDirty && (
+                <span className="strat-tax__pending" role="status">
+                  {t('pages.home.stratMatrix.taxPending')}
+                </span>
+              )}
             </div>
           </div>
         )}

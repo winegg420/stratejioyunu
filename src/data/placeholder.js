@@ -1,7 +1,10 @@
 ﻿import { applyUnitDisplayList, getUnitDisplayName } from './unitCatalog';
 import { createResearchTemplates } from './researchCatalog';
 
+/** HUD / marka — büyük harf terminal stili */
 export const GAME_NAME = 'STRATEJİ OYUNU';
+/** Tarayıcı sekmesi ve PWA — okunabilir ad (geçici) */
+export const GAME_TAB_TITLE = 'Strateji Oyunu';
 export const SERVER_NAME = 'Türkiye-1 Sezon';
 export const CITY_NAME = 'İzmir';
 export const CITY_TYPE = 'Kıyı Şehri';

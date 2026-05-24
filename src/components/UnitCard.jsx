@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { toRawInputNumber } from '../lib/formatNumber';
 import { flushGameSave } from '../lib/gameActionSync';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
@@ -6,11 +7,14 @@ import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
 import { canAffordPopulation, getUnitPopulationCost } from '../lib/populationUtils';
 import { resolveUnitInfoPayload } from '../lib/contentInfoResolver';
 import TroopStockLabel from './TroopStockLabel';
+import CostParts from './CostParts';
 import CyberDataInput from './CyberDataInput';
 import ProcessingActionButton from './ProcessingActionButton';
 import UnitMilitaryIcon from './UnitMilitaryIcon';
+import { formatReadableDuration, parseTimeToSeconds } from '../lib/gameUtils';
 
 export default function UnitCard({ unit, awayMap, iconDomain }) {
+  const { t, lang } = useLanguage();
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const activeCityId = useGameStore((s) => s.activeCityId);
@@ -62,6 +66,9 @@ export default function UnitCard({ unit, awayMap, iconDomain }) {
   };
 
   const openInfo = () => openContentInfo(resolveUnitInfoPayload(unit));
+  const timeLabel = unit.time && unit.time !== '—'
+    ? formatReadableDuration(parseTimeToSeconds(unit.time) || 0, lang)
+    : null;
 
   return (
     <article className="card unit-card content-card--slim">
@@ -71,7 +78,7 @@ export default function UnitCard({ unit, awayMap, iconDomain }) {
           type="button"
           className="content-card__intel-hit"
           onClick={openInfo}
-          aria-label={`${unit.name} ansiklopedi`}
+          aria-label={t('components.unitCard.encyclopediaAria', { name: unit.name })}
         >
           <div className="card-visual unit-card-visual">
             <UnitMilitaryIcon
@@ -92,9 +99,10 @@ export default function UnitCard({ unit, awayMap, iconDomain }) {
             </span>
           </div>
         </button>
-        <p className="content-card__meta">
-          Birim maliyeti: <strong>{unit.cost}</strong>
-          {unit.time && unit.time !== '—' ? ` · ${unit.time}` : ''}
+        <p className="content-card__meta unit-card__cost-row">
+          <span className="unit-card__cost-label">{t('components.unitCard.unitCost')}</span>
+          <CostParts costStr={unit.cost} className="unit-card__cost-parts" />
+          {timeLabel ? <span className="unit-card__time"> · {timeLabel}</span> : null}
         </p>
       </div>
       <div className="card-actions unit-card-actions">
@@ -112,7 +120,7 @@ export default function UnitCard({ unit, awayMap, iconDomain }) {
           disabled={!canProduce || isBusy}
           onClick={() => runProduction(false)}
         >
-          ÜRET
+          {t('components.unitCard.produce')}
         </ProcessingActionButton>
         <ProcessingActionButton
           type="button"
@@ -121,7 +129,7 @@ export default function UnitCard({ unit, awayMap, iconDomain }) {
           disabled={!canProduce || isBusy}
           onClick={() => runProduction(true)}
         >
-          Kuyruğa Ekle
+          {t('components.unitCard.queueAdd')}
         </ProcessingActionButton>
       </div>
     </article>

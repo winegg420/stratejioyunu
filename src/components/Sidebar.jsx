@@ -10,7 +10,12 @@ import NavAttackAlert from './NavAttackAlert';
 import NavExpeditionCount from './NavExpeditionCount';
 import SystemLockedModal from './SystemLockedModal';
 import SidebarActiveBeam from './SidebarActiveBeam';
-import { useActiveExpeditionCount, useReportsNavBadge, useUnderAttack } from '../stores/gameStore';
+import {
+  useActiveExpeditionCount,
+  useActiveIntelOperationCount,
+  useReportsNavBadge,
+  useUnderAttack,
+} from '../stores/gameStore';
 
 export default function Sidebar() {
   const { t } = useLanguage();
@@ -19,6 +24,7 @@ export default function Sidebar() {
   const reportsBadge = useReportsNavBadge();
   const underAttack = useUnderAttack();
   const expeditionCount = useActiveExpeditionCount();
+  const intelOpCount = useActiveIntelOperationCount();
   const city = useGameStore((s) => s.cities[activeCityId]);
   const activeCity = playerCities.find((c) => c.id === activeCityId);
   const progression = getProgressionState(city);
@@ -88,7 +94,7 @@ export default function Sidebar() {
                 <NavLink
                   to={item.path}
                   end={item.path === '/'}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                 >
                   <span className="nav-icon">
                     {item.icon}
@@ -101,17 +107,23 @@ export default function Sidebar() {
                         📦
                       </span>
                     )}
+                    {item.path === '/seferler' && (
+                      <>
+                        <NavExpeditionCount
+                          count={expeditionCount}
+                          title={t('navBadge.expeditionCount', { count: expeditionCount })}
+                        />
+                        <NavAttackAlert show={underAttack} />
+                      </>
+                    )}
+                    {item.path === '/istihbarat' && (
+                      <NavExpeditionCount
+                        count={intelOpCount}
+                        title={t('navBadge.intelOpCount', { count: intelOpCount })}
+                      />
+                    )}
                   </span>
                   <span className="nav-label">{label}</span>
-                  {item.path === '/seferler' && (
-                    <>
-                      <NavExpeditionCount
-                        count={expeditionCount}
-                        title={`${expeditionCount} aktif operasyon`}
-                      />
-                      <NavAttackAlert show={underAttack} />
-                    </>
-                  )}
                   {item.path === '/raporlar' && <NavBadge show={reportsBadge} />}
                   {item.coastal && (
                     <span className="nav-badge nav-badge--coastal">{t('navBadge.coastal')}</span>

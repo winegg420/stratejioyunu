@@ -14,7 +14,7 @@ import { useNotificationStore } from '../stores/notificationStore';
 
 export default function Messages() {
   const { playerName, session } = useAuth();
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const profileDisplayName = useGameStore((s) => s.profileDisplayName);
   const profilePlayerName = useGameStore((s) => s.profilePlayerName);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
@@ -60,10 +60,17 @@ export default function Messages() {
   const handleSend = (e) => {
     e.preventDefault();
     if (!toPresident.trim() || !subject.trim() || !body.trim()) {
-      addToast('Tüm resmi alanlar doldurulmalıdır.', 'warn');
+      addToast(t('pages.messages.sendValidation'), 'warn');
       return;
     }
-    addToast('Resmi yazışma şifreli kanala iletildi (simülasyon).', 'info');
+    const recipient = toPresident.trim();
+    const sentMsg = t('pages.messages.sendSuccess', { recipient });
+    addToast(
+      sentMsg.includes('pages.messages.sendSuccess')
+        ? `Resmi yazışma ${recipient} adresine iletildi.`
+        : sentMsg,
+      'success',
+    );
     setComposeOpen(false);
     setToPresident('');
     setSubject('');

@@ -45,7 +45,7 @@ function StateMailComposeForm({
             type="text"
             value={toPresident}
             onChange={(e) => setToPresident(e.target.value)}
-            placeholder="President_Alpha"
+            placeholder="Hedef Başkan / lider adı"
             autoComplete="off"
           />
         </label>

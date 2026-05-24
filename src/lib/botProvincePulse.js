@@ -1,5 +1,38 @@
 import { getPlayerProvinceNames } from './botProvinceAssignment';
-import { resolveCityProvinceName } from '../map/cityProvinceMatch';
+import { findProvinceFeature, resolveCityProvinceName } from '../map/cityProvinceMatch';
+import { getOwnProvinceStyle, getProvinceStyle } from '../map/mapUtils';
+
+/** Oyuncu kontrolündeki il adları (shapeName) */
+export function buildOwnProvinceNameSet(mapCities, playerCities, provinces = null) {
+  const names = new Set(getPlayerProvinceNames(mapCities, playerCities));
+
+  for (const pc of playerCities ?? []) {
+    const province = resolveCityProvinceName({ name: pc.name, lat: pc.lat, lng: pc.lng }, playerCities)
+      ?? pc.provinceName;
+    if (province) names.add(province);
+  }
+
+  if (provinces?.features?.length) {
+    for (const pc of playerCities ?? []) {
+      const feature = findProvinceFeature(
+        provinces,
+        { name: pc.name, lat: pc.lat, lng: pc.lng, provinceName: pc.provinceName },
+        playerCities,
+      );
+      const shapeName = feature?.properties?.shapeName;
+      if (shapeName) names.add(shapeName);
+    }
+  }
+
+  return names;
+}
+
+/** İl poligonu temel stili — önce kendi (yeşil), sonra bot (kırmızı) */
+export function resolveProvinceLayerStyle(provinceName, ownNames, botNames) {
+  if (provinceName && ownNames?.has(provinceName)) return getOwnProvinceStyle();
+  if (provinceName && botNames?.has(provinceName)) return getBotProvinceStyle();
+  return getProvinceStyle();
+}
 
 /** Bot kontrolündeki il poligon adları (shapeName) — pulse katmanı */
 export function buildBotProvinceNameSet(mapCities, playerCities, provinces = null) {
@@ -12,7 +45,7 @@ export function buildBotProvinceNameSet(mapCities, playerCities, provinces = nul
   }
 
   if (provinces?.features?.length) {
-    const playerProvinces = getPlayerProvinceNames(mapCities, playerCities);
+    const playerProvinces = buildOwnProvinceNameSet(mapCities, playerCities, provinces);
     for (const feature of provinces.features) {
       const shapeName = feature.properties?.shapeName;
       if (!shapeName || playerProvinces.has(shapeName)) continue;

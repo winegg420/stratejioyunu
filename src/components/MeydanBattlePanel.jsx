@@ -75,7 +75,7 @@ export default function MeydanBattlePanel() {
           </label>
           <button
             type="button"
-            className="btn btn-danger btn-sm meydan-battle-declare-btn"
+            className="btn btn-hud-secondary btn-sm meydan-battle-declare-btn"
             disabled={!targetPick}
             onClick={handleDeclare}
           >

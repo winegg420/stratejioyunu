@@ -10,7 +10,7 @@ import {
   signUp,
 } from '../lib/auth';
 import { stopSyncPolling } from '../lib/supabaseSync';
-import { fetchUserProfile, resolveProfileDisplayName, resolveProfileIsAdmin } from '../lib/profileApi';
+import { fetchUserProfile, resolvePlayerDisplayName, resolveProfileIsAdmin } from '../lib/profileApi';
 import { useGameStore } from '../stores/gameStore';
 import { PAGE_SESSION_TIMEOUT_MS } from '../components/PageSessionGate';
 import { refreshSessionIfNeeded, startSessionKeeper } from '../lib/sessionKeeper';
@@ -62,11 +62,17 @@ export function AuthProvider({ children }) {
   const hydratedUserRef = useRef(null);
 
   const applyProfileIdentity = useCallback((user, profile) => {
-    const displayName = profile
-      ? resolveProfileDisplayName(profile, getDisplayName(user))
-      : getDisplayName(user);
+    const displayName = resolvePlayerDisplayName({
+      profile,
+      user,
+      playerName: getDisplayName(user),
+    });
     setPlayerName(displayName);
     syncPlayerIdentityKeys(displayName, profile?.player_name);
+    useGameStore.setState({
+      profileDisplayName: displayName,
+      profilePlayerName: profile?.player_name?.trim() || displayName,
+    });
     const isAdmin = resolveProfileIsAdmin(profile, user);
     if (isAdmin) {
       useGameStore.setState({ isAdminUser: true });
@@ -80,9 +86,11 @@ export function AuthProvider({ children }) {
     const profile = await fetchUserProfile(user.id);
     applyProfileIdentity(user, profile);
 
-    const fallbackName = profile
-      ? resolveProfileDisplayName(profile, getDisplayName(user))
-      : getDisplayName(user);
+    const fallbackName = resolvePlayerDisplayName({
+      profile,
+      user,
+      playerName: getDisplayName(user),
+    });
     const result = await useGameStore.getState().hydrateFromSupabase(user.id, fallbackName);
     if (result?.ok) {
       hydratedUserRef.current = user.id;

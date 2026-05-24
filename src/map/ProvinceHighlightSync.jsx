@@ -3,11 +3,12 @@ import { useMap } from 'react-leaflet';
 import { findProvinceFeature } from './cityProvinceMatch';
 import { provinceCodesMatch } from './mapOwnership';
 import { getProvinceStyle } from './mapUtils';
+import { resolveProvinceLayerStyle } from '../lib/botProvincePulse';
 
 const ACTIVE_STYLE = {
-  fillColor: '#4a7c59',
-  fillOpacity: 0.22,
-  color: '#4a7c59',
+  fillColor: '#22ff88',
+  fillOpacity: 0.28,
+  color: '#22ff88',
   weight: 3.2,
   opacity: 1,
   lineJoin: 'round',
@@ -20,13 +21,17 @@ export default function ProvinceHighlightSync({
   provinces,
   playerCities,
   layerRef,
+  ownProvinceNames,
+  botProvinceNames,
 }) {
   const map = useMap();
   const activeLayerRef = useRef(null);
 
   useEffect(() => {
     const resetLayer = (layer) => {
-      if (layer?.setStyle) layer.setStyle(getProvinceStyle());
+      if (!layer?.setStyle) return;
+      const name = layer.feature?.properties?.shapeName;
+      layer.setStyle(resolveProvinceLayerStyle(name, ownProvinceNames, botProvinceNames));
     };
 
     if (activeLayerRef.current) {
@@ -67,14 +72,17 @@ export default function ProvinceHighlightSync({
         activeLayerRef.current = null;
       }
     };
-  }, [map, activeCity, provinces, playerCities, layerRef]);
+  }, [map, activeCity, provinces, playerCities, layerRef, ownProvinceNames, botProvinceNames]);
 
   return null;
 }
 
-export function setActiveProvinceLayer(layer, activeLayerRef, resetStyle = getProvinceStyle) {
+export function setActiveProvinceLayer(layer, activeLayerRef, resetStyleForLayer = getProvinceStyle) {
   if (activeLayerRef.current && activeLayerRef.current !== layer) {
-    activeLayerRef.current.setStyle(resetStyle());
+    const prevStyle = typeof resetStyleForLayer === 'function'
+      ? resetStyleForLayer(activeLayerRef.current)
+      : resetStyleForLayer();
+    activeLayerRef.current.setStyle(prevStyle);
   }
   activeLayerRef.current = layer;
   if (layer) {

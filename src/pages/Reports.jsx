@@ -6,7 +6,7 @@ import ReportFilters from '../components/ReportFilters';
 import ReportDetailModal from '../components/ReportDetailModal';
 import CyberToggle from '../components/CyberToggle';
 import { isOperationReport } from '../data/intelOperationsCatalog';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import PageSessionGate from '../components/PageSessionGate';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -15,6 +15,8 @@ export default function Reports() {
   const reports = useGameStore((s) => s.reports);
   const gameHydrating = useGameStore((s) => s.gameHydrating);
   const refreshReportsFromServer = useGameStore((s) => s.refreshReportsFromServer);
+  const reconcileReportsFromHistory = useGameStore((s) => s.reconcileReportsFromHistory);
+  const pastExpeditions = useGameStore((s) => s.pastExpeditions ?? STORE_EMPTY_ARRAY);
   const markReportsRead = useGameStore((s) => s.markReportsRead);
   const deleteReports = useGameStore((s) => s.deleteReports);
   const [filter, setFilter] = useState('all');
@@ -29,10 +31,19 @@ export default function Reports() {
     refreshReportsFromServer()
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setReportsLoading(false);
+        if (!cancelled) {
+          reconcileReportsFromHistory();
+          setReportsLoading(false);
+        }
       });
     return () => { cancelled = true; };
-  }, [gameHydrating, refreshReportsFromServer]);
+  }, [gameHydrating, refreshReportsFromServer, reconcileReportsFromHistory]);
+
+  useEffect(() => {
+    if (gameHydrating || reports.length > 0 || !pastExpeditions.length) return undefined;
+    reconcileReportsFromHistory();
+    return undefined;
+  }, [gameHydrating, reports.length, pastExpeditions.length, reconcileReportsFromHistory]);
 
   const counts = useMemo(
     () => ({

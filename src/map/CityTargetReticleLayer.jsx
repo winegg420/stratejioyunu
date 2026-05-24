@@ -52,7 +52,6 @@ export default function CityTargetReticleLayer({
   onSelectCity,
 }) {
   const playerName = getCurrentPlayerName();
-  if (zoom < MAP_ZOOM_LABEL_MIN) return null;
   const targets = useMemo(() => {
     const own = new Set(playerCities.map((c) => c.name));
     const list = [];
@@ -64,6 +63,8 @@ export default function CityTargetReticleLayer({
     }
     return list;
   }, [mapCities, playerCities]);
+
+  if (zoom < MAP_ZOOM_LABEL_MIN) return null;
 
   return (
     <>
@@ -83,15 +84,8 @@ export default function CityTargetReticleLayer({
             if (city.status === 'empty') return NEUTRAL;
             return HOSTILE;
           })()}
-          interactive={Boolean(onSelectCity)}
+          interactive={false}
           zIndexOffset={950}
-          bubblingMouseEvents={false}
-          eventHandlers={onSelectCity ? {
-            click: (e) => {
-              L.DomEvent.stopPropagation(e);
-              onSelectCity(city);
-            },
-          } : undefined}
         />
       ))}
     </>

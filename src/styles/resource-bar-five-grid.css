@@ -134,18 +134,23 @@
   box-shadow: none !important;
 }
 
-.resource-bar--stacked .resource-bar-diamond {
-  display: inline-flex !important;
+.resource-bar--stacked .resources-row--single .resource-bar-diamond:not(.resource-bar-diamond--dock) {
+  display: flex !important;
+  flex: 0 0 auto !important;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.05rem;
-  padding: 0.2rem 0.45rem !important;
-  border: 1px solid rgba(201, 168, 76, 0.35);
-  border-radius: 4px;
+  padding: 0.45rem 0.5rem !important;
+  border-left: 1px solid rgba(201, 168, 76, 0.28);
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  border-radius: 0;
   background: rgba(201, 168, 76, 0.08);
   cursor: help;
-  min-width: 2.75rem;
+  min-width: 3.25rem;
+  align-self: stretch;
 }
 
 .resource-bar--stacked .resource-bar-diamond__icon {

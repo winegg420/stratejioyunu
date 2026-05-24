@@ -111,19 +111,33 @@
 .expeditions-page .meydan-battle-declare-btn {
   width: auto !important;
   min-width: 0;
-  max-width: 20rem;
+  max-width: 16rem;
   align-self: flex-start;
   flex: 0 0 auto;
-  padding: 0.4rem 0.85rem !important;
+  padding: 0.38rem 0.75rem !important;
   white-space: normal;
   text-align: center;
-  font-size: 0.72rem !important;
-  letter-spacing: 0.06em;
-  box-shadow: 0 0 8px rgba(255, 90, 70, 0.35) !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0.05em;
+  background: rgba(28, 12, 12, 0.75) !important;
+  background-image: none !important;
+  border: 1px solid rgba(248, 113, 113, 0.45) !important;
+  color: #fecaca !important;
+  box-shadow: none !important;
 }
 
 .expeditions-page .meydan-battle-declare-btn:hover:not(:disabled) {
-  box-shadow: 0 0 12px rgba(255, 90, 70, 0.45) !important;
+  background: rgba(60, 16, 16, 0.9) !important;
+  border-color: rgba(248, 113, 113, 0.65) !important;
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.2) !important;
+}
+
+.expeditions-page .alliance-ops-start-btn {
+  width: 100%;
+  max-width: 22rem;
+  margin-top: 0.35rem;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em;
 }
 
 .expeditions-page-header .page-action {

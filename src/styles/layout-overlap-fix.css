@@ -95,9 +95,44 @@
   font-size: 0.54rem !important;
   line-height: 1.2 !important;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   max-width: 100%;
+  position: relative;
+  cursor: help;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.res-empire-badge[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  min-width: 10rem;
+  max-width: 14rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(74, 124, 89, 0.55);
+  border-radius: 2px;
+  background: rgba(10, 18, 12, 0.96);
+  color: #a7f3d0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 40;
+}
+
+.res-empire-badge[data-tooltip]:hover::after,
+.res-empire-badge[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .resource-item .res-bar--command {
@@ -138,13 +173,17 @@
   min-width: 10rem;
 }
 
-/* ── Dil + saat — bayraklar saat kutusunun solunda, çakışmasın ── */
+/* ── Dil + saat — sunucu saati üstte, bayraklar altta ── */
 .resource-bar-lang-clock {
   display: inline-flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   align-items: center !important;
-  gap: 0.65rem !important;
+  gap: 0.28rem !important;
   flex-shrink: 0;
+}
+
+.resource-bar-lang-clock--stacked {
+  justify-content: center !important;
 }
 
 .resource-bar-lang-clock .lang-switcher--bar {
@@ -180,9 +219,45 @@
   letter-spacing: 0.04em;
 }
 
-.resource-bar-lang-clock .server-time-clock {
-  flex-shrink: 0;
-  margin: 0 !important;
+.resource-bar--stacked .resource-item--money,
+.resource-bar--stacked .resource-item--money .res-bar-cell__value,
+.resource-bar--stacked .resource-item--money .res-bar-cell__foot {
+  overflow: visible !important;
+}
+
+.resource-bar-diamond--dock {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.28rem !important;
+  padding: 0.2rem 0.45rem !important;
+  border: 1px solid rgba(201, 168, 76, 0.4) !important;
+  border-radius: 4px !important;
+  background: rgba(201, 168, 76, 0.1) !important;
+  cursor: help !important;
+  flex-shrink: 0 !important;
+  min-width: 0 !important;
+}
+
+.resource-bar-diamond--dock .resource-bar-diamond__icon {
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+}
+
+.resource-bar-diamond--dock .resource-bar-diamond__value {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: #c9a84c !important;
+  letter-spacing: 0.04em !important;
+}
+
+.resource-bar-diamond--dock .resource-bar-diamond__label {
+  display: none !important;
+}
+
+.resource-bar-lang-clock .resource-bar-diamond--dock {
+  margin: 0.05rem 0 !important;
 }
 
 /* ── Sağ blok: dil + saat + oyuncu — sıkışmayı önle ── */

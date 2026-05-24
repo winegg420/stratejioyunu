@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import HistoryBookPanel from '../components/HistoryBookPanel';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatIdeologyLabel } from '../lib/ideologySystem';
 import { formatLoyaltyScore } from '../lib/loyaltySystem';
 import { fetchSeasonLeaderboardRows } from '../lib/profileApi';
@@ -114,11 +114,12 @@ export default function SeasonQuests() {
   const dailyQuestFlags = useGameStore((s) => s.dailyQuestFlags);
   const researches = useGameStore((s) => s.researches);
   const activeCityHappiness = useGameStore((s) => s.cities[s.activeCityId]?.happiness);
-  const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? []);
-  const watchlist = useGameStore((s) => s.watchlist ?? []);
+  const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? STORE_EMPTY_ARRAY);
+  const watchlist = useGameStore((s) => s.watchlist ?? STORE_EMPTY_ARRAY);
   const claimDailyQuestReward = useGameStore((s) => s.claimDailyQuestReward);
   const claimSeasonPrize = useGameStore((s) => s.claimSeasonPrize);
   const removeWatchTarget = useGameStore((s) => s.removeWatchTarget);
+  const refreshSeasonQuestsUi = useGameStore((s) => s.refreshSeasonQuestsUi);
 
   const dailyQuestCtx = useMemo(
     () => buildDailyQuestContext({
@@ -131,6 +132,10 @@ export default function SeasonQuests() {
     }),
     [activeCityId, cities, seasonStats, dailyQuestFlags, researches, activeCityHappiness],
   );
+
+  useEffect(() => {
+    refreshSeasonQuestsUi();
+  }, [refreshSeasonQuestsUi, dailyQuestCtx]);
 
   return (
     <div className="page season-quests-page page--console">
@@ -200,11 +205,9 @@ export default function SeasonQuests() {
                 .join(' ')}
             >
               <h4>{q.title}</h4>
-              {progressLine && (
-                <p className="daily-quest-progress font-hud-data" role="status">
-                  {progressLine}
-                </p>
-              )}
+              <p className="daily-quest-progress font-hud-data" role="status">
+                {progressLine ?? (lang === 'en' ? 'Progress pending…' : 'İlerleme hesaplanıyor…')}
+              </p>
               <p className="hint">{q.hint}</p>
               {q.completed && !q.claimed && (
                 <button

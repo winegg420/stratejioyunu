@@ -10,11 +10,16 @@ import MilitaryEmptyState from '../components/MilitaryEmptyState';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import IntelOpActionButton from '../components/IntelOpActionButton';
 import IntelNoAgentsAlert from '../components/IntelNoAgentsAlert';
+import IntelConfirmDialog from '../components/IntelConfirmDialog';
 import CustomDropdown from '../components/CustomDropdown';
 import {
   AGENT_OPERATIONS,
   KBRN_CHEM_PRESSURE_OP,
 } from '../data/intelOperationsCatalog';
+import {
+  filterActiveIntelOperations,
+  filterIntelCategoryExpeditions,
+} from '../lib/activeOperationsCount';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
 import { CYBER_ABILITIES } from '../lib/cyberOps';
@@ -31,7 +36,6 @@ import {
 } from '../utils/cbrnEngine';
 import { getProgressionState } from '../lib/progressionSystem';
 import { resolveCityCoords } from '../lib/expeditionTravel';
-import { getMapCityDisplayName } from '../map/mapCityDisplayName';
 import { useLanguage } from '../context/LanguageContext';
 import { STORE_EMPTY_ARRAY, useGameStore, useActiveCity } from '../stores/gameStore';
 
@@ -46,6 +50,8 @@ export default function Intelligence() {
   const playerCities = useGameStore((s) => s.playerCities);
   const expeditions = useGameStore((s) => s.expeditions ?? STORE_EMPTY_ARRAY);
   const reports = useGameStore((s) => s.reports ?? STORE_EMPTY_ARRAY);
+  const gameHydrating = useGameStore((s) => s.gameHydrating);
+  const refreshReportsFromServer = useGameStore((s) => s.refreshReportsFromServer);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks ?? STORE_EMPTY_ARRAY);
   const idleAgents = city?.idleAgents ?? 0;
   const intelOps = useGameStore((s) => s.intelOperations ?? STORE_EMPTY_ARRAY);
@@ -76,8 +82,43 @@ export default function Intelligence() {
   const [kbrnTargetName, setKbrnTargetName] = useState('');
   const [kbrnAgents, setKbrnAgents] = useState(2);
   const [agentOpId, setAgentOpId] = useState(AGENT_OPERATIONS[0]?.id ?? '');
+  const [activeSection, setActiveSection] = useState('intel');
+  const [pendingConfirm, setPendingConfirm] = useState(null);
 
   const hasAgents = idleAgents > 0;
+
+  useEffect(() => {
+    if (gameHydrating) return undefined;
+    refreshReportsFromServer().catch(() => {});
+    return undefined;
+  }, [gameHydrating, refreshReportsFromServer]);
+
+  useEffect(() => {
+    const sections = [
+      { id: 'intel-agents', key: 'intel' },
+      { id: 'intel-cyber', key: 'cyber' },
+      { id: 'intel-kbrn', key: 'kbrn' },
+    ];
+    const nodes = sections
+      .map((s) => document.getElementById(s.id))
+      .filter(Boolean);
+    if (!nodes.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (!visible.length) return;
+        const match = sections.find((s) => s.id === visible[0].target.id);
+        if (match) setActiveSection(match.key);
+      },
+      { rootMargin: '-35% 0px -45% 0px', threshold: [0.12, 0.35, 0.6] },
+    );
+
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [progression.cyberUnlocked, progression.kbrnUnlocked]);
 
   useEffect(() => {
     if (!mapTargetPickResult) return;
@@ -93,17 +134,32 @@ export default function Intelligence() {
   const selectedTarget = cyberTargets.find((c) => c.name === resolvedCyberName) ?? cyberTargets[0];
   const resolvedAgentName = agentTargetName || resolvedCyberName;
 
+  const activeIntelAgentOps = useMemo(
+    () => filterActiveIntelOperations(intelOps, now),
+    [intelOps, now],
+  );
+
+  const activeIntelExpeditions = useMemo(
+    () => filterIntelCategoryExpeditions(expeditions, now),
+    [expeditions, now],
+  );
+
   const activeCyberExpeditions = useMemo(
-    () => expeditions.filter((e) => e.mode === 'cyber'),
-    [expeditions],
+    () => activeIntelExpeditions.filter((e) => e.mode === 'cyber'),
+    [activeIntelExpeditions],
   );
 
   const activeKbrnExpeditions = useMemo(
-    () => expeditions.filter((e) => e.mode === 'kbrn'),
-    [expeditions],
+    () => activeIntelExpeditions.filter((e) => e.mode === 'kbrn'),
+    [activeIntelExpeditions],
   );
 
-  const activeOpsCount = intelOps.length + activeCyberExpeditions.length + activeKbrnExpeditions.length;
+  const activeSpyExpeditions = useMemo(
+    () => activeIntelExpeditions.filter((e) => e.mode === 'spy'),
+    [activeIntelExpeditions],
+  );
+
+  const activeOpsCount = activeIntelAgentOps.length + activeIntelExpeditions.length;
 
   const enemySpyWarning = useMemo(() => {
     const ownNames = new Set(playerCities.map((c) => c.name));
@@ -162,18 +218,16 @@ export default function Intelligence() {
     });
   };
 
-  const confirmIntelSend = (cityName, operationName) => {
-    const displayCity = getMapCityDisplayName(cityName) || cityName;
-    return window.confirm(
-      t('pages.intelligence.sendConfirm', { city: displayCity, operation: operationName }),
-    );
+  const requestIntelConfirm = (cityName, operationName, onConfirm) => {
+    setPendingConfirm({ cityName, operationName, onConfirm });
   };
 
   const handleAgentSend = (op) => {
     const target = resolvedAgentName || cyberTargets[0]?.name;
     if (!target || !op) return;
-    if (!confirmIntelSend(target, op.name)) return;
-    sendIntelOperation({ target, opType: op.name, opId: op.id, agentCount: 1 });
+    requestIntelConfirm(target, op.name, () => {
+      sendIntelOperation({ target, opType: op.name, opId: op.id, agentCount: 1 });
+    });
   };
 
   const selectedAgentOp = AGENT_OPERATIONS.find((op) => op.id === agentOpId) ?? AGENT_OPERATIONS[0];
@@ -182,20 +236,22 @@ export default function Intelligence() {
     if (!selectedTarget) return;
     const ability = CYBER_ABILITIES.find((a) => a.id === abilityId);
     if (!ability) return;
-    if (!confirmIntelSend(selectedTarget.name, ability.name)) return;
-    startCyberVirusExpedition({
-      targetCity: selectedTarget,
-      abilityId,
-      agentCount,
+    requestIntelConfirm(selectedTarget.name, ability.name, () => {
+      startCyberVirusExpedition({
+        targetCity: selectedTarget,
+        abilityId,
+        agentCount,
+      });
     });
   };
 
   const handleKbrnSend = () => {
     if (!kbrnResolvedTarget) return;
-    if (!confirmIntelSend(kbrnResolvedTarget.name, KBRN_CHEM_PRESSURE_OP.name)) return;
-    startKbrnChemExpedition({
-      targetCity: kbrnResolvedTarget,
-      agentCount: kbrnAgents,
+    requestIntelConfirm(kbrnResolvedTarget.name, KBRN_CHEM_PRESSURE_OP.name, () => {
+      startKbrnChemExpedition({
+        targetCity: kbrnResolvedTarget,
+        agentCount: kbrnAgents,
+      });
     });
   };
 
@@ -211,51 +267,80 @@ export default function Intelligence() {
         enemySpyWarning={enemySpyWarning}
       />
 
-      <nav className="intel-section-nav" aria-label={t('pages.intelligence.sectionNavAria')}>
-        <a href="#intel-ops-active" className="intel-section-nav__link">
-          {t('pages.intelligence.navActive')}
+      <nav className="intel-section-nav intel-section-nav--tabs" aria-label={t('pages.intelligence.sectionNavAria')}>
+        <a
+          href="#intel-agents"
+          className={`intel-section-nav__link${activeSection === 'intel' ? ' intel-section-nav__link--active' : ''}`}
+          onClick={() => setActiveSection('intel')}
+        >
+          {t('pages.intelligence.navIntel')}
         </a>
-        <a href="#intel-agents" className="intel-section-nav__link">
-          {t('pages.intelligence.navAgents')}
-        </a>
-        <a href="#intel-cyber" className="intel-section-nav__link">
+        <a
+          href="#intel-cyber"
+          className={`intel-section-nav__link${activeSection === 'cyber' ? ' intel-section-nav__link--active' : ''}`}
+          onClick={() => setActiveSection('cyber')}
+        >
           {t('pages.intelligence.navCyber')}
         </a>
-        <a href="#intel-kbrn" className="intel-section-nav__link">
+        <a
+          href="#intel-kbrn"
+          className={`intel-section-nav__link${activeSection === 'kbrn' ? ' intel-section-nav__link--active' : ''}`}
+          onClick={() => setActiveSection('kbrn')}
+        >
           {t('pages.intelligence.navKbrn')}
         </a>
       </nav>
 
+      <IntelConfirmDialog
+        open={Boolean(pendingConfirm)}
+        cityName={pendingConfirm?.cityName}
+        operationName={pendingConfirm?.operationName}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={() => {
+          const action = pendingConfirm?.onConfirm;
+          setPendingConfirm(null);
+          action?.();
+        }}
+      />
+
       <IntelAccordion
         id="intel-ops-active"
-        title="Aktif Operasyonlar"
+        title={t('pages.intelligence.activeOpsTitle')}
         icon="📡"
         defaultOpen
         badge={activeOpsCount}
       >
         {activeOpsCount > 0 ? (
           <ul className="intel-list">
-            {intelOps.map((op) => (
+            {activeIntelAgentOps.map((op) => (
               <IntelListRow key={op.id} seedKey={op.id}>
                 <strong>{op.opType}</strong>
                 <span>{op.target}</span>
-                <span className="badge">Ajan</span>
+                <span className="badge">{t('pages.intelligence.badgeAgent')}</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(op.endsAt, now))}</span>
+              </IntelListRow>
+            ))}
+            {activeSpyExpeditions.map((exp) => (
+              <IntelListRow key={exp.id} seedKey={exp.id}>
+                <strong>{exp.type ?? t('pages.intelligence.spyProbe')}</strong>
+                <span>{exp.originCityName} → {exp.target}</span>
+                <span className="badge">{t('pages.intelligence.badgeSpy')}</span>
+                <span className="timer">{formatSeconds(remainingFromEndsAt(exp.endsAt, now))}</span>
               </IntelListRow>
             ))}
             {activeCyberExpeditions.map((exp) => (
               <IntelListRow key={exp.id} seedKey={exp.id}>
-                <strong>{exp.troopPayload?.cyberVirus?.abilityId ?? 'Siber'}</strong>
+                <strong>{exp.troopPayload?.cyberVirus?.abilityId ?? t('pages.intelligence.badgeCyber')}</strong>
                 <span>{exp.originCityName} → {exp.target}</span>
-                <span className="badge">Siber</span>
+                <span className="badge">{t('pages.intelligence.badgeCyber')}</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(exp.endsAt, now))}</span>
               </IntelListRow>
             ))}
             {activeKbrnExpeditions.map((exp) => (
               <IntelListRow key={exp.id} seedKey={exp.id}>
-                <strong>Kimyasal Baskı</strong>
+                <strong>{t('pages.intelligence.chemPressure')}</strong>
                 <span>{exp.originCityName} → {exp.target}</span>
-                <span className="badge badge--kbrn">KBRN</span>
+                <span className="badge badge--kbrn">{t('pages.intelligence.badgeKbrn')}</span>
                 <span className="timer">{formatSeconds(remainingFromEndsAt(exp.endsAt, now))}</span>
               </IntelListRow>
             ))}
@@ -264,9 +349,9 @@ export default function Intelligence() {
           <div className="intel-ops-empty-wrap">
             <QueueEmptyState
               as="div"
-              tag="[ OPERASYON YOK ]"
-              title="Aktif operasyon yok"
-              hint="Aşağıdan ajan, siber veya KBRN operasyonu başlatın."
+              tag={t('pages.intelligence.activeOpsEmptyTag')}
+              title={t('pages.intelligence.activeOpsEmptyTitle')}
+              hint={t('pages.intelligence.activeOpsEmptyHint')}
               icon="📡"
             />
           </div>

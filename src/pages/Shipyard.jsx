@@ -35,13 +35,12 @@ export default function Shipyard() {
           hint={t('pages.shipyard.coastalHint')}
           footer={(
             <div className="shipyard-inland-guide">
-              <p className="shipyard-inland-guide__text">{t('pages.shipyard.switchCityHint')}</p>
-              <div className="shipyard-inland-guide__arrow" aria-hidden="true">
-                <span className="shipyard-inland-guide__arrow-line" />
-                <span className="shipyard-inland-guide__arrow-head">▲</span>
-              </div>
-              <p className="shipyard-inland-guide__target">
-                <span className="shipyard-inland-guide__target-label">{t('pages.shipyard.switchCityLabel')}</span>
+              <p className="shipyard-inland-guide__text">
+                {t('pages.shipyard.switchCityHint')}{' '}
+                <span className="shipyard-inland-guide__inline-hint">
+                  <span className="shipyard-inland-guide__inline-arrow" aria-hidden="true">↑</span>
+                  {t('pages.shipyard.switchCityArrow')}
+                </span>
               </p>
             </div>
           )}

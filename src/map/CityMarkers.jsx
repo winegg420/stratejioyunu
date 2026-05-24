@@ -8,6 +8,7 @@ import { useGameStore } from '../stores/gameStore';
 import { getCityOwnerLabel } from './mapOwnership';
 import { PLAYER_CITY_ROLES } from '../data/worldCitiesCatalog';
 import { getIdeologyProfile, resolveCityIdeology } from '../lib/ideologySystem';
+import { isMapClickSuppressed } from './mapPanClick';
 import {
   createCityMarkerIcon,
   createColonyIcon,
@@ -108,9 +109,15 @@ export default function CityMarkers({
           ? getIdeologyProfile(resolveCityIdeology(markerCity, playerName, playerIdeology))?.color
           : null;
 
+        const useIdeologyPin = ideologyView && ideologyColor;
+
         const icon = city.isOwn
           ? (isMainHq
-            ? createMainHqIcon(markerCity, ownerLabel, { showLabels: showPinLabels, isActive })
+            ? createMainHqIcon(markerCity, ownerLabel, {
+              showLabels: showPinLabels,
+              isActive,
+              colorOverride: useIdeologyPin ? ideologyColor : null,
+            })
             : createColonyIcon(markerCity, {
               underAttack: isUnderAttack,
               ownerLabel,
@@ -118,8 +125,9 @@ export default function CityMarkers({
               peaceShield,
               showLabels: showPinLabels,
               isActive,
+              colorOverride: useIdeologyPin ? ideologyColor : null,
             }))
-          : (ideologyView && ideologyColor
+          : (useIdeologyPin
             ? createCityMarkerIcon(markerCity, {
               ownerLabel,
               showLabels: showPinLabels,
@@ -130,12 +138,13 @@ export default function CityMarkers({
         return (
           <Marker
             key={`${markerRenderKey}-${city.playerId || city.name}-${ownerLabel}-${cyberActive ? 'c' : 'n'}`}
-            position={[city.lat, city.lng]}
+            position={[markerCity.lat, markerCity.lng]}
             icon={icon}
             zIndexOffset={isActive ? 1400 : 900}
             bubblingMouseEvents={false}
             eventHandlers={{
               click: (e) => {
+                if (isMapClickSuppressed(e.target?._map)) return;
                 L.DomEvent.stopPropagation(e);
                 onSelectCity(markerCity);
               },
@@ -143,8 +152,18 @@ export default function CityMarkers({
                 const { clientX, clientY } = e.originalEvent;
                 onCityHover?.({
                   name: markerCity.name,
-                  lat: city.lat,
-                  lng: city.lng,
+                  lat: markerCity.lat,
+                  lng: markerCity.lng,
+                  x: clientX,
+                  y: clientY,
+                });
+              },
+              mousemove: (e) => {
+                const { clientX, clientY } = e.originalEvent;
+                onCityHover?.({
+                  name: markerCity.name,
+                  lat: markerCity.lat,
+                  lng: markerCity.lng,
                   x: clientX,
                   y: clientY,
                 });

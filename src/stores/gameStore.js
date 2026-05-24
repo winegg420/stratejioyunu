@@ -1,4 +1,5 @@
-﻿import { create } from 'zustand';
+﻿import { useMemo } from 'react';
+import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { createFoundCityState, createInitialGameState } from '../data/gameInit';
 import { ensureCityResources, getResourceDisplay } from '../data/resourceCatalog';
@@ -98,6 +99,7 @@ import {
   scaleTradeWithCentralBank,
 } from '../lib/adminOverrideEngine';
 import {
+  DEFAULT_SERVER_ID,
   fetchAdminLogs,
   fetchServerBroadcast,
   insertAdminLog,
@@ -175,7 +177,7 @@ import {
 import { getTroopsAwayFromCity } from '../lib/troopStock';
 import { canAffordCost, deductCost, parseUnitCost } from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
-import { clampTaxRate, enrichCityModel } from '../lib/cityModel';
+import { clampTaxRate, DEFAULT_TAX_RATE, enrichCityModel } from '../lib/cityModel';
 import { syncResearchesToCatalog } from '../data/researchCatalog';
 import { mergeCityIdleTroops, syncAllCityBuildings } from '../lib/buildingUtils';
 import {
@@ -201,7 +203,8 @@ import {
   disableAdminModeOnState,
   enableAdminModeOnState,
 } from '../lib/adminModeControl';
-import { countActiveExpeditions, filterActiveExpeditions } from '../lib/gameUtils';
+import { countIntelNavOperations, filterFieldExpeditions } from '../lib/activeOperationsCount';
+import { filterActiveExpeditions } from '../lib/gameUtils';
 import {
   getNextAutoTutorialQuest,
   isQuestComplete,
@@ -275,8 +278,10 @@ import { persistChronicleToServer } from '../lib/historyBookApi';
 import {
   applyIdeologyTravelSeconds,
   canChangeIdeology,
+  computeIdeologyRegimeCooldownEndsAt,
   defaultProtectionEndsAt,
   formatIdeologyLabel,
+  isIdeologyChangeOnCooldown,
   getProductionDurationMultiplier,
   getResearchDurationMultiplier,
   getTradeRevenueMultiplier,
@@ -361,9 +366,12 @@ import {
   scheduleSaveGameState,
   syncExpeditionsFromServer,
 } from '../lib/supabaseSync';
+import { recoverReportsFromHistory } from '../lib/reportRecovery';
+import { saveCachedReports } from '../lib/reportsCache';
 
 /** Stable fallbacks — React 19 getSnapshot must return cached references when store is unchanged. */
 export const STORE_EMPTY_ARRAY = [];
+export const STORE_EMPTY_OBJECT = Object.freeze({});
 
 function cloudSync(get, options = {}) {
   const state = get();
@@ -841,7 +849,10 @@ export const useGameStore = create((set, get) => ({
       return false;
     }
     const amount = Math.max(0, Math.floor(Number(qty) || 0));
-    if (!amount) return false;
+    if (!amount) {
+      useNotificationStore.getState().addToast('Geçerli bir miktar girin', 'warn');
+      return false;
+    }
 
     const trade = buildMarketTradeCost(resourceId, amount, mode, state.centralBank);
     if (!trade) return false;
@@ -913,7 +924,10 @@ export const useGameStore = create((set, get) => ({
     if (!city) return false;
     const amount = Math.max(0, Math.floor(Number(qty) || 0));
     const price = Math.max(0, Math.floor(Number(unitPrice) || 0));
-    if (!amount || !price) return false;
+    if (!amount || !price) {
+      useNotificationStore.getState().addToast('Miktar ve birim fiyat girin', 'warn');
+      return false;
+    }
 
     let resources = city.resources.map((r) => ({ ...r }));
     if (side === 'sell') {
@@ -945,7 +959,6 @@ export const useGameStore = create((set, get) => ({
       marketOffers: [offer, ...(get().marketOffers ?? [])].slice(0, 48),
       ...tickOpenMarket(get()),
     });
-    useNotificationStore.getState().addToast('[ TEKLİF ] Açık pazar ilanı yayınlandı.', 'success');
     return true;
   },
 
@@ -1137,7 +1150,7 @@ export const useGameStore = create((set, get) => ({
   refreshServerBroadcast: async () => {
     const [broadcast, logs] = await Promise.all([
       fetchServerBroadcast(),
-      fetchAdminLogs(80),
+      fetchAdminLogs(DEFAULT_SERVER_ID, 80),
     ]);
     const regionalIncentive = normalizeRegionalIncentive(broadcast.regionalIncentive);
     const centralBank = normalizeCentralBank(broadcast.centralBank);
@@ -1172,7 +1185,7 @@ export const useGameStore = create((set, get) => ({
       logText,
       payload,
     });
-    const logs = await fetchAdminLogs(80);
+    const logs = await fetchAdminLogs(DEFAULT_SERVER_ID, 80);
     set({
       newsLog: mergeAdminLogsIntoNews([item, ...(get().newsLog ?? [])], logs),
       adminPublicLogs: logs,
@@ -1279,13 +1292,15 @@ export const useGameStore = create((set, get) => ({
     cloudSync(get, { cityId, activeCityId: true });
   },
 
-  setCityTaxRate: (taxRate) => {
+  setCityTaxRate: (taxRate, { silent = false } = {}) => {
     const state = get();
     const cityId = state.activeCityId;
     const city = state.cities[cityId];
     if (!city) return false;
 
     const nextRate = clampTaxRate(taxRate);
+    if (nextRate === (city.taxRate ?? DEFAULT_TAX_RATE)) return true;
+
     const nextCity = refreshCityMorale(
       { ...state, cities: { ...state.cities, [cityId]: { ...city, taxRate: nextRate } } },
       cityId,
@@ -1298,11 +1313,13 @@ export const useGameStore = create((set, get) => ({
       get()._triggerPlayerEconomicCrisis(cityId, econTrigger.reason);
     }
 
-    useNotificationStore.getState().addToast(
-      `Vergi oranı %${nextRate} — moral ${nextCity.happiness}%`,
-      nextRate > 20 ? 'warn' : 'info',
-    );
-    cloudSync(get, { cityId });
+    if (!silent) {
+      useNotificationStore.getState().addToast(
+        `Vergi oranı %${nextRate} — moral ${nextCity.happiness}%`,
+        nextRate > 20 ? 'warn' : 'info',
+      );
+    }
+    cloudSync(get, { cityId, immediate: true });
     return true;
   },
 
@@ -1833,8 +1850,9 @@ export const useGameStore = create((set, get) => ({
     });
     useNotificationStore.getState().addToast(
       `İttifak operasyonu planlandı: ${targetName}`,
-      'info',
+      'success',
     );
+    cloudSync(get, { savePlayerMeta: true });
     return true;
   },
 
@@ -1927,6 +1945,11 @@ export const useGameStore = create((set, get) => ({
     set({ watchlist });
     persistEngagement(get);
     return true;
+  },
+
+  refreshSeasonQuestsUi: () => {
+    const state = get();
+    set(refreshEngagementDerived(state));
   },
 
   claimDailyQuestReward: (questId) => {
@@ -2119,6 +2142,14 @@ export const useGameStore = create((set, get) => ({
     const freeWindow = canChangeIdeology(state.protectionEndsAt);
     const playerKey = getCurrentPlayerName();
 
+    if (isRegimeChange && isIdeologyChangeOnCooldown(state.ideologyChangeCooldownAt)) {
+      useNotificationStore.getState().addToast(
+        'Rejim değişimi için bekleme süresi devam ediyor.',
+        'warn',
+      );
+      return false;
+    }
+
     if (isRegimeChange && !freeWindow) {
       const budget = getActiveCityMoney(state.cities, state.activeCityId);
       if (budget < IDEOLOGY_CHANGE_COST_MONEY) {
@@ -2195,9 +2226,14 @@ export const useGameStore = create((set, get) => ({
       newsLog = [newsItem, ...newsLog].slice(0, 48);
     }
 
+    const ideologyChangeCooldownAt = isRegimeChange
+      ? computeIdeologyRegimeCooldownEndsAt()
+      : state.ideologyChangeCooldownAt;
+
     set({
       playerIdeology: ideology,
       protectionEndsAt,
+      ideologyChangeCooldownAt,
       cities,
       mapCities,
       newsLog,
@@ -2232,6 +2268,7 @@ export const useGameStore = create((set, get) => ({
 
   canAffordIdeologyChange: () => {
     const state = get();
+    if (isIdeologyChangeOnCooldown(state.ideologyChangeCooldownAt)) return false;
     if (canChangeIdeology(state.protectionEndsAt)) return true;
     return getActiveCityMoney(state.cities, state.activeCityId) >= IDEOLOGY_CHANGE_COST_MONEY;
   },
@@ -2641,12 +2678,11 @@ export const useGameStore = create((set, get) => ({
     }
 
     const completedExpeditionIds = [];
-    for (const e of state.expeditions) {
+    for (const e of get().expeditions ?? []) {
       if (e.endsAt != null && e.endsAt <= now) completedExpeditionIds.push(e.id);
     }
-    const expeditions = state.expeditions;
 
-    const researchList = state.researches ?? [];
+    const researchList = get().researches ?? [];
     let researches = researchList.map((r) => ({ ...r }));
     const completedResearchIds = [];
     researches = researches.map((r) => {
@@ -2663,7 +2699,7 @@ export const useGameStore = create((set, get) => ({
       };
     });
 
-    let intelOperations = (state.intelOperations ?? []).map((o) => ({ ...o }));
+    let intelOperations = (get().intelOperations ?? []).map((o) => ({ ...o }));
     const completedIntelIds = [];
     intelOperations = intelOperations.map((o) => {
       if (o.endsAt == null || o.endsAt > now) return o;
@@ -2676,9 +2712,9 @@ export const useGameStore = create((set, get) => ({
       lastTickAt: now,
       cities,
       flashes,
-      expeditions,
-      researches,
-      intelOperations,
+      expeditions: get().expeditions ?? [],
+      researches: get().researches ?? researches,
+      intelOperations: get().intelOperations ?? intelOperations,
       ...(cbrnPatch?.globalCbrnOutbreak != null
         ? { globalCbrnOutbreak: cbrnPatch.globalCbrnOutbreak }
         : {}),
@@ -3799,9 +3835,33 @@ export const useGameStore = create((set, get) => ({
     );
   },
 
+  reconcileReportsFromHistory: () => {
+    const state = get();
+    const recovered = recoverReportsFromHistory({
+      reports: state.reports,
+      pastExpeditions: state.pastExpeditions,
+    });
+    if (recovered.length === (state.reports?.length ?? 0)) {
+      return { ok: true, added: 0 };
+    }
+    const hasUnread = recovered.some((r) => r.isNew);
+    set({
+      reports: recovered,
+      navBadges: { ...state.navBadges, reports: hasUnread },
+    });
+    saveCachedReports(recovered, state.playerMeta?.displayName ?? state.playerName);
+    return { ok: true, added: recovered.length - (state.reports?.length ?? 0) };
+  },
+
   refreshReportsFromServer: async () => {
-    if (!isSyncEnabled()) return { ok: false };
-    return refreshReportsFromServer(get, set);
+    const state = get();
+    if (!isSyncEnabled()) {
+      const result = get().reconcileReportsFromHistory();
+      return { ok: true, count: get().reports?.length ?? 0, source: 'local', ...result };
+    }
+    const remote = await refreshReportsFromServer(get, set);
+    get().reconcileReportsFromHistory();
+    return { ok: remote?.ok, count: get().reports?.length ?? 0, source: 'remote' };
   },
 
   refreshPastExpeditionsFromServer: async () => {
@@ -4772,6 +4832,7 @@ export const useGameStore = create((set, get) => ({
         r.id === researchId ? { ...r, active: true, queued: false, ...timing } : r,
       ),
     });
+    cloudSync(get, { researches: true });
     return true;
   },
 
@@ -4873,7 +4934,7 @@ export function useActiveCityResources() {
 
 export function useActiveCityIdleTroops() {
   return useGameStore(
-    (s) => s.cities[s.activeCityId]?.idleTroops ?? STORE_EMPTY_ARRAY,
+    (s) => mergeCityIdleTroops(s.cities[s.activeCityId]?.idleTroops ?? STORE_EMPTY_ARRAY),
   );
 }
 
@@ -4908,20 +4969,32 @@ export function useActiveExpeditionCount() {
   return useGameStore((s) => {
     void (s.mapRouteSyncRev ?? 0);
     void s.expeditions?.length;
-    return countActiveExpeditions(s.expeditions, s.now);
+    return filterFieldExpeditions(s.expeditions, s.now).length;
+  });
+}
+
+/** İstihbarat menüsü rozeti — ajan operasyonları + siber/KBRN/casus seferleri */
+export function useActiveIntelOperationCount() {
+  return useGameStore((s) => {
+    void (s.mapRouteSyncRev ?? 0);
+    void s.expeditions?.length;
+    void (s.intelOperations?.length ?? 0);
+    return countIntelNavOperations({
+      expeditions: s.expeditions,
+      intelOperations: s.intelOperations,
+      now: s.now,
+    });
   });
 }
 
 /** Aktif sefer listesi — harita/operasyonlar ile aynı store aboneliği */
 export function useActiveExpeditions() {
-  return useGameStore(
-    useShallow((s) => {
-  void (s.mapRouteSyncRev ?? 0);
-      void s.now;
-      const list = s.expeditions ?? [];
-      void list.length;
-      return filterActiveExpeditions(list, s.now);
-    }),
+  const expeditions = useGameStore((s) => s.expeditions);
+  const now = useGameStore((s) => s.now);
+  const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
+  return useMemo(
+    () => filterActiveExpeditions(expeditions ?? [], now),
+    [expeditions, now, mapRouteSyncRev],
   );
 }
 

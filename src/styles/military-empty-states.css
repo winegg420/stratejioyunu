@@ -229,6 +229,25 @@
   color: rgba(212, 212, 170, 0.88);
 }
 
+.shipyard-inland-guide__inline-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0;
+  font-weight: 600;
+  color: #a7f3d0;
+  white-space: nowrap;
+}
+
+.shipyard-inland-guide__inline-arrow {
+  display: inline-block;
+  color: #4ade80;
+  font-size: 0.95rem;
+  line-height: 1;
+  animation: shipyard-guide-bounce 1.6s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.55);
+}
+
 .shipyard-inland-guide__arrow {
   display: flex;
   flex-direction: column;
@@ -285,6 +304,13 @@
 #resource-bar-city-switch.shipyard-city-highlight {
   outline: 1px solid rgba(74, 222, 128, 0.55);
   box-shadow: 0 0 14px rgba(74, 222, 128, 0.25);
+}
+
+#resource-bar-city-switch.shipyard-city-highlight .custom-dropdown__chevron {
+  color: #4ade80;
+  font-size: 0.65rem;
+  animation: shipyard-guide-bounce 1.6s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
 }
 
 @media (max-width: 900px) {

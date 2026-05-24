@@ -15,6 +15,7 @@ export const IDEOLOGY_IDS = [
 ];
 
 export const IDEOLOGY_CHANGE_WINDOW_DAYS = 7;
+export const IDEOLOGY_REGIME_COOLDOWN_DAYS = 7;
 
 export const IDEOLOGY_PROFILES = {
   [IDEOLOGY_SOCIALIST]: {
@@ -177,9 +178,9 @@ export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = fa
   const glow = p?.colorGlow ?? 'rgba(100, 116, 139, 0.4)';
   return {
     fillColor: color,
-    fillOpacity: isOwn ? 0.22 : isAlly ? 0.18 : 0.14,
+    fillOpacity: isOwn ? 0.38 : isAlly ? 0.32 : 0.26,
     color,
-    weight: isOwn || isAlly ? 3.2 : 2.6,
+    weight: isOwn || isAlly ? 3.4 : 2.8,
     opacity: 0.95,
     className: isAlly ? 'territory-ideology territory-ideology--ally' : 'territory-ideology',
     dashArray: undefined,
@@ -216,4 +217,24 @@ export function formatIdeologyChangeDeadline(protectionEndsAt) {
   if (diff <= 0) return 'Süre doldu';
   const days = Math.ceil(diff / (24 * 60 * 60 * 1000));
   return `${days} gün kaldı`;
+}
+
+export function computeIdeologyRegimeCooldownEndsAt(fromMs = Date.now()) {
+  return new Date(fromMs + IDEOLOGY_REGIME_COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString();
+}
+
+export function isIdeologyChangeOnCooldown(cooldownEndsAt, now = Date.now()) {
+  if (!cooldownEndsAt) return false;
+  const end = new Date(cooldownEndsAt).getTime();
+  if (Number.isNaN(end)) return false;
+  return now < end;
+}
+
+/** @returns {{ days: number, hours: number } | null} */
+export function getIdeologyCooldownRemaining(cooldownEndsAt, now = Date.now()) {
+  if (!isIdeologyChangeOnCooldown(cooldownEndsAt, now)) return null;
+  const diff = Math.max(0, new Date(cooldownEndsAt).getTime() - now);
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  return { days, hours };
 }

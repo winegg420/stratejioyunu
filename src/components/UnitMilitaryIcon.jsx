@@ -76,25 +76,44 @@ const ICONS = {
   ),
   scout: (
     <>
-      <path d="M2 13.5 12 7.5l10 6-3.2-1.2 1.8 3.7h-3.2l-2 3.5-2-3.5H7.4l1.8-3.7L2 13.5Z" fill="currentColor" />
-      <path d="M10.5 10.5h3v1.8h-3v-1.8Z" fill="currentColor" opacity="0.4" />
+      <path d="M3 12.5h14l-1.2-1.8H4.2L3 12.5Z" fill="currentColor" opacity="0.35" />
+      <path d="M4.5 12h15l-1-2.2H5.5L4.5 12Z" fill="currentColor" />
+      <path d="M6 9.8h12l-.8-1.6H6.8L6 9.8Z" fill="currentColor" opacity="0.75" />
+      <path d="M11 7.5h2v2.3h-2V7.5Z" fill="currentColor" />
+      <path d="M16.5 10.2 19 8.5v1.2l-2.5 1.1v-.6Z" fill="currentColor" />
+      <circle cx="8.5" cy="12.8" r="0.9" fill="#0a0f0a" opacity="0.5" />
     </>
   ),
   fighter: (
-    <path d="M2.5 13.5 12 6.5l9.5 7-3.2-1.2 2.2 4.2h-4l-2.2 4.2-2.2-4.2H5.5l2.2-4.2-3.2 1.2Z" fill="currentColor" />
+    <>
+      <path d="M2 13h20v1.2H2V13Z" fill="currentColor" opacity="0.3" />
+      <path d="M4 11.8h16l-1.2-2H5.2L4 11.8Z" fill="currentColor" />
+      <path d="M7.5 9.6h9l-.7-1.4H8.2l-.7 1.4Z" fill="currentColor" opacity="0.8" />
+      <path d="M10.5 7.8h3v1.8h-3V7.8Z" fill="currentColor" />
+      <path d="M18.5 10.5 21.5 8.8v1.5L18.5 12v-1.5Z" fill="currentColor" />
+      <path d="M5.5 10.8 3 9.5v1.1l2.5 1.4v-.2Z" fill="currentColor" opacity="0.65" />
+      <path d="M11.8 11.4h.4v2.2h-.4v-2.2Z" fill="currentColor" opacity="0.55" />
+    </>
   ),
   bomber: (
     <>
-      <path d="M1.5 13.5 12 7l10.5 6.5-2.8-1 2 3.8h-3.8l-1.8 3.5-1.8-3.5H8.3l2-3.8-2.8 1Z" fill="currentColor" />
-      <ellipse cx="12" cy="15.2" rx="3.2" ry="1.1" fill="currentColor" opacity="0.45" />
+      <path d="M1.5 13.2h21v1.3H1.5v-1.3Z" fill="currentColor" opacity="0.28" />
+      <path d="M3.5 12h17l-1.5-2.4H5L3.5 12Z" fill="currentColor" />
+      <path d="M6 9.8h12l-1-1.8H7L6 9.8Z" fill="currentColor" opacity="0.72" />
+      <path d="M8.5 7.6h7l-.8-1.5H9.3l-.8 1.5Z" fill="currentColor" />
+      <path d="M11 6.2h2v2.2h-2V6.2Z" fill="currentColor" />
+      <path d="M19 10.8 22 9v1.6l-3 1.5V10.8Z" fill="currentColor" />
+      <path d="M5 10.8 2.5 9.2v1.4L5 12v-1.2Z" fill="currentColor" opacity="0.6" />
     </>
   ),
   drone: (
     <>
-      <rect x="7" y="11" width="10" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
-      <circle cx="8" cy="9" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="16" cy="9" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M10 9h4M8 9v2M16 9v2" stroke="currentColor" strokeWidth="1.1" />
+      <rect x="8" y="10.5" width="8" height="2.2" rx="0.5" fill="currentColor" />
+      <circle cx="6.5" cy="8.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="17.5" cy="8.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="6.5" cy="15.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="17.5" cy="15.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M8.4 10.6h7.2M6.5 10.5V8.5M17.5 10.5V8.5M6.5 13.5v2M17.5 13.5v2" stroke="currentColor" strokeWidth="1" />
     </>
   ),
   patrol: (
@@ -118,7 +137,11 @@ const ICONS = {
     </>
   ),
   aircraft: (
-    <path d="M2.5 13.5 12 6.5l9.5 7-3.2-1.2 2.2 4.2h-4l-2.2 4.2-2.2-4.2H5.5l2.2-4.2-3.2 1.2Z" fill="currentColor" />
+    <>
+      <path d="M4 11.8h16l-1.2-2H5.2L4 11.8Z" fill="currentColor" />
+      <path d="M10.5 7.8h3v1.8h-3V7.8Z" fill="currentColor" />
+      <path d="M18.5 10.5 21.5 8.8v1.5L18.5 12v-1.5Z" fill="currentColor" />
+    </>
   ),
   ship: (
     <>

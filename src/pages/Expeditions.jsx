@@ -7,7 +7,9 @@ import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import OperationsMetropolisAlert from '../components/OperationsMetropolisAlert';
 import CustomDropdown from '../components/CustomDropdown';
-import { useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
+import { flushGameSave } from '../lib/gameActionSync';
+import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import { ALLIANCE_OP_STATUS } from '../lib/allianceOperation';
 import { diplomacy } from '../data/placeholder';
 import { useLanguage } from '../context/LanguageContext';
@@ -23,11 +25,13 @@ export default function Expeditions() {
   const pastExpeditions = useGameStore((s) => s.pastExpeditions);
   const gameHydrating = useGameStore((s) => s.gameHydrating);
   const refreshPastExpeditionsFromServer = useGameStore((s) => s.refreshPastExpeditionsFromServer);
-  const allianceOperations = useGameStore((s) => s.allianceOperations ?? []);
+  const allianceOperations = useGameStore((s) => s.allianceOperations ?? STORE_EMPTY_ARRAY);
   const recallExpedition = useGameStore((s) => s.recallExpedition);
   const createAllianceOperation = useGameStore((s) => s.createAllianceOperation);
   const approveAllianceOperation = useGameStore((s) => s.approveAllianceOperation);
   const requestMapTradeFocus = useGameStore((s) => s.requestMapTradeFocus);
+  const activeCityId = useGameStore((s) => s.activeCityId);
+  const addToast = useNotificationStore((s) => s.addToast);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +54,20 @@ export default function Expeditions() {
   const openMapExpeditionLaunch = () => {
     navigate('/harita?mode=expedition');
   };
+
+  const handlePlanAllianceOperation = async () => {
+    if (!opTarget) {
+      addToast('Önce hedef şehir seçin', 'warn');
+      return;
+    }
+    const ok = createAllianceOperation({ targetName: opTarget });
+    if (!ok) {
+      addToast('Operasyon planlanamadı — hedef geçersiz', 'warn');
+      return;
+    }
+    await flushGameSave({ cityId: activeCityId, savePlayerMeta: true });
+  };
+
   const hasActive = activeExpeditions.length > 0;
   const hasPast = pastExpeditions.length > 0;
 
@@ -67,14 +85,6 @@ export default function Expeditions() {
               onClick={openMapExpeditionLaunch}
             >
               {t('pages.expeditions.newExpedition')}
-            </button>
-            <button
-              type="button"
-              className="btn btn-hud-secondary"
-              onClick={() => opTarget && createAllianceOperation({ targetName: opTarget })}
-              disabled={!opTarget}
-            >
-              {t('pages.expeditions.allianceOp')}
             </button>
             <Link to="/harita" className="btn btn-hud-secondary">
               {t('common.openMap')}
@@ -206,6 +216,14 @@ export default function Expeditions() {
             ]}
           />
         </label>
+        <button
+          type="button"
+          className="btn btn-hud-primary alliance-ops-start-btn"
+          disabled={!opTarget}
+          onClick={handlePlanAllianceOperation}
+        >
+          {t('pages.expeditions.allianceOp')}
+        </button>
         <div className="alliance-ops-timing">
           <label>
             <span>Geciktirme / Zaman Ayarı (dk)</span>

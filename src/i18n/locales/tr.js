@@ -66,6 +66,8 @@ const trBase = {
   navBadge: {
     coastal: 'Kıyı',
     logisticsTitle: 'Lojistik',
+    expeditionCount: '{{count}} aktif saha operasyonu',
+    intelOpCount: '{{count}} aktif istihbarat operasyonu',
   },
   cityManagement: {
     sectionTag: 'ŞEHİR & KOLONİ',
@@ -177,6 +179,9 @@ const trBase = {
       title: 'Kara Kuvvetleri',
       subtitle: '> Kara kuvvetleri üretim hattı hazır...',
       status: '[ STATUS: COMBAT READY ]',
+      productionSection: 'Asker Üretimi',
+      queueTitle: 'Aktif Kuyruk — {{city}}',
+      queueEmpty: 'Üretim kuyruğu boş. Bir birlik seçip üretim başlatın.',
     },
     airbase: {
       title: 'Hava Üssü',
@@ -260,6 +265,11 @@ const trBase = {
       title: 'Kurucu Komuta Merkezi',
       subtitle: '> Kurucu konsol — kriz motoru, merkez bankası ve bölgesel teşvik modülleri...',
       status: '[ GOD MODE ]',
+    },
+  },
+  components: {
+    battleSimulator: {
+      title: 'Savaş Simülatörü',
     },
   },
 };

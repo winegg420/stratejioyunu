@@ -33,8 +33,8 @@ export function getTroopsAwayFromCity(expeditions, cityId) {
 }
 
 export function getTroopStock(troop, awayMap = EMPTY_AWAY_MAP) {
-  const idle = troop.available ?? 0;
-  const away = awayMap[troop.id] || 0;
+  const idle = troop?.available ?? troop?.count ?? 0;
+  const away = awayMap[troop?.id] || 0;
   const total = idle + away;
   return { total, idle, away };
 }

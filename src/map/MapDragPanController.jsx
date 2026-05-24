@@ -1,17 +1,11 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 
-/** Yalnızca UI kontrolleri — il poligonları ve marker üzerinden de pan mümkün */
+/** Yalnızca UI kontrolleri — şehir/il/marker üzerinden de sürükleyerek pan mümkün */
 const IGNORE_SELECTOR = [
   '.leaflet-control',
   '.leaflet-popup',
-  '.leaflet-marker-icon',
-  '.map-marker-wrap',
-  '.map-marker-pin',
-  '.map-city-dot',
-  '.map-city-centroid-label',
   '.map-hud-panel',
-  '.map-focus-crosshair',
   'button',
   'input',
   'select',
@@ -92,14 +86,14 @@ export default function MapDragPanController({ enabled = true }) {
       container.classList.remove('map-pan--grabbing');
     };
 
-    container.addEventListener('pointerdown', onMouseDown);
+    container.addEventListener('pointerdown', onMouseDown, true);
     window.addEventListener('pointermove', onMouseMove);
     window.addEventListener('pointerup', onMouseUp);
     window.addEventListener('pointercancel', onMouseUp);
 
     return () => {
       container.classList.remove('map-pan-grabbable', 'map-pan--grabbing');
-      container.removeEventListener('pointerdown', onMouseDown);
+      container.removeEventListener('pointerdown', onMouseDown, true);
       window.removeEventListener('pointermove', onMouseMove);
       window.removeEventListener('pointerup', onMouseUp);
       window.removeEventListener('pointercancel', onMouseUp);

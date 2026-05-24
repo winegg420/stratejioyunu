@@ -188,11 +188,17 @@
   margin-top: 0.2rem;
 }
 
-.black-market-field-error {
+.black-market-field-error,
+.market-field-error {
   display: block;
   margin-top: 0.25rem;
   font-size: 0.78rem;
   color: #f87171;
+}
+
+.market-field-error--offer {
+  width: 100%;
+  margin-top: 0.45rem;
 }
 
 .market-offer-cancel-btn {
@@ -226,7 +232,58 @@
   color: rgba(254, 202, 202, 0.65);
 }
 
+.trade-resource-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
 .trade-res-label {
   white-space: normal;
   word-break: normal;
+}
+
+.trade-res-stock {
+  font-size: 0.82rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.trade-half-btn-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.trade-half-btn-wrap[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  min-width: 9rem;
+  max-width: 13rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(74, 124, 89, 0.55);
+  border-radius: 2px;
+  background: rgba(10, 18, 12, 0.96);
+  color: #a7f3d0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 20;
+}
+
+.trade-half-btn-wrap[data-tooltip]:hover::after,
+.trade-half-btn-wrap[data-tooltip]:focus-within::after {
+  opacity: 1;
+  visibility: visible;
 }

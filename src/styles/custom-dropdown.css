@@ -114,6 +114,11 @@
   cursor: not-allowed;
 }
 
+.city-switcher .custom-dropdown__chevron {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 /* Kaynak çubuğu şehir seçici — dar alan */
 .city-switcher .custom-dropdown__trigger {
   min-height: 1.85rem;

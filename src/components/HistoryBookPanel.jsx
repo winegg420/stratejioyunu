@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import CustomDropdown from './CustomDropdown';
+import MilitaryEmptyState from './MilitaryEmptyState';
 import { useGameStore } from '../stores/gameStore';
 import {
   CHRONICLE_TYPE_LABELS,
   formatChronicleDate,
   formatSeasonLabel,
   getChroniclesForSeason,
+  getCurrentSeasonId,
   isSeasonEnded,
   listSeasonIdsForArchive,
 } from '../lib/historyBook';
@@ -18,7 +20,7 @@ export default function HistoryBookPanel() {
 
   const [theme, setTheme] = useState('scroll');
   const [selectedSeason, setSelectedSeason] = useState(
-    seasonChronicles?.currentSeasonId ?? null,
+    seasonChronicles?.currentSeasonId ?? getCurrentSeasonId(),
   );
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState('local');
@@ -73,6 +75,7 @@ export default function HistoryBookPanel() {
   );
 
   const ended = selectedSeason ? isSeasonEnded(selectedSeason) : false;
+  const showEmpty = !loading && entries.length === 0;
 
   return (
     <section
@@ -89,10 +92,12 @@ export default function HistoryBookPanel() {
           value={selectedSeason ?? ''}
           onChange={setSelectedSeason}
           aria-label="Sezon seç"
-          options={seasonIds.map((id) => ({
-            value: id,
-            label: `${formatSeasonLabel(id)}${id === seasonChronicles?.currentSeasonId ? ' (aktif)' : ''}`,
-          }))}
+          options={seasonIds.length > 0
+            ? seasonIds.map((id) => ({
+              value: id,
+              label: `${formatSeasonLabel(id)}${id === seasonChronicles?.currentSeasonId ? ' (aktif)' : ''}`,
+            }))
+            : [{ value: getCurrentSeasonId(), label: `${formatSeasonLabel(getCurrentSeasonId())} (aktif)` }]}
         />
         <span className="history-book-status">
           {loading ? 'Arşiv yükleniyor…' : (
@@ -113,13 +118,28 @@ export default function HistoryBookPanel() {
       </div>
 
       <div className="history-book-scroll">
-        {entries.length === 0 ? (
+        {loading && entries.length === 0 ? (
+          <MilitaryEmptyState
+            variant="inline"
+            tag="[ ARŞİV ]"
+            icon="📜"
+            title="Tarih kitabı yükleniyor…"
+            hint="Sezon kayıtları sunucudan okunuyor."
+          />
+        ) : showEmpty ? (
           <div className="history-book-empty" role="status">
+            <MilitaryEmptyState
+              variant="inline"
+              tag="[ ARŞİV BOŞ ]"
+              icon="📜"
+              title="Bu sezonda henüz kronik yok"
+              hint="Büyük savaşlar, rejim değişimleri ve pakt ihanetleri tamamlandıkça otomatik olarak buraya yazılır."
+            />
             <p className="history-book-empty__lead">
               Tarih kitabı boş. Sezon tamamlandığında olaylar burada kayıt altına alınır.
             </p>
             <p className="history-book-empty__hint">
-              Büyük savaşlar, rejim değişimleri ve pakt ihanetleri otomatik olarak derlenir.
+              Saldırı seferi, rejim ilanı veya anlaşma ihlali gerçekleştirdiğinizde kayıtlar görünür.
             </p>
           </div>
         ) : (

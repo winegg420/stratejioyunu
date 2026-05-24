@@ -1,5 +1,5 @@
 /** Taktik bina kartı görselleri — canlıda public/buildings yolları (deploy güvenli). */
-export const BUILDING_ASSET_VERSION = '20260519c';
+export const BUILDING_ASSET_VERSION = '20260524a';
 
 export const BUILDING_PLACEHOLDER_IMAGE = '/buildings/hq.jpg';
 

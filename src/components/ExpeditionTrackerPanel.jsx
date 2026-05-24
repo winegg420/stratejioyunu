@@ -79,7 +79,7 @@ export default function ExpeditionTrackerPanel() {
             <span className="expedition-empty-radar__tag">{t('pages.home.expedition.emptyTag')}</span>
             <p className="expedition-empty-radar__hint">{t('pages.home.expedition.emptyHint')}</p>
             <Link to="/harita" className="btn btn-hud-primary btn-sm expedition-empty-radar__cta">
-              {t('common.openMap')}
+              {t('common.openMapCta')}
             </Link>
           </div>
         </div>

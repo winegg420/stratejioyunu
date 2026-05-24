@@ -50,6 +50,7 @@ const QUEST_POOLS = {
         current: `%${Math.round(ctx.activeCity?.taxRate ?? 15)}`,
         target: '%12–%18',
         unit: 'vergi',
+        format: 'text',
       }),
       reward: { loyalty: 55, food: 500 },
     },
@@ -158,6 +159,7 @@ const QUEST_POOLS = {
         current: isAiCenterOperational(ctx.activeCity) ? 'Çevrimiçi' : 'Kapalı',
         target: 'Çevrimiçi',
         unit: 'YZ merkezi',
+        format: 'text',
       }),
       reward: { loyalty: 80, hammadde: 500 },
     },
@@ -223,19 +225,13 @@ export function syncDailyQuestsState(state, ideology, now = Date.now()) {
   if (!state || state.dayKey !== day) {
     return generateDailyQuests(ideology, now);
   }
-  return state;
-}
-
-export function evaluateDailyQuests(questState, ctx) {
-  if (!questState?.quests) return questState;
-  const quests = questState.quests.map((q) => {
-    const template = Object.values(QUEST_POOLS)
-      .flat()
-      .find((t) => q.templateId === t.id);
-    const done = template?.check?.(ctx) ?? false;
-    return { ...q, completed: done || q.completed };
+  const quests = (state.quests ?? []).map((q) => {
+    if (q.templateId) return q;
+    const template = findQuestTemplateForQuest(q);
+    return template?.id ? { ...q, templateId: template.id } : q;
   });
-  return { ...questState, quests };
+  const changed = quests.some((q, i) => q !== state.quests[i]);
+  return changed ? { ...state, quests } : state;
 }
 
 export function claimDailyQuest(questState, questId, loyaltyScore) {
@@ -289,28 +285,80 @@ function findQuestTemplate(templateId) {
     .find((t) => t.id === templateId);
 }
 
+/** Kayıtlı görev → şablon (templateId veya gün_id soneki). */
+export function findQuestTemplateForQuest(quest) {
+  if (!quest) return null;
+  if (quest.templateId) {
+    const byId = findQuestTemplate(quest.templateId);
+    if (byId) return byId;
+  }
+  const pool = Object.values(QUEST_POOLS).flat();
+  if (quest.id) {
+    const bySuffix = pool.find((t) => quest.id === t.id || quest.id.endsWith(`_${t.id}`));
+    if (bySuffix) return bySuffix;
+  }
+  return pool.find((t) => t.title === quest.title) ?? null;
+}
+
+function formatProgressPair(raw, lang) {
+  if (!raw) return null;
+  const current = raw.current ?? '—';
+  const target = raw.target ?? '—';
+
+  if (raw.format === 'percent' || raw.unit === 'mutluluk') {
+    const curNum = typeof raw.current === 'number'
+      ? raw.current
+      : parseInt(String(raw.current).replace(/\D/g, ''), 10);
+    const tgtLabel = typeof raw.target === 'number'
+      ? `%${raw.target}`
+      : String(raw.target);
+    const curLabel = typeof curNum === 'number' && Number.isFinite(curNum)
+      ? `%${curNum}`
+      : String(current);
+    if (lang === 'en') return `Current: ${curLabel} / Target: ${tgtLabel}`;
+    return `Mevcut: ${curLabel} / Hedef: ${tgtLabel}`;
+  }
+
+  if (raw.format === 'text' || raw.unit === 'YZ merkezi') {
+    if (lang === 'en') return `Current: ${current} / Target: ${target}`;
+    return `Mevcut: ${current} / Hedef: ${target}`;
+  }
+
+  if (lang === 'en') return `Current ${current} / Target ${target}`;
+  return `Mevcut: ${current} / Hedef: ${target}`;
+}
+
 /** Günlük görev kartı için "Mevcut X / Hedef Y" satırı. */
 export function formatDailyQuestProgressLine(quest, ctx, lang = 'tr') {
-  const template = findQuestTemplate(quest?.templateId);
-  if (!template?.progress) return null;
-  const raw = template.progress(ctx);
-  if (!raw) return null;
-  if (raw.format === 'percent' || raw.unit === 'mutluluk') {
-    const current = typeof raw.current === 'number'
-      ? raw.current
-      : parseInt(String(raw.current).replace(/\D/g, ''), 10) || 0;
-    const target = typeof raw.target === 'number'
-      ? raw.target
-      : parseInt(String(raw.target).replace(/\D/g, ''), 10) || 0;
-    if (lang === 'en') {
-      return `Current: %${current} / Target: %${target}`;
+  const template = findQuestTemplateForQuest(quest);
+  if (!template?.progress) {
+    if (typeof template?.target === 'number' && ctx?.seasonStats) {
+      return null;
     }
-    return `Mevcut: %${current} / Hedef: %${target}`;
+    return quest?.completed
+      ? (lang === 'en' ? 'Completed' : 'Tamamlandı')
+      : null;
   }
-  if (lang === 'en') {
-    return `Current ${raw.current} / Target ${raw.target}`;
-  }
-  return `Mevcut: ${raw.current} / Hedef: ${raw.target}`;
+
+  const raw = template.progress(ctx);
+  return formatProgressPair(raw, lang);
+}
+
+/** Görev tamamlanma durumu + ilerleme metnini günceller. */
+export function evaluateDailyQuests(questState, ctx) {
+  if (!questState?.quests) return questState;
+  const quests = questState.quests.map((q) => {
+    const template = findQuestTemplateForQuest(q);
+    const done = template?.check?.(ctx) ?? false;
+    let templateId = q.templateId;
+    if (!templateId && template?.id) templateId = template.id;
+    return {
+      ...q,
+      templateId,
+      completed: done || q.completed,
+    };
+  });
+  return { ...questState, quests };
 }
 
 export function markSocialistAidFlag(flags, sendAmounts) {

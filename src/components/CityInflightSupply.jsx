@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { remainingFromEndsAt } from '../lib/gameUtils';
 import { formatCargoAmount } from '../lib/cargoLogistics';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 
 function formatEtaShort(totalSeconds) {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -16,7 +16,7 @@ function getCargoQty(exp) {
 
 export default function CityInflightSupply({ cityId, cityName, className = '' }) {
   const now = useGameStore((s) => s.now);
-  const expeditions = useGameStore((s) => s.expeditions ?? []);
+  const expeditions = useGameStore((s) => s.expeditions ?? STORE_EMPTY_ARRAY);
 
   const transits = useMemo(
     () => expeditions.filter(

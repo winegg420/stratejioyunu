@@ -51,7 +51,12 @@ function wrapMarker(pinHtml, city, ownerLabel, options = {}) {
 }
 
 /** Ana Merkez — parlak yeşil yıldız (aktif veya pasif) */
-export function createMainHqIcon(city, ownerLabel, { showLabels = true, isActive = false } = {}) {
+export function createMainHqIcon(city, ownerLabel, {
+  showLabels = true,
+  isActive = false,
+  colorOverride = null,
+} = {}) {
+  const glyphColor = colorOverride ?? EMPIRE_CITY_GLOW;
   const wrapped = wrapMarker(
     `
       <span class="active-hq-radar main-hq-radar" aria-hidden="true">
@@ -59,7 +64,7 @@ export function createMainHqIcon(city, ownerLabel, { showLabels = true, isActive
         <span class="active-hq-radar__ring active-hq-radar__ring--2"></span>
         <span class="active-hq-radar__ring active-hq-radar__ring--3"></span>
       </span>
-      <span class="main-hq-marker__glyph" aria-hidden="true">★</span>
+      <span class="main-hq-marker__glyph" style="color:${glyphColor}" aria-hidden="true">★</span>
     `,
     city,
     ownerLabel,
@@ -85,8 +90,9 @@ export function createColonyIcon(city, {
   peaceShield = false,
   showLabels = true,
   isActive = false,
+  colorOverride = null,
 } = {}) {
-  const color = underAttack ? '#ef4444' : EMPIRE_CITY_GLOW;
+  const color = underAttack ? '#ef4444' : (colorOverride ?? EMPIRE_CITY_GLOW);
   const peaceRing = peaceShield
     ? '<span class="map-peace-shield-ring" aria-hidden="true"></span>'
     : '';
@@ -182,8 +188,8 @@ export function createMapHitIcon() {
   return L.divIcon({
     className: 'map-city-hit-marker',
     html: '<span class="map-city-hit-marker__zone" aria-hidden="true"></span>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
   });
 }
 

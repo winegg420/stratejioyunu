@@ -32,6 +32,7 @@ export default function MapIntelSidebar() {
   const [rankRows, setRankRows] = useState([]);
   const [rankSource, setRankSource] = useState('loading');
   const [reportsSyncing, setReportsSyncing] = useState(false);
+  const [spyProbeReports, setSpyProbeReports] = useState([]);
 
   useEffect(() => {
     localStorage.setItem(INTEL_SIDEBAR_KEY, expanded ? '1' : '0');

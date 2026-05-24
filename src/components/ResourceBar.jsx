@@ -91,6 +91,12 @@ function ResourceItem({
   const foodHourlyTitle = resource.id === 'food' && !frozen && !showHourlyBadge && !hourlyLabel
     ? t('resourceBar.foodHourlyZeroTitle')
     : undefined;
+  const detailTitle = `${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}`;
+  const sharedTreasuryTip = t('resourceBar.sharedTreasuryTitle');
+  const moneyTreasuryTitle = resource.empireShared
+    ? `${detailTitle} · ${sharedTreasuryTip}`
+    : detailTitle;
+  const cellTitle = resource.id === 'money' ? moneyTreasuryTitle : detailTitle;
 
   return (
     <div
@@ -110,7 +116,7 @@ function ResourceItem({
       ]
         .filter(Boolean)
         .join(' ')}
-      title={`${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}`}
+      title={cellTitle}
     >
       {resource.id === 'money' && budgetSpendFloats?.length > 0 && (
         <div className="budget-spend-float-layer" aria-hidden="true">
@@ -125,7 +131,7 @@ function ResourceItem({
         </span>
         <span className="res-label">{displayLabel}</span>
       </div>
-      <div className="res-bar-cell__value">
+      <div className="res-bar-cell__value" title={resource.id === 'money' ? detailTitle : undefined}>
         <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
           {formatCompactNumber(resource.current)}
         </span>
@@ -136,7 +142,13 @@ function ResourceItem({
         )}
         {frozen && <span className="res-stgn-badge">[ STGN ]</span>}
         {resource.empireShared && (
-          <span className="res-empire-badge" title={t('resourceBar.sharedTreasuryTitle')}>
+          <span
+            className="res-empire-badge"
+            title={sharedTreasuryTip}
+            data-tooltip={sharedTreasuryTip}
+            aria-label={sharedTreasuryTip}
+            tabIndex={0}
+          >
             {t('resourceBar.sharedTreasury')}
           </span>
         )}
@@ -183,6 +195,7 @@ export default function ResourceBar() {
   const valueFlashes = useResourceValueFlashes(resources);
   const workforceShortage = hasWorkforceShortage(activeCity);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
+  const diamonds = useGameStore((s) => s.playerMeta?.diamonds ?? 0);
   const peaceActive = isPeaceForceProtected(protectionEndsAt);
   const peaceCountdown = formatPeaceForceCountdown(protectionEndsAt);
   const visibleResources = resources.filter((r) => r.id !== 'uranium');
@@ -284,9 +297,22 @@ export default function ResourceBar() {
           </div>
         )}
 
-        <div className="resource-bar-lang-clock resource-bar-lang-clock--dock" aria-label="Dil ve sunucu saati">
-          <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
+        <div
+          className="resource-bar-lang-clock resource-bar-lang-clock--dock resource-bar-lang-clock--stacked"
+          aria-label="Sunucu saati, premium elmas ve dil"
+        >
           <ServerTimeClock />
+          <div
+            className="resource-bar-diamond resource-bar-diamond--dock"
+            title={t('resourceBar.diamondsTitle')}
+            aria-label={`${t('resourceBar.diamonds')}: ${diamonds}`}
+          >
+            <span className="resource-bar-diamond__icon" aria-hidden="true">💎</span>
+            <span className="resource-bar-diamond__value font-hud-data">
+              {formatCompactNumber(diamonds)}
+            </span>
+          </div>
+          <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
         </div>
 
         <div className="resource-bar-main-row">

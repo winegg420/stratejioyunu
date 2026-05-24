@@ -21,12 +21,12 @@ export const WORLD_ROLE_COLORS = {
 export function getMapCityDisplayColor(city, options = {}) {
   if (!city) return CITY_STATUS_COLORS.empty;
   const { ideologyView = false, playerName, playerIdeology } = options;
+  if (city.status === 'own' || city.isOwn) return CITY_STATUS_COLORS.own;
   if (ideologyView && playerName) {
     const ideology = resolveCityIdeology(city, playerName, playerIdeology);
     const profile = getIdeologyProfile(ideology);
     if (profile?.color) return profile.color;
   }
-  if (city.status === 'own') return CITY_STATUS_COLORS.own;
   if (city.worldRole && WORLD_ROLE_COLORS[city.worldRole]) {
     return WORLD_ROLE_COLORS[city.worldRole];
   }
@@ -69,6 +69,19 @@ export const MAP_BORDER_STYLE = {
   lineCap: 'round',
 };
 
+/** Oyuncunun kendi ili — her zaman neon yeşil sınır + iç dolgu */
+export function getOwnProvinceStyle() {
+  return {
+    fillColor: '#22ff88',
+    fillOpacity: 0.16,
+    color: '#22ff88',
+    weight: 2.4,
+    lineJoin: 'round',
+    lineCap: 'round',
+    opacity: 0.92,
+  };
+}
+
 export function getProvinceStyle() {
   return {
     fillColor: '#0a0f0a',
@@ -81,6 +94,7 @@ export function getProvinceStyle() {
   };
 }
 
+
 export function getDistrictStyle() {
   return {
     fillColor: '#111a11',
@@ -90,10 +104,11 @@ export function getDistrictStyle() {
 }
 
 export function getHoverStyle(base) {
+  const isOwn = base?.color === '#22ff88' || base?.fillColor === '#22ff88';
   return {
     ...base,
-    fillOpacity: Math.min(0.14, (base.fillOpacity || 0.06) + 0.06),
-    weight: 1.6,
-    color: 'rgba(0, 240, 255, 0.55)',
+    fillOpacity: Math.min(isOwn ? 0.24 : 0.14, (base.fillOpacity || 0.06) + 0.06),
+    weight: (base.weight || 1.2) + 0.35,
+    color: isOwn ? '#4ade80' : 'rgba(0, 240, 255, 0.55)',
   };
 }

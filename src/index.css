@@ -336,6 +336,7 @@ a {
 }
 
 .nav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1966,8 +1967,10 @@ body.map-scroll-locked {
   gap: 0.65rem;
 }
 
-.meydan-battle-declare .btn-danger {
+.meydan-battle-declare .btn-danger,
+.meydan-battle-declare .meydan-battle-declare-btn {
   width: auto;
+  max-width: 16rem;
   align-self: flex-start;
 }
 

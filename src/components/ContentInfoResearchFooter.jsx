@@ -3,11 +3,13 @@ import { useNotificationStore } from '../stores/notificationStore';
 import { canAffordCost } from '../utils/resourceCosts';
 import { ADVANCED_RESEARCH_CATEGORY } from '../data/researchCatalog';
 import { isKbrnBranchUnlocked, scaleAdvancedResearchCost } from '../lib/kbrnResearch';
+import { flushGameSave } from '../lib/gameActionSync';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function ContentInfoResearchFooter({ researchId, onClose }) {
   const { t, researchName } = useLanguage();
   const city = useActiveCity();
+  const activeCityId = useGameStore((s) => s.activeCityId);
   const resources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const researches = useGameStore((s) => s.researches ?? STORE_EMPTY_ARRAY);
   const enqueueResearch = useGameStore((s) => s.enqueueResearch);
@@ -27,30 +29,74 @@ export default function ContentInfoResearchFooter({ researchId, onClose }) {
   const canStart = !atMaxLevel && !advancedLocked && !item.active && !item.queued && canAfford && !hasActive;
   const canQueue = !atMaxLevel && !advancedLocked && !item.active && !item.queued && canAfford && hasActive;
 
-  const handleResearch = () => {
-    if (item.queued) {
-      const ok = startQueuedResearch(item.id);
-      if (!ok) {
-        useNotificationStore.getState().addToast(t('pages.research.startFailed'), 'warn');
-      } else {
-        onClose?.();
-      }
-      return;
-    }
-    const ok = enqueueResearch(item.id);
+  const persistResearch = async (ok) => {
     if (!ok) {
       useNotificationStore.getState().addToast(t('pages.research.startFailed'), 'warn');
-    } else {
-      onClose?.();
+      return;
     }
+    await flushGameSave({ cityId: activeCityId, researches: true });
+    onClose?.();
   };
 
-  const handleQueue = () => {
+  const toast = (key, type = 'warn') => {
+    useNotificationStore.getState().addToast(t(key), type);
+  };
+
+  const handleResearch = async () => {
+    if (atMaxLevel) {
+      toast('pages.research.maxLevelReached', 'info');
+      return;
+    }
+    if (advancedLocked) {
+      toast('pages.research.lockHint');
+      return;
+    }
+    if (item.active) {
+      toast('pages.research.researching', 'info');
+      return;
+    }
+    if (!canAfford) {
+      toast('pages.research.cannotAfford');
+      return;
+    }
+
+    if (item.queued) {
+      if (hasActive) {
+        toast('pages.research.waitForActive');
+        return;
+      }
+      const ok = startQueuedResearch(item.id);
+      await persistResearch(ok);
+      return;
+    }
+
+    if (hasActive) {
+      const ok = enqueueResearch(item.id, { addToQueue: true });
+      if (!ok) {
+        toast('pages.research.queueFailed');
+        return;
+      }
+      await flushGameSave({ cityId: activeCityId, researches: true });
+      onClose?.();
+      return;
+    }
+
+    const ok = enqueueResearch(item.id);
+    await persistResearch(ok);
+  };
+
+  const handleQueue = async () => {
     const ok = enqueueResearch(item.id, { addToQueue: true });
     if (!ok) {
       useNotificationStore.getState().addToast(t('pages.research.queueFailed'), 'warn');
+      return;
     }
+    await flushGameSave({ cityId: activeCityId, researches: true });
   };
+
+  const primaryDisabled = item.queued
+    ? hasActive || advancedLocked
+    : !canStart && !canQueue;
 
   return (
     <footer className="content-info-modal__footer content-info-modal__footer--research">
@@ -64,17 +110,16 @@ export default function ContentInfoResearchFooter({ researchId, onClose }) {
           <button
             type="button"
             className="btn btn-hud-primary btn--research-max"
-            onClick={() => {
-              useNotificationStore.getState().addToast(t('pages.research.maxLevelReached'), 'info');
-            }}
+            disabled
+            aria-disabled="true"
           >
             {t('pages.research.maxLevel')}
           </button>
         ) : item.queued ? (
           <button
             type="button"
-            className="btn btn-hud-primary"
-            disabled={hasActive || advancedLocked}
+            className={`btn btn-hud-primary${primaryLooksDisabled ? ' btn--action-muted' : ''}`}
+            aria-disabled={primaryLooksDisabled || undefined}
             onClick={handleResearch}
           >
             {t('pages.research.start')}
@@ -82,8 +127,8 @@ export default function ContentInfoResearchFooter({ researchId, onClose }) {
         ) : (
           <button
             type="button"
-            className="btn btn-hud-primary"
-            disabled={!canStart}
+            className={`btn btn-hud-primary${primaryLooksDisabled ? ' btn--action-muted' : ''}`}
+            aria-disabled={primaryLooksDisabled || undefined}
             onClick={handleResearch}
           >
             {item.active ? t('pages.research.researching') : t('pages.research.research')}

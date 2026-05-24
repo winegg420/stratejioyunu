@@ -133,7 +133,7 @@ function ResearchCard({ item, advancedLocked }) {
           onClick={() => {
             const ok = enqueueResearch(item.id, { addToQueue: true });
             if (!ok) {
-              useNotificationStore.getState().addToast('Kuyruğa eklenemedi.', 'warn');
+              useNotificationStore.getState().addToast(t('pages.research.queueFailed'), 'warn');
             }
           }}
         >

@@ -1,5 +1,4 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -17,7 +16,7 @@ import { normalizeMapCities } from './botCityUtils';
 import { safeFilterMapCities, safeMapCities, safeRunMapOp } from '../lib/mapSafeUtils';
 import { useMountedRef } from '../hooks/useMountedRef';
 import { enrichMapCityWithProvince } from './cityProvinceMatch';
-import { buildBotProvinceNameSet } from '../lib/botProvincePulse';
+import { buildBotProvinceNameSet, buildOwnProvinceNameSet } from '../lib/botProvincePulse';
 import { useMapFullscreen } from '../hooks/useMapFullscreen';
 import { useProvinceMapHandlers } from './useProvinceMapHandlers';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
@@ -71,6 +70,8 @@ export default function TurkeyMap() {
   const [flyTarget, setFlyTarget] = useState(null);
   const [cityPick, setCityPick] = useState('');
   const [viewport, setViewport] = useState(null);
+  const [restoreViewport, setRestoreViewport] = useState(null);
+  const fsViewportSnapshotRef = useRef(null);
   const [hoverCoord, setHoverCoord] = useState(null);
   const [hudCollapsed, setHudCollapsed] = useState(false);
   const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
@@ -82,6 +83,7 @@ export default function TurkeyMap() {
   const [panelInitialActionMode, setPanelInitialActionMode] = useState(null);
   const [consoleForceExpanded, setConsoleForceExpanded] = useState(false);
 
+  const [theaterPortalEl, setTheaterPortalEl] = useState(null);
   const provinceLayerRef = useRef(null);
   const activeProvinceLayerRef = useRef(null);
   const botPulsePhaseRef = useRef(0);
@@ -102,6 +104,7 @@ export default function TurkeyMap() {
     hexPulseTimersRef.current = [];
   }, []);
   const botProvinceNamesRef = useRef(new Set());
+  const ownProvinceNamesRef = useRef(new Set());
 
   /** Ana haritada sürükle-pan her zaman (mobilde sayfa kilidi yalnızca dış kaydırmayı etkiler) */
   const mapPanEnabled = true;
@@ -114,7 +117,12 @@ export default function TurkeyMap() {
     () => buildBotProvinceNameSet(mapCities, playerCities, provinces),
     [mapCities, playerCities, provinces],
   );
+  const ownProvinceNames = useMemo(
+    () => buildOwnProvinceNameSet(mapCities, playerCities, provinces),
+    [mapCities, playerCities, provinces],
+  );
   botProvinceNamesRef.current = botProvinceNames;
+  ownProvinceNamesRef.current = ownProvinceNames;
 
   const activePlayerCity = useMemo(
     () => playerCities.find((c) => c.id === activeCityId) ?? playerCities[0],
@@ -194,12 +202,18 @@ export default function TurkeyMap() {
     if (snapshot) setLastViewedLocation(snapshot);
   }, [viewport, setLastViewedLocation]);
 
-  const openMapCityPanel = useCallback((cityOrHighlight, { initialActionMode = null } = {}) => {
+  const showCityDetailPanel = useCallback((cityOrHighlight, { initialActionMode = null } = {}) => {
     const enriched = enrichMapCityWithProvince(cityOrHighlight, playerCities);
     setActiveHighlightCity(enriched);
     setSelectedCity(enriched);
     setPanelInitialActionMode(initialActionMode);
-    if (enriched.lat != null && enriched.lng != null) {
+    persistMapView(enriched);
+    return enriched;
+  }, [playerCities, persistMapView]);
+
+  const openMapCityPanel = useCallback((cityOrHighlight, { initialActionMode = null, skipFly = false } = {}) => {
+    const enriched = showCityDetailPanel(cityOrHighlight, { initialActionMode });
+    if (!skipFly && enriched.lat != null && enriched.lng != null) {
       setFitBounds(null);
       setFlyTarget({
         lat: enriched.lat,
@@ -208,9 +222,8 @@ export default function TurkeyMap() {
         at: Date.now(),
       });
     }
-    persistMapView(enriched);
     return enriched;
-  }, [playerCities, persistMapView]);
+  }, [playerCities, showCityDetailPanel]);
 
   const resolveConsoleCity = useCallback((city) => {
     if (!city?.name) return city;
@@ -281,19 +294,12 @@ export default function TurkeyMap() {
     resolveConsoleCity,
   ]);
 
-  const handleFlyCompleteOpenPanel = useCallback(() => {
-    const city = pendingPanelCityRef.current;
-    if (!city) return;
-    openMapCityPanel(city, { initialActionMode: panelInitialActionMode });
-    pendingPanelCityRef.current = null;
-  }, [openMapCityPanel, panelInitialActionMode]);
-
   const openCityDetail = useCallback(
     (city) => focusCityOnMap(city, { openPanel: true }),
     [focusCityOnMap],
   );
 
-  const handleSelectCity = useCallback((city) => {
+  const handleSelectCity = useCallback((city, { skipFly = false } = {}) => {
     const enriched = enrichMapCityWithProvince(city, playerCities);
     if (mapTargetPickRequest) {
       const own = new Set(playerCities.map((c) => c.name));
@@ -306,10 +312,10 @@ export default function TurkeyMap() {
       const own = new Set(playerCities.map((c) => c.name));
       if (own.has(enriched.name) || enriched.status === 'empty') return;
       setExpeditionLaunchMode(false);
-      openMapCityPanel(enriched, { initialActionMode: 'troops' });
+      openMapCityPanel(enriched, { initialActionMode: 'troops', skipFly });
       return;
     }
-    openMapCityPanel(enriched);
+    openMapCityPanel(enriched, { skipFly });
   }, [
     mapTargetPickRequest,
     expeditionLaunchMode,
@@ -318,6 +324,13 @@ export default function TurkeyMap() {
     navigate,
     openMapCityPanel,
   ]);
+
+  const handleFlyCompleteOpenPanel = useCallback(() => {
+    const city = pendingPanelCityRef.current;
+    if (!city) return;
+    pendingPanelCityRef.current = null;
+    handleSelectCity(city, { skipFly: true });
+  }, [handleSelectCity]);
 
   const handleProvinceView = useCallback((highlight) => {
     if (mapTargetPickRequest) return;
@@ -336,6 +349,7 @@ export default function TurkeyMap() {
     mapCities,
     playerCities,
     mapTargetPickRequest,
+    expeditionLaunchMode,
     fulfillMapTargetPick,
     navigate,
     handleSelectCity,
@@ -344,7 +358,7 @@ export default function TurkeyMap() {
     setActiveHighlightCity,
     activeProvinceLayerRef,
     botProvinceNamesRef,
-    botPulsePhaseRef,
+    ownProvinceNamesRef,
   });
 
   const hoverRafRef = useRef(0);
@@ -545,6 +559,33 @@ export default function TurkeyMap() {
     return () => window.clearTimeout(t);
   }, [isFullscreen]);
 
+  useEffect(() => {
+    if (isFullscreen) return undefined;
+
+    const snap = fsViewportSnapshotRef.current;
+    if (!snap?.center) return undefined;
+
+    fsViewportSnapshotRef.current = null;
+    const timer = window.setTimeout(() => {
+      setRestoreViewport({
+        center: snap.center,
+        zoom: snap.zoom,
+        at: Date.now(),
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [isFullscreen]);
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (!isFullscreen && viewport?.center) {
+      fsViewportSnapshotRef.current = {
+        center: { lat: viewport.center.lat, lng: viewport.center.lng },
+        zoom: viewport.zoom,
+      };
+    }
+    toggleFullscreen();
+  }, [isFullscreen, viewport, toggleFullscreen]);
+
   const pageClassName = useMemo(
     () => [
       'map-page',
@@ -559,18 +600,35 @@ export default function TurkeyMap() {
     [mapLocked, isMobile, mapTargetPickRequest, expeditionLaunchMode, isFullscreen],
   );
 
+  const fsPortalRoot = isFullscreen ? theaterPortalEl : null;
+
   return (
     <div ref={theaterRef} className={pageClassName}>
-      {isFullscreen && createPortal(
-        <button
-          type="button"
-          className="map-fs-exit-btn map-fs-exit-btn--portaled"
-          onClick={exitFullscreen}
-          aria-label="Tam ekrandan çık"
-        >
-          [ TAM EKRANDAN ÇIK ]
-        </button>,
-        document.body,
+      <div
+        ref={setTheaterPortalEl}
+        className="map-theater-portal-anchor"
+        aria-hidden={!isFullscreen}
+      />
+
+      {isFullscreen && (
+        <div className="map-fs-chrome" data-map-no-pan>
+          <button
+            type="button"
+            className={`btn btn-secondary btn-sm map-fs-ideology-btn map-ideology-toggle${ideologyView ? ' active' : ''}`}
+            onClick={handleToggleIdeology}
+            aria-pressed={ideologyView}
+          >
+            [ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]
+          </button>
+          <button
+            type="button"
+            className="map-fs-exit-btn"
+            onClick={exitFullscreen}
+            aria-label="Tam ekrandan çık"
+          >
+            [ TAM EKRANDAN ÇIK ]
+          </button>
+        </div>
       )}
 
       {isMobile && !isFullscreen && (
@@ -611,7 +669,7 @@ export default function TurkeyMap() {
         </div>
       )}
 
-      <MapCoordTooltip hover={hoverCoord} />
+      <MapCoordTooltip hover={hoverCoord} portalRoot={fsPortalRoot} />
 
       {mapTargetPickRequest && (
         <div className="map-pick-target-banner" role="status">
@@ -649,12 +707,11 @@ export default function TurkeyMap() {
           <MapTacticalCommandBar
             ideologyView={ideologyView}
             onToggleIdeology={handleToggleIdeology}
-            isFullscreen={isFullscreen}
           />
           <button
             type="button"
             className="map-fs-hero-btn map-fs-hero-btn--compact"
-            onClick={toggleFullscreen}
+          onClick={handleToggleFullscreen}
             aria-label="Taktik harekat odası tam ekran modunu aç"
           >
             [ TAM EKRAN ]
@@ -673,6 +730,7 @@ export default function TurkeyMap() {
           <TurkeyLeafletMap
             provinces={provinces}
             botProvinceNames={botProvinceNames}
+            ownProvinceNames={ownProvinceNames}
             botPulsePhaseRef={botPulsePhaseRef}
             onEachProvince={onEachProvince}
             ideologyView={ideologyView}
@@ -694,13 +752,15 @@ export default function TurkeyMap() {
             activeLng={activeLng}
             fitBounds={fitBounds}
             flyTarget={flyTarget}
+            restoreViewport={restoreViewport}
             onFlyComplete={handleFlyCompleteOpenPanel}
-            ideologyView={ideologyView}
             isMobile={isMobile}
             mapPanEnabled={mapPanEnabled}
             hudCollapsed={hudCollapsed}
             onViewportChange={setViewportStable}
             onMapClickPulse={handleMapClickPulse}
+            isFullscreen={isFullscreen}
+            showLocHud={!hoverCoord}
           />
         )}
 
@@ -781,6 +841,7 @@ export default function TurkeyMap() {
           city={selectedCity}
           onClose={handleCloseCityPanel}
           initialActionMode={panelInitialActionMode}
+          portalRoot={fsPortalRoot}
         />
       )}
     </div>

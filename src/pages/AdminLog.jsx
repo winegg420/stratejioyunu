@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import NewsFeed from '../components/NewsFeed';
 import { ADMIN_LOG_TAG, adminLogToNewsItem } from '../lib/adminOverrideEngine';
-import { fetchAdminLogs } from '../lib/adminBroadcastSync';
+import { DEFAULT_SERVER_ID, fetchAdminLogs } from '../lib/adminBroadcastSync';
 import { isGameAdmin } from '../lib/adminAccess';
 import { isDevAdminLocalEnabled } from '../lib/devTestMode';
 import {
@@ -12,7 +12,7 @@ import {
   setAdminPanelUnlocked,
 } from '../lib/adminUnlock';
 import { useAuth } from '../context/AuthContext';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 
 export default function AdminLog() {
@@ -27,7 +27,7 @@ export default function AdminLog() {
     profileIsAdmin: isAdminUser,
   });
   const adminActive = devTestModeActive || isDevAdminLocalEnabled();
-  const storeLogs = useGameStore((s) => s.adminPublicLogs ?? []);
+  const storeLogs = useGameStore((s) => s.adminPublicLogs ?? STORE_EMPTY_ARRAY);
   const refreshServerBroadcast = useGameStore((s) => s.refreshServerBroadcast);
   const enableAdminMode = useGameStore((s) => s.enableAdminMode);
   const disableAdminMode = useGameStore((s) => s.disableAdminMode);
@@ -46,11 +46,19 @@ export default function AdminLog() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      await refreshServerBroadcast();
-      const rows = await fetchAdminLogs(100);
-      if (!cancelled) {
-        setLogs(rows);
-        setLoading(false);
+      try {
+        await refreshServerBroadcast();
+        const rows = await fetchAdminLogs(DEFAULT_SERVER_ID, 100);
+        if (cancelled) return;
+        const fromStore = useGameStore.getState().adminPublicLogs ?? [];
+        setLogs(rows.length ? rows : fromStore);
+      } catch (err) {
+        console.warn('[AdminLog] load', err);
+        if (!cancelled) {
+          setLogs(useGameStore.getState().adminPublicLogs ?? []);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };

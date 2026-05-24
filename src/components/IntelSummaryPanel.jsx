@@ -1,4 +1,4 @@
-import { isOperationReport } from '../data/intelOperationsCatalog';
+import { getLatestOperationReport } from '../data/intelOperationsCatalog';
 
 function formatLastOpResult(report) {
   if (!report) return 'Henüz operasyon tamamlanmadı';
@@ -16,7 +16,7 @@ export default function IntelSummaryPanel({
   reports = [],
   enemySpyWarning,
 }) {
-  const lastOp = reports.find((r) => isOperationReport(r));
+  const lastOp = getLatestOperationReport(reports);
 
   return (
     <section className="intel-summary-panel glass-panel" aria-label="İstihbarat özet paneli">

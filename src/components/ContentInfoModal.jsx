@@ -1,10 +1,21 @@
 import CostParts from './CostParts';
+import ContentInfoBuildingFooter from './ContentInfoBuildingFooter';
 import ContentInfoResearchFooter from './ContentInfoResearchFooter';
 import UnitMilitaryIcon from './UnitMilitaryIcon';
 import { useModalDismiss, stopModalPropagation } from '../hooks/useModalDismiss';
 import { useGameStore } from '../stores/gameStore';
+import { parseTimeToSeconds, formatReadableDuration } from '../lib/gameUtils';
+import { useLanguage } from '../context/LanguageContext';
+
+function formatLevelRowTime(timeStr, lang) {
+  if (!timeStr || timeStr === '—') return '—';
+  const secs = parseTimeToSeconds(timeStr);
+  if (secs > 0) return formatReadableDuration(secs, lang);
+  return timeStr;
+}
 
 function LevelTable({ rows, effectLabel }) {
+  const { lang } = useLanguage();
   if (!rows?.length) return null;
   return (
     <div className="content-info-modal__section">
@@ -30,7 +41,9 @@ function LevelTable({ rows, effectLabel }) {
                 <td className="content-info-modal__cost-cell">
                   <CostParts costStr={row.cost} />
                 </td>
-                <td className="content-info-modal__mono content-info-modal__dim">{row.time}</td>
+                <td className="content-info-modal__mono content-info-modal__dim">
+                  {formatLevelRowTime(row.time, lang)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -144,6 +157,7 @@ export default function ContentInfoModal() {
   if (!data) return null;
 
   const isUnit = data.kind === 'unit';
+  const isBuilding = data.kind === 'building';
   const isResearch = data.kind === 'research';
 
   return (
@@ -193,6 +207,9 @@ export default function ContentInfoModal() {
           {isUnit ? <UnitBody data={data} /> : <BuildingResearchBody data={data} />}
         </div>
 
+        {isBuilding && data.id && (
+          <ContentInfoBuildingFooter buildingId={data.id} onClose={closeContentInfo} />
+        )}
         {isResearch && data.id && (
           <ContentInfoResearchFooter researchId={data.id} onClose={closeContentInfo} />
         )}

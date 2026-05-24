@@ -199,6 +199,7 @@ export const MIL_AI_TUTORIAL_QUESTS = [
     id: 'quest_12_complete',
     code: 'SİSTEM',
     titleKey: 'milAi.tutorial.quest12.title',
+    completeStatusKey: 'milAi.tutorial.quest12.title',
     taskKey: 'milAi.tutorial.quest12.task',
     celebrateKey: 'milAi.tutorial.quest12.celebrate',
     autoComplete: true,

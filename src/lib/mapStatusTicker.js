@@ -2,6 +2,8 @@
  * Harita alt bilgi bandı + global ticker — oyun durumuna göre dinamik mesajlar.
  */
 import { translate } from '../i18n';
+import { getUnitDisplayName } from '../data/unitCatalog';
+import { formatSeconds, remainingFromEndsAt } from './gameUtils';
 
 export function buildOperationalTickerMessages(state, lang = 'tr') {
   const t = (key, vars) => translate(lang, key, vars);
@@ -15,6 +17,7 @@ export function buildOperationalTickerMessages(state, lang = 'tr') {
     activeCrisis,
     globalOutbreak,
     incomingAttacks = [],
+    now = Date.now(),
   } = state;
 
   const messages = [];
@@ -95,7 +98,22 @@ export function buildOperationalTickerMessages(state, lang = 'tr') {
       text: t('map.ticker.constructionQueue', { count: buildTotal }),
     });
   }
-  if (prodTotal > 0) {
+
+  const activeProd = cities[activeCityId]?.productionQueue?.find((q) => !q.queued)
+    ?? cities[activeCityId]?.productionQueue?.[0];
+  if (activeProd) {
+    const unitLabel = getUnitDisplayName(activeProd.unitId, activeProd.unit) || activeProd.unit;
+    const rem = activeProd.queued ? 0 : remainingFromEndsAt(activeProd.endsAt, now);
+    messages.push({
+      id: 'prod-active',
+      label: t('map.ticker.production'),
+      text: t('map.ticker.prodActive', {
+        unit: unitLabel,
+        count: activeProd.count,
+        time: activeProd.queued ? t('components.activeQueue.queued') : formatSeconds(rem),
+      }),
+    });
+  } else if (prodTotal > 0) {
     messages.push({
       id: 'prod-q',
       label: t('map.ticker.production'),

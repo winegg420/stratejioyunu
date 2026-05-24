@@ -35,8 +35,10 @@ export default function CargoLogisticsPanel({
   const playerCities = useGameStore((s) => s.playerCities);
   const mapCities = useGameStore((s) => s.mapCities);
   const now = useGameStore((s) => s.now);
-  const cargoTransfers = useGameStore((s) =>
-    (s.expeditions ?? []).filter((e) => e.mode === 'cargo' && e.direction === 'outgoing'),
+  const expeditions = useGameStore((s) => s.expeditions);
+  const cargoTransfers = useMemo(
+    () => expeditions.filter((e) => e.mode === 'cargo' && e.direction === 'outgoing'),
+    [expeditions],
   );
   const startCargoTransfer = useGameStore((s) => s.startCargoTransfer);
   const { locked: actionLocked, runLocked } = useActionLock();

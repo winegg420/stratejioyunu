@@ -59,6 +59,7 @@ export default function CommandTickerFeed() {
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks);
+  const now = useGameStore((s) => s.now);
 
   const items = useMemo(
     () => buildTickerItems({
@@ -72,6 +73,7 @@ export default function CommandTickerFeed() {
       activeCityId,
       playerCities,
       incomingAttacks,
+      now,
     }, lang, t),
     [
       lang,
@@ -85,6 +87,7 @@ export default function CommandTickerFeed() {
       cities,
       activeCityId,
       playerCities,
+      now,
       incomingAttacks,
     ],
   );

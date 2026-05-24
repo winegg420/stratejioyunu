@@ -1,26 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
 import { diplomacy } from '../data/placeholder';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import PageSessionGate from '../components/PageSessionGate';
 import { useLanguage } from '../context/LanguageContext';
-
-function confirmBreakTreaty(partner, t) {
-  return window.confirm(t('pages.diplomacy.confirmBreakPact', { partner }));
-}
 import {
   TREATY_KIND,
   TREATY_LABELS,
   TREATY_STATUS,
   formatTreatyDurationHours,
   isTreatyActive,
+  parseTreatyEndsAt,
+  tickTreatyExpiry,
 } from '../lib/diplomaticAgreements';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { saveDiplomaticTreaties } from '../lib/historyBookStorage';
+
+function confirmBreakTreaty(partner, t) {
+  return window.confirm(t('pages.diplomacy.confirmBreakPact', { partner }));
+}
 
 function PactRow({ treaty, onBreak, t }) {
-  const endsLabel = treaty.endsAt
-    ? new Date(treaty.endsAt).toLocaleString('tr-TR')
+  const endsAt = parseTreatyEndsAt(treaty.endsAt);
+  const endsLabel = endsAt != null
+    ? new Date(endsAt).toLocaleString('tr-TR')
     : 'Süresiz';
   return (
     <li className="diplomacy-pact-row diplomacy-pact-row--active">
@@ -49,11 +53,19 @@ function isCeasefireTreaty(treaty) {
   return kind === TREATY_KIND.CEASEFIRE || treaty.type === TREATY_LABELS[TREATY_KIND.CEASEFIRE];
 }
 
+function isCeasefireExpired(treaty, now) {
+  if (!isCeasefireTreaty(treaty)) return false;
+  if (treaty.status === TREATY_STATUS.EXPIRED) return true;
+  const endsAt = parseTreatyEndsAt(treaty.endsAt);
+  if (treaty.status === TREATY_STATUS.ACTIVE && endsAt != null && endsAt <= now) return true;
+  return false;
+}
+
 export default function Diplomacy() {
   const { t } = useLanguage();
   const { alliance, votes } = diplomacy;
   const now = useGameStore((s) => s.now);
-  const diplomaticTreaties = useGameStore((s) => s.diplomaticTreaties ?? []);
+  const diplomaticTreaties = useGameStore((s) => s.diplomaticTreaties ?? STORE_EMPTY_ARRAY);
   const breakDiplomaticTreaty = useGameStore((s) => s.breakDiplomaticTreaty);
   const proposeDiplomaticAgreement = useGameStore((s) => s.proposeDiplomaticAgreement);
   const acceptDiplomaticAgreement = useGameStore((s) => s.acceptDiplomaticAgreement);
@@ -64,6 +76,14 @@ export default function Diplomacy() {
   const [napHours, setNapHours] = useState('');
 
   const playerName = getCurrentPlayerName();
+
+  useEffect(() => {
+    const tick = tickTreatyExpiry(useGameStore.getState().diplomaticTreaties ?? [], now);
+    if (!tick.changed) return;
+    useGameStore.setState({ diplomaticTreaties: tick.treaties });
+    saveDiplomaticTreaties(playerName, tick.treaties);
+  }, [now, playerName]);
+
   const activeTreaties = diplomaticTreaties.filter((t) => t.status === TREATY_STATUS.ACTIVE);
   const pendingIncoming = diplomaticTreaties.filter(
     (t) => t.status === TREATY_STATUS.PENDING && t.proposer !== playerName,
@@ -73,16 +93,35 @@ export default function Diplomacy() {
   );
 
   const expiredCeasefires = useMemo(
-    () => (diplomaticTreaties ?? []).filter((treaty) => {
-      if (!isCeasefireTreaty(treaty)) return false;
-      if (treaty.status === TREATY_STATUS.EXPIRED) return true;
-      if (treaty.status === TREATY_STATUS.ACTIVE && treaty.endsAt != null && treaty.endsAt <= now) {
-        return true;
-      }
-      return false;
-    }),
+    () => diplomaticTreaties.filter((treaty) => isCeasefireExpired(treaty, now)),
     [diplomaticTreaties, now],
   );
+
+  const handleProposeCeasefire = () => {
+    const hours = Number(ceasefireHours) || 48;
+    const ok = window.confirm(
+      t('pages.diplomacy.confirmCeasefire', { partner, hours }),
+    );
+    if (!ok) return;
+    proposeDiplomaticAgreement({
+      partner,
+      kind: TREATY_KIND.CEASEFIRE,
+      durationHours: hours,
+    });
+  };
+
+  const handleProposeNap = () => {
+    const hours = napHours ? Number(napHours) : null;
+    const ok = window.confirm(
+      t('pages.diplomacy.confirmNap', { partner, duration: hours ? `${hours} saat` : 'süresiz' }),
+    );
+    if (!ok) return;
+    proposeDiplomaticAgreement({
+      partner,
+      kind: TREATY_KIND.NAP,
+      durationHours: hours,
+    });
+  };
 
   return (
     <PageSessionGate loadingMessageKey="auth.syncingGame">
@@ -96,13 +135,22 @@ export default function Diplomacy() {
 
       {expiredCeasefires.length > 0 && (
         <div className="diplomacy-ceasefire-expired-banners" role="alert">
-          {expiredCeasefires.map((treaty) => (
-            <p key={treaty.id ?? `${treaty.partner}-ceasefire-expired`} className="diplomacy-ceasefire-expired-banner">
-              <strong>{treaty.partner}</strong>
-              {' '}
-              ile ateşkes sona erdi — yenile veya boz
-            </p>
-          ))}
+          {expiredCeasefires.map((treaty) => {
+            const endsAt = parseTreatyEndsAt(treaty.endsAt);
+            const endsLabel = endsAt != null
+              ? new Date(endsAt).toLocaleDateString('tr-TR')
+              : '—';
+            return (
+              <p key={treaty.id ?? `${treaty.partner}-ceasefire-expired`} className="diplomacy-ceasefire-expired-banner">
+                <strong>{treaty.partner}</strong>
+                {' '}
+                ile ateşkes sona erdi
+                {endsLabel !== '—' ? ` (${endsLabel})` : ''}
+                {' '}
+                — yenile veya boz
+              </p>
+            );
+          })}
         </div>
       )}
 
@@ -126,9 +174,9 @@ export default function Diplomacy() {
           <p className="hint diplomacy-panel__hint">
             Ateşkes ve saldırmazlık pakti bağlayıcıdır. Bozmak veya saldırmak itibar kaybettirir.
           </p>
-          {activeTreaties.filter((t) => isTreatyActive(t, now)).length > 0 ? (
+          {activeTreaties.filter((tr) => isTreatyActive(tr, now)).length > 0 ? (
             <ul className="diplomacy-pact-list treaty-list">
-              {activeTreaties.filter((t) => isTreatyActive(t, now)).map((treaty) => (
+              {activeTreaties.filter((tr) => isTreatyActive(tr, now)).map((treaty) => (
                 <PactRow
                   key={treaty.id ?? treaty.partner}
                   treaty={treaty}
@@ -178,11 +226,7 @@ export default function Diplomacy() {
             <button
               type="button"
               className="btn btn-primary diplomacy-action-btn"
-              onClick={() => proposeDiplomaticAgreement({
-                partner,
-                kind: TREATY_KIND.CEASEFIRE,
-                durationHours: Number(ceasefireHours) || 48,
-              })}
+              onClick={handleProposeCeasefire}
             >
               [ ATEŞKES TEKLİF ET ]
             </button>
@@ -207,11 +251,7 @@ export default function Diplomacy() {
             <button
               type="button"
               className="btn btn-secondary diplomacy-action-btn"
-              onClick={() => proposeDiplomaticAgreement({
-                partner,
-                kind: TREATY_KIND.NAP,
-                durationHours: napHours ? Number(napHours) : null,
-              })}
+              onClick={handleProposeNap}
             >
               [ NAP TEKLİF ET ]
             </button>
@@ -223,34 +263,34 @@ export default function Diplomacy() {
         <section className="panel">
           <h3 className="panel-title">Bekleyen Teklifler</h3>
           <ul className="diplomacy-pending-list">
-            {pendingIncoming.map((t) => (
-              <li key={t.id} className="diplomacy-pending-row">
+            {pendingIncoming.map((tr) => (
+              <li key={tr.id} className="diplomacy-pending-row">
                 <span>
-                  {t.proposer} → {t.type}
+                  {tr.proposer} → {tr.type}
                   {' '}
                   ({formatTreatyDurationHours(
-                    t.endsAt ? Math.round((t.endsAt - Date.now()) / 3600000) : 0,
+                    tr.endsAt ? Math.round((parseTreatyEndsAt(tr.endsAt) - Date.now()) / 3600000) : 0,
                   )})
                 </span>
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  onClick={() => acceptDiplomaticAgreement(t.id)}
+                  onClick={() => acceptDiplomaticAgreement(tr.id)}
                 >
                   Onayla
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={() => rejectDiplomaticAgreement(t.id)}
+                  onClick={() => rejectDiplomaticAgreement(tr.id)}
                 >
                   Reddet
                 </button>
               </li>
             ))}
-            {pendingOutgoing.map((t) => (
-              <li key={t.id} className="diplomacy-pending-row diplomacy-pending-row--out">
-                <span>Giden: {t.type} → {t.partner}</span>
+            {pendingOutgoing.map((tr) => (
+              <li key={tr.id} className="diplomacy-pending-row diplomacy-pending-row--out">
+                <span>Giden: {tr.type} → {tr.partner}</span>
                 <span className="muted">Yanıt bekleniyor</span>
               </li>
             ))}

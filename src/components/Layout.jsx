@@ -12,6 +12,7 @@ import IncomingThreatFlash from './IncomingThreatFlash';
 import DevTestModeBanner from './DevTestModeBanner';
 import { useTerminalLogStore } from '../stores/terminalLogStore';
 import ErrorBoundary from './ErrorBoundary';
+import ToastContainer from './ToastContainer';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../lib/auth';
 import {
@@ -23,6 +24,7 @@ import { useGameStore } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useMobileScrollGuard } from '../hooks/useMobileScrollGuard';
 import { releaseMapSessionLocks } from '../map/mapRouteCleanup';
+import { applyDocumentTitle } from '../lib/documentTitle';
 const MOBILE_SHELL_CLASS = 'mobile-shell-active';
 
 export default function Layout() {
@@ -42,6 +44,10 @@ export default function Layout() {
   const hydrateAttemptRef = useRef(null);
 
   // useHudButtonStrokes — MutationObserver döngü riski; geçici kapalı
+
+  useEffect(() => {
+    applyDocumentTitle();
+  }, []);
 
   useEffect(() => {
     initWorldSystems();
@@ -137,6 +143,7 @@ export default function Layout() {
       <DevTestModeBanner />
       <IncomingThreatFlash />
       <PwaUpdateBanner />
+      <ToastContainer />
       {isMapPage && <CyberShellChrome />}
       <TerminalBottomDock />
       <ContentInfoModal />

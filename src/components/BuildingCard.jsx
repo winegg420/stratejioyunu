@@ -1,4 +1,6 @@
-﻿import { useActionLock } from '../hooks/useActionLock';
+﻿import { useEffect, useState } from 'react';
+import { useActionLock } from '../hooks/useActionLock';
+import { getBuildingVisual } from '../data/buildingVisualCatalog';
 import { formatReadableDuration, parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { applyConstructionDurationSeconds } from '../lib/aiCenterEngine';
 import { canAffordCost } from '../utils/resourceCosts';
@@ -27,6 +29,11 @@ import { useLanguage } from '../context/LanguageContext';
 export default function BuildingCard({ building, progressionLock = null, coastalLocked = false }) {
   const { t, buildingLabel, lang } = useLanguage();
   const buildingName = buildingLabel(building.id, building.name);
+  const buildingVisual = getBuildingVisual(building.id);
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => {
+    setImageFailed(false);
+  }, [building.id, buildingVisual.image]);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const city = useGameStore((s) => s.cities[activeCityId]);
@@ -57,12 +64,15 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const unmetPrereqs = getUnmetTutorialPrerequisites(city, building.id, tutorialState);
   const nextSpec = resolveNextConstructionSpec(building);
   const displayCost = nextSpec?.cost ?? null;
-  const displayTimeSec = nextSpec?.time
-    ? applyConstructionDurationSeconds(parseTimeToSeconds(nextSpec.time) || 120, city)
-    : 0;
-  const displayTimeLabel = displayTimeSec > 0
-    ? formatReadableDuration(displayTimeSec, lang)
-    : null;
+  const displayTimeLabel = (() => {
+    if (!nextSpec?.time || nextSpec.time === '—') return null;
+    const baseSec = parseTimeToSeconds(nextSpec.time);
+    if (!baseSec) {
+      return /dk|sa|min|hr|sec|sn/i.test(nextSpec.time) ? nextSpec.time : null;
+    }
+    const adjusted = applyConstructionDurationSeconds(baseSec, city);
+    return formatReadableDuration(adjusted, lang);
+  })();
   const atMaxLevel = building.maxLevel != null
     && (building.level ?? 0) >= building.maxLevel;
   const canAfford = displayCost && canAffordCost(displayCost, 1, resources);
@@ -72,10 +82,15 @@ export default function BuildingCard({ building, progressionLock = null, coastal
   const cannotAfford = Boolean(displayCost) && !canAfford && prereqsMet && !progressionBlocked && !coastalLocked;
   const canBuild = Boolean(nextSpec) && !upgrading && canAfford && !queueFull && prereqsMet && !progressionBlocked && !coastalLocked;
   const blockedLabel = unmetPrereqs.length
-    ? `[ SEKTÖR KİLİTLİ: ${unmetPrereqs
-      .map((req) => `${(BUILDING_LABELS[req.id] ?? req.id).toUpperCase()} SV.${req.level} GEREKLİ`)
-      .join(' · ')} ]`
-    : '[ SEKTÖR KİLİTLİ ]';
+    ? t('components.buildingCard.sectorLockedReqs', {
+      reqs: unmetPrereqs
+        .map((req) => t('components.buildingCard.sectorLockedReq', {
+          name: (BUILDING_LABELS[req.id] ?? buildingLabel(req.id, req.id)).toUpperCase(),
+          level: req.level,
+        }))
+        .join(' · '),
+    })
+    : t('components.buildingCard.sectorLockedGeneric');
   const currentLevel = building.level ?? 0;
   const targetLevel = nextSpec?.targetLevel ?? currentLevel + 1;
   const queueBadge = queueEntry
@@ -130,6 +145,7 @@ export default function BuildingCard({ building, progressionLock = null, coastal
         progressionBlocked && 'building-card--progression-locked',
         cannotAfford && 'building-card--unaffordable',
         coastalLocked && 'building-card--coastal-locked',
+        atMaxLevel && 'building-card--max',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -151,22 +167,39 @@ export default function BuildingCard({ building, progressionLock = null, coastal
           {t('cityManagement.coastalLock')}
         </p>
       )}
-      <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={`${building.name} ansiklopedi`}>
-        <div className="card-visual card-visual--building card-visual--placeholder">
+      <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={t('components.buildingCard.encyclopediaAria', { name: buildingName })}>
+        {!imageFailed && buildingVisual?.image ? (
           <div
-            className={`building-card__placeholder building-card__placeholder--${building.id}`}
-            aria-hidden="true"
+            className={`card-visual card-visual--building building-img-wrap building-img-wrap--cell-grid building-img-wrap--${building.id}`}
           >
-            <span className="building-card__placeholder-icon">{building.image}</span>
-            <span className="building-card__placeholder-name">{buildingName}</span>
+            <img
+              src={buildingVisual.image}
+              alt=""
+              className="building-card__img"
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageFailed(true)}
+            />
           </div>
-        </div>
+        ) : (
+          <div className="card-visual card-visual--building card-visual--placeholder">
+            <div
+              className={`building-card__placeholder building-card__placeholder--${building.id}`}
+              aria-hidden="true"
+            >
+              <span className="building-card__placeholder-icon">{building.image}</span>
+              <span className="building-card__placeholder-name">{buildingName}</span>
+            </div>
+          </div>
+        )}
         <div className="content-card__head">
           <h3>{building.name}</h3>
           <span className="building-level-badge">
-            Sv.{currentLevel}
+            {t('components.buildingCard.levelShort', { level: currentLevel })}
             {nextSpec && currentLevel > 0 && (
-              <span className="building-next-level">→ Sv.{targetLevel}</span>
+              <span className="building-next-level">
+                → {t('components.buildingCard.levelShort', { level: targetLevel })}
+              </span>
             )}
           </span>
         </div>
@@ -175,8 +208,8 @@ export default function BuildingCard({ building, progressionLock = null, coastal
         <>
           <div className="building-level-progress" aria-hidden={false}>
             <div className="building-level-progress__labels">
-              <span>Sv.{currentLevel}</span>
-              <span>Sv.{targetLevel}</span>
+              <span>{t('components.buildingCard.levelShort', { level: currentLevel })}</span>
+              <span>{t('components.buildingCard.levelShort', { level: targetLevel })}</span>
             </div>
             <div
               className="building-level-progress__bar terminal-progress-track"
@@ -184,7 +217,7 @@ export default function BuildingCard({ building, progressionLock = null, coastal
               aria-valuenow={Math.round(upgradeProgressPct)}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`Sv.${currentLevel} → Sv.${targetLevel}`}
+              aria-label={t('components.buildingCard.levelProgressAria', { current: currentLevel, target: targetLevel })}
             >
               <div
                 className="building-level-progress__fill terminal-progress-fill"
@@ -227,7 +260,10 @@ export default function BuildingCard({ building, progressionLock = null, coastal
       )}
       {building.id === AI_CENTER_BUILDING_ID && getAiCenterLevel(city) >= 1 && (
         <p className="content-card__meta content-card__meta--ai">
-          ⚡ Tüketim: {getAiCenterEnergyDemandHourly(getAiCenterLevel(city))}/sa · {formatAiCenterStatus(city)}
+          {t('components.buildingCard.aiConsumption', {
+            rate: getAiCenterEnergyDemandHourly(getAiCenterLevel(city)),
+            status: formatAiCenterStatus(city),
+          })}
         </p>
       )}
       {empireSlotHint && (
@@ -244,25 +280,38 @@ export default function BuildingCard({ building, progressionLock = null, coastal
             disabled={actionLocked}
             onClick={() => cancelConstruction(queueEntry.id)}
           >
-            [ İPTAL ET ]
+            {t('components.buildingCard.cancel')}
           </button>
         )}
-        <button
-          type="button"
-          className={`btn btn-hud-primary btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
-          disabled={!canBuild || buildBusy || coastalLocked}
-          onClick={handleUpgrade}
-        >
-          {coastalLocked ? t('cityManagement.coastalBtn') : actionLocked ? t('common.loading') : upgradeLabel}
-        </button>
-        <button
-          type="button"
-          className={`btn btn-hud-secondary btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
-          disabled={!canAfford || !prereqsMet || queueFull || actionLocked || coastalLocked}
-          onClick={handleQueue}
-        >
-          Kuyruğa Ekle
-        </button>
+        {atMaxLevel ? (
+          <button
+            type="button"
+            className="btn btn-hud-primary btn--max-level"
+            disabled
+            aria-disabled="true"
+          >
+            {t('components.buildingCard.maxLevelBadge')}
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`btn btn-hud-primary btn-primary${isUnbuilt && prereqsMet ? ' btn-build-start' : ''}${actionLocked ? ' btn-hud-loading' : ''}`}
+              disabled={!canBuild || buildBusy || coastalLocked}
+              onClick={handleUpgrade}
+            >
+              {coastalLocked ? t('cityManagement.coastalBtn') : actionLocked ? t('common.loading') : upgradeLabel}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-hud-secondary btn-secondary${actionLocked ? ' btn-hud-loading' : ''}`}
+              disabled={!canAfford || !prereqsMet || queueFull || actionLocked || coastalLocked}
+              onClick={handleQueue}
+            >
+              {t('components.buildingCard.queueAdd')}
+            </button>
+          </>
+        )}
       </div>
     </article>
   );

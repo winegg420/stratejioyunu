@@ -1,22 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { getMapCityDisplayName } from '../map/mapCityDisplayName';
-import { latLngToLoc } from '../map/MapMouseCoordinateHud';
 
 const FADE_MS = 140;
 
 /**
- * Şehir hover koordinat kutusu — pointer-events yok, rAF ile konum, hızlı fade-out.
+ * Şehir hover etiketi — yalnızca şehir adı, imleci takip eder.
  */
-export default function MapCoordTooltip({ hover }) {
+export default function MapCoordTooltip({ hover, portalRoot = null }) {
   const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [payload, setPayload] = useState(null);
   const rafRef = useRef(0);
   const fadeTimerRef = useRef(null);
+  const hadContentRef = useRef(false);
 
   useEffect(() => {
     if (hover) {
+      hadContentRef.current = true;
       if (fadeTimerRef.current) {
         window.clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = null;
@@ -34,10 +36,11 @@ export default function MapCoordTooltip({ hover }) {
       return undefined;
     }
 
-    if (!visible && !payload) return undefined;
+    if (!hadContentRef.current) return undefined;
 
     setFading(true);
     fadeTimerRef.current = window.setTimeout(() => {
+      hadContentRef.current = false;
       setVisible(false);
       setFading(false);
       setPayload(null);
@@ -50,7 +53,7 @@ export default function MapCoordTooltip({ hover }) {
         fadeTimerRef.current = null;
       }
     };
-  }, [hover, visible, payload]);
+  }, [hover]);
 
   useEffect(() => () => {
     if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
@@ -59,9 +62,11 @@ export default function MapCoordTooltip({ hover }) {
 
   if (!visible || !payload) return null;
 
-  const loc = latLngToLoc(payload.lat, payload.lng);
+  const mountNode = portalRoot
+    ?? (typeof document !== 'undefined' ? document.body : null);
+  if (!mountNode) return null;
 
-  return (
+  return createPortal(
     <div
       className={[
         'map-coord-tooltip',
@@ -70,12 +75,10 @@ export default function MapCoordTooltip({ hover }) {
       style={{ left: pos.x, top: pos.y }}
       role="tooltip"
     >
-      {payload.name && (
-        <span className="map-coord-tooltip__city">
-          {getMapCityDisplayName(payload.name)}
-        </span>
-      )}
-      <span>{`LOC: ${loc.x}, ${loc.y}`}</span>
-    </div>
+      <span className="map-coord-tooltip__city">
+        {getMapCityDisplayName(payload.name)}
+      </span>
+    </div>,
+    mountNode,
   );
 }

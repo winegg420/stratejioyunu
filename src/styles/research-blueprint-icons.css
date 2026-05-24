@@ -124,6 +124,7 @@
   box-shadow: 0 0 10px rgba(201, 168, 76, 0.35);
 }
 
+.building-card--max .btn--max-level,
 .btn--research-max,
 .content-card--research-max .btn--research-max {
   opacity: 0.4;

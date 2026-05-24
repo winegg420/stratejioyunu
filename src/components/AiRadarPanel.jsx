@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import {
   formatAiCenterStatus,
@@ -12,7 +12,7 @@ export default function AiRadarPanel() {
   const city = useGameStore((s) => s.cities[s.activeCityId]);
   const playerCities = useGameStore((s) => s.playerCities);
   const incomingAttacks = useGameStore((s) => s.incomingAttacks);
-  const intelFeed = useGameStore((s) => s.intelFeed ?? []);
+  const intelFeed = useGameStore((s) => s.intelFeed ?? STORE_EMPTY_ARRAY);
 
   const cityIds = useMemo(() => playerCities.map((c) => c.id), [playerCities]);
   const warnings = useMemo(

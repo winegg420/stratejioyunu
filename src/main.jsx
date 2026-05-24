@@ -53,7 +53,15 @@ import './styles/resource-bar-five-grid.css';
 import './styles/global-ui-ux-revision.css';
 import App from './App.jsx';
 import { purgeStaleDevTestFlags } from './lib/devTestMode';
+import { useGameStore } from './stores/gameStore';
+import { saveCachedReports } from './lib/reportsCache';
 purgeStaleDevTestFlags();
+
+useGameStore.subscribe((state, prev) => {
+  if (state.reports !== prev.reports) {
+    saveCachedReports(state.reports, state.playerName);
+  }
+});
 
 const rootEl = document.getElementById('root');
 

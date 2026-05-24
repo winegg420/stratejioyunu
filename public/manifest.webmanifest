@@ -1,6 +1,6 @@
 {
-  "name": "[OYUN ADI]",
-  "short_name": "[OYUN ADI]",
+  "name": "Strateji Oyunu",
+  "short_name": "Strateji Oyunu",
   "description": "Dünya haritası üzerinde çok oyunculu web stratejisi",
   "theme_color": "#0a0e14",
   "background_color": "#0a0e14",

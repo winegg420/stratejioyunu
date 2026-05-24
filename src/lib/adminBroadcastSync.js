@@ -1,6 +1,4 @@
-/**
- * Sunucu geneli admin yayın ayarları + admin_logs — Supabase veya localStorage demo.
- */
+export { DEFAULT_SERVER_ID } from './adminOverrideEngine';
 import { supabase, isSupabaseConfigured } from './supabase';
 import {
   ADMIN_LOG_TAG,
@@ -107,21 +105,41 @@ export async function saveServerBroadcast(broadcast, serverId = DEFAULT_SERVER_I
   return { ok: true, source: 'supabase' };
 }
 
+/** server_id her zaman string (ör. turkiye-1); tek sayı argümanı eski limit-only çağrılarıdır. */
+export function resolveFetchAdminLogsArgs(serverId = DEFAULT_SERVER_ID, limit = 80) {
+  if (typeof serverId === 'number' && Number.isFinite(serverId)) {
+    return {
+      serverId: DEFAULT_SERVER_ID,
+      limit: Math.max(1, Math.floor(serverId)),
+    };
+  }
+  const resolvedServerId =
+    typeof serverId === 'string' && serverId.length > 0 ? serverId : DEFAULT_SERVER_ID;
+  const resolvedLimit =
+    typeof limit === 'number' && Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 80;
+  return { serverId: resolvedServerId, limit: resolvedLimit };
+}
+
 export async function fetchAdminLogs(serverId = DEFAULT_SERVER_ID, limit = 80) {
+  const { serverId: resolvedServerId, limit: resolvedLimit } = resolveFetchAdminLogsArgs(
+    serverId,
+    limit,
+  );
+
   if (!isSupabaseConfigured || !supabase) {
-    return readLocalLogs().slice(0, limit);
+    return readLocalLogs().slice(0, resolvedLimit);
   }
 
   const { data, error } = await supabase
     .from('admin_logs')
     .select('*')
-    .eq('server_id', serverId)
+    .eq('server_id', resolvedServerId)
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .limit(resolvedLimit);
 
   if (error) {
     console.warn('[adminLogs] fetch', error);
-    return readLocalLogs().slice(0, limit);
+    return readLocalLogs().slice(0, resolvedLimit);
   }
   return data ?? [];
 }

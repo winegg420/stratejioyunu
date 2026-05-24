@@ -10,6 +10,12 @@
   line-height: 0;
 }
 
+.unit-card-visual.card-visual::before,
+.unit-card-visual.card-visual::after {
+  content: none !important;
+  display: none !important;
+}
+
 .unit-card-visual {
   display: flex;
   align-items: center;
@@ -34,4 +40,48 @@
   width: 1.1rem;
   height: 1.1rem;
   margin-right: 0.25rem;
+}
+
+.unit-card__cost-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.35rem;
+}
+
+.unit-card__cost-label {
+  flex: 0 0 auto;
+}
+
+.unit-card__cost-parts {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.unit-card__cost-parts .cost-parts__chip {
+  margin: 0.1rem 0.15rem 0.1rem 0;
+}
+
+.unit-card__time {
+  flex: 0 0 auto;
+  opacity: 0.88;
+}
+
+.production-queue-hud__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.production-queue-hud__thumb .unit-military-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.terminal-log-panel--queue .terminal-log-panel__title {
+  font-weight: 700;
+  color: #a7f3d0;
 }

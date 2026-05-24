@@ -150,6 +150,7 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     _cbrnTickCount: 0,
     playerIdeology: loadPlayerIdeology(playerKey),
     protectionEndsAt,
+    ideologyChangeCooldownAt: playerMeta?.ideologyChangeCooldownAt ?? null,
     milAiCompleted: normalizeMilAiCompleted(loadMilAiCompleted(playerKey)),
     milAiCelebration: null,
     milAiScoutLaunched: false,

@@ -23,6 +23,31 @@ export const TREATY_BREAK_LOYALTY_PENALTY = -45;
 
 const MS_HOUR = 60 * 60 * 1000;
 
+/** endsAt — epoch ms, ISO veya tr-TR "25.05.2026" / "25.05.2026 14:30" */
+export function parseTreatyEndsAt(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const asNum = Number(value);
+  if (Number.isFinite(asNum) && asNum > 1e11) return asNum;
+  const str = String(value).trim();
+  const trMatch = str.match(
+    /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/,
+  );
+  if (trMatch) {
+    const [, d, mo, y, h = '23', mi = '59', se = '59'] = trMatch;
+    return new Date(
+      Number(y),
+      Number(mo) - 1,
+      Number(d),
+      Number(h),
+      Number(mi),
+      Number(se),
+    ).getTime();
+  }
+  const parsed = Date.parse(str);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function formatTreatyDurationHours(hours) {
   if (hours == null || hours <= 0) return 'Süresiz';
   if (hours < 24) return `${hours} saat`;
@@ -37,7 +62,8 @@ export function buildCeasefireEndsAt(hours, now = Date.now()) {
 
 export function isTreatyActive(treaty, now = Date.now()) {
   if (!treaty || treaty.status !== TREATY_STATUS.ACTIVE) return false;
-  if (treaty.endsAt != null && treaty.endsAt <= now) return false;
+  const endsAt = parseTreatyEndsAt(treaty.endsAt);
+  if (endsAt != null && endsAt <= now) return false;
   return true;
 }
 
@@ -105,10 +131,11 @@ export function acceptTreatyProposal(treaty, accepter, now = Date.now()) {
 export function tickTreatyExpiry(treaties, now = Date.now()) {
   let changed = false;
   const next = (treaties ?? []).map((t) => {
-    if (t.status !== TREATY_STATUS.ACTIVE || t.endsAt == null) return t;
-    if (t.endsAt > now) return t;
+    if (t.status !== TREATY_STATUS.ACTIVE) return t;
+    const endsAt = parseTreatyEndsAt(t.endsAt);
+    if (endsAt == null || endsAt > now) return t;
     changed = true;
-    return { ...t, status: TREATY_STATUS.EXPIRED };
+    return { ...t, status: TREATY_STATUS.EXPIRED, endsAt };
   });
   return { treaties: next, changed };
 }

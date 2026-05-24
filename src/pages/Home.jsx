@@ -13,7 +13,7 @@ import StrategicManagementMatrix from '../components/StrategicManagementMatrix';
 import QueueEmptyState from '../components/QueueEmptyState';
 import { newsFeed as staticNewsFeed } from '../data/placeholder';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import CrisisResponsePanel from '../components/CrisisResponsePanel';
 import PeaceForceBanner from '../components/PeaceForceBanner';
 import MilAiAdvisor from '../components/MilAiAdvisor';
@@ -124,8 +124,8 @@ export default function Home() {
     setBriefingOpen(false);
   }, [pendingIdeology, playerName, playerIdeology, setPlayerIdeology, showIdeologyBriefing]);
 
-  const liveNews = useGameStore((s) => s.newsLog ?? []);
-  const adminPublicLogs = useGameStore((s) => s.adminPublicLogs ?? []);
+  const liveNews = useGameStore((s) => s.newsLog ?? STORE_EMPTY_ARRAY);
+  const adminPublicLogs = useGameStore((s) => s.adminPublicLogs ?? STORE_EMPTY_ARRAY);
   const globalOutbreak = useGameStore((s) => s.globalCbrnOutbreak);
   const activeCrisis = useGameStore((s) => s.activeCrisis);
   const newsItems = [

@@ -4,7 +4,7 @@ import UnitCard from '../components/UnitCard';
 import ActiveQueue from '../components/ActiveQueue';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { airUnits as airUnitDefs } from '../data/placeholder';
-import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Airbase() {
@@ -13,7 +13,7 @@ export default function Airbase() {
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === activeCityId)?.name);
   const awayMap = useTroopsAwayMap(activeCityId);
   const troops = useActiveCityIdleTroops();
-  const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? []);
+  const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? STORE_EMPTY_ARRAY);
   const productionQueueKey = productionQueue.map((q) => q.id).join('-') || 'empty';
 
   const airUnits = useMemo(

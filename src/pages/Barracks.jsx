@@ -5,7 +5,7 @@ import ActiveQueue from '../components/ActiveQueue';
 import BattleSimulator from '../components/BattleSimulator';
 import LockedFeatureGate from '../components/LockedFeatureGate';
 import { landUnits as landUnitDefs } from '../data/placeholder';
-import { useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useActiveCityIdleTroops, useGameStore, useTroopsAwayMap } from '../stores/gameStore';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Barracks() {
@@ -14,13 +14,13 @@ export default function Barracks() {
   const cityName = useGameStore((s) => s.playerCities.find((c) => c.id === activeCityId)?.name);
   const awayMap = useTroopsAwayMap(activeCityId);
   const troops = useActiveCityIdleTroops();
-  const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? []);
+  const productionQueue = useGameStore((s) => s.cities[s.activeCityId]?.productionQueue ?? STORE_EMPTY_ARRAY);
   const productionQueueKey = productionQueue.map((q) => q.id).join('-') || 'empty';
   const landUnits = useMemo(
     () =>
       landUnitDefs.map((u) => {
-        const t = troops.find((x) => x.id === u.id);
-        const idle = t?.available ?? 0;
+        const troop = troops.find((x) => x.id === u.id);
+        const idle = troop?.available ?? 0;
         const away = awayMap[u.id] || 0;
         return { ...u, count: idle + away, idle };
       }),

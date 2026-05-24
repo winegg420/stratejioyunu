@@ -363,6 +363,17 @@
   text-transform: uppercase;
 }
 
+.content-info-modal__footer .btn--max-level,
+.content-info-modal__footer .btn--research-max {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.content-info-modal__footer .btn--action-muted {
+  opacity: 0.72;
+}
+
 .content-info-modal__matchup-pct {
   font-family: var(--font-mono, monospace);
   font-weight: 700;

@@ -1,6 +1,6 @@
-/* Araştırma sayfası — responsive kart ızgarası */
+/* Araştırma sayfası — responsive kart ızgarası (card-command-layout üzerine yazar) */
 
-.page--research .card-grid {
+.page.page--research.page--console .research-section .card-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
@@ -8,19 +8,19 @@
 }
 
 @media (min-width: 768px) {
-  .page--research .card-grid {
+  .page.page--research.page--console .research-section .card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1200px) {
-  .page--research .card-grid {
+  .page.page--research.page--console .research-section .card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1600px) {
-  .page--research .card-grid {
+  .page.page--research.page--console .research-section .card-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

@@ -5,6 +5,8 @@ import { normalizeIdeology } from './ideologySystem';
 import { loadPlayerIdeology, loadProtectionEndsAt } from './briefingStorage';
 import { computeCityHappiness } from './happinessSystem';
 import { rehydrateCrisisCityEffects } from './crisisEngine';
+import { loadCachedReports, saveCachedReports } from './reportsCache';
+import { recoverReportsFromHistory } from './reportRecovery';
 import { createStarterBuildings, syncCityBuildingsToCatalog, getStarterIdleTroops, getStarterResources } from '../lib/buildingUtils';
 import { mergeResearchProgress } from '../data/researchCatalog';
 import { resolveResourceId } from '../data/resourceCatalog';
@@ -29,6 +31,8 @@ import {
   loadTreatyBreaks,
 } from './historyBookStorage';
 import { isSupabaseConfigured, supabase } from './supabase';
+import { getAuthUser } from './auth';
+import { resolvePlayerDisplayName } from './profileApi';
 
 /** Kayıt sonrası eski `metal` satırlarını temizler (enum hâlâ metal içeriyorsa). */
 async function purgeLegacyMetalResourceRows(profileId, cityIds) {
@@ -518,6 +522,8 @@ export async function saveGameState(state, options = {}) {
       seasonChronicles: state.seasonChronicles ?? null,
       diplomaticTreaties: state.diplomaticTreaties ?? [],
       treatyBreaks: state.treatyBreaks ?? [],
+      allianceOperations: state.allianceOperations ?? [],
+      ideologyChangeCooldownAt: state.ideologyChangeCooldownAt ?? null,
     };
     const cityIds = Object.keys(persisted.cities ?? {});
     const tasks = [
@@ -643,6 +649,8 @@ export async function saveGameState(state, options = {}) {
       seasonChronicles: state.seasonChronicles ?? state.playerMeta?.seasonChronicles ?? null,
       diplomaticTreaties: state.diplomaticTreaties ?? state.playerMeta?.diplomaticTreaties ?? [],
       treatyBreaks: state.treatyBreaks ?? state.playerMeta?.treatyBreaks ?? [],
+      allianceOperations: state.allianceOperations ?? state.playerMeta?.allianceOperations ?? [],
+      ideologyChangeCooldownAt: state.ideologyChangeCooldownAt ?? state.playerMeta?.ideologyChangeCooldownAt ?? null,
     };
     tasks.push(
       supabase.from('profiles').update({
@@ -806,10 +814,12 @@ export async function loadGameState(userId, { playerName } = {}) {
   const buildingsByCity = groupBy(cityIds, bldRes.data ?? [], 'city_id');
   const unitsByCity = groupBy(cityIds, unitRes.data ?? [], 'city_id');
 
-  const displayName = profile.display_name?.trim()
-    || profile.player_name?.trim()
-    || playerName
-    || 'Oyuncu';
+  const authUser = await getAuthUser();
+  const displayName = resolvePlayerDisplayName({
+    profile,
+    user: authUser,
+    playerName,
+  });
   const playerMeta = profile.player_meta ?? {};
   const isAdminUser = Boolean(
     playerMeta.isAdmin === true
@@ -873,7 +883,9 @@ export async function loadGameState(userId, { playerName } = {}) {
   const researches = mergeResearches(researchRes.data);
   const expeditions = (expRes.data ?? []).map(dbRowToExpedition);
   const pastExpeditions = (pastExpRes.data ?? []).map((row) => dbRowToPastExpedition(row));
-  const reports = (reportRes.error ? [] : (reportRes.data ?? [])).map(dbRowToReport);
+  const dbReports = (reportRes.error ? [] : (reportRes.data ?? [])).map(dbRowToReport);
+  const reports = mergeReportLists(loadCachedReports(displayName), dbReports);
+  saveCachedReports(reports, displayName);
 
   const activeCrisis = playerMeta.activeCrisis ?? null;
   const crisisPatches = rehydrateCrisisCityEffects(
@@ -918,6 +930,7 @@ export async function loadGameState(userId, { playerName } = {}) {
     activeCityId,
     playerIdeology,
     protectionEndsAt,
+    ideologyChangeCooldownAt: playerMeta.ideologyChangeCooldownAt ?? null,
     loyaltyScore: profile.loyalty_score ?? 0,
     playerMeta,
     globalCbrnOutbreak: playerMeta.globalCbrnOutbreak ?? null,
@@ -944,6 +957,9 @@ export async function loadGameState(userId, { playerName } = {}) {
       playerMeta.diplomaticTreaties ?? loadDiplomaticTreaties(displayName),
     ),
     treatyBreaks: playerMeta.treatyBreaks ?? loadTreatyBreaks(displayName),
+    allianceOperations: Array.isArray(playerMeta.allianceOperations)
+      ? playerMeta.allianceOperations
+      : [],
     playerCities,
     cities,
     researches,
@@ -1095,7 +1111,11 @@ export async function refreshReportsFromServer(getState, setState) {
     ...completedExpRows.map(completedExpeditionToReport),
   ];
 
-  const merged = mergeReportLists(getState().reports, remote);
+  const merged = recoverReportsFromHistory({
+    reports: mergeReportLists(getState().reports, remote),
+    pastExpeditions: getState().pastExpeditions,
+  });
+  saveCachedReports(merged, getState().playerMeta?.displayName ?? getState().playerName);
   const hasUnread = merged.some((r) => r.isNew);
   setState({
     reports: merged,
@@ -1355,8 +1375,14 @@ export async function hydrateGameStore(userId, { playerName, getState, setState,
       ...prev,
       ...patch,
       expeditions: mergedExpeditions,
-      reports: mergeReportLists(prev.reports, patch.reports),
       pastExpeditions: mergePastExpeditionLists(prev.pastExpeditions, patch.pastExpeditions),
+      reports: recoverReportsFromHistory({
+        reports: mergeReportLists(
+          mergeReportLists(loadCachedReports(playerName), prev.reports),
+          patch.reports,
+        ),
+        pastExpeditions: mergePastExpeditionLists(prev.pastExpeditions, patch.pastExpeditions),
+      }),
       navBadges: {
         ...prev.navBadges,
         ...patch.navBadges,

@@ -12,6 +12,12 @@
   background: rgba(17, 26, 17, 0.88);
 }
 
+.intel-section-nav--tabs {
+  position: sticky;
+  top: calc(var(--resource-bar-height, 3.25rem) + 0.35rem);
+  z-index: 12;
+}
+
 .intel-section-nav__link {
   padding: 0.28rem 0.55rem;
   font-family: var(--font-mono, 'Share Tech Mono', monospace);
@@ -31,6 +37,15 @@
   color: #4ade80;
   border-color: rgba(74, 222, 128, 0.55);
   background: rgba(6, 40, 22, 0.55);
+}
+
+.intel-section-nav__link--active {
+  color: #031a12 !important;
+  background: #4ade80 !important;
+  border-color: #4ade80 !important;
+  box-shadow:
+    0 0 0 1px rgba(6, 40, 22, 0.35) inset,
+    0 0 16px rgba(74, 222, 128, 0.45);
 }
 
 .intel-section-anchor,
@@ -674,6 +689,58 @@
 .intel-footer-hint {
   margin-top: 1rem;
   font-size: 0.72rem;
+}
+
+.intel-confirm-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 6, 4, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.intel-confirm-dialog {
+  width: min(100%, 24rem);
+  padding: 1rem 1.1rem;
+  background: rgba(10, 18, 12, 0.98);
+  border: 1px solid rgba(74, 124, 89, 0.45);
+}
+
+.intel-confirm-dialog__head {
+  margin-bottom: 0.65rem;
+}
+
+.intel-confirm-dialog__tag {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(74, 222, 128, 0.85);
+}
+
+.intel-confirm-dialog__head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.intel-confirm-dialog__body {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.intel-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 @media (max-width: 720px) {

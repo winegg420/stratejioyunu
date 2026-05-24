@@ -2,6 +2,7 @@
  * Devlet Tarih Kitabı — sezon kroniklerinin otomatik derlenmesi.
  */
 import { genId } from './gameUtils';
+import { parseTreatyEndsAt } from './diplomaticAgreements';
 import { formatIdeologyLabel } from './ideologySystem';
 import { SERVER_NAME } from '../data/placeholder';
 
@@ -276,7 +277,7 @@ export function normalizeDiplomaticTreaties(treaties) {
       status: t.status ?? 'active',
       proposer: t.proposer ?? null,
       signedBy: t.signedBy ?? [],
-      endsAt: t.endsAt ?? null,
+      endsAt: parseTreatyEndsAt(t.endsAt),
       proposedAt: t.proposedAt ?? null,
       acceptedAt: t.acceptedAt ?? null,
       brokenAt: t.brokenAt ?? null,

@@ -7,7 +7,7 @@ import ProcessingActionButton from '../components/ProcessingActionButton';
 import { useKeyedAsyncLock } from '../hooks/useAsyncActionLock';
 import { useMarketTicker } from '../hooks/useMarketTicker';
 import { flushGameSave } from '../lib/gameActionSync';
-import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, STORE_EMPTY_OBJECT, useGameStore } from '../stores/gameStore';
 import { BUILDING_LABELS } from '../lib/buildingUtils';
 import {
   MARKET_TRADABLE_IDS,
@@ -22,8 +22,20 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { useLanguage } from '../context/LanguageContext';
 import { getEmpireMoneyTotal } from '../lib/empireTreasury';
 import MarketPriceChart from '../components/MarketPriceChart';
+import { useNotificationStore } from '../stores/notificationStore';
+import { toRawInputNumber } from '../lib/formatNumber';
 
 const EMPTY_QTY = Object.fromEntries(MARKET_TRADABLE_IDS.map((id) => [id, '']));
+
+function parsePositiveQty(raw) {
+  const trimmed = String(raw ?? '').trim();
+  if (!trimmed) return { qty: 0, error: 'Miktar girin' };
+  const num = Math.floor(Number(toRawInputNumber(trimmed)) || 0);
+  if (!Number.isFinite(num) || num <= 0) {
+    return { qty: 0, error: 'Miktar 1 veya üzeri olmalı' };
+  }
+  return { qty: num, error: null };
+}
 
 export default function Market() {
   const { t } = useLanguage();
@@ -39,8 +51,8 @@ export default function Market() {
   const postMarketOffer = useGameStore((s) => s.postMarketOffer);
   const acceptMarketOffer = useGameStore((s) => s.acceptMarketOffer);
   const cancelMarketOffer = useGameStore((s) => s.cancelMarketOffer);
-  const marketOffers = useGameStore((s) => s.marketOffers ?? []);
-  const openMarketPrices = useGameStore((s) => s.openMarketPrices ?? {});
+  const marketOffers = useGameStore((s) => s.marketOffers ?? STORE_EMPTY_ARRAY);
+  const openMarketPrices = useGameStore((s) => s.openMarketPrices ?? STORE_EMPTY_OBJECT);
   const openMarketSupplyIndex = useGameStore((s) => s.openMarketSupplyIndex ?? 0);
   const playerName = getCurrentPlayerName();
 
@@ -52,14 +64,18 @@ export default function Market() {
   const [offerResource, setOfferResource] = useState('hammadde');
   const [offerQty, setOfferQty] = useState('');
   const [offerPrice, setOfferPrice] = useState('');
+  const [tradeError, setTradeError] = useState(null);
+  const [offerError, setOfferError] = useState('');
   const { runLocked, isBusy, isProcessing } = useKeyedAsyncLock();
 
   const setBuy = (id, val) => {
     setBuyQty((prev) => ({ ...prev, [id]: val }));
+    setTradeError((prev) => (prev?.resourceId === id && prev?.mode === 'buy' ? null : prev));
   };
 
   const setSell = (id, val) => {
     setSellQty((prev) => ({ ...prev, [id]: val }));
+    setTradeError((prev) => (prev?.resourceId === id && prev?.mode === 'sell' ? null : prev));
   };
 
   const maxBuyQty = (id) => {
@@ -70,32 +86,65 @@ export default function Market() {
     return String(Math.floor(budget / unitPrice));
   };
 
+  const addToast = useNotificationStore((s) => s.addToast);
+
+  const showTradeError = (resourceId, mode, message) => {
+    setTradeError({ resourceId, mode, message });
+    addToast(message, 'warn');
+  };
+
   const handleTrade = (resourceId, mode) => {
     const lockKey = `trade-${resourceId}-${mode}`;
-    if (isBusy) return;
+    if (isBusy) {
+      addToast('Başka bir işlem sürüyor — bekleyin', 'warn');
+      return;
+    }
 
     const raw = mode === 'buy' ? buyQty[resourceId] : sellQty[resourceId];
-    const qty = Math.max(0, Math.floor(Number(raw) || 0));
-    if (!qty) return;
+    const { qty, error } = parsePositiveQty(raw);
+    if (error) {
+      showTradeError(resourceId, mode, error);
+      return;
+    }
 
+    setTradeError(null);
     runLocked(lockKey, async () => {
       const ok = executeMarketTrade({ resourceId, qty, mode });
       if (ok) {
         if (mode === 'buy') setBuy(resourceId, '');
         else setSell(resourceId, '');
         await flushGameSave({ cityId: activeCityId });
+        return;
       }
+      showTradeError(resourceId, mode, 'İşlem tamamlanamadı — stok veya bütçe kontrolü');
     });
   };
 
-  const handleOffer = (e) => {
+  const handleOffer = async (e) => {
     e.preventDefault();
-    const qty = Math.floor(Number(offerQty) || 0);
-    const price = Math.floor(Number(offerPrice) || 0);
-    if (!qty || !price) return;
-    postMarketOffer({ resourceId: offerResource, qty, unitPrice: price });
-    setOfferQty('');
-    setOfferPrice('');
+    const { qty, error: qtyErr } = parsePositiveQty(offerQty);
+    const priceRaw = String(offerPrice ?? '').trim();
+    const price = Math.floor(Number(toRawInputNumber(priceRaw)) || 0);
+    if (qtyErr || !priceRaw || price <= 0) {
+      const msg = qtyErr || !priceRaw || price <= 0
+        ? 'Miktar ve birim fiyat girin (en az 1)'
+        : qtyErr;
+      setOfferError(msg);
+      addToast(msg, 'warn');
+      return;
+    }
+    setOfferError('');
+    const ok = postMarketOffer({ resourceId: offerResource, qty, unitPrice: price });
+    if (ok) {
+      addToast('Teklif defterine eklendi', 'success');
+      setOfferQty('');
+      setOfferPrice('');
+      await flushGameSave({ cityId: activeCityId });
+      return;
+    }
+    const failMsg = 'Teklif eklenemedi — stok veya pazar kontrolü';
+    setOfferError(failMsg);
+    addToast(failMsg, 'warn');
   };
 
   return (
@@ -202,6 +251,9 @@ export default function Market() {
                     >
                       SATIN AL
                     </ProcessingActionButton>
+                    {tradeError?.resourceId === id && tradeError?.mode === 'buy' && (
+                      <span className="market-field-error" role="alert">{tradeError.message}</span>
+                    )}
                   </label>
                   <label className="market-exchange-field">
                     <span>Satım</span>
@@ -233,6 +285,9 @@ export default function Market() {
                     >
                       SAT
                     </ProcessingActionButton>
+                    {tradeError?.resourceId === id && tradeError?.mode === 'sell' && (
+                      <span className="market-field-error" role="alert">{tradeError.message}</span>
+                    )}
                   </label>
                 </div>
               </article>
@@ -311,6 +366,11 @@ export default function Market() {
                 </button>
               </div>
             </div>
+            {offerError && (
+              <span className="market-field-error market-field-error--offer" role="alert">
+                {offerError}
+              </span>
+            )}
           </div>
         </form>
 

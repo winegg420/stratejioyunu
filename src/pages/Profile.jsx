@@ -16,7 +16,10 @@ import {
   IDEOLOGY_PROFILES,
   formatIdeologyChangeDeadline,
   formatIdeologyLabel,
+  getIdeologyCooldownRemaining,
+  isIdeologyChangeOnCooldown,
 } from '../lib/ideologySystem';
+import { useLanguage } from '../context/LanguageContext';
 import {
   IDEOLOGY_CHANGE_COST_MONEY,
   IDEOLOGY_CHANGE_REAL_MONEY_NOTE,
@@ -24,12 +27,13 @@ import {
 } from '../lib/loyaltySystem';
 import { PROTECTION_DAYS } from '../data/placeholder';
 import { getProgressionState } from '../lib/progressionSystem';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { getAuthUser } from '../lib/auth';
 import { fetchUserProfile, resolvePlayerDisplayName } from '../lib/profileApi';
 
 export default function Profile() {
-  const { logout, playerName, session } = useAuth();
+  const { t } = useLanguage();
+  const { logout, playerName: authPlayerName, session } = useAuth();
   const profileDisplayName = useGameStore((s) => s.profileDisplayName);
   const profilePlayerName = useGameStore((s) => s.profilePlayerName);
   const isAdminUser = useGameStore((s) => s.isAdminUser);
@@ -58,12 +62,12 @@ export default function Profile() {
       profile: profileRow,
       user: authUser ?? session?.user,
       profileDisplayName: profileDisplayName || profilePlayerName,
-      playerName,
+      playerName: authPlayerName,
     }),
-    [profileRow, authUser, session?.user, profileDisplayName, profilePlayerName, playerName],
+    [profileRow, authUser, session?.user, profileDisplayName, profilePlayerName, authPlayerName],
   );
   const showAdminPanel = isGameAdmin({
-    playerName,
+    playerName: authPlayerName,
     email: session?.user?.email,
     session,
     profileIsAdmin: isAdminUser,
@@ -78,11 +82,13 @@ export default function Profile() {
   const performVipAscension = useGameStore((s) => s.performVipAscension);
   const playerCities = useGameStore((s) => s.playerCities);
   const playerIdeology = useGameStore((s) => s.playerIdeology);
+  const ideologyChangeCooldownAt = useGameStore((s) => s.ideologyChangeCooldownAt);
+  const now = useGameStore((s) => s.now);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
   const canChangeIdeologyFree = useGameStore((s) => s.canChangeIdeology);
   const canAffordIdeologyChange = useGameStore((s) => s.canAffordIdeologyChange);
   const loyaltyScore = useGameStore((s) => s.loyaltyScore ?? 0);
-  const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? []);
+  const cosmeticTitles = useGameStore((s) => s.cosmeticTitles ?? STORE_EMPTY_ARRAY);
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const ideologyUnlocked = getProgressionState(activeCity).ideologyUnlocked;
@@ -90,6 +96,8 @@ export default function Profile() {
 
   const freeWindow = canChangeIdeologyFree();
   const paidChange = Boolean(playerIdeology) && !freeWindow;
+  const ideologyOnCooldown = isIdeologyChangeOnCooldown(ideologyChangeCooldownAt, now);
+  const ideologyCooldownRemaining = getIdeologyCooldownRemaining(ideologyChangeCooldownAt, now);
 
   const vipTier = playerMeta?.vipTier ?? 0;
   const allBadges = useMemo(() => {
@@ -212,7 +220,16 @@ export default function Profile() {
           {IDEOLOGY_IDS.map((id) => {
             const p = IDEOLOGY_PROFILES[id];
             const active = playerIdeology === id;
-            const disabled = !ideologyUnlocked || (paidChange && !canAffordIdeologyChange() && !active);
+            const onCooldown = ideologyOnCooldown && !active;
+            const disabled = !ideologyUnlocked
+              || onCooldown
+              || (paidChange && !canAffordIdeologyChange() && !active);
+            const cooldownTitle = onCooldown && ideologyCooldownRemaining
+              ? t('pages.profile.ideology.cooldownTooltip', {
+                days: ideologyCooldownRemaining.days,
+                hours: ideologyCooldownRemaining.hours,
+              })
+              : undefined;
             return (
               <button
                 key={id}
@@ -220,7 +237,9 @@ export default function Profile() {
                 className={`doctrine-card${active ? ' is-active' : ''}${disabled ? ' is-disabled' : ''}`}
                 style={{ '--ideology-color': p.color }}
                 disabled={disabled}
-                title={!ideologyUnlocked ? ideologyLockHint ?? '' : undefined}
+                title={!ideologyUnlocked
+                  ? ideologyLockHint ?? ''
+                  : cooldownTitle}
                 onClick={() => handleIdeologyPick(id)}
               >
                 <span className="doctrine-card__rank">{p.tag}</span>
@@ -287,12 +306,17 @@ export default function Profile() {
           <li>Profilde görünen VIP askeri madalya rozeti</li>
         </ul>
 
+        <p id="profile-vip-ascend-desc" className="hint profile-vip-btn-hint">
+          {t('pages.profile.vipAscendHint')}
+        </p>
         <div className="profile-vip-actions">
           {!canVipAscend || !confirmOpen ? (
             <button
               type="button"
               className="btn btn-danger profile-vip-btn"
               disabled={!canVipAscend}
+              title={t('pages.profile.vipAscendTitle')}
+              aria-describedby="profile-vip-ascend-desc"
               onClick={() => canVipAscend && setConfirmOpen(true)}
             >
               VIP At
@@ -325,14 +349,16 @@ export default function Profile() {
         )}
       </section>
 
-      <section className="panel profile-cleansing-panel">
-        <h3 className="panel-title">Sunucu Temizlik Motoru</h3>
-        <p className="profile-vip-desc">
-          Son <strong>{formatInactivityDays()} gün</strong> giriş yapmayan oyuncuların şehirleri otomatik
-          hayalet statüsünden geçirilip haritada gri, sahipsiz boş araziye dönüştürülür. Aktif oyuncular
-          için sürekli yer açılır.
-        </p>
-      </section>
+      {showAdminPanel && (
+        <section className="panel profile-cleansing-panel">
+          <h3 className="panel-title">Sunucu Temizlik Motoru</h3>
+          <p className="profile-vip-desc">
+            Son <strong>{formatInactivityDays()} gün</strong> giriş yapmayan oyuncuların şehirleri otomatik
+            hayalet statüsünden geçirilip haritada gri, sahipsiz boş araziye dönüştürülür. Aktif oyuncular
+            için sürekli yer açılır.
+          </p>
+        </section>
+      )}
 
       <section className="panel">
         <h3 className="panel-title">Rozetler</h3>

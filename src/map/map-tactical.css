@@ -200,10 +200,9 @@
 
 .map-coord-tooltip__city {
   display: block;
-  font-size: 0.58rem;
-  color: rgba(0, 240, 255, 0.75);
-  margin-bottom: 2px;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  color: #4ade80;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -350,14 +349,19 @@
   flex-shrink: 0;
   position: relative;
   z-index: 5;
-  width: 1.5rem;
-  height: 1.5rem;
+  min-width: 24px;
+  min-height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(74, 124, 89, 0.3);
   border-radius: 3px;
   background: #1a2e1a;
   color: #d4d4aa;
-  font-size: 1rem;
+  font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -697,7 +701,6 @@
   padding: 3px 6px;
   min-height: 16px;
   min-width: 3.25rem;
-  max-width: 5.75rem;
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid #00f0ff;
@@ -706,11 +709,17 @@
   cursor: pointer;
 }
 
+.map-marker-label-stack {
+  max-width: 5.75rem;
+}
+
 .map-city-centroid-label__inner {
   flex-direction: row;
   align-items: center;
   gap: 3px;
   text-align: left;
+  max-width: none;
+  width: max-content;
 }
 
 .map-marker-label-stack {
@@ -724,8 +733,7 @@
   animation: map-label-cyber-pulse 1.6s ease-in-out infinite;
 }
 
-.map-marker-label__city,
-.map-city-centroid-label__name {
+.map-marker-label__city {
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 0.55rem;
   font-weight: 700;
@@ -737,6 +745,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 5.25rem;
+}
+
+.map-city-centroid-label__name {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: none;
 }
 
 .map-marker-label__bot {
@@ -1491,8 +1513,19 @@
 .leaflet-marker-icon.map-city-centroid-label {
   background: transparent !important;
   border: none !important;
-  pointer-events: auto !important;
-  cursor: pointer;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+.map-city-centroid-label--compact .map-city-centroid-label__inner {
+  padding: 2px 4px;
+  min-width: 2.5rem;
+  max-width: 6.75rem;
+}
+
+.map-city-centroid-label--compact .map-city-centroid-label__name {
+  font-size: 0.48rem;
+  max-width: 6.25rem;
 }
 
 .map-city-centroid-label__dot {
@@ -1509,6 +1542,16 @@
   box-shadow: 0 0 5px rgba(249, 115, 22, 0.65);
 }
 
+.map-city-centroid-label--own .map-city-centroid-label__dot {
+  background: #22ff88;
+  box-shadow: 0 0 6px rgba(34, 255, 136, 0.85);
+}
+
+.map-city-centroid-label--own .map-city-centroid-label__name {
+  color: #6ee7a8;
+  text-shadow: 0 0 8px rgba(34, 255, 136, 0.45);
+}
+
 .map-marker-wrap--pin-only .map-marker-pin {
   margin: 0 auto;
 }
@@ -1517,6 +1560,73 @@ html.map-fs-active .map-intel-sidebar {
   top: 3.25rem;
   right: 0.75rem;
   max-height: calc(100% - 4.5rem);
+}
+
+html.map-fs-active .map-intel-sidebar__reopen {
+  top: 50%;
+  right: 0;
+  width: 48px;
+  min-width: 48px;
+  min-height: 104px;
+  font-size: 0.66rem;
+  border-width: 2px;
+  border-color: rgba(0, 240, 255, 0.9);
+  color: #f0fdf4;
+  z-index: 20040;
+}
+
+html.map-fs-active .map-loc-hud {
+  display: none !important;
+}
+
+.map-theater-portal-anchor {
+  position: fixed;
+  inset: 0;
+  z-index: 14500;
+  pointer-events: none;
+}
+
+.map-theater-portal-anchor:empty {
+  display: none;
+}
+
+.map-fs-chrome {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 20050;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  max-width: min(96vw, 520px);
+  pointer-events: auto;
+}
+
+.map-fs-chrome .map-fs-exit-btn,
+.map-fs-chrome .map-fs-ideology-btn {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
+.map-fs-ideology-btn.active {
+  border-color: rgba(0, 240, 255, 0.9);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+  color: #a7f3d0;
+}
+
+.map-command-modal-root--theater {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.map-command-modal-root--theater .map-command-modal__backdrop,
+.map-command-modal-root--theater .map-command-modal.hud-panel-border {
+  pointer-events: auto;
 }
 
 /* Zoom out — renkli şehir noktaları */
@@ -1603,47 +1713,48 @@ html.map-fs-active .map-intel-sidebar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  width: 32px;
-  min-width: 32px;
+  gap: 0.25rem;
+  width: 44px;
+  min-width: 44px;
   height: auto;
-  min-height: 72px;
-  padding: 0.35rem 0.2rem;
-  border: 2px solid rgba(0, 240, 255, 0.65);
+  min-height: 96px;
+  padding: 0.5rem 0.3rem;
+  border: 2px solid rgba(0, 240, 255, 0.85);
   border-right: none;
-  border-radius: 8px 0 0 8px;
-  background: rgba(8, 22, 18, 0.96);
-  color: rgba(0, 240, 255, 0.95);
-  font-size: 0.5rem;
+  border-radius: 10px 0 0 10px;
+  background: rgba(6, 18, 14, 0.98);
+  color: #e2fff4;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  line-height: 1.1;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
   cursor: pointer;
   pointer-events: auto;
   box-shadow:
-    -4px 0 18px rgba(0, 0, 0, 0.55),
-    0 0 14px rgba(0, 240, 255, 0.25);
+    -6px 0 22px rgba(0, 0, 0, 0.65),
+    0 0 18px rgba(0, 240, 255, 0.35);
 }
 
 .map-intel-sidebar__reopen:hover {
-  border-color: rgba(0, 240, 255, 0.9);
-  color: #f0fdf4;
-  background: rgba(12, 36, 28, 0.98);
+  border-color: #67e8f9;
+  color: #fff;
+  background: rgba(10, 40, 32, 0.99);
   box-shadow:
-    -6px 0 22px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0, 240, 255, 0.35);
+    -8px 0 26px rgba(0, 0, 0, 0.7),
+    0 0 24px rgba(0, 240, 255, 0.45);
 }
 
 .map-intel-sidebar__reopen-icon {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.5));
 }
 
 .map-intel-sidebar__reopen-label {
   text-transform: uppercase;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  max-height: 4.5rem;
+  max-height: 5.5rem;
 }
 
 .map-intel-sidebar__bolt {
@@ -1907,10 +2018,15 @@ html.map-fs-active .map-intel-sidebar {
   }
 
   .map-intel-sidebar__reopen {
-    top: 8px;
-    right: 8px;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.58rem;
+    top: auto;
+    bottom: 5.5rem;
+    right: 0;
+    transform: none;
+    width: 42px;
+    min-width: 42px;
+    min-height: 88px;
+    padding: 0.45rem 0.28rem;
+    font-size: 0.6rem;
   }
 
   .map-status-band {

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import {
   BLACK_MARKET_LABELS,
   BLACK_MARKET_TYPES,
@@ -13,18 +14,40 @@ import CustomDropdown from '../components/CustomDropdown';
 import { useLanguage } from '../context/LanguageContext';
 import { getNearestEmpireOrigin } from '../lib/empireExpansion';
 import { resolveCityCoords } from '../lib/expeditionTravel';
+import { toRawInputNumber } from '../lib/formatNumber';
 
 const TITLE_MIN_LEN = 3;
 
+function parsePositivePrice(raw) {
+  const trimmed = String(raw ?? '').trim();
+  if (!trimmed) return { value: 0, error: 'Fiyat girin' };
+  const num = Number(toRawInputNumber(trimmed));
+  if (!Number.isFinite(num) || num <= 0) {
+    return { value: 0, error: 'Fiyat 1 veya üzeri olmalı' };
+  }
+  return { value: Math.floor(num), error: null };
+}
+
+function parsePositiveQty(raw) {
+  const trimmed = String(raw ?? '').trim();
+  if (!trimmed) return { value: 0, error: 'Miktar girin' };
+  const num = Math.floor(Number(toRawInputNumber(trimmed)) || 0);
+  if (!Number.isFinite(num) || num <= 0) {
+    return { value: 0, error: 'Miktar 1 veya üzeri olmalı' };
+  }
+  return { value: num, error: null };
+}
+
 export default function BlackMarket() {
   const { t } = useLanguage();
-  const listings = useGameStore((s) => s.blackMarketListings ?? []);
-  const crises = useGameStore((s) => s.diplomaticCrises ?? []);
+  const addToast = useNotificationStore((s) => s.addToast);
+  const listings = useGameStore((s) => s.blackMarketListings ?? STORE_EMPTY_ARRAY);
+  const crises = useGameStore((s) => s.diplomaticCrises ?? STORE_EMPTY_ARRAY);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const mapCities = useGameStore((s) => s.mapCities);
   const cities = useGameStore((s) => s.cities);
-  const resources = useGameStore((s) => s.cities[activeCityId]?.resources ?? []);
+  const resources = useGameStore((s) => s.cities[activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
   const postListing = useGameStore((s) => s.postBlackMarketListing);
   const buyListing = useGameStore((s) => s.buyBlackMarketListing);
 
@@ -32,7 +55,9 @@ export default function BlackMarket() {
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
   const [price, setPrice] = useState('');
+  const [priceError, setPriceError] = useState('');
   const [qty, setQty] = useState('100');
+  const [qtyError, setQtyError] = useState('');
   const [resourceId, setResourceId] = useState('hammadde');
 
   const captureRiskPct = useMemo(() => {
@@ -52,29 +77,64 @@ export default function BlackMarket() {
 
   const openListings = listings.filter((l) => l.status === 'open');
 
-  const validateTitle = (value) => {
-    const trimmed = value.trim();
-    if (trimmed.length > 0 && trimmed.length < TITLE_MIN_LEN) {
-      setTitleError('En az 3 karakter girin');
+  const validateTitle = (value, { showToast = false } = {}) => {
+    const trimmed = String(value ?? '').trim();
+    if (trimmed.length < TITLE_MIN_LEN) {
+      const msg = `Başlık en az ${TITLE_MIN_LEN} karakter olmalı`;
+      setTitleError(msg);
+      if (showToast) addToast(msg, 'warn');
       return false;
     }
     setTitleError('');
     return true;
   };
 
+  const validatePrice = (value, { showToast = false } = {}) => {
+    const { value: priceNum, error } = parsePositivePrice(value);
+    if (error) {
+      setPriceError(error);
+      if (showToast) addToast(error, 'warn');
+      return { ok: false, priceNum: 0 };
+    }
+    setPriceError('');
+    return { ok: true, priceNum };
+  };
+
+  const validateQty = (value, { showToast = false } = {}) => {
+    const { value: qtyNum, error } = parsePositiveQty(value);
+    if (error) {
+      setQtyError(error);
+      if (showToast) addToast(error, 'warn');
+      return { ok: false, qtyNum: 0 };
+    }
+    setQtyError('');
+    return { ok: true, qtyNum };
+  };
+
   const handlePost = (e) => {
     e.preventDefault();
-    if (!validateTitle(title)) return;
-    postListing({
+    const titleOk = validateTitle(title, { showToast: true });
+    const { ok: priceOk, priceNum } = validatePrice(price, { showToast: true });
+    const { ok: qtyOk, qtyNum } = validateQty(qty, { showToast: true });
+    if (!titleOk || !priceOk || !qtyOk) return;
+
+    const ok = postListing({
       type,
-      title: title.trim() || BLACK_MARKET_LABELS[type],
-      price: Number(price),
-      qty: Number(qty),
+      title: title.trim(),
+      price: priceNum,
+      qty: qtyNum,
       resourceId: type === BLACK_MARKET_TYPES.STOLEN_GOODS ? resourceId : null,
     });
-    setTitle('');
-    setTitleError('');
-    setPrice('');
+    if (ok) {
+      setTitle('');
+      setTitleError('');
+      setPrice('');
+      setPriceError('');
+      setQty('100');
+      setQtyError('');
+      return;
+    }
+    addToast('İlan yayınlanamadı — stok veya kaynak kontrolü', 'warn');
   };
 
   return (
@@ -82,7 +142,7 @@ export default function BlackMarket() {
       <LocalizedPageHeader
         pageKey="blackMarket"
         className="black-market-page-header"
-        subtitleOverride={pageSubtitle}
+        subtitle={pageSubtitle}
       />
 
       {crises.length > 0 && (
@@ -129,7 +189,7 @@ export default function BlackMarket() {
                 setTitle(e.target.value);
                 if (titleError) validateTitle(e.target.value);
               }}
-              onBlur={() => validateTitle(title)}
+              onBlur={(e) => validateTitle(e.target.value)}
               aria-invalid={titleError ? 'true' : undefined}
             />
             {titleError && (
@@ -157,16 +217,36 @@ export default function BlackMarket() {
             <CyberDataInput
               value={qty}
               min={1}
-              onChange={(e) => setQty(e.target.value)}
+              onChange={(e) => {
+                setQty(e.target.value);
+                if (qtyError) validateQty(e.target.value);
+              }}
+              onBlur={(e) => validateQty(e.target.value)}
+              aria-invalid={qtyError ? 'true' : undefined}
             />
+            {qtyError && (
+              <span className="black-market-field-error" role="alert">
+                {qtyError}
+              </span>
+            )}
           </label>
           <label>
             <span>Fiyat (Bütçe)</span>
             <CyberDataInput
               value={price}
               min={1}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                if (priceError) validatePrice(e.target.value);
+              }}
+              onBlur={(e) => validatePrice(e.target.value)}
+              aria-invalid={priceError ? 'true' : undefined}
             />
+            {priceError && (
+              <span className="black-market-field-error" role="alert">
+                {priceError}
+              </span>
+            )}
           </label>
           <button type="submit" className="btn btn-hud-primary">[ İLAN YAYINLA ]</button>
         </form>

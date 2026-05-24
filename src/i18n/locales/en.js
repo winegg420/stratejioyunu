@@ -66,6 +66,8 @@ const enBase = {
   navBadge: {
     coastal: 'Coastal',
     logisticsTitle: 'Logistics',
+    expeditionCount: '{{count}} active field operations',
+    intelOpCount: '{{count}} active intel operations',
   },
   cityManagement: {
     sectionTag: 'CITY & COLONY',
@@ -177,6 +179,9 @@ const enBase = {
       title: 'Land Forces',
       subtitle: '> Land forces production line ready...',
       status: '[ STATUS: COMBAT READY ]',
+      productionSection: 'Troop Production',
+      queueTitle: 'Active Queue — {{city}}',
+      queueEmpty: 'Production queue empty. Select a unit to start training.',
     },
     airbase: {
       title: 'Air Base',
@@ -260,6 +265,11 @@ const enBase = {
       title: 'Founder Command Center',
       subtitle: '> Founder console — crisis engine, central bank and regional incentives...',
       status: '[ GOD MODE ]',
+    },
+  },
+  components: {
+    battleSimulator: {
+      title: 'Battle Simulator',
     },
   },
 };

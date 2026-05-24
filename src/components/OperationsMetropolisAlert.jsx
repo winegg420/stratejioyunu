@@ -4,12 +4,12 @@ import {
   getOperationCooldownEndsAt,
   resolveLastOperationMs,
 } from '../lib/operationsCooldown';
-import { useGameStore } from '../stores/gameStore';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 
 export default function OperationsMetropolisAlert() {
   const expeditions = useGameStore((s) => s.expeditions);
   const pastExpeditions = useGameStore((s) => s.pastExpeditions);
-  const intelOps = useGameStore((s) => s.intelOperations ?? []);
+  const intelOps = useGameStore((s) => s.intelOperations ?? STORE_EMPTY_ARRAY);
 
   const cooldownEndsAt = useMemo(() => {
     const hasActive = (expeditions?.length ?? 0) > 0 || (intelOps?.length ?? 0) > 0;

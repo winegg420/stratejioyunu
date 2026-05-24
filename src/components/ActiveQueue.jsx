@@ -1,7 +1,11 @@
+import { useMemo } from 'react';
 import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
 import { calcConstructionSpeedupDiamondCost } from '../lib/premiumDiamonds';
+import { resolveUnitIconDomain } from './UnitMilitaryIcon';
+import UnitMilitaryIcon from './UnitMilitaryIcon';
+import { useLanguage } from '../context/LanguageContext';
 import CyberTerminalPlaceholder from './CyberTerminalPlaceholder';
 import TerminalLogPanel from './TerminalLogPanel';
 
@@ -9,15 +13,19 @@ const ALL_UNITS = [...landUnits, ...airUnits, ...seaUnits];
 
 function QueueRow({
   item, queued, remaining, progress, onSpeedUp, onCancel, onStart, productionHud,
-  speedUpCost, canAffordSpeedUp, speedUpTitle,
+  speedUpCost, canAffordSpeedUp, speedUpTitle, unitId, iconDomain, t,
 }) {
-  const display = queued ? 'Sırada' : formatSeconds(remaining);
+  const display = queued ? t('components.activeQueue.queued') : formatSeconds(remaining);
 
   if (productionHud) {
     return (
       <li className={`production-queue-hud${queued ? ' production-queue-hud--queued' : ''}`}>
         <span className="production-queue-hud__thumb" aria-hidden="true">
-          {item.unitImage ?? '⚔️'}
+          {unitId ? (
+            <UnitMilitaryIcon unitId={unitId} domain={iconDomain} size={28} />
+          ) : (
+            item.unitImage ?? '⚔️'
+          )}
         </span>
         <div className="production-queue-hud__body">
           <span className="production-queue-hud__label">{item.label}</span>
@@ -30,7 +38,7 @@ function QueueRow({
         <div className="active-queue-actions">
           {queued ? (
             <button type="button" className="btn btn-primary btn-sm" disabled={!onStart} onClick={onStart}>
-              Başlat
+              {t('components.activeQueue.start')}
             </button>
           ) : (
             <button
@@ -46,7 +54,7 @@ function QueueRow({
             </button>
           )}
           <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
-            İptal
+            {t('components.activeQueue.cancel')}
           </button>
         </div>
       </li>
@@ -68,7 +76,7 @@ function QueueRow({
       <div className="active-queue-actions">
         {queued && (
           <button type="button" className="btn btn-primary btn-sm" disabled={!onStart} onClick={onStart}>
-            Başlat
+            {t('components.activeQueue.start')}
           </button>
         )}
         {!queued && (
@@ -85,7 +93,7 @@ function QueueRow({
           </button>
         )}
         <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
-          İptal
+          {t('components.activeQueue.cancel')}
         </button>
       </div>
     </li>
@@ -93,6 +101,7 @@ function QueueRow({
 }
 
 export default function ActiveQueue({ title, queueType, emptyText }) {
+  const { t, unitName } = useLanguage();
   const now = useGameStore((s) => s.now);
   const queue = useGameStore((s) => {
     const city = s.cities[s.activeCityId];
@@ -113,16 +122,46 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
 
   const isProduction = queueType === 'production';
 
+  const activeProduction = useMemo(() => {
+    if (!isProduction || !queue.length) return null;
+    const q = queue.find((entry) => !entry.queued) ?? queue[0];
+    if (!q) return null;
+    const label = unitName(q.unitId, q.unit) || q.unit || q.unitId;
+    const rem = q.queued ? 0 : remainingFromEndsAt(q.endsAt, now);
+    const time = q.queued
+      ? t('components.activeQueue.queued')
+      : formatSeconds(rem);
+    return {
+      ...q,
+      label,
+      time,
+      iconDomain: resolveUnitIconDomain(q.unitId),
+    };
+  }, [isProduction, queue, now, t, unitName]);
+
+  const dockTitle = activeProduction
+    ? t('components.activeQueue.productionDock', {
+      unit: activeProduction.label,
+      count: activeProduction.count,
+      time: activeProduction.time,
+    })
+    : title;
+
   const items = queue.map((q) => {
     const unitMeta = isProduction ? ALL_UNITS.find((u) => u.id === q.unitId) : null;
     const rem = q.queued ? 0 : remainingFromEndsAt(q.endsAt, now);
     const speedUpCost = !isProduction && !q.queued && rem > 1
       ? calcConstructionSpeedupDiamondCost(rem)
       : 0;
+    const unitLabel = unitName(q.unitId, q.unit) || q.unit || q.unitId;
     return {
       id: q.id,
-      label: queueType === 'construction' ? q.name : q.unit,
-      detail: queueType === 'construction' ? `Seviye ${q.targetLevel}` : `×${q.count}`,
+      unitId: q.unitId,
+      iconDomain: resolveUnitIconDomain(q.unitId),
+      label: queueType === 'construction' ? q.name : unitLabel,
+      detail: queueType === 'construction'
+        ? t('components.activeQueue.levelDetail', { level: q.targetLevel })
+        : t('components.activeQueue.unitQty', { count: q.count }),
       unitImage: unitMeta?.image,
       queued: q.queued,
       remaining: rem,
@@ -130,15 +169,16 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
       speedUpCost,
       canAffordSpeedUp: isProduction || speedUpCost === 0 || diamonds >= speedUpCost,
       speedUpTitle: isProduction
-        ? 'Hızlandır'
-        : `Hızlandır (−%90) · ${speedUpCost} elmas`,
+        ? t('components.activeQueue.speedUp')
+        : t('components.activeQueue.speedUpConstruction', { cost: speedUpCost }),
     };
   });
 
-  const dockTag = queueType === 'construction' ? 'İNŞAAT' : 'ÜRETİM';
+  const dockTag = queueType === 'construction'
+    ? t('components.activeQueue.construction')
+    : t('components.activeQueue.production');
 
   if (!items.length) {
-    const isConstruction = queueType === 'construction';
     return (
       <TerminalLogPanel title={title} tag={dockTag} className="terminal-log-panel--queue">
         <section className="active-queue-panel active-queue-panel--empty active-queue-panel--placeholder">
@@ -154,14 +194,23 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   const onStartQueued = queueType === 'construction' ? startQueuedConstruction : startQueuedProduction;
 
   return (
-    <TerminalLogPanel title={title} tag={dockTag} className="terminal-log-panel--queue">
+    <TerminalLogPanel title={dockTitle} tag={dockTag} className="terminal-log-panel--queue">
       <section className="active-queue-panel">
-        <h3 className="active-queue-title">{title}</h3>
+        <h3 className="active-queue-title">
+          {activeProduction
+            ? t('components.activeQueue.productionTitle', {
+              unit: activeProduction.label,
+              count: activeProduction.count,
+            })
+            : title}
+        </h3>
         <ul className={`active-queue-list${isProduction ? ' active-queue-list--production' : ''}`}>
           {items.map((item) => (
             <QueueRow
               key={item.id}
               item={item}
+              unitId={item.unitId}
+              iconDomain={item.iconDomain}
               queued={item.queued}
               remaining={item.remaining}
               progress={item.progress}
@@ -169,6 +218,7 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
               speedUpCost={item.speedUpCost}
               canAffordSpeedUp={item.canAffordSpeedUp}
               speedUpTitle={item.speedUpTitle}
+              t={t}
               onSpeedUp={() => onSpeedUp(item.id)}
               onCancel={() => onCancel(item.id)}
               onStart={() => !hasActive && onStartQueued(item.id)}

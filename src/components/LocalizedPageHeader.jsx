@@ -16,10 +16,12 @@ export default function LocalizedPageHeader({
   /** Dinamik içerik için isteğe bağlı geçersiz kılmalar */
   title: titleOverride,
   subtitle: subtitleOverride,
+  subtitleOverride: subtitleOverrideProp,
   status: statusOverride,
   feedLine: feedLineOverride,
 }) {
   const copy = usePageT(pageKey);
+  const resolvedSubtitle = subtitleOverride ?? subtitleOverrideProp;
   const feedFromCopy = feedKey
     ? copy.feed
     : (copy.feed && !String(copy.feed).startsWith('pages.') ? copy.feed : undefined);
@@ -29,7 +31,7 @@ export default function LocalizedPageHeader({
       className={className}
       title={titleOverride ?? copy.title}
       subtitle={
-        subtitleOverride
+        resolvedSubtitle
         ?? (typewriterSubtitle === false ? undefined : copy.subtitle)
       }
       status={statusOverride ?? (hideStatus ? undefined : copy.status)}

@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { Marker } from 'react-leaflet';
+import { isMapClickSuppressed } from './mapPanClick';
 import { createCyberCityIcon } from './cyberMarkers';
 
 export default function CyberCityMarkers({
@@ -32,6 +33,7 @@ export default function CyberCityMarkers({
             bubblingMouseEvents={false}
             eventHandlers={{
               click: (e) => {
+                if (isMapClickSuppressed(e.target?._map)) return;
                 L.DomEvent.stopPropagation(e);
                 onSelectCity(city);
               },

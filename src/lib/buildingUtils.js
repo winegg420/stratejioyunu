@@ -185,16 +185,36 @@ export function getStarterIdleTroops() {
   return [...land, ...air, ...sea];
 }
 
+/** React 19 useSyncExternalStore — aynı içerik için aynı dizi referansı. */
+let mergeIdleTroopsInputRef = null;
+let mergeIdleTroopsContentKey = '';
+let mergeIdleTroopsResult = null;
+
+function idleTroopsContentKey(src) {
+  if (!src?.length) return 'empty';
+  return src.map((t) => `${t.id}:${t.available ?? t.count ?? 0}`).join('|');
+}
+
 /** Mevcut şehir asker listesini kara/hava/deniz kataloğuyla hizalar. */
 export function mergeCityIdleTroops(existing = []) {
-  const byId = new Map((existing ?? []).map((t) => [t.id, { ...t }]));
+  const src = existing ?? [];
+  const contentKey = idleTroopsContentKey(src);
+  if (contentKey === mergeIdleTroopsContentKey && mergeIdleTroopsResult) {
+    return mergeIdleTroopsResult;
+  }
+
+  const byId = new Map(src.map((t) => [t.id, { ...t }]));
   for (const template of getStarterIdleTroops()) {
     const prev = byId.get(template.id);
     byId.set(template.id, prev
       ? { ...template, ...prev, name: template.name }
       : { ...template });
   }
-  return [...byId.values()];
+  const merged = [...byId.values()];
+  mergeIdleTroopsInputRef = src;
+  mergeIdleTroopsContentKey = contentKey;
+  mergeIdleTroopsResult = merged;
+  return merged;
 }
 
 export function createStarterResearches() {

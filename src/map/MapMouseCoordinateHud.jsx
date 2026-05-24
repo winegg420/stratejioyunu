@@ -8,7 +8,8 @@ export function latLngToLoc(lat, lng) {
   return safeLatLngToLoc(lat, lng);
 }
 
-export default function MapMouseCoordinateHud() {
+/** Taktik grid — yalnızca boş harita üzerinde; şehir hover / tam ekranda gizli */
+export default function MapMouseCoordinateHud({ visible = true } = {}) {
   const map = useMap();
   const [loc, setLoc] = useState(null);
 
@@ -35,6 +36,8 @@ export default function MapMouseCoordinateHud() {
       map.off('mouseout', onLeave);
     };
   }, [map]);
+
+  if (!visible) return null;
 
   return (
     <div className="map-loc-hud font-hud-data" aria-live="polite">

@@ -71,16 +71,14 @@ export default function CityDotLayer({
         if (city.lat == null || city.lng == null) return null;
         let variant = 'default';
         let color = getMapCityDisplayColor(city, { ideologyView, playerName, playerIdeology });
-        if (!ideologyView) {
-          if (city.isOwn || city.status === 'own') {
-            variant = 'own';
-            color = EMPIRE_CITY_GLOW;
-          } else if (city.status === 'bot') {
+        if (city.isOwn || city.status === 'own') {
+          variant = 'own';
+          color = EMPIRE_CITY_GLOW;
+        } else if (!ideologyView) {
+          if (city.status === 'bot') {
             variant = 'bot';
             color = BOT_MARKER_ORANGE;
           }
-        } else if (city.isOwn || city.status === 'own') {
-          variant = 'own';
         } else if (city.status === 'bot') {
           variant = 'bot';
         }

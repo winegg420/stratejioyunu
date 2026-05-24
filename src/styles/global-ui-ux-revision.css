@@ -3,22 +3,62 @@
  * sefer paneli, stratejik matris, kuyruk sıfır vurgusu
  */
 
-/* ── 1. Dil seçici: TR / EN metin (11px), "/" ayırıcı ── */
+/* ── 1. Dil seçici: dikdörtgen bayraklar ── */
+.lang-switcher--flags,
 .lang-switcher--bar,
-.lang-switcher--bar.lang-switcher--bar-compact,
-.lang-switcher--text {
+.lang-switcher--bar.lang-switcher--bar-compact {
   display: inline-flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   align-items: center !important;
-  gap: 0.2rem !important;
-  padding: 0.12rem 0.35rem !important;
+  gap: 0.28rem !important;
+  padding: 0.18rem 0.28rem !important;
   border: 1px solid rgba(74, 222, 128, 0.45) !important;
   border-radius: 4px !important;
   background: rgba(10, 18, 12, 0.92) !important;
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.1) !important;
   min-width: 0 !important;
   max-width: none !important;
+}
+
+.lang-switcher__flags {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.28rem !important;
+}
+
+.lang-switcher__flag-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.1rem !important;
+  margin: 0 !important;
+  border: 1px solid rgba(74, 124, 89, 0.45) !important;
+  border-radius: 2px !important;
+  background: rgba(8, 14, 10, 0.85) !important;
+  cursor: pointer !important;
+  line-height: 0 !important;
+  opacity: 0.72;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.lang-switcher__flag-btn:hover {
+  opacity: 1;
+  border-color: rgba(74, 222, 128, 0.55) !important;
+}
+
+.lang-switcher__flag-btn--active {
+  opacity: 1;
+  border-color: rgba(74, 222, 128, 0.85) !important;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.35) !important;
+}
+
+.lang-flag-svg {
+  display: block;
+  width: 28px;
+  height: 18px;
+  border-radius: 1px;
 }
 
 .lang-switcher--bar .lang-switcher__title {
@@ -76,13 +116,17 @@
   padding: 0.15rem 0.4rem !important;
 }
 
-/* Dil + kırmızı dijital saat — dikey hizalama */
+/* Sunucu saati üstte, bayraklar altta */
 .resource-bar-lang-clock {
   display: inline-flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   align-items: center !important;
   align-self: center !important;
-  gap: 0.5rem !important;
+  gap: 0.28rem !important;
+}
+
+.resource-bar-lang-clock--stacked {
+  justify-content: center !important;
 }
 
 /* Sunucu saati — tüm sayfalarda aynı kutu ve etiket */
@@ -342,6 +386,8 @@
   margin-right: 0 !important;
   padding-right: 0.35rem !important;
   border-right: 1px solid rgba(74, 124, 89, 0.28) !important;
+  overflow: visible !important;
+  z-index: 3 !important;
 }
 
 .resource-bar--stacked .resource-bar-resources--strip .resource-item--bar-cell:last-child {
@@ -503,15 +549,61 @@
   }
 }
 
-/* ── Barış Gücü terminal paneli — C4ISR şeridi üstüne binmesin ── */
+/* ── Barış Gücü — kompakt şerit, ticker hemen üstünde ── */
 .terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-dock-logs__portals {
-  padding-bottom: 0.85rem !important;
+  padding-bottom: 0.15rem !important;
+  gap: 0.15rem !important;
 }
 
 .terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace {
-  margin-bottom: 0.9rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .terminal-log-panel__head {
+  padding: 0.18rem 0.55rem !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .terminal-log-panel__body {
+  padding: 0.2rem 0.55rem 0.28rem !important;
 }
 
 .terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner {
-  margin-bottom: 0.75rem !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  margin: 0 !important;
+  padding: 0.28rem 0.45rem !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner__icon {
+  font-size: 1rem !important;
+  flex-shrink: 0;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner__title {
+  display: inline !important;
+  margin: 0 0.35rem 0 0 !important;
+  font-size: 0.62rem !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner__sub {
+  display: inline !important;
+  font-size: 0.58rem !important;
+  margin: 0 !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner__warn {
+  display: none !important;
+}
+
+.terminal-dock-logs:not(.terminal-dock-logs--hidden) .terminal-log-panel--peace .peace-force-banner__body {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

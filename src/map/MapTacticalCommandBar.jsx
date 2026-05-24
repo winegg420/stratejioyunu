@@ -4,7 +4,6 @@ import { IDEOLOGY_PROFILES } from '../lib/ideologySystem';
 function MapTacticalCommandBar({
   ideologyView,
   onToggleIdeology,
-  isFullscreen,
 }) {
   return (
     <div className="map-tactical-command-bar" role="toolbar" aria-label="Taktik komuta şeridi">
@@ -13,7 +12,6 @@ function MapTacticalCommandBar({
         className={`btn btn-secondary btn-sm map-ideology-toggle${ideologyView ? ' active' : ''}`}
         onClick={onToggleIdeology}
         aria-pressed={ideologyView}
-        disabled={isFullscreen}
       >
         [ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]
       </button>

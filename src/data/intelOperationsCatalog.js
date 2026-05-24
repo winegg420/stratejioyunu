@@ -33,5 +33,21 @@ export function isOperationReport(report) {
   if (report.reportCategory === 'operation') return true;
   if (report.filterType === 'cyber') return true;
   if (report.filterType === 'kbrn') return true;
+  if (report.type === 'Siber Operasyon' || report.type === 'Ajan Operasyonu') return true;
+  if (report.cyberSuccess != null || report.operationSuccess != null) return true;
   return report.filterType === 'spy' && report.type === 'Ajan Operasyonu';
+}
+
+function reportSortKey(report) {
+  const raw = report?.date ?? '';
+  const parsed = Date.parse(raw);
+  if (Number.isFinite(parsed)) return parsed;
+  const idNum = Number(String(report?.id ?? '').replace(/\D/g, ''));
+  return Number.isFinite(idNum) ? idNum : 0;
+}
+
+export function getLatestOperationReport(reports = []) {
+  return [...reports]
+    .filter(isOperationReport)
+    .sort((a, b) => reportSortKey(b) - reportSortKey(a))[0] ?? null;
 }

@@ -6,10 +6,10 @@ import {
   CHRONICLE_TYPES,
   SERVER_SLUG,
   createChronicleEntry,
-  createDemoChronicleArchive,
   getChroniclesForSeason,
   getCurrentSeasonId,
   syncSeasonChronicles,
+  createDemoChronicleArchive,
 } from './historyBook';
 
 const DEFAULT_SERVER = SERVER_SLUG;
@@ -56,10 +56,8 @@ export async function persistChronicleToServer(entry) {
 export async function fetchSeasonChroniclesFromServer(seasonId, localState) {
   if (!isSupabaseConfigured || !supabase) {
     return {
-      source: 'demo',
-      state: localState?.entries?.length || localState?.archives
-        ? syncSeasonChronicles(localState)
-        : createDemoChronicleArchive(),
+      source: 'local',
+      state: syncSeasonChronicles(localState),
     };
   }
 
@@ -117,10 +115,7 @@ export async function fetchAvailableSeasonIds(localState) {
   ].filter(Boolean));
 
   if (!isSupabaseConfigured || !supabase) {
-    const demo = localState?.entries?.length ? localState : createDemoChronicleArchive();
-    for (const id of Object.keys(demo.archives ?? {})) localIds.add(id);
-    if (demo.currentSeasonId) localIds.add(demo.currentSeasonId);
-    return [...localIds].sort().reverse();
+    return [...localIds].filter(Boolean).sort().reverse();
   }
 
   const { data, error } = await supabase

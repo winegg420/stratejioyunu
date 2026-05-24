@@ -615,6 +615,36 @@
   color: rgba(148, 163, 184, 0.6);
 }
 
+.strat-ops-chip__counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.strat-ops-chip__sep {
+  opacity: 0.45;
+}
+
+.strat-tax__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.strat-tax__pending {
+  font-size: 0.62rem;
+  color: #fbbf24;
+  letter-spacing: 0.06em;
+}
+
+.strat-tax__preview {
+  font-size: 0.72rem;
+  color: #4ade80;
+}
+
 .strat-ops-chip__meta--alert {
   color: #fbbf24;
 }
