@@ -450,6 +450,30 @@ export default {
       queueTitle: 'Aktif Kuyruk — {{city}}',
       queueEmpty: 'Hava birliği üretimi için bir uçak seçip kuyruğa ekleyin.',
     },
+    defense: {
+      title: 'Savunma Sistemleri',
+      subtitle: 'Üs savunma hattı — adet üretimi ve kademe yükseltme',
+      status: '[ SAVUNMA KOMUTASI ]',
+      intro: 'Her sistem adet bazında üretilir ve ayrı kademe seviyesine yükseltilebilir. Kademe arttıkça etkinlik ve maliyet ölçeklenir.',
+      systemsSection: '[ SAVUNMA ENVANTERİ ]',
+      produceSection: 'Adet üretimi',
+      upgradeSection: 'Kademe yükseltme',
+      levelBadge: 'Kademe {{level}} / {{max}}',
+      countBadge: 'Adet: {{count}}',
+      produce: 'Üret',
+      queueAdd: 'Kuyruğa ekle',
+      upgrade: 'Kademe yükselt',
+      queueUpgrade: 'Kuyruğa al',
+      queued: 'Sırada',
+      maxLevel: 'MAX KADEME',
+      perUnit: '/ adet',
+      queueTitle: 'Savunma Kuyruğu — {{city}}',
+      queueEmpty: 'Savunma kuyruğu boş. Bir sistem seçip üretim veya kademe yükseltme başlatın.',
+      queueStart: 'Başlat',
+      queueCancel: 'İptal',
+      queueProduceLabel: '{{count}}× {{name}}',
+      queueUpgradeLabel: '{{name}} kademe',
+    },
     shipyard: {
       coastalTag: '[ KIYI GEREKLİ ]',
       coastalTitle: 'İç bölge — tersane kapalı',
@@ -756,6 +780,32 @@ export default {
         hint: 'Araştırma → Ağır Sanayi Sv.1',
         progress: 'Ağır Sanayi Sv.{{current}}/1',
       },
+    },
+  },
+  defense: {
+    firewall: {
+      name: 'Siber Güvenlik Duvarı',
+      desc: 'Ağ altyapısını koruyan ilk dijital savunma hattıdır. Gelen hafif siber sızmaları, veri hırsızlığı girişimlerini ve düşman casus dronlarını saniyeler içinde tespit edip sistem dışına atar.',
+    },
+    korkut: {
+      name: 'Korkut Mobil Uçaksavar Sistemi',
+      desc: 'Alçak irtifadan sinsice yaklaşan seyir füzelerini, helikopterleri ve kamikaze drone sürülerini namlu gücüyle havada imha eden, yüksek hareket kabiliyetine sahip mobil savunma aracıdır.',
+    },
+    gokdeniz: {
+      name: 'Gökdeniz Yarı Otomatik CIWS',
+      desc: 'Üssün merkezine yerleştirilen radar güdümlü döner namlulu sistem. Üzerine gelen ağır füzeleri ve yaklaşan zırhlı kara araçlarını saniyede 75 mermi fırlatarak zırh delici mühimmatla eritir.',
+    },
+    akkor: {
+      name: 'Akkor Elektromanyetik Top',
+      desc: 'Barut veya yakıt kullanmaz; saf elektrik enerjisini kinetik güce dönüştürerek mermiyi ses hızının 7 katına çıkarır. En ağır zırhlı tankları ve kruvazörleri tek atışta delip geçmek için tasarlanmıştır.',
+    },
+    siper: {
+      name: 'Siper Uzun Menzilli Füze Bataryası',
+      desc: 'Yüzlerce kilometre öteden fırlatılan balistik ve seyir füzelerini hava sahanıza girmeden algılar. Karşı önleme füzesi ateşleyerek tehditleri stratosferde imha eden ana şemsiyedir.',
+    },
+    demir_kubbe: {
+      name: 'Demir Kubbe Enerji Kalkanı',
+      desc: 'Üretimi en maliyetli son kademe savunmadır. Şehrin üstünü kaplayan siber-fiziksel kalkan jeneratörü; düşman ordusu ve füze saldırılarının büyük bölümünü absorbe ederek içeri sızdırmaz.',
     },
   },
 };

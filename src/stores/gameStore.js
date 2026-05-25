@@ -43,6 +43,14 @@ import {
   remainingFromEndsAt,
 } from '../lib/gameUtils';
 import { ALLIANCE, diplomacy, landUnits, airUnits, seaUnits } from '../data/placeholder';
+import { DEFENSE_BY_ID } from '../data/defenseCatalog';
+import {
+  getDefenseUpgradeDurationSeconds,
+  getDefenseUnitDurationSeconds,
+  isDefenseAtMaxLevel,
+  normalizeCityDefense,
+  scaleDefenseUpgradeCost,
+} from '../lib/defenseSystemUtils';
 import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
 import { EXPEDITION_DURATIONS } from '../lib/expeditionConfig';
 import {
@@ -804,11 +812,12 @@ function restoreTroopsToCity(city, troopPayload) {
 
 function tickAllCities(state, now) {
   const cities = { ...state.cities };
-  const completed = { construction: [], production: [] };
+  const completed = { construction: [], production: [], defense: [] };
 
   for (const [cityId, city] of Object.entries(cities)) {
     let constructionQueue = city.constructionQueue.map((q) => ({ ...q }));
     let productionQueue = city.productionQueue.map((q) => ({ ...q }));
+    let defenseQueue = (city.defenseQueue ?? []).map((q) => ({ ...q }));
 
     const activeBuild = constructionQueue.find((q) => !q.queued && q.endsAt != null);
     if (activeBuild && activeBuild.endsAt <= now) {
@@ -820,7 +829,12 @@ function tickAllCities(state, now) {
       completed.production.push({ cityId, itemId: activeProd.id });
     }
 
-    cities[cityId] = { ...city, constructionQueue, productionQueue };
+    const activeDefense = defenseQueue.find((q) => !q.queued && q.endsAt != null);
+    if (activeDefense && activeDefense.endsAt <= now) {
+      completed.defense.push({ cityId, itemId: activeDefense.id });
+    }
+
+    cities[cityId] = { ...city, constructionQueue, productionQueue, defenseQueue };
   }
 
   return { cities, completed };
@@ -2774,6 +2788,7 @@ export const useGameStore = create((set, get) => ({
 
     completed.construction.forEach(({ cityId, itemId }) => get()._completeConstruction(cityId, itemId));
     completed.production.forEach(({ cityId, itemId }) => get()._completeProduction(cityId, itemId));
+    completed.defense.forEach(({ cityId, itemId }) => get()._completeDefenseItem(cityId, itemId));
     completedExpeditionIds.forEach((id) => get()._completeExpedition(id));
     completedIntelIds.forEach((id) => get()._completeIntelOperation(id));
 
@@ -4905,6 +4920,192 @@ export const useGameStore = create((set, get) => ({
         (id) => get()._completeExpedition(id),
       ).catch((err) => console.warn('[gameStore] expedition sync', err));
     }
+  },
+
+  _completeDefenseItem: (cityId, itemId) => {
+    const state = get();
+    const city = state.cities[cityId];
+    if (!city) return;
+
+    const normalized = normalizeCityDefense(city);
+    const queue = [...normalized.defenseQueue];
+    const activeIdx = queue.findIndex((q) => q.id === itemId);
+    if (activeIdx === -1) return;
+
+    const item = queue[activeIdx];
+    const inventory = { ...normalized.defenseInventory };
+    const slot = { ...inventory[item.systemId] };
+
+    if (item.kind === 'upgrade') {
+      slot.level = Math.min((slot.level ?? 0) + 1, 15);
+    } else {
+      slot.count = (slot.count ?? 0) + (item.count ?? 1);
+    }
+    inventory[item.systemId] = slot;
+    queue.splice(activeIdx, 1);
+
+    patchCity(set, get, cityId, { defenseInventory: inventory, defenseQueue: queue });
+
+    const def = DEFENSE_BY_ID[item.systemId];
+    const label = def?.name ?? item.label ?? 'Savunma';
+    if (item.kind === 'upgrade') {
+      useNotificationStore.getState().addToast(`${label} kademe yükseltildi`, 'success');
+    } else {
+      useNotificationStore.getState().addToast(
+        `Savunma üretimi tamamlandı: ${item.count} ${label}`,
+        'success',
+      );
+    }
+    cloudSync(get, { cityId });
+  },
+
+  enqueueDefenseProduction: (systemId, count, { addToQueue = false } = {}) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+
+    const hq = city.buildings?.find((b) => b.id === 'hq');
+    if (!hq || hq.level < 1) {
+      useNotificationStore.getState().addToast('Savunma için Komuta Merkezi gerekli', 'warn');
+      return false;
+    }
+
+    const def = DEFENSE_BY_ID[systemId];
+    if (!def || !count || count <= 0) return false;
+
+    const normalized = normalizeCityDefense(city);
+    const defenseQueue = normalized.defenseQueue;
+    const hasActive = defenseQueue.some((q) => !q.queued);
+    if (!canAffordCost(def.unitCost, count, city.resources)) return false;
+
+    const duration = getDefenseUnitDurationSeconds(def, count);
+    const queued = addToQueue || hasActive;
+    const timing = queued
+      ? { durationSeconds: duration, startedAt: null, endsAt: null }
+      : createQueueTiming(duration);
+
+    const item = {
+      id: genId('dq'),
+      systemId,
+      kind: 'produce',
+      label: def.name,
+      count,
+      costPaid: def.unitCost,
+      costQty: count,
+      queued,
+      ...timing,
+    };
+
+    const resources = deductCost(def.unitCost, count, city.resources);
+    pushBudgetSpendFloat(set, get, moneyInCost(def.unitCost, count));
+    patchCity(set, get, cityId, {
+      resources,
+      defenseInventory: normalized.defenseInventory,
+      defenseQueue: [...defenseQueue, item],
+    });
+
+    useNotificationStore.getState().addToast(
+      queued ? `${count} ${def.name} kuyruğa eklendi` : `${count} ${def.name} üretiliyor`,
+      'success',
+    );
+    cloudSync(get, { cityId });
+    return true;
+  },
+
+  enqueueDefenseUpgrade: (systemId, { addToQueue = false } = {}) => {
+    const state = get();
+    const cityId = state.activeCityId;
+    const city = state.cities[cityId];
+    if (!city) return false;
+
+    const def = DEFENSE_BY_ID[systemId];
+    if (!def) return false;
+
+    const normalized = normalizeCityDefense(city);
+    const slot = normalized.defenseInventory[systemId] ?? { count: 0, level: 0 };
+    if (isDefenseAtMaxLevel(slot.level)) return false;
+
+    const defenseQueue = normalized.defenseQueue;
+    const hasActive = defenseQueue.some((q) => !q.queued);
+    const costStr = scaleDefenseUpgradeCost(def.upgradeCost, slot.level ?? 0);
+    if (!canAffordCost(costStr, 1, city.resources)) return false;
+
+    const duration = getDefenseUpgradeDurationSeconds(def, slot.level ?? 0);
+    const queued = addToQueue || hasActive;
+    const timing = queued
+      ? { durationSeconds: duration, startedAt: null, endsAt: null }
+      : createQueueTiming(duration);
+
+    const item = {
+      id: genId('dq'),
+      systemId,
+      kind: 'upgrade',
+      label: def.name,
+      count: 1,
+      costPaid: costStr,
+      costQty: 1,
+      queued,
+      ...timing,
+    };
+
+    const resources = deductCost(costStr, 1, city.resources);
+    pushBudgetSpendFloat(set, get, moneyInCost(costStr, 1));
+    patchCity(set, get, cityId, {
+      resources,
+      defenseInventory: normalized.defenseInventory,
+      defenseQueue: [...defenseQueue, item],
+    });
+
+    useNotificationStore.getState().addToast(
+      queued ? `${def.name} kademe kuyruğa eklendi` : `${def.name} kademe yükseltiliyor`,
+      'success',
+    );
+    cloudSync(get, { cityId });
+    return true;
+  },
+
+  startQueuedDefense: (queueId) => {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    if (!city) return false;
+    if ((city.defenseQueue ?? []).some((q) => !q.queued)) return false;
+    const item = (city.defenseQueue ?? []).find((q) => q.id === queueId && q.queued);
+    if (!item) return false;
+    const duration = item.durationSeconds || 60;
+    const timing = createQueueTiming(duration);
+    const normalized = normalizeCityDefense(city);
+    patchCity(set, get, cityId, {
+      defenseQueue: normalized.defenseQueue.map((q) =>
+        q.id === queueId ? { ...q, queued: false, ...timing } : q,
+      ),
+    });
+    useNotificationStore.getState().addToast('Savunma kuyruğu başlatıldı', 'success');
+    return true;
+  },
+
+  cancelDefenseQueue: (queueId) => {
+    const cityId = get().activeCityId;
+    const city = get().cities[cityId];
+    if (!city) return false;
+    const item = (city.defenseQueue ?? []).find((q) => q.id === queueId);
+    if (!item) return false;
+
+    const refundFactor = item.queued ? 1 : 0.5;
+    let resources = city.resources;
+    if (item.costPaid) {
+      const refunded = refundCostWithDepotCap(resources, item.costPaid, item.costQty ?? 1, refundFactor);
+      resources = refunded.resources;
+    }
+
+    const normalized = normalizeCityDefense(city);
+    patchCity(set, get, cityId, {
+      resources,
+      defenseQueue: normalized.defenseQueue.filter((q) => q.id !== queueId),
+    });
+    useNotificationStore.getState().addToast('Savunma kuyruğu iptal edildi', 'info');
+    cloudSync(get, { cityId });
+    return true;
   },
 
   startTicker: () => {

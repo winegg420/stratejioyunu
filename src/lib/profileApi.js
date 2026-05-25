@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import { getDisplayName } from './auth';
 import { getCompetitionDef } from './seasonChampionship';
 
-const DEFAULT_SERVER = 'turkiye-1';
+const DEFAULT_SERVER = 'global-1';
 const GENERIC_PLAYER_LABEL = 'Oyuncu';
 
 function isUsablePlayerLabel(value) {

@@ -48,6 +48,7 @@ import {
 import { loadGameConfig } from '../lib/gameConfig';
 import { tickOpenMarket } from '../lib/openMarket';
 import { seedMarketPriceHistory } from '../lib/marketPriceHistory';
+import { createDefaultDefenseInventory } from '../lib/defenseSystemUtils';
 import { pickMainHqStarter, enrichMapCityWithWorld } from '../lib/worldCitySystem';
 
 export function createCityState(overrides = {}) {
@@ -65,6 +66,8 @@ export function createCityState(overrides = {}) {
     idleAgents: overrides.idleAgents ?? 0,
     constructionQueue: overrides.constructionQueue ?? [],
     productionQueue: overrides.productionQueue ?? [],
+    defenseInventory: overrides.defenseInventory ?? createDefaultDefenseInventory(),
+    defenseQueue: overrides.defenseQueue ?? [],
   };
   const idlePopulation = overrides.idlePopulation ?? getDefaultIdlePopulation(base);
   const cityCtx = enrichCityModel({ ...base, idlePopulation });
@@ -97,8 +100,8 @@ export function createInitialGameState(playerMeta = loadPlayerMeta()) {
     saveProtectionEndsAt(playerKey, protectionEndsAt);
   }
 
-  const mainHq = pickMainHqStarter(playerKey);
   const gameConfig = loadGameConfig();
+  const mainHq = pickMainHqStarter(playerKey, gameConfig);
   const playerCities = [mainHq];
 
   const base = {

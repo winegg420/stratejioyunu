@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import MapErrorBoundary from '../components/MapErrorBoundary';
 import TurkeyMap from '../map/TurkeyMap';
+import HudBackButton from '../components/HudBackButton';
 import { useLanguage } from '../context/LanguageContext';
 import { useGameStore } from '../stores/gameStore';
 
@@ -35,6 +36,7 @@ export default function MapPage() {
   return (
     <div className="page page--console map-page-wrapper map-page-wrapper--tactical">
       <header className="map-page-compact-header">
+        <HudBackButton fallback="/" label={t('nav.city')} className="btn btn-secondary btn-sm hud-back-btn map-page-compact-header__back" />
         <h1 className="map-page-compact-header__title">{t('pages.map.title')}</h1>
         <span className="map-page-compact-header__meta">{t('map.pageMeta')}</span>
       </header>

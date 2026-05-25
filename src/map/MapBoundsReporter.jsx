@@ -28,7 +28,7 @@ export default function MapBoundsReporter({ onViewportChange }) {
 
   useEffect(() => {
     const report = () => {
-      if (map._animatingZoom) return;
+      if (map._animatingZoom || map._panAnim?._inProgress) return;
       const next = {
         bounds: clampLatLngBounds(map.getBounds()),
         center: map.getCenter(),
@@ -53,12 +53,12 @@ export default function MapBoundsReporter({ onViewportChange }) {
       if (map.dragging?.moved?.()) report();
     };
 
-    map.on('zoom', report);
+    map.on('moveend', report);
     map.on('zoomend', onZoomEnd);
     map.on('dragend', onUserMove);
     report();
     return () => {
-      map.off('zoom', report);
+      map.off('moveend', report);
       map.off('zoomend', onZoomEnd);
       map.off('dragend', onUserMove);
     };

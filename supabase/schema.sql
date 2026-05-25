@@ -161,6 +161,8 @@ create table if not exists public.cities (
   last_tick_at timestamptz not null default timezone('utc', now()),
   construction_queue jsonb not null default '[]'::jsonb,
   production_queue jsonb not null default '[]'::jsonb,
+  defense_inventory jsonb not null default '{}'::jsonb,
+  defense_queue jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   primary key (profile_id, id),

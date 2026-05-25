@@ -5,7 +5,7 @@ import { createResearchTemplates } from './researchCatalog';
 export const GAME_NAME = 'STRATEJİ OYUNU';
 /** Tarayıcı sekmesi ve PWA — okunabilir ad (geçici) */
 export const GAME_TAB_TITLE = 'Strateji Oyunu';
-export const SERVER_NAME = 'Türkiye-1 Sezon';
+export const SERVER_NAME = 'Küresel-1 Sezon';
 export const CITY_NAME = 'İzmir';
 export const CITY_TYPE = 'Kıyı Şehri';
 export const PLAYER_NAME = 'Komutan_Alpha';
@@ -278,13 +278,7 @@ export const profile = {
   badges: ['İlk Kan', 'Tüccar', 'Hayatta Kalan'],
 };
 
-export const mapCities = [
-  { name: 'İstanbul', owner: null, population: 48000, type: 'Kıyı', tier: 'capital', status: 'bot', worldRole: 'bot_coastal', provinceName: 'İstanbul', lat: 41.01, lng: 28.97 },
-  { name: 'İzmir', owner: null, population: 12500, type: 'Kıyı', tier: 'metropolis', status: 'bot', worldRole: 'bot_coastal', provinceName: 'İzmir', lat: 38.42, lng: 27.14 },
-  { name: 'Ankara', owner: null, population: 22000, type: 'Başkent', tier: 'capital', status: 'bot', worldRole: 'bot_capital', provinceName: 'Ankara', lat: 39.93, lng: 32.85 },
-  { name: 'Trabzon', owner: 'Falcon99', ownerIdeology: 'technocrat', population: 8500, type: 'Kıyı', tier: 'town', status: 'enemy', worldRole: 'bot_coastal', provinceName: 'Trabzon', lat: 41.00, lng: 39.72 },
-  { name: 'Manisa', owner: null, population: 0, type: 'Küçükşehir', tier: 'town', status: 'empty', worldRole: 'world_empty', provinceName: 'Manisa', lat: 38.62, lng: 27.43 },
-];
+export const mapCities = [];
 
 export const expeditionSummary = {
   incoming: activeExpeditions.filter((e) => e.direction === 'returning').length,
@@ -330,6 +324,7 @@ export const NAV_ITEMS = [
   { path: '/arastirma', icon: '🔬', labelKey: 'nav.research' },
   { path: '/kisla', icon: '🪖', labelKey: 'nav.barracks' },
   { path: '/hava', icon: '✈️', labelKey: 'nav.airbase' },
+  { path: '/savunma', icon: '🛡️', labelKey: 'nav.defense' },
   { path: '/tersane', icon: '⚓', labelKey: 'nav.shipyard', coastal: true },
   { path: '/seferler', icon: '⚔️', labelKey: 'nav.expeditions' },
   { path: '/istihbarat', icon: '🕵️', labelKey: 'nav.intelligence' },

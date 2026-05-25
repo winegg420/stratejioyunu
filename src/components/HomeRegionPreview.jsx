@@ -4,6 +4,7 @@ import { useGameStore } from '../stores/gameStore';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { normalizeProvinceCode } from '../map/mapOwnership';
 import { featureToViewBoxPolygons, getFeatureBounds } from '../map/geoUtils';
+import { fetchMapGeo } from '../map/mapGeoLoader';
 
 export default function HomeRegionPreview() {
   const playerCities = useGameStore((s) => s.playerCities);
@@ -15,8 +16,7 @@ export default function HomeRegionPreview() {
   const provinceCode = activeCity?.province;
 
   useEffect(() => {
-    fetch('/geo/provinces.json')
-      .then((r) => r.json())
+    fetchMapGeo()
       .then(setProvinces)
       .catch(() => setProvinces(null));
   }, []);
@@ -25,7 +25,8 @@ export default function HomeRegionPreview() {
     if (!provinces?.features?.length || !provinceCode) return null;
     const code = normalizeProvinceCode(provinceCode);
     const feature = provinces.features.find(
-      (f) => normalizeProvinceCode(f.properties?.shapeISO) === code,
+      (f) => normalizeProvinceCode(f.properties?.shapeISO) === code
+        || f.properties?.shapeName === activeCity?.provinceName,
     );
     if (!feature) return null;
 

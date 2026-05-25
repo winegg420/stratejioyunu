@@ -50,8 +50,28 @@ async function purgeLegacyMetalResourceRows(profileId, cityIds) {
 import { applyDevTestModeToState, isDevAdminLocalEnabled, stripAccidentalDevBoost } from './devTestMode';
 import { resolveStateForCloudSave } from './adminModeControl';
 import { applyAdminRestorableSlice, loadAdminSnapshot } from './adminModeSnapshot';
+import { normalizeCityDefense } from './defenseSystemUtils';
 
-const LAND_UNIT_IDS = new Set(landUnits.map((u) => u.id));
+function buildDefenseByCity(cities = {}) {
+  return Object.fromEntries(
+    Object.entries(cities).map(([id, city]) => [
+      id,
+      {
+        defenseInventory: city.defenseInventory ?? {},
+        defenseQueue: city.defenseQueue ?? [],
+      },
+    ]),
+  );
+}
+
+function resolveDefenseFromRow(row, playerMeta) {
+  const metaSlice = playerMeta?.defenseByCity?.[row.id];
+  return normalizeCityDefense({
+    defenseInventory: row.defense_inventory ?? metaSlice?.defenseInventory ?? {},
+    defenseQueue: row.defense_queue ?? metaSlice?.defenseQueue ?? [],
+  });
+}
+
 const AIR_UNIT_IDS = new Set(airUnits.map((u) => u.id));
 const SEA_UNIT_IDS = new Set(seaUnits.map((u) => u.id));
 
@@ -474,6 +494,8 @@ export async function saveGameState(state, options = {}) {
       cbrn_quarantine: Boolean(city.quarantine),
       construction_queue: city.constructionQueue ?? [],
       production_queue: city.productionQueue ?? [],
+      defense_inventory: city.defenseInventory ?? {},
+      defense_queue: city.defenseQueue ?? [],
       updated_at: nowIso,
     }));
     const resourceRows = [];
@@ -524,6 +546,7 @@ export async function saveGameState(state, options = {}) {
       treatyBreaks: state.treatyBreaks ?? [],
       allianceOperations: state.allianceOperations ?? [],
       ideologyChangeCooldownAt: state.ideologyChangeCooldownAt ?? null,
+      defenseByCity: buildDefenseByCity(persisted.cities),
     };
     const cityIds = Object.keys(persisted.cities ?? {});
     const tasks = [
@@ -582,6 +605,8 @@ export async function saveGameState(state, options = {}) {
     cbrn_quarantine: Boolean(city.quarantine),
     construction_queue: city.constructionQueue ?? [],
     production_queue: city.productionQueue ?? [],
+    defense_inventory: city.defenseInventory ?? {},
+    defense_queue: city.defenseQueue ?? [],
     updated_at: nowIso,
   };
 
@@ -651,6 +676,7 @@ export async function saveGameState(state, options = {}) {
       treatyBreaks: state.treatyBreaks ?? state.playerMeta?.treatyBreaks ?? [],
       allianceOperations: state.allianceOperations ?? state.playerMeta?.allianceOperations ?? [],
       ideologyChangeCooldownAt: state.ideologyChangeCooldownAt ?? state.playerMeta?.ideologyChangeCooldownAt ?? null,
+      defenseByCity: buildDefenseByCity(persisted.cities),
     };
     tasks.push(
       supabase.from('profiles').update({
@@ -837,6 +863,7 @@ export async function loadGameState(userId, { playerName } = {}) {
 
   for (const row of cityRows) {
     const buildings = mergeBuildings(buildingsByCity[row.id]);
+    const defenseNorm = resolveDefenseFromRow(row, playerMeta);
     const baseCtx = {
       buildings,
       idlePopulation: row.idle_population ?? 0,
@@ -866,6 +893,8 @@ export async function loadGameState(userId, { playerName } = {}) {
       quarantine: row.cbrn_quarantine ?? false,
       constructionQueue: row.construction_queue ?? [],
       productionQueue: row.production_queue ?? [],
+      defenseInventory: defenseNorm.defenseInventory,
+      defenseQueue: defenseNorm.defenseQueue,
       lastTickAt,
     });
 

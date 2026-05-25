@@ -6,6 +6,7 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { WORLD_ROLES } from '../data/worldCitiesCatalog';
 import { normalizeMapCity } from './botCityUtils';
 import { MAP_ZOOM_LABEL_MIN } from './mapZoomConfig';
+import { filterMapPointsInViewport } from './mapViewportCull';
 
 const RETICLE_SVG = (color = '#ff3355', { dim = false } = {}) => `
   <svg class="map-target-reticle__svg" viewBox="0 0 32 32" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
@@ -49,6 +50,7 @@ export default function CityTargetReticleLayer({
   playerIdeology = null,
   ideologyView = false,
   zoom = 0,
+  viewportBounds = null,
   onSelectCity,
 }) {
   const playerName = getCurrentPlayerName();
@@ -61,8 +63,8 @@ export default function CityTargetReticleLayer({
       if (city.lat == null || city.lng == null) continue;
       list.push(city);
     }
-    return list;
-  }, [mapCities, playerCities]);
+    return filterMapPointsInViewport(list, viewportBounds, { max: 80, paddingDeg: 1.5 });
+  }, [mapCities, playerCities, viewportBounds]);
 
   if (zoom < MAP_ZOOM_LABEL_MIN) return null;
 

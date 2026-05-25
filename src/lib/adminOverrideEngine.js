@@ -19,7 +19,7 @@ export const ADMIN_ACTION = {
   CLEAR_INCENTIVE: 'clear_incentive',
 };
 
-export const DEFAULT_SERVER_ID = 'turkiye-1';
+export const DEFAULT_SERVER_ID = 'global-1';
 
 export const DEFAULT_PARITIES = {
   food: 1,

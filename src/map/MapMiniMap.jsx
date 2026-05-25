@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TURKEY_BOUNDS, clampLatLng } from './turkeyBounds';
+import { fetchMapGeo } from './mapGeoLoader';
 
 const TURKEY = TURKEY_BOUNDS;
 
@@ -42,8 +43,7 @@ export default function MapMiniMap({ viewport, activeCity, mapCities }) {
   const [polygons, setPolygons] = useState([]);
 
   useEffect(() => {
-    fetch('/geo/provinces.json')
-      .then((r) => r.json())
+    fetchMapGeo()
       .then((data) => {
         const all = data.features.flatMap((f) =>
           featureToPolygons(f).map((ring) => ringToPoints(ring)),

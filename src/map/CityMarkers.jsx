@@ -15,6 +15,7 @@ import {
   createMainHqIcon,
   createMapHitIcon,
 } from './cityMarkerUtils';
+import { filterMapPointsInViewport } from './mapViewportCull';
 
 function buildMarkerList(mapCities, playerCities) {
   const byName = new Map();
@@ -61,6 +62,8 @@ export default function CityMarkers({
   onCityHoverEnd,
   showPinLabels = true,
   markerRenderKey = 0,
+  zoom = 0,
+  viewportBounds = null,
   ideologyView = false,
   playerIdeology = null,
 }) {
@@ -69,10 +72,18 @@ export default function CityMarkers({
   const peaceActive = isPeaceForceProtected(protectionEndsAt);
   const playerName = getCurrentPlayerName();
 
-  const markers = useMemo(
-    () => buildMarkerList(mapCities, playerCities),
-    [mapCities, playerCities],
-  );
+  const markers = useMemo(() => {
+    const all = buildMarkerList(mapCities, playerCities);
+    const own = all.filter((c) => c.isOwn);
+    const rest = filterMapPointsInViewport(
+      all.filter((c) => !c.isOwn),
+      viewportBounds,
+      { max: 60, paddingDeg: 1.5 },
+    );
+    const merged = new Map();
+    for (const c of [...own, ...rest]) merged.set(c.name, c);
+    return [...merged.values()];
+  }, [mapCities, playerCities, viewportBounds]);
 
   return (
     <>

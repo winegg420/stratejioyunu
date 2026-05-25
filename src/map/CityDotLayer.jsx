@@ -5,6 +5,7 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { BOT_MARKER_ORANGE, EMPIRE_CITY_GLOW } from './cityMarkerUtils';
 import { getMapCityDisplayColor } from './mapUtils';
 import { normalizeMapCity } from './botCityUtils';
+import { filterMapPointsInViewport, maxDotsForZoom } from './mapViewportCull';
 
 const DOT_SIZE = 10;
 
@@ -55,13 +56,16 @@ export default function CityDotLayer({
   playerIdeology = null,
   ideologyView = false,
   visible = true,
+  zoom = 0,
+  viewportBounds = null,
   renderKey = 0,
 }) {
   const playerName = getCurrentPlayerName();
-  const cities = useMemo(
-    () => buildCityList(mapCities, playerCities),
-    [mapCities, playerCities],
-  );
+  const cities = useMemo(() => {
+    const list = buildCityList(mapCities, playerCities);
+    const max = maxDotsForZoom(zoom);
+    return filterMapPointsInViewport(list, viewportBounds, { max, paddingDeg: 3 });
+  }, [mapCities, playerCities, zoom, viewportBounds]);
 
   if (!visible) return null;
 

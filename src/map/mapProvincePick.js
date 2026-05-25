@@ -1,4 +1,5 @@
 import { resolveCityProvinceName } from './cityProvinceMatch';
+import { getFeatureBounds } from './geoUtils';
 
 function pointInRing(point, ring) {
   if (!ring?.length) return false;
@@ -28,11 +29,35 @@ function pointInFeature(point, feature) {
   return false;
 }
 
-/** Tıklanan koordinattaki il poligonu */
+function pointInBbox(point, bbox) {
+  const [lng, lat] = point;
+  return lat >= bbox.minLat && lat <= bbox.maxLat && lng >= bbox.minLng && lng <= bbox.maxLng;
+}
+
+/** @type {WeakMap<object, Array<{ feature: object, bbox: object }>>} */
+const indexCache = new WeakMap();
+
+function getProvinceIndex(provinces) {
+  if (!provinces?.features?.length) return [];
+  const cached = indexCache.get(provinces);
+  if (cached) return cached;
+
+  const index = provinces.features.map((feature) => ({
+    feature,
+    bbox: getFeatureBounds(feature),
+  }));
+  indexCache.set(provinces, index);
+  return index;
+}
+
+/** Tıklanan koordinattaki il/ülke poligonu */
 export function findProvinceAtLatLng(provinces, latlng) {
   if (!provinces?.features?.length || latlng == null) return null;
   const point = [latlng.lng, latlng.lat];
-  for (const feature of provinces.features) {
+  const index = getProvinceIndex(provinces);
+
+  for (const { feature, bbox } of index) {
+    if (!pointInBbox(point, bbox)) continue;
     if (pointInFeature(point, feature)) return feature;
   }
   return null;

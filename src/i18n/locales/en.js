@@ -26,6 +26,7 @@ const enBase = {
     messages: 'State Mail',
     alliance: 'Alliance',
     cyberOps: 'Cyber Ops',
+    defense: 'Defense',
     city: 'City',
   },
   resource: {

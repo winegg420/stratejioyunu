@@ -1,7 +1,8 @@
 import { airUnits, landUnits } from '../data/placeholder';
+import { MAP_GEO } from '../map/mapGeoConfig';
 import { TURKEY_BOUNDS } from '../map/turkeyBounds';
 
-export const MAX_LAND_EXPEDITION_SECONDS = 5 * 3600;
+export const MAX_LAND_EXPEDITION_SECONDS = MAP_GEO.maxLandExpeditionSeconds;
 export const MIN_EXPEDITION_SECONDS = 90;
 export const AIR_SPEED_MULTIPLIER = 3;
 

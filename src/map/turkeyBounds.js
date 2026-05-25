@@ -1,25 +1,24 @@
 import L from 'leaflet';
+import { MAP_GEO } from './mapGeoConfig';
 
-/**
- * Harita görünüm kutusu — Türkiye + geniş tampon (Akdeniz / Karadeniz / komşu ülkeler).
- * Oyuncu haritayı serbestçe kaydırabilir; sert geri çekme yok.
- */
-export const TURKEY_BOUNDS = {
-  south: 30.5,
-  north: 45.5,
-  west: 17.0,
-  east: 52.5,
-};
+/** Harita görünüm kutusu — MAP_GEO.bounds */
+export const MAP_BOUNDS = { ...MAP_GEO.bounds };
 
-export const TURKEY_MAX_BOUNDS = L.latLngBounds(
-  [TURKEY_BOUNDS.south, TURKEY_BOUNDS.west],
-  [TURKEY_BOUNDS.north, TURKEY_BOUNDS.east],
+/** @deprecated alias — mevcut importlar */
+export const TURKEY_BOUNDS = MAP_BOUNDS;
+
+export const MAP_MAX_BOUNDS = L.latLngBounds(
+  [MAP_BOUNDS.south, MAP_BOUNDS.west],
+  [MAP_BOUNDS.north, MAP_BOUNDS.east],
 );
+
+/** @deprecated alias */
+export const TURKEY_MAX_BOUNDS = MAP_MAX_BOUNDS;
 
 export function clampLatLng(lat, lng) {
   return {
-    lat: Math.min(TURKEY_BOUNDS.north, Math.max(TURKEY_BOUNDS.south, lat)),
-    lng: Math.min(TURKEY_BOUNDS.east, Math.max(TURKEY_BOUNDS.west, lng)),
+    lat: Math.min(MAP_BOUNDS.north, Math.max(MAP_BOUNDS.south, lat)),
+    lng: Math.min(MAP_BOUNDS.east, Math.max(MAP_BOUNDS.west, lng)),
   };
 }
 

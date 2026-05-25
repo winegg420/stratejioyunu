@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import './map-tactical.css';
 import CityDetailPanel from './CityDetailPanel';
 import MapMiniMap from './MapMiniMap';
-import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
+import { MAP_GEO } from './mapGeoConfig';
 import { getProvinceStyle } from './mapUtils';
 import TacticalSearchConsole from './TacticalSearchConsole';
 import MapTacticalCommandBar from './MapTacticalCommandBar';
@@ -23,10 +23,13 @@ import { useGameStore, useUnderAttack } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { releaseMapSessionLocks } from './mapRouteCleanup';
 import { buildMapCitySearchList } from '../lib/mapCitySearchList';
+import { fetchMapGeo } from './mapGeoLoader';
 import {
   buildLastViewedFromCity,
   buildLastViewedFromProvince,
+  buildLastViewedFromViewport,
   resolveMapCityFromLastViewed,
+  resolveRestoreFlyTarget,
 } from '../lib/mapLastViewedLocation';
 import MapCoordTooltip from '../components/MapCoordTooltip';
 import HudBackButton from '../components/HudBackButton';
@@ -197,8 +200,13 @@ export default function TurkeyMap() {
     });
   }, []);
 
-  const persistMapView = useCallback((city) => {
-    const snapshot = buildLastViewedFromCity(city, viewport);
+  const persistMapView = useCallback((city, { panelOpen = true } = {}) => {
+    const snapshot = buildLastViewedFromCity(city, viewport, { panelOpen });
+    if (snapshot) setLastViewedLocation(snapshot);
+  }, [viewport, setLastViewedLocation]);
+
+  const persistViewportOnly = useCallback(() => {
+    const snapshot = buildLastViewedFromViewport(viewport);
     if (snapshot) setLastViewedLocation(snapshot);
   }, [viewport, setLastViewedLocation]);
 
@@ -218,7 +226,7 @@ export default function TurkeyMap() {
       setFlyTarget({
         lat: enriched.lat,
         lng: enriched.lng,
-        zoom: 8,
+        zoom: MAP_GEO.countryFocusZoom,
         at: Date.now(),
       });
     }
@@ -246,7 +254,7 @@ export default function TurkeyMap() {
       setFlyTarget({
         lat: enriched.lat,
         lng: enriched.lng,
-        zoom: 8,
+        zoom: MAP_GEO.countryFocusZoom,
         at: Date.now(),
       });
     }
@@ -279,7 +287,7 @@ export default function TurkeyMap() {
       setFlyTarget({
         lat: enriched.lat,
         lng: enriched.lng,
-        zoom: 8,
+        zoom: MAP_GEO.countryFocusZoom,
         at: Date.now(),
         openPanelAfter: true,
       });
@@ -325,12 +333,31 @@ export default function TurkeyMap() {
     openMapCityPanel,
   ]);
 
+  const handleFlySettled = useCallback(() => {
+    setFlyTarget(null);
+    if (!viewport) return;
+    setLastViewedLocation((prev) => {
+      if (!prev) return buildLastViewedFromViewport(viewport);
+      return {
+        ...prev,
+        zoom: viewport.zoom,
+        centerLat: viewport.center.lat,
+        centerLng: viewport.center.lng,
+        viewedAt: Date.now(),
+      };
+    });
+  }, [viewport, setLastViewedLocation]);
+
   const handleFlyCompleteOpenPanel = useCallback(() => {
     const city = pendingPanelCityRef.current;
     if (!city) return;
     pendingPanelCityRef.current = null;
     handleSelectCity(city, { skipFly: true });
   }, [handleSelectCity]);
+
+  const handleMapFlyComplete = useCallback(() => {
+    handleFlyCompleteOpenPanel();
+  }, [handleFlyCompleteOpenPanel]);
 
   const handleProvinceView = useCallback((highlight) => {
     if (mapTargetPickRequest) return;
@@ -417,31 +444,50 @@ export default function TurkeyMap() {
     }
   }, [search, searchCoord, mapCities, searchCityList, flyToCityAndOpenPanel]);
 
+  const handleWorldView = useCallback(() => {
+    setSelectedCity(null);
+    setActiveHighlightCity(null);
+    setPanelInitialActionMode(null);
+    pendingPanelCityRef.current = null;
+    mapViewRestoredRef.current = true;
+    setFitBounds(null);
+    setFlyTarget({
+      lat: MAP_GEO.center[0],
+      lng: MAP_GEO.center[1],
+      zoom: MAP_GEO.worldOverviewZoom,
+      at: Date.now(),
+    });
+    persistViewportOnly();
+  }, [persistViewportOnly]);
+
   const clearMapFilters = useCallback(() => {
     setSearch('');
     setSearchCoord('');
     setCityPick('');
     setSelectedCity(null);
     setActiveHighlightCity(null);
-    setFlyTarget(null);
-    setFitBounds(TURKEY_MAX_BOUNDS);
+    handleWorldView();
     clearLastViewedLocation();
-    mapViewRestoredRef.current = false;
+    mapViewRestoredRef.current = true;
+    pendingPanelCityRef.current = null;
     if (activeProvinceLayerRef.current) {
       activeProvinceLayerRef.current.setStyle(getProvinceStyle());
       activeProvinceLayerRef.current = null;
     }
-  }, [clearLastViewedLocation]);
+  }, [clearLastViewedLocation, handleWorldView]);
 
   const handleCloseCityPanel = useCallback(() => {
     setSelectedCity(null);
     setActiveHighlightCity(null);
     setPanelInitialActionMode(null);
+    pendingPanelCityRef.current = null;
+    mapViewRestoredRef.current = true;
+    persistViewportOnly();
     if (activeProvinceLayerRef.current) {
       activeProvinceLayerRef.current.setStyle(getProvinceStyle());
       activeProvinceLayerRef.current = null;
     }
-  }, []);
+  }, [persistViewportOnly]);
 
   const handleToggleIdeology = useCallback(() => {
     setIdeologyView((v) => !v);
@@ -483,11 +529,7 @@ export default function TurkeyMap() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch('/geo/provinces.json', { signal: ac.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`provinces ${r.status}`);
-        return r.json();
-      })
+    fetchMapGeo(ac.signal)
       .then((data) => {
         if (mountedRef.current) setProvinces(data);
       })
@@ -521,23 +563,25 @@ export default function TurkeyMap() {
     return undefined;
   }, [mapFocusRequest, playerCities, mapCities, clearMapFocusRequest, mountedRef, openCityDetail]);
 
-  /** Sidebar’dan dönüşte son harita lokasyonu + detay paneli */
+  /** Sidebar’dan dönüşte son harita lokasyonu; panel yalnızca panelOpen ise açılır */
   useEffect(() => {
     if (mapViewRestoredRef.current) return undefined;
     if (mapTargetPickRequest || mapFocusRequest || mapExpeditionLaunchRequest) return undefined;
     if (!lastViewedLocation || !mapCities.length || !mapReady) return undefined;
 
-    const restored = resolveMapCityFromLastViewed(lastViewedLocation, mapCities, playerCities);
-    if (!restored) return undefined;
-
     mapViewRestoredRef.current = true;
-    setSelectedCity(restored);
-    setActiveHighlightCity(restored);
 
-    const lat = lastViewedLocation.centerLat ?? restored.lat;
-    const lng = lastViewedLocation.centerLng ?? restored.lng;
-    if (lat != null && lng != null) {
-      setFlyTarget({ lat, lng, at: Date.now() });
+    if (lastViewedLocation.panelOpen !== false) {
+      const restored = resolveMapCityFromLastViewed(lastViewedLocation, mapCities, playerCities);
+      if (restored) {
+        setSelectedCity(restored);
+        setActiveHighlightCity(restored);
+      }
+    }
+
+    const fly = resolveRestoreFlyTarget(lastViewedLocation);
+    if (fly) {
+      setFlyTarget({ ...fly, at: Date.now() });
     }
 
     return undefined;
@@ -704,6 +748,7 @@ export default function TurkeyMap() {
 
       {!isFullscreen && (
         <div className="map-page-toolbar">
+          <HudBackButton fallback="/" label="Ana Merkez" className="btn btn-secondary btn-sm hud-back-btn map-toolbar-back" />
           <MapTacticalCommandBar
             ideologyView={ideologyView}
             onToggleIdeology={handleToggleIdeology}
@@ -753,7 +798,11 @@ export default function TurkeyMap() {
             fitBounds={fitBounds}
             flyTarget={flyTarget}
             restoreViewport={restoreViewport}
-            onFlyComplete={handleFlyCompleteOpenPanel}
+            onFlyComplete={handleMapFlyComplete}
+            onFlySettled={handleFlySettled}
+            onWorldView={handleWorldView}
+            suppressActiveCityFocus={Boolean(lastViewedLocation || flyTarget || mapFocusRequest)}
+            viewportBounds={viewport?.bounds ?? null}
             isMobile={isMobile}
             mapPanEnabled={mapPanEnabled}
             hudCollapsed={hudCollapsed}

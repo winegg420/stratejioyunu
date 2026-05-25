@@ -12,7 +12,7 @@ export const CHRONICLE_TYPES = {
   BETRAYAL: 'betrayal',
 };
 
-export const SERVER_SLUG = 'turkiye-1';
+export const SERVER_SLUG = 'global-1';
 
 /** Büyük savaş eşiği — toplam zayiat birimi */
 export const WAR_CASUALTY_THRESHOLD = 55;

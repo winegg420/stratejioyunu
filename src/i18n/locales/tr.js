@@ -26,6 +26,7 @@ const trBase = {
     messages: 'State Mail',
     alliance: 'İttifak',
     cyberOps: 'Siber Operasyon',
+    defense: 'Savunma',
     city: 'Şehir',
   },
   resource: {

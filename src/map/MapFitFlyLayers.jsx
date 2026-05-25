@@ -1,21 +1,22 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
+import { MAP_GEO } from './mapGeoConfig';
 
-export function FitBounds({ bounds }) {
+export function FitBounds({ bounds, animate = true }) {
   const map = useMap();
   useEffect(() => {
     if (!bounds) return;
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10, animate: true });
-  }, [map, bounds]);
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10, animate });
+  }, [map, bounds, animate]);
   return null;
 }
 
-export function FlyToCity({ lat, lng, zoom, onComplete }) {
+export function FlyToCity({ lat, lng, zoom, onComplete, onSettled }) {
   const map = useMap();
   useEffect(() => {
     if (lat == null || lng == null) return undefined;
 
-    const targetZoom = zoom ?? Math.max(map.getZoom(), 7);
+    const targetZoom = zoom ?? Math.min(MAP_GEO.maxZoom, Math.max(map.getZoom(), MAP_GEO.countryFocusZoom));
     let completed = false;
 
     const finish = () => {
@@ -23,6 +24,7 @@ export function FlyToCity({ lat, lng, zoom, onComplete }) {
       completed = true;
       map.off('moveend', finish);
       onComplete?.();
+      onSettled?.();
     };
 
     map.once('moveend', finish);
@@ -35,11 +37,11 @@ export function FlyToCity({ lat, lng, zoom, onComplete }) {
       map.off('moveend', finish);
       window.clearTimeout(fallback);
     };
-  }, [map, lat, lng, zoom, onComplete]);
+  }, [map, lat, lng, zoom, onComplete, onSettled]);
   return null;
 }
 
-export default function MapFitFlyLayers({ fitBounds, flyTarget, onFlyComplete }) {
+export default function MapFitFlyLayers({ fitBounds, flyTarget, onFlyComplete, onFlySettled }) {
   const flyKey = flyTarget?.at ?? `${flyTarget?.lat}-${flyTarget?.lng}`;
   return (
     <>
@@ -51,6 +53,7 @@ export default function MapFitFlyLayers({ fitBounds, flyTarget, onFlyComplete })
           lng={flyTarget.lng}
           zoom={flyTarget.zoom}
           onComplete={flyTarget.openPanelAfter ? onFlyComplete : undefined}
+          onSettled={onFlySettled ?? onFlyComplete}
         />
       )}
     </>

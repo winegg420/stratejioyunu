@@ -7,6 +7,10 @@
 export const WORLD_ROLES = {
   BOT_COASTAL: 'bot_coastal',
   BOT_CAPITAL: 'bot_capital',
+  /** Mega Şehir — fethedilebilir, kayıt kapalı */
+  MEGA_CITY: 'mega_city',
+  /** Oyuncu kayıt slotu — zayıf bot, fethedilemez */
+  PLAYER_SLOT: 'player_slot',
   OPEN_INLAND: 'open_inland',
   WORLD_EMPTY: 'world_empty',
   WORLD_DEMO: 'world_demo',
@@ -78,16 +82,35 @@ export const INLAND_STARTER_BY_PROVINCE = new Map(
   INLAND_STARTER_CITIES.map((c) => [c.provinceName, c]),
 );
 
+/**
+ * Küresel harita — oyuncu başlangıç havuzu (Mega olmayan ülkeler).
+ * GeoJSON yüklenmeden önce pickMainHqStarter için kullanılır.
+ */
+export const WORLD_PLAYER_STARTERS = [
+  { name: 'Polonya', provinceName: 'Polonya', province: 'PL', lat: 52.0, lng: 19.0 },
+  { name: 'İtalya', provinceName: 'İtalya', province: 'IT', lat: 41.9, lng: 12.5 },
+  { name: 'Brezilya', provinceName: 'Brezilya', province: 'BR', lat: -14.2, lng: -51.9 },
+  { name: 'Hindistan', provinceName: 'Hindistan', province: 'IN', lat: 20.6, lng: 78.9 },
+  { name: 'Kanada', provinceName: 'Kanada', province: 'CA', lat: 56.1, lng: -106.3 },
+  { name: 'Avustralya', provinceName: 'Avustralya', province: 'AU', lat: -25.3, lng: 133.8 },
+  { name: 'Mısır', provinceName: 'Mısır', province: 'EG', lat: 26.8, lng: 30.8 },
+  { name: 'Endonezya', provinceName: 'Endonezya', province: 'ID', lat: -0.8, lng: 113.9 },
+  { name: 'Güney Kore', provinceName: 'Güney Kore', province: 'KR', lat: 35.9, lng: 127.8 },
+  { name: 'Norveç', provinceName: 'Norveç', province: 'NO', lat: 60.5, lng: 8.5 },
+  { name: 'Finlandiya', provinceName: 'Finlandiya', province: 'FI', lat: 61.9, lng: 25.7 },
+  { name: 'Romanya', provinceName: 'Romanya', province: 'RO', lat: 45.9, lng: 24.9 },
+];
+
 /** Admin panelinden yönetilecek varsayılan oyun yapılandırması. */
 export const DEFAULT_GAME_CONFIG = {
-  serverId: 'turkiye-1',
-  /** Oyuncunun koloni kurabileceği / fethedebileceği il plaka kodları veya 'all_inland' */
-  playerOpenProvinces: 'all_inland',
+  serverId: 'global-1',
+  mapMode: 'world',
+  /** Oyuncunun koloni kurabileceği ülkeler — Mega hariç hepsi */
+  playerOpenProvinces: 'all_non_mega',
   coastalBotsEnabled: true,
   capitalBotEnabled: true,
   inlandStartersEnabled: true,
-  /** Aktif dünya şehir üst sınırı (52 → ileride ilçe ile artar) */
-  maxActiveWorldSlots: 52,
-  /** İlçe modu — cities.district doldurulur */
+  /** Aktif dünya ülke üst sınırı */
+  maxActiveWorldSlots: 175,
   districtExpansionReady: true,
 };

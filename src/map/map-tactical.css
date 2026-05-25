@@ -76,6 +76,19 @@
   white-space: nowrap;
 }
 
+.map-toolbar-back {
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .map-page-wrapper--tactical .map-page-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem 0;
+  }
+}
+
 .map-container--tactical {
   position: relative;
   overflow: hidden;
@@ -956,15 +969,16 @@
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(0, 4, 10, 0.72);
-  backdrop-filter: blur(3px);
-  cursor: pointer;
-  pointer-events: auto;
+  background: rgba(0, 4, 10, 0.35);
+  backdrop-filter: blur(2px);
+  cursor: default;
+  pointer-events: none;
 }
 
 .map-command-modal.hud-panel-border {
   position: relative;
   z-index: 1;
+  pointer-events: auto;
   width: min(920px, 96vw);
   max-height: min(calc(100vh - 5rem), 92vh);
   margin-bottom: 1.5rem;

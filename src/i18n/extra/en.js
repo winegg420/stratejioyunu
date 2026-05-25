@@ -446,6 +446,30 @@ export default {
       queueTitle: 'Active Queue — {{city}}',
       queueEmpty: 'Select an aircraft to add to the production queue.',
     },
+    defense: {
+      title: 'Defense Systems',
+      subtitle: 'Base defense line — unit production and tier upgrades',
+      status: '[ DEFENSE COMMAND ]',
+      intro: 'Each system is produced by quantity and can be upgraded separately. Higher tiers scale effectiveness and cost.',
+      systemsSection: '[ DEFENSE INVENTORY ]',
+      produceSection: 'Unit production',
+      upgradeSection: 'Tier upgrade',
+      levelBadge: 'Tier {{level}} / {{max}}',
+      countBadge: 'Qty: {{count}}',
+      produce: 'Produce',
+      queueAdd: 'Add to queue',
+      upgrade: 'Upgrade tier',
+      queueUpgrade: 'Queue upgrade',
+      queued: 'Queued',
+      maxLevel: 'MAX TIER',
+      perUnit: '/ unit',
+      queueTitle: 'Defense Queue — {{city}}',
+      queueEmpty: 'Defense queue empty. Start production or tier upgrade for a system.',
+      queueStart: 'Start',
+      queueCancel: 'Cancel',
+      queueProduceLabel: '{{count}}× {{name}}',
+      queueUpgradeLabel: '{{name}} tier',
+    },
     shipyard: {
       coastalTag: '[ COAST REQUIRED ]',
       coastalTitle: 'Inland — shipyard closed',
@@ -752,6 +776,32 @@ export default {
         hint: 'Research → Heavy Industry Lv.1',
         progress: 'Heavy Industry Lv.{{current}}/1',
       },
+    },
+  },
+  defense: {
+    firewall: {
+      name: 'Cyber Security Firewall',
+      desc: 'The first digital defense line protecting network infrastructure. Detects and ejects light cyber intrusions, data theft attempts, and enemy spy drones within seconds.',
+    },
+    korkut: {
+      name: 'Korkut Mobile Air Defense System',
+      desc: 'A highly mobile defense platform that destroys low-altitude cruise missiles, helicopters, and kamikaze drone swarms with direct fire.',
+    },
+    gokdeniz: {
+      name: 'Gökdeniz Semi-Automatic CIWS',
+      desc: 'Radar-guided rotating gun system at the base core. Fires 75 rounds per second with armor-piercing ammunition against heavy missiles and approaching armored vehicles.',
+    },
+    akkor: {
+      name: 'Akkor Electromagnetic Railgun',
+      desc: 'Uses pure electrical energy instead of propellant, accelerating projectiles to seven times the speed of sound. Designed to pierce the heaviest tanks and cruisers in a single shot.',
+    },
+    siper: {
+      name: 'Siper Long-Range Missile Battery',
+      desc: 'Detects ballistic and cruise missiles hundreds of kilometers away before they enter your airspace. Fires interceptors to destroy threats in the stratosphere.',
+    },
+    demir_kubbe: {
+      name: 'Iron Dome Energy Shield',
+      desc: 'The most costly final-tier defense. Activates a cyber-physical shield generator over the city, absorbing a large share of incoming army and missile damage.',
     },
   },
 };

@@ -3360,6 +3360,12 @@ body.map-scroll-locked {
   border-color: rgba(74, 124, 89, 0.4);
 }
 
+.map-hud-btn--world {
+  font-size: 1.05rem;
+  line-height: 1;
+  color: #67e8f9;
+}
+
 .map-hud-compass {
   font-size: 1rem;
 }

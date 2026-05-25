@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
-import { buildMapCitySearchList } from '../lib/mapCitySearchList';
 import { getMapCityDisplayName } from './mapCityDisplayName';
 import { MAP_ZOOM_LABEL_MIN } from './mapZoomConfig';
+import { filterMapPointsInViewport, maxLabelsForZoom } from './mapViewportCull';
+import { normalizeMapCity } from './botCityUtils';
 
 function escapeHtml(text) {
   return String(text ?? '')
@@ -47,9 +48,8 @@ function createCityLabelIcon(city, { isOwn = false, compact = false } = {}) {
 export default function CityMapLabelsLayer({
   mapCities,
   playerCities,
-  provinces = null,
   zoom = 0,
-  onSelectCity,
+  viewportBounds = null,
 }) {
   const show = zoom >= MAP_ZOOM_LABEL_MIN;
   const compact = zoom < 6;
@@ -59,7 +59,9 @@ export default function CityMapLabelsLayer({
     const playerProvinces = new Set(
       playerCities.map((p) => p.provinceName).filter(Boolean),
     );
-    return buildMapCitySearchList(mapCities, provinces, playerCities).map((city) => {
+
+    const enriched = mapCities.map((raw) => {
+      const city = normalizeMapCity(raw);
       const pc = playerCities.find(
         (p) => p.name === city.name
           || p.provinceName === city.provinceName
@@ -76,7 +78,10 @@ export default function CityMapLabelsLayer({
           || playerProvinces.has(provinceKey),
       };
     });
-  }, [mapCities, provinces, playerCities]);
+
+    const max = maxLabelsForZoom(zoom);
+    return filterMapPointsInViewport(enriched, viewportBounds, { max, paddingDeg: 2 });
+  }, [mapCities, playerCities, zoom, viewportBounds]);
 
   if (!show) return null;
 

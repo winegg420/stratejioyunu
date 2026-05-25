@@ -6,8 +6,10 @@ import {
   INLAND_STARTER_BY_PROVINCE,
   INLAND_STARTER_CITIES,
   PLAYER_CITY_ROLES,
+  WORLD_PLAYER_STARTERS,
   WORLD_ROLES,
 } from '../data/worldCitiesCatalog';
+import { isMegaCity, isPlayerRegisterableCountry } from '../data/worldCountriesCatalog';
 import { computeFeatureCentroid, formatBotCityName } from './botProvinceAssignment';
 import { resolveMapCityOwnerIdeology } from './mapIdeologyDistribution';
 import { normalizeProvinceCode } from '../map/mapOwnership';
@@ -27,17 +29,27 @@ export function normalizeGameConfig(config = {}) {
   return { ...DEFAULT_GAME_CONFIG, ...config };
 }
 
+export function isWorldMapMode(gameConfig = DEFAULT_GAME_CONFIG) {
+  return normalizeGameConfig(gameConfig).mapMode === 'world';
+}
+
 export function resolveProvinceWorldRole(provinceName, gameConfig = DEFAULT_GAME_CONFIG) {
+  const cfg = normalizeGameConfig(gameConfig);
   const name = String(provinceName ?? '').trim();
   if (!name) return WORLD_ROLES.WORLD_EMPTY;
 
-  if (gameConfig.capitalBotEnabled !== false && name === CAPITAL_BOT_PROVINCE) {
+  if (isWorldMapMode(cfg)) {
+    if (isMegaCity(name)) return WORLD_ROLES.BOT_CAPITAL;
+    return WORLD_ROLES.PLAYER_SLOT;
+  }
+
+  if (cfg.capitalBotEnabled !== false && name === CAPITAL_BOT_PROVINCE) {
     return WORLD_ROLES.BOT_CAPITAL;
   }
-  if (gameConfig.coastalBotsEnabled !== false && COASTAL_BOT_SET.has(name)) {
+  if (cfg.coastalBotsEnabled !== false && COASTAL_BOT_SET.has(name)) {
     return WORLD_ROLES.BOT_COASTAL;
   }
-  if (gameConfig.inlandStartersEnabled !== false && INLAND_STARTER_BY_PROVINCE.has(name)) {
+  if (cfg.inlandStartersEnabled !== false && INLAND_STARTER_BY_PROVINCE.has(name)) {
     return WORLD_ROLES.OPEN_INLAND;
   }
   return WORLD_ROLES.WORLD_EMPTY;
@@ -46,6 +58,9 @@ export function resolveProvinceWorldRole(provinceName, gameConfig = DEFAULT_GAME
 export function isProvinceOpenForPlayer(provinceName, gameConfig = DEFAULT_GAME_CONFIG) {
   const cfg = normalizeGameConfig(gameConfig);
   const open = cfg.playerOpenProvinces;
+  if (open === 'all_non_mega') {
+    return isPlayerRegisterableCountry(provinceName);
+  }
   if (open === 'all_inland') {
     return INLAND_STARTER_BY_PROVINCE.has(provinceName)
       || resolveProvinceWorldRole(provinceName, cfg) === WORLD_ROLES.OPEN_INLAND;
@@ -58,7 +73,27 @@ export function isProvinceOpenForPlayer(provinceName, gameConfig = DEFAULT_GAME_
   return false;
 }
 
-export function pickMainHqStarter(seed = '') {
+export function pickMainHqStarter(seed = '', gameConfig = DEFAULT_GAME_CONFIG) {
+  const cfg = normalizeGameConfig(gameConfig);
+  if (isWorldMapMode(cfg)) {
+    const pool = WORLD_PLAYER_STARTERS;
+    const idx = hashString(seed) % pool.length;
+    const pick = pool[idx];
+    return {
+      id: slugCityId(pick.name),
+      name: pick.name,
+      province: pick.province,
+      provinceName: pick.provinceName,
+      district: pick.district ?? 'Merkez',
+      type: 'Ulusal Komuta Merkezi',
+      lat: pick.lat,
+      lng: pick.lng,
+      cityRole: PLAYER_CITY_ROLES.MAIN_HQ,
+      isUnlosable: true,
+      isCoastal: false,
+    };
+  }
+
   const pool = INLAND_STARTER_CITIES;
   const idx = hashString(seed) % pool.length;
   const pick = pool[idx];
@@ -107,6 +142,7 @@ export function enrichMapCityWithWorld(city, gameConfig = DEFAULT_GAME_CONFIG) {
   let status = city.status;
   if (!city.owner && worldRole === WORLD_ROLES.BOT_COASTAL) status = 'bot';
   if (!city.owner && worldRole === WORLD_ROLES.BOT_CAPITAL) status = 'bot';
+  if (!city.owner && worldRole === WORLD_ROLES.PLAYER_SLOT) status = 'bot';
 
   return {
     ...city,
@@ -126,6 +162,7 @@ function createBotWorldCity(feature, worldRole, gameConfig) {
   const centroid = computeFeatureCentroid(feature);
   if (!centroid) return null;
 
+  const mega = isWorldMapMode(gameConfig) && isMegaCity(provinceName);
   const botId = `Bot_${String(iso).replace(/[^A-Za-z0-9]/g, '_') || provinceName}`;
   const displayName = worldRole === WORLD_ROLES.BOT_CAPITAL
     ? provinceName
@@ -138,16 +175,47 @@ function createBotWorldCity(feature, worldRole, gameConfig) {
     district: 'Merkez',
     botId,
     owner: null,
-    rank: worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Bot Başkent' : 'Bot Kıyı Komutanlığı',
-    population: worldRole === WORLD_ROLES.BOT_CAPITAL ? 22000 : 4200 + (provinceName.length * 41) % 8000,
-    type: worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Başkent' : 'Kıyı',
+    rank: mega ? 'Mega Şehir Komutanlığı' : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Bot Başkent' : 'Bot Kıyı Komutanlığı'),
+    population: mega
+      ? 48000 + (hashString(provinceName) % 12000)
+      : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 22000 : 4200 + (provinceName.length * 41) % 8000),
+    type: mega ? 'Mega Şehir' : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Başkent' : 'Kıyı'),
     tier: worldRole === WORLD_ROLES.BOT_CAPITAL ? 'capital' : 'town',
     alliance: null,
     status: 'bot',
     lat: centroid.lat,
     lng: centroid.lng,
-    worldRole,
+    worldRole: mega ? WORLD_ROLES.MEGA_CITY : worldRole,
     isCoastal: worldRole === WORLD_ROLES.BOT_COASTAL,
+  };
+
+  return enrichMapCityWithWorld({
+    ...draft,
+    ownerIdeology: resolveMapCityOwnerIdeology(draft),
+  }, gameConfig);
+}
+
+function createPlayerSlotMapCity(feature, gameConfig) {
+  const provinceName = feature.properties?.shapeName ?? '';
+  const iso = feature.properties?.shapeISO ?? '';
+  const centroid = computeFeatureCentroid(feature);
+  if (!centroid || !provinceName) return null;
+
+  const draft = {
+    name: provinceName,
+    provinceName,
+    province: iso,
+    district: 'Merkez',
+    botId: `Slot_${String(iso).replace(/[^A-Za-z0-9]/g, '_') || provinceName}`,
+    owner: null,
+    population: 600 + (hashString(provinceName) % 2400),
+    type: 'Boş Ülke',
+    tier: 'town',
+    status: 'bot',
+    lat: centroid.lat,
+    lng: centroid.lng,
+    worldRole: WORLD_ROLES.PLAYER_SLOT,
+    isCoastal: false,
   };
 
   return enrichMapCityWithWorld({
@@ -180,8 +248,8 @@ function createOpenInlandMapCity(feature, gameConfig) {
 }
 
 /**
- * GeoJSON illerinden bot kıyı + Ankara + açık iç Anadolu parsellerini üretir.
- * Oyuncu ilini atlar; mevcut düşman demo üslerine dokunmaz.
+ * GeoJSON parsellerinden dünya/bot ülkelerini üretir.
+ * Oyuncu ülkesini atlar; mevcut düşman demo üslerine dokunmaz.
  */
 export function seedWorldMapFromProvinces({
   mapCities = [],
@@ -232,6 +300,16 @@ export function seedWorldMapFromProvinces({
       continue;
     }
 
+    if (worldRole === WORLD_ROLES.PLAYER_SLOT) {
+      if (existing?.status === 'own') continue;
+      const slot = createPlayerSlotMapCity(feature, cfg);
+      if (slot) {
+        upsert(slot);
+        byProvince.set(provinceName, slot);
+      }
+      continue;
+    }
+
     if (worldRole === WORLD_ROLES.OPEN_INLAND && isProvinceOpenForPlayer(provinceName, cfg)) {
       if (existing?.status === 'bot' || existing?.status === 'own') continue;
       const openCity = createOpenInlandMapCity(feature, cfg);
@@ -256,9 +334,11 @@ export function isRaidOnlyMapTarget(mapCity, defenderPlayerCity) {
 
 export function isConquerableMapTarget(mapCity, state = null) {
   if (!mapCity) return false;
+  if (mapCity.worldRole === WORLD_ROLES.PLAYER_SLOT) return false;
   if (mapCity.status === 'bot') {
     return mapCity.worldRole === WORLD_ROLES.BOT_COASTAL
       || mapCity.worldRole === WORLD_ROLES.BOT_CAPITAL
+      || mapCity.worldRole === WORLD_ROLES.MEGA_CITY
       || !mapCity.worldRole;
   }
   if (mapCity.status === 'enemy' && mapCity.owner && state) {

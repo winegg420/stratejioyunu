@@ -11,6 +11,7 @@ import Buildings from './pages/Buildings';
 import Research from './pages/Research';
 import Barracks from './pages/Barracks';
 import Airbase from './pages/Airbase';
+import Defense from './pages/Defense';
 import Shipyard from './pages/Shipyard';
 import Expeditions from './pages/Expeditions';
 import Intelligence from './pages/Intelligence';
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="arastirma" element={<PageSafe><Research /></PageSafe>} />
             <Route path="kisla" element={<PageSafe><Barracks /></PageSafe>} />
             <Route path="hava" element={<PageSafe><Airbase /></PageSafe>} />
+            <Route path="savunma" element={<PageSafe><Defense /></PageSafe>} />
             <Route path="tersane" element={<PageSafe><Shipyard /></PageSafe>} />
             <Route path="seferler" element={<PageSafe><Expeditions /></PageSafe>} />
             <Route path="istihbarat" element={<PageSafe><Intelligence /></PageSafe>} />

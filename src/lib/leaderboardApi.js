@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import { formatIdeologyLabel } from './ideologySystem';
 import { formatLoyaltyScore } from './loyaltySystem';
 
-const DEFAULT_SERVER = 'turkiye-1';
+const DEFAULT_SERVER = 'global-1';
 
 function mapProfileRows(data = []) {
   return data.map((row, i) => ({

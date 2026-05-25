@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
 const MIGRATION = resolve(
   root,
-  'supabase/migrations/20260522120000_resource_metal_to_hammadde.sql',
+  'supabase/migrations/20260524140000_defense_systems.sql',
 );
 
 const PROJECT_REF = 'pzxzjudmfajrruabpfmh';
