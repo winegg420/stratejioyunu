@@ -36,8 +36,8 @@
   height: auto !important;
   min-height: var(--resource-bar-h, 100px) !important;
   max-height: none !important;
-  overflow: visible !important;
-  contain: none !important;
+  overflow: hidden !important;
+  contain: layout style !important;
 }
 
 .resource-bar:not(.resource-bar--stacked) .resource-bar-inner:not(.resource-bar-inner--tiered),

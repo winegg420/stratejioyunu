@@ -10,12 +10,12 @@ export function useGameDataReady() {
     return s.cities[s.activeCityId]?.resources;
   });
 
+  if (hydrating) return false;
   if (Array.isArray(resources) && resources.length > 0) return true;
   if (activeCityId && playerCities?.length > 0) {
     const city = useGameStore.getState().cities[activeCityId];
     if (city) return true;
   }
-  if (hydrating) return false;
   if (!activeCityId || !playerCities?.length) return false;
   if (!resources || resources.length === 0) return false;
   return true;

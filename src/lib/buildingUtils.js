@@ -74,7 +74,7 @@ export function syncCityBuildingsToCatalog(buildings = [], { useDemoLevels = fal
   for (const b of buildings) {
     if (b?.id && allowed.has(b.id)) existing.set(b.id, b);
   }
-  return CANONICAL_BUILDING_IDS.map((id) => {
+  return (Array.isArray(CANONICAL_BUILDING_IDS) ? CANONICAL_BUILDING_IDS : []).map((id) => {
     const def = defs[id];
     const prev = existing.get(id);
     const levelOne = getLevelOneSpec(id);

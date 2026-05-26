@@ -1,11 +1,17 @@
-﻿import { useMemo } from 'react';
+﻿import { useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { isDepotOverflow, hasWorkforceShortage } from '../lib/resourceProduction';
 import { formatCompactNumber } from '../lib/formatNumber';
-import { formatHourlyProduction, getHourlyAmount, formatHourlyAmount } from '../lib/hourlyProduction';
+import {
+  formatHourlyProduction,
+  getHourlyAmount,
+  formatHourlyAmount,
+  getEnergyDrainHourly,
+  getEnergyNetHourly,
+} from '../lib/hourlyProduction';
 import { formatCityOptionLabel } from '../lib/cityManagementUi';
 import { isMainHqCity } from '../lib/worldCitySystem';
 import { getEmpireMoneyTotal } from '../lib/empireTreasury';
@@ -18,6 +24,7 @@ import {
 } from '../lib/progressionSystem';
 import ServerTimeClock from './ServerTimeClock';
 import LanguageSwitcher from './LanguageSwitcher';
+import DiamondPackagesModal from './DiamondPackagesModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useResourceBarHeight } from '../hooks/useResourceBarHeight';
 
@@ -38,6 +45,7 @@ function renderResourceItems({
   energyCrisis,
   budgetSpendFloats,
   resourceLabel,
+  activeCity,
   t,
 }) {
   return items.map((r) => {
@@ -61,6 +69,7 @@ function renderResourceItems({
         depotOverflow={depotOverflow}
         energyCrisis={r.id === 'energy' && energyCrisis}
         budgetSpendFloats={r.id === 'money' ? budgetSpendFloats : null}
+        activeCity={activeCity}
       />
     );
   });
@@ -77,21 +86,41 @@ function ResourceItem({
   depotOverflow,
   energyCrisis,
   budgetSpendFloats,
+  activeCity,
   t,
 }) {
   const hasDepot = resource.max != null;
   const frozen = resource.productionFrozen || depotOverflow;
   const workforceCut = resource.workforcePenalty && !frozen;
   const hourlyLabel = !frozen ? formatHourlyProduction(resource) : null;
-  const hourlyAmount = !frozen ? getHourlyAmount(resource) : 0;
-  const showHourlyBadge = hourlyAmount > 0 && ['hammadde', 'fuel', 'money', 'food', 'energy'].includes(resource.id);
+  const grossHourly = !frozen ? getHourlyAmount(resource) : 0;
+  const energyDrainHourly = resource.id === 'energy' ? getEnergyDrainHourly(activeCity) : 0;
+  const hourlyCacheRef = useRef(0);
+  if (grossHourly > 0) hourlyCacheRef.current = grossHourly;
+  const stableGross = grossHourly > 0 ? grossHourly : hourlyCacheRef.current;
+  const netHourly = resource.id === 'energy'
+    ? stableGross - energyDrainHourly
+    : stableGross;
+  const showEnergyNet = resource.id === 'energy' && !frozen && (stableGross > 0 || energyDrainHourly > 0);
+  const showHourlyBadge = !showEnergyNet && stableGross > 0
+    && ['hammadde', 'fuel', 'money', 'food', 'energy'].includes(resource.id);
   const hourlyZeroLabel = resource.id === 'energy'
     ? `+0${t('cityManagement.hourlyEnergy')}`
     : t('common.perHourZero');
   const foodHourlyTitle = resource.id === 'food' && !frozen && !showHourlyBadge && !hourlyLabel
     ? t('resourceBar.foodHourlyZeroTitle')
     : undefined;
-  const detailTitle = `${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${hourlyLabel ? ` · ${hourlyLabel}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}`;
+  const fillPct = hasDepot && resource.max > 0
+    ? Math.round((resource.current / resource.max) * 100)
+    : null;
+  const energyTrendTitle = showEnergyNet
+    ? (netHourly > 0.5
+      ? t('resourceBar.energyTrendUp')
+      : netHourly < -0.5
+        ? t('resourceBar.energyTrendDown')
+        : t('resourceBar.energyTrendFlat'))
+    : '';
+  const detailTitle = `${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${fillPct != null ? ` (${fillPct}%)` : ''}${showEnergyNet ? ` · ${t('resourceBar.energyNetTitle')}: ${netHourly >= 0 ? '+' : ''}${Math.round(netHourly)} E/saat` : ''}${hourlyLabel && !showEnergyNet ? ` · ${hourlyLabel}` : ''}${energyDrainHourly > 0 ? ` · ${t('resourceBar.energyAiDrain', { drain: formatHourlyAmount(energyDrainHourly) })}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}${energyTrendTitle ? ` — ${energyTrendTitle}` : ''}`;
   const sharedTreasuryTip = t('resourceBar.sharedTreasuryTitle');
   const moneyTreasuryTitle = resource.empireShared
     ? `${detailTitle} · ${sharedTreasuryTip}`
@@ -154,30 +183,49 @@ function ResourceItem({
         )}
       </div>
       <div className="res-bar-cell__foot">
-        {showHourlyBadge ? (
+        {showEnergyNet ? (
+          <span
+            className={[
+              'res-hourly-badge',
+              'res-hourly-badge--net',
+              'font-hud-data',
+              netHourly > 0.5 && 'res-hourly-badge--up',
+              netHourly < -0.5 && 'res-hourly-badge--down',
+            ].filter(Boolean).join(' ')}
+            title={detailTitle}
+          >
+            <span className="res-hourly-badge__arrow" aria-hidden="true">
+              {netHourly > 0.5 ? '▲' : netHourly < -0.5 ? '▼' : '◆'}
+            </span>
+            {netHourly >= 0 ? '+' : ''}
+            {formatHourlyAmount(Math.round(Math.abs(netHourly)))}
+            {t('cityManagement.hourlyEnergy')}
+          </span>
+        ) : showHourlyBadge ? (
           <span className="res-hourly-badge font-hud-data">
-            +{formatHourlyAmount(hourlyAmount)}
+            +{formatHourlyAmount(stableGross)}
             {resource.id === 'energy' ? t('cityManagement.hourlyEnergy') : t('cityManagement.hourlyPerHour')}
           </span>
-        ) : hourlyLabel ? (
+        ) : hourlyLabel && stableGross > 0 ? (
           <span className="res-hourly-live">{hourlyLabel}</span>
-        ) : (
+        ) : stableGross <= 0 && !frozen ? (
           <span
             className={`res-rate${frozen ? ' res-rate--stopped' : ''}`}
             title={foodHourlyTitle}
           >
             {frozen ? t('resourceBar.stopped') : hourlyZeroLabel}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
 
 export default function ResourceBar() {
+  const [diamondShopOpen, setDiamondShopOpen] = useState(false);
   const gameReady = useGameDataReady();
   const barRef = useResourceBarHeight([gameReady]);
-  const { t, resourceLabel } = useLanguage();
+  const { t, lang, resourceLabel } = useLanguage();
   const { playerName } = useAuth();
   const activeCityId = useGameStore((s) => s.activeCityId);
   const cities = useGameStore((s) => s.cities);
@@ -212,7 +260,7 @@ export default function ResourceBar() {
   const energyCrisis = energyRes != null && energyRes.current < 0;
 
   const hasResources = visibleResources.length > 0;
-  const showSyncOnly = !gameReady && !hasResources;
+  const showSyncOnly = !gameReady && !hasResources && !activeCityId;
   const rowResources = pickResourcesByIds(visibleResources, RESOURCE_ROW_TOP);
   const resourceRenderProps = {
     flashes,
@@ -220,6 +268,7 @@ export default function ResourceBar() {
     energyCrisis,
     budgetSpendFloats,
     resourceLabel,
+    activeCity,
     t,
   };
 
@@ -278,6 +327,31 @@ export default function ResourceBar() {
               )}
             </div>
           </div>
+          <div
+            className="resource-bar-lang-clock resource-bar-lang-clock--dock resource-bar-lang-clock--stacked"
+            aria-label="Sunucu saati, premium elmas ve dil"
+          >
+            <ServerTimeClock />
+            <button
+              type="button"
+              className="resource-bar-diamond resource-bar-diamond--dock resource-bar-diamond--premium-btn"
+              title={t('resourceBar.diamondsTitle')}
+              aria-label={`${t('resourceBar.diamonds')}: ${diamonds}`}
+              onClick={() => setDiamondShopOpen(true)}
+            >
+              <span className="resource-bar-diamond__shine" aria-hidden="true" />
+              <span className="resource-bar-diamond__icon" aria-hidden="true">💎</span>
+              <span className="resource-bar-diamond__label">{t('resourceBar.diamonds')}</span>
+              <span className="resource-bar-diamond__value font-hud-data">
+                {formatCompactNumber(diamonds)}
+              </span>
+            </button>
+            <DiamondPackagesModal
+              open={diamondShopOpen}
+              onClose={() => setDiamondShopOpen(false)}
+            />
+            <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
+          </div>
         </div>
 
         {peaceActive && (
@@ -296,24 +370,6 @@ export default function ResourceBar() {
             </span>
           </div>
         )}
-
-        <div
-          className="resource-bar-lang-clock resource-bar-lang-clock--dock resource-bar-lang-clock--stacked"
-          aria-label="Sunucu saati, premium elmas ve dil"
-        >
-          <ServerTimeClock />
-          <div
-            className="resource-bar-diamond resource-bar-diamond--dock"
-            title={t('resourceBar.diamondsTitle')}
-            aria-label={`${t('resourceBar.diamonds')}: ${diamonds}`}
-          >
-            <span className="resource-bar-diamond__icon" aria-hidden="true">💎</span>
-            <span className="resource-bar-diamond__value font-hud-data">
-              {formatCompactNumber(diamonds)}
-            </span>
-          </div>
-          <LanguageSwitcher className="lang-switcher--bar lang-switcher--bar-compact" compact />
-        </div>
 
         <div className="resource-bar-main-row">
           <div id="resource-bar-city-switch" className="city-switcher-wrap resource-bar-city-col">
@@ -336,7 +392,7 @@ export default function ResourceBar() {
                 aria-label={t('resourceBar.activeCity')}
                 options={playerCities.map((c) => ({
                   value: c.id,
-                  label: formatCityOptionLabel(c),
+                  label: formatCityOptionLabel(c, t, lang),
                 }))}
               />
             </label>

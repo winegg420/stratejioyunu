@@ -187,9 +187,9 @@
 /* ── 2. Üst kaynak barı — grid: kaynaklar solda, dil/saat sağda sabit ── */
 .resource-bar--stacked .resource-bar-inner--grid {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-columns: 1fr !important;
   grid-template-rows: auto auto !important;
-  column-gap: 0.65rem !important;
+  column-gap: 0 !important;
   row-gap: 0.28rem !important;
   align-items: stretch !important;
   width: 100% !important;
@@ -202,14 +202,26 @@
   row-gap: 0.32rem !important;
 }
 
+.resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-meta-row {
+  grid-row: 1 !important;
+}
+
+.resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-peace-row {
+  grid-row: 2 !important;
+}
+
+.resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-main-row {
+  grid-row: 3 !important;
+}
+
 .resource-bar--stacked .resource-bar-meta-row {
-  grid-column: 1 !important;
+  grid-column: 1 / -1 !important;
   grid-row: 1 !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0.5rem !important;
+  justify-content: space-between !important;
+  gap: 0.45rem !important;
   min-width: 0 !important;
   min-height: 1.35rem !important;
   position: relative !important;
@@ -217,7 +229,7 @@
 }
 
 .resource-bar--stacked .resource-bar-peace-row {
-  grid-column: 1 !important;
+  grid-column: 1 / -1 !important;
   grid-row: 2 !important;
   display: flex !important;
   align-items: center !important;
@@ -249,10 +261,6 @@
     0 0 0 1px rgba(74, 222, 128, 0.12) inset !important;
 }
 
-.resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-lang-clock--dock {
-  grid-row: 1 / span 3 !important;
-}
-
 .resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-main-row {
   grid-row: 3 !important;
 }
@@ -261,21 +269,25 @@
   grid-row: 2 !important;
 }
 
-.resource-bar--stacked .resource-bar-lang-clock--dock {
-  grid-column: 2 !important;
-  grid-row: 1 / span 2 !important;
-  align-self: center !important;
-  justify-self: end !important;
+.resource-bar--stacked .resource-bar-meta-row .resource-bar-lang-clock--dock {
+  position: static !important;
+  grid-column: unset !important;
+  grid-row: unset !important;
   flex: 0 0 auto !important;
   flex-shrink: 0 !important;
   margin: 0 !important;
-  padding: 0 0 0 0.55rem !important;
+  padding: 0 0 0 0.45rem !important;
   border-left: 1px solid rgba(74, 124, 89, 0.22) !important;
   z-index: 4 !important;
 }
 
+/* Tek sunucu saati — grid span kaynaklı çift görünümü engelle */
+.resource-bar-lang-clock--dock .server-time-clock ~ .server-time-clock {
+  display: none !important;
+}
+
 .resource-bar--stacked .resource-bar-main-row {
-  grid-column: 1 !important;
+  grid-column: 1 / -1 !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -492,27 +504,26 @@
 
 @media (max-width: 900px) {
   .resource-bar--stacked .resource-bar-inner--grid {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto auto !important;
-  }
-
-  .resource-bar--stacked .resource-bar-lang-clock--dock {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    justify-self: end !important;
-    border-left: none !important;
-    padding: 0 0 0.35rem 0 !important;
+    grid-template-rows: auto auto !important;
   }
 
   .resource-bar--stacked .resource-bar-meta-row {
-    grid-row: 2 !important;
-    padding-right: 7.5rem !important;
+    grid-row: 1 !important;
+    flex-wrap: wrap !important;
+    padding-right: 0 !important;
+  }
+
+  .resource-bar--stacked .resource-bar-meta-row .resource-bar-lang-clock--dock {
+    border-left: none !important;
+    padding: 0 !important;
+    margin-left: auto !important;
   }
 
   .resource-bar--stacked .resource-bar-main-row {
-    grid-row: 3 !important;
+    grid-row: 2 !important;
     flex-direction: column !important;
     min-height: 0 !important;
+    border-top: 1px solid rgba(74, 124, 89, 0.22) !important;
   }
 
   .resource-bar--stacked .resource-bar-city-col {
@@ -533,19 +544,19 @@
   }
 
   .resource-bar--stacked .resource-bar-inner--grid.resource-bar-inner--has-peace {
-    grid-template-rows: auto auto auto auto !important;
+    grid-template-rows: auto auto auto !important;
   }
 
   .resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-meta-row {
-    grid-row: 2 !important;
+    grid-row: 1 !important;
   }
 
   .resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-peace-row {
-    grid-row: 3 !important;
+    grid-row: 2 !important;
   }
 
   .resource-bar--stacked .resource-bar-inner--has-peace .resource-bar-main-row {
-    grid-row: 4 !important;
+    grid-row: 3 !important;
   }
 }
 

@@ -22,6 +22,13 @@ import AnimatedCounter from '../components/AnimatedCounter';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useHomeCommandStats } from '../hooks/useHomeCommandStats';
 import { getProgressionState } from '../lib/progressionSystem';
+import {
+  QUEUE_SLOT_DIAMOND_COST,
+  canPurchaseQueueSlot,
+  getConstructionQueueLimit,
+  getProductionQueueLimit,
+  getPlayerDiamonds,
+} from '../lib/premiumDiamonds';
 
 const HOME_PROGRESSION_FALLBACK = Object.freeze({
   ideologyUnlocked: false,
@@ -29,6 +36,7 @@ const HOME_PROGRESSION_FALLBACK = Object.freeze({
 });
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
+import { resolveHomeFeedSectorType } from '../lib/playerCityDisplay';
 
 function QueueItem({ name, detail, endsAt, queued, now, queuedLabel }) {
   const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
@@ -53,7 +61,9 @@ const WIDGET_ICONS = {
   cityCount: '🏙',
 };
 
-function CommandWidget({ label, value, sub, active, iconKey }) {
+function CommandWidget({
+  label, value, sub, active, iconKey, onAddSlot, addSlotDisabled, addSlotTitle,
+}) {
   const icon = WIDGET_ICONS[iconKey] ?? '◈';
   const numeric = typeof value === 'number';
   const isZero = numeric && value === 0;
@@ -65,6 +75,7 @@ function CommandWidget({ label, value, sub, active, iconKey }) {
         'glass-panel',
         isActive && 'home-cmd-widget--active',
         isZero && 'home-cmd-widget--zero',
+        onAddSlot && 'home-cmd-widget--has-add',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -83,12 +94,24 @@ function CommandWidget({ label, value, sub, active, iconKey }) {
         </span>
         {sub && <span className="home-cmd-widget__sub">{sub}</span>}
       </div>
+      {onAddSlot && (
+        <button
+          type="button"
+          className="home-cmd-widget__add"
+          onClick={onAddSlot}
+          disabled={addSlotDisabled}
+          title={addSlotTitle}
+          aria-label={addSlotTitle}
+        >
+          +
+        </button>
+      )}
     </div>
   );
 }
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, countryLabel } = useLanguage();
   const gameReady = useGameDataReady();
   const { playerName } = useAuth();
   const setPlayerIdeology = useGameStore((s) => s.setPlayerIdeology);
@@ -149,18 +172,23 @@ export default function Home() {
   ].slice(0, 24);
   const now = useGameStore((s) => s.now);
   const cmdStats = useHomeCommandStats();
+  const playerMeta = useGameStore((s) => s.playerMeta);
+  const purchaseQueueSlot = useGameStore((s) => s.purchaseQueueSlot);
+  const constructionLimit = getConstructionQueueLimit(playerMeta);
+  const productionLimit = getProductionQueueLimit(playerMeta);
+  const diamondBalance = getPlayerDiamonds(playerMeta);
+  const canBuyConstructionSlot = canPurchaseQueueSlot(playerMeta, 'construction');
+  const canBuyProductionSlot = canPurchaseQueueSlot(playerMeta, 'production');
 
   const sectorReady = gameReady && Boolean(activeCity?.name && city);
   const sectorFeedLine = sectorReady
     ? (() => {
       const parts = [
-        activeCity.name,
-        (activeCity.type && String(activeCity.type).trim())
-          ? activeCity.type
-          : t('pages.home.feed.base'),
+        countryLabel(activeCity.name),
+        resolveHomeFeedSectorType(activeCity, t),
       ];
       if (activeCity.provinceName?.trim()) {
-        parts.push(t('pages.home.feed.sector', { province: activeCity.provinceName.trim() }));
+        parts.push(t('pages.home.feed.sector', { province: countryLabel(activeCity.provinceName.trim()) }));
       }
       parts.push(t('pages.home.feed.sync'));
       return `> ${parts.join(' · ')}`;
@@ -228,19 +256,27 @@ export default function Home() {
             iconKey="buildQueue"
             label={t('pages.home.widgets.buildQueue')}
             value={cmdStats.constructionCount}
-            sub={cmdStats.live
-              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindBuilding') })
-              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindBuilding') })}
+            sub={t('pages.home.widgets.queueCap', {
+              count: cmdStats.constructionCount,
+              limit: constructionLimit,
+            })}
             active={cmdStats.constructionCount > 0}
+            onAddSlot={canBuyConstructionSlot ? () => purchaseQueueSlot('construction') : undefined}
+            addSlotDisabled={!canBuyConstructionSlot || diamondBalance < QUEUE_SLOT_DIAMOND_COST}
+            addSlotTitle={t('premium.queueSlotAdd', { cost: QUEUE_SLOT_DIAMOND_COST, type: t('premium.queueConstruction') })}
           />
           <CommandWidget
             iconKey="prodQueue"
             label={t('pages.home.widgets.prodQueue')}
             value={cmdStats.productionCount}
-            sub={cmdStats.live
-              ? t('pages.home.widgets.liveSuffix', { kind: t('pages.home.widgets.kindUnit') })
-              : t('pages.home.widgets.offlineSuffix', { kind: t('pages.home.widgets.kindUnit') })}
+            sub={t('pages.home.widgets.queueCap', {
+              count: cmdStats.productionCount,
+              limit: productionLimit,
+            })}
             active={cmdStats.productionCount > 0}
+            onAddSlot={canBuyProductionSlot ? () => purchaseQueueSlot('production') : undefined}
+            addSlotDisabled={!canBuyProductionSlot || diamondBalance < QUEUE_SLOT_DIAMOND_COST}
+            addSlotTitle={t('premium.queueSlotAdd', { cost: QUEUE_SLOT_DIAMOND_COST, type: t('premium.queueProduction') })}
           />
           <CommandWidget
             iconKey="unreadReports"
@@ -255,7 +291,7 @@ export default function Home() {
             iconKey="cityCount"
             label={t('pages.home.widgets.cityCount')}
             value={playerCities.length}
-            sub={t('pages.home.widgets.activeLabel')}
+            sub={t('pages.home.widgets.activeCountries', { count: playerCities.length })}
             active={playerCities.length > 0}
           />
         </div>

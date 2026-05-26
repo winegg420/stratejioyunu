@@ -34,15 +34,13 @@ export default function MapPage() {
   ]);
 
   return (
-    <div className="page page--console map-page-wrapper map-page-wrapper--tactical">
+    <MapErrorBoundary className="map-page-wrapper map-page-wrapper--tactical map-page-wrapper--fill">
       <header className="map-page-compact-header">
         <HudBackButton fallback="/" label={t('nav.city')} className="btn btn-secondary btn-sm hud-back-btn map-page-compact-header__back" />
         <h1 className="map-page-compact-header__title">{t('pages.map.title')}</h1>
         <span className="map-page-compact-header__meta">{t('map.pageMeta')}</span>
       </header>
-      <MapErrorBoundary className="map-error-boundary-wrap">
-        <TurkeyMap />
-      </MapErrorBoundary>
-    </div>
+      <TurkeyMap />
+    </MapErrorBoundary>
   );
 }

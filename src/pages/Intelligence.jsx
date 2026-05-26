@@ -21,6 +21,7 @@ import {
   filterIntelCategoryExpeditions,
 } from '../lib/activeOperationsCount';
 import { formatSeconds, remainingFromEndsAt } from '../lib/gameUtils';
+import { resolveIntelTargetName } from '../lib/intelTargetResolve';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
 import { CYBER_ABILITIES } from '../lib/cyberOps';
 import {
@@ -121,14 +122,17 @@ export default function Intelligence() {
   }, [progression.cyberUnlocked, progression.kbrnUnlocked]);
 
   useEffect(() => {
-    if (!mapTargetPickResult) return;
-    if (mapTargetPickResult.field === 'agent') setAgentTargetName(mapTargetPickResult.cityName);
+    if (!mapTargetPickResult?.cityName) return;
+    const needsTargets = mapTargetPickResult.field !== 'agent';
+    if (needsTargets && !cyberTargets.length) return;
+    const resolved = resolveIntelTargetName(mapTargetPickResult.cityName, cyberTargets);
+    if (mapTargetPickResult.field === 'agent') setAgentTargetName(resolved);
     if (mapTargetPickResult.field === 'cyber' || mapTargetPickResult.field === 'kbrn') {
-      setCyberTargetName(mapTargetPickResult.cityName);
-      if (mapTargetPickResult.field === 'kbrn') setKbrnTargetName(mapTargetPickResult.cityName);
+      setCyberTargetName(resolved);
+      if (mapTargetPickResult.field === 'kbrn') setKbrnTargetName(resolved);
     }
     clearMapTargetPickResult();
-  }, [mapTargetPickResult, clearMapTargetPickResult]);
+  }, [mapTargetPickResult, cyberTargets, clearMapTargetPickResult]);
 
   const resolvedCyberName = cyberTargetName || cyberTargets[0]?.name || '';
   const selectedTarget = cyberTargets.find((c) => c.name === resolvedCyberName) ?? cyberTargets[0];

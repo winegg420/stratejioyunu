@@ -9,6 +9,7 @@ import {
   isConquerableMapTarget,
   isMainHqCity,
 } from './worldCitySystem';
+import { IS_WORLD_MAP } from '../map/mapInteractionPolicy';
 
 /** Komuta Merkezi seviyesine göre maksimum şehir slotu (OGame koloni). */
 export const CITY_SLOTS_BY_HQ = [
@@ -74,14 +75,20 @@ export function formatEmpireSlotHint(state) {
   const maxSlots = getMaxCitySlots(hq);
 
   if (hq < 5 && colonies === 0) {
-    return 'Sv.1–4: yalnızca Ana Merkez — koloni için Sv.5 Komuta Merkezi';
+    return IS_WORLD_MAP
+      ? 'Sv.1–4: yalnızca ana ülke — ek ülke için Sv.5 Komuta Merkezi'
+      : 'Sv.1–4: yalnızca Ana Merkez — koloni için Sv.5 Komuta Merkezi';
   }
   if (owned >= EMPIRE_MAX_CITIES) {
-    return 'İmparatorluk sınırı: 6 şehir (maksimum)';
+    return IS_WORLD_MAP
+      ? 'İmparatorluk sınırı: 6 ülke (maksimum)'
+      : 'İmparatorluk sınırı: 6 şehir (maksimum)';
   }
   if (owned < maxSlots) {
     const free = maxSlots - owned;
-    return `Fethedilebilir koloni slotu: ${free} (Sv.${hq} Komuta Merkezi)`;
+    return IS_WORLD_MAP
+      ? `Fethedilebilir ülke slotu: ${free} (Sv.${hq} Komuta Merkezi)`
+      : `Fethedilebilir koloni slotu: ${free} (Sv.${hq} Komuta Merkezi)`;
   }
   const nextHq = getNextSlotHqLevel(maxSlots);
   if (nextHq == null) {

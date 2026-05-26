@@ -9,8 +9,14 @@ import {
   WORLD_PLAYER_STARTERS,
   WORLD_ROLES,
 } from '../data/worldCitiesCatalog';
-import { isMegaCity, isPlayerRegisterableCountry } from '../data/worldCountriesCatalog';
+import {
+  isMegaCity,
+  isPlayerRegisterableCountry,
+  isWorldCountryCoastal,
+  resolveCountryIso2,
+} from '../data/worldCountriesCatalog';
 import { computeFeatureCentroid, formatBotCityName } from './botProvinceAssignment';
+import { computeWorldBotPopulation } from './worldCountryPopulation';
 import { resolveMapCityOwnerIdeology } from './mapIdeologyDistribution';
 import { normalizeProvinceCode } from '../map/mapOwnership';
 import { slugCityId } from './cityIdUtils';
@@ -85,12 +91,12 @@ export function pickMainHqStarter(seed = '', gameConfig = DEFAULT_GAME_CONFIG) {
       province: pick.province,
       provinceName: pick.provinceName,
       district: pick.district ?? 'Merkez',
-      type: 'Ulusal Komuta Merkezi',
+      type: 'Küresel Komuta Merkezi',
       lat: pick.lat,
       lng: pick.lng,
       cityRole: PLAYER_CITY_ROLES.MAIN_HQ,
       isUnlosable: true,
-      isCoastal: false,
+      isCoastal: isWorldCountryCoastal(pick.provinceName ?? pick.name),
     };
   }
 
@@ -176,9 +182,12 @@ function createBotWorldCity(feature, worldRole, gameConfig) {
     botId,
     owner: null,
     rank: mega ? 'Mega Şehir Komutanlığı' : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Bot Başkent' : 'Bot Kıyı Komutanlığı'),
-    population: mega
-      ? 48000 + (hashString(provinceName) % 12000)
-      : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 22000 : 4200 + (provinceName.length * 41) % 8000),
+    population: computeWorldBotPopulation({
+      provinceName,
+      shapeIso: iso,
+      worldRole,
+      mega,
+    }),
     type: mega ? 'Mega Şehir' : (worldRole === WORLD_ROLES.BOT_CAPITAL ? 'Başkent' : 'Kıyı'),
     tier: worldRole === WORLD_ROLES.BOT_CAPITAL ? 'capital' : 'town',
     alliance: null,
@@ -208,7 +217,11 @@ function createPlayerSlotMapCity(feature, gameConfig) {
     district: 'Merkez',
     botId: `Slot_${String(iso).replace(/[^A-Za-z0-9]/g, '_') || provinceName}`,
     owner: null,
-    population: 600 + (hashString(provinceName) % 2400),
+    population: computeWorldBotPopulation({
+      provinceName,
+      shapeIso: iso,
+      worldRole: WORLD_ROLES.PLAYER_SLOT,
+    }),
     type: 'Boş Ülke',
     tier: 'town',
     status: 'bot',
@@ -251,6 +264,27 @@ function createOpenInlandMapCity(feature, gameConfig) {
  * GeoJSON parsellerinden dünya/bot ülkelerini üretir.
  * Oyuncu ülkesini atlar; mevcut düşman demo üslerine dokunmaz.
  */
+/** Mevcut harita kayıtlarında bot ülke nüfusunu küresel ölçeğe yükseltir. */
+export function refreshWorldBotPopulations(mapCities, gameConfig = DEFAULT_GAME_CONFIG) {
+  if (!isWorldMapMode(gameConfig) || !mapCities?.length) return mapCities;
+  return mapCities.map((city) => {
+    if (!city || city.owner) return city;
+    if (city.status !== 'bot' && city.status !== 'empty') return city;
+    const provinceName = city.provinceName ?? city.name ?? '';
+    const iso = resolveCountryIso2(provinceName, city.province ?? '') || (city.province ?? '');
+    const mega = city.worldRole === WORLD_ROLES.MEGA_CITY || isMegaCity(provinceName);
+    const population = computeWorldBotPopulation({
+      provinceName,
+      shapeIso: iso,
+      worldRole: city.worldRole ?? WORLD_ROLES.BOT_CAPITAL,
+      mega,
+    });
+    const stale = (city.population ?? 0) < 500_000;
+    if (population === city.population && !stale) return city;
+    return { ...city, population };
+  });
+}
+
 export function seedWorldMapFromProvinces({
   mapCities = [],
   playerCities = [],
@@ -334,8 +368,8 @@ export function isRaidOnlyMapTarget(mapCity, defenderPlayerCity) {
 
 export function isConquerableMapTarget(mapCity, state = null) {
   if (!mapCity) return false;
-  if (mapCity.worldRole === WORLD_ROLES.PLAYER_SLOT) return false;
   if (mapCity.status === 'bot') {
+    if (mapCity.worldRole === WORLD_ROLES.PLAYER_SLOT) return true;
     return mapCity.worldRole === WORLD_ROLES.BOT_COASTAL
       || mapCity.worldRole === WORLD_ROLES.BOT_CAPITAL
       || mapCity.worldRole === WORLD_ROLES.MEGA_CITY

@@ -1,6 +1,7 @@
 import { landUnits } from '../data/placeholder';
 import { LEGACY_UNIT_NAME_TO_ID } from '../data/unitCatalog';
 import { stripBotCitySuffix } from './botProvinceAssignment';
+import { countryNameMatchesQuery } from './countryDisplayNames';
 
 const NAME_TO_ID = {
   ...LEGACY_UNIT_NAME_TO_ID,
@@ -55,7 +56,9 @@ export function findSpyReportForCity(reports, cityName) {
       r.targetCity,
       extractCityFromReportTitle(r.title),
     ].filter(Boolean);
-    return targets.some((t) => normalizeMapCityKey(t) === normalized);
+    return targets.some(
+      (t) => normalizeMapCityKey(t) === normalized || countryNameMatchesQuery(t, cityName),
+    );
   }) ?? null;
 }
 

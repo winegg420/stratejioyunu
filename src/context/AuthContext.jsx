@@ -11,6 +11,7 @@ import {
 } from '../lib/auth';
 import { stopSyncPolling } from '../lib/supabaseSync';
 import { fetchUserProfile, resolvePlayerDisplayName, resolveProfileIsAdmin } from '../lib/profileApi';
+import { isGameAdmin } from '../lib/adminAccess';
 import { useGameStore } from '../stores/gameStore';
 import { PAGE_SESSION_TIMEOUT_MS } from '../components/PageSessionGate';
 import { refreshSessionIfNeeded, startSessionKeeper } from '../lib/sessionKeeper';
@@ -178,6 +179,7 @@ export function AuthProvider({ children }) {
           profileDisplayName: null,
           profilePlayerName: null,
           isAdminUser: false,
+          authEmail: null,
         });
         setSession(null);
         return;
@@ -277,6 +279,7 @@ export function AuthProvider({ children }) {
       profileDisplayName: null,
       profilePlayerName: null,
       isAdminUser: false,
+      authEmail: null,
     });
     setSession(null);
     setIsDemo(false);

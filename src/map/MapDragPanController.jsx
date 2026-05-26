@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
+import { IS_WORLD_MAP } from './mapInteractionPolicy';
 
 /** Yalnızca UI kontrolleri — şehir/il/marker üzerinden de sürükleyerek pan mümkün */
 const IGNORE_SELECTOR = [
@@ -23,6 +24,11 @@ export default function MapDragPanController({ enabled = true }) {
   const map = useMap();
 
   useEffect(() => {
+    if (IS_WORLD_MAP) {
+      map.dragging.enable();
+      return undefined;
+    }
+
     const container = map.getContainer();
     if (!enabled) {
       container.classList.remove('map-pan-grabbable', 'map-pan--grabbing');

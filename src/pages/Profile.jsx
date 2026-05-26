@@ -176,7 +176,10 @@ export default function Profile() {
             </button>
           </p>
           <p>
-            Şehir: {playerCities.length} · İttifak: {profile.alliance}
+            {t('pages.profile.meta.countryAlliance', {
+              count: playerCities.length,
+              alliance: profile.alliance,
+            })}
             {vipTier > 0 && (
               <>
                 {' '}
@@ -384,7 +387,7 @@ export default function Profile() {
               <th>Sezon</th>
               <th>Sıra</th>
               <th>Puan</th>
-              <th>Şehir</th>
+              <th>{t('pages.profile.meta.seasonCountryCol')}</th>
             </tr>
           </thead>
           <tbody>

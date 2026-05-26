@@ -6,8 +6,9 @@ export const CARTO_ATTRIBUTION =
 
 export const ROUTE_STYLES = {
   attack: {
-    color: '#ff3355',
-    dashArray: '8, 14',
+    color: '#facc15',
+    dashArray: '14, 5',
+    weight: 8,
     className: 'cyber-route tactical-route tactical-route-beam tactical-route--attack cyber-route--attack',
   },
   spy: {

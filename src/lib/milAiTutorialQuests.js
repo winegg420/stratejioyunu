@@ -13,6 +13,7 @@ import {
   getUnmetPrerequisites,
 } from './buildingUtils';
 import { isDevTestMode } from './devTestMode';
+import { buildMilAiBotWeakAdvice } from './milAiBotTarget';
 
 export const MIL_AI_TUTORIAL_QUEST_IDS = [
   'quest_01_ai_center',
@@ -374,7 +375,7 @@ export function pickMilAiLevelAdvice(state, lang = 'tr') {
     candidates.push(translate(lang, 'milAi.advice.lv3.fuelDepot'));
   }
   if (level >= 5) {
-    candidates.push(translate(lang, 'milAi.advice.lv5.botWeak'));
+    candidates.push(buildMilAiBotWeakAdvice(state, lang));
   }
   if (level >= 8) {
     candidates.push(translate(lang, 'milAi.advice.lv8.tension'));

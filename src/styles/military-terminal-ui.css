@@ -69,6 +69,16 @@
   border-bottom: 1px solid rgba(74, 124, 89, 0.08);
 }
 
+.cost-parts__chip--short {
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+}
+
+.cost-parts__chip--short .cost-parts__text {
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.45);
+}
+
 .cost-parts__chip {
   gap: 0.35rem !important;
 }

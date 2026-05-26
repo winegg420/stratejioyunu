@@ -1,3 +1,4 @@
+import { asArray } from './asArray';
 import { getHqLevel } from './buildingUtils';
 import { getEmpireBudgetIncomeMultiplier } from './empireExpansion';
 import {
@@ -18,7 +19,9 @@ import { applyAiMineProductionMult } from './aiCenterEngine';
 import { BUILDING_RESOURCE_MAP, formatRate, recalculateResourceRates } from './gameUtils';
 import { getIdlePopulation } from './populationUtils';
 
-const PRODUCTION_RESOURCE_IDS = new Set(Object.values(BUILDING_RESOURCE_MAP));
+const PRODUCTION_RESOURCE_IDS = new Set(
+  Object.values(BUILDING_RESOURCE_MAP ?? {}).filter(Boolean),
+);
 
 export const WORKFORCE_PENALTY_FACTOR = 0.1;
 export const WORKFORCE_PENALTY_LABEL = 'İşçi kalmadı — maden üretimi %90 düşürüldü';
@@ -44,7 +47,7 @@ export function hasWorkforceShortage(city) {
 }
 
 function applyWorkforcePenalty(resources) {
-  return resources.map((r) => {
+  return asArray(resources).map((r) => {
     if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return { ...r, workforcePenalty: false };
     const hourly = parseHourlyRate(r.rate);
     if (hourly <= 0) return { ...r, workforcePenalty: true };
@@ -61,7 +64,7 @@ function applyVipProductionBonus(resources, multiplier) {
   const mult = multiplier > 0 ? multiplier : 1;
   if (mult <= 1) return resources;
 
-  return resources.map((r) => {
+  return asArray(resources).map((r) => {
     if (!PRODUCTION_RESOURCE_IDS.has(r.id)) return { ...r, vipProductionBonus: false };
     const hourly = parseHourlyRate(r.rate);
     if (hourly <= 0) return { ...r, vipProductionBonus: false };
@@ -74,7 +77,7 @@ function applyVipProductionBonus(resources, multiplier) {
 }
 
 function applyDepotFreeze(resources) {
-  return resources.map((r) => {
+  return asArray(resources).map((r) => {
     const frozen = isDepotOverflow(r);
     if (!frozen) {
       return { ...r, productionFrozen: false };
@@ -86,7 +89,7 @@ function applyDepotFreeze(resources) {
 function applyIdeologyResourceBonus(resources, playerIdeology) {
   if (!playerIdeology) return resources;
 
-  return resources.map((r) => {
+  return asArray(resources).map((r) => {
     const mult = getIdeologyResourceMultiplier(playerIdeology, r.id);
     if (!PRODUCTION_RESOURCE_IDS.has(r.id) || mult === 1) {
       return { ...r, ideologyResourceBonus: false };
@@ -114,7 +117,7 @@ export function applyProductionFreeze(
     : (cityOrIdlePop ?? 1);
 
   const city = typeof cityOrIdlePop === 'object' ? cityOrIdlePop : null;
-  let withRates = recalculateResourceRates(buildings, resources);
+  let withRates = recalculateResourceRates(buildings, asArray(resources));
 
   if (idlePop <= 0 && !isNewPlayerWorkforceProtected(city)) {
     withRates = applyWorkforcePenalty(withRates);
@@ -139,6 +142,7 @@ export function applyProductionFreeze(
       },
     );
     withRates = applyHappinessToResourceRates(withRates, happiness, cyberEffects, kbrnEffects);
+    withRates = asArray(withRates);
     if (hasActiveCyberEnergyHalt(cyberEffects)) {
       withRates = withRates.map((r) => (
         r.id === 'energy'

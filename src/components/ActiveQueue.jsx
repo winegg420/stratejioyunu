@@ -2,7 +2,14 @@ import { useMemo } from 'react';
 import { landUnits, airUnits, seaUnits } from '../data/placeholder';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { formatSeconds, progressFromTiming, remainingFromEndsAt } from '../lib/gameUtils';
-import { calcConstructionSpeedupDiamondCost } from '../lib/premiumDiamonds';
+import {
+  calcConstructionSpeedupDiamondCost,
+  canPurchaseQueueSlot,
+  getConstructionQueueLimit,
+  getPlayerDiamonds,
+  getProductionQueueLimit,
+  QUEUE_SLOT_DIAMOND_COST,
+} from '../lib/premiumDiamonds';
 import { resolveUnitIconDomain } from './UnitMilitaryIcon';
 import UnitMilitaryIcon from './UnitMilitaryIcon';
 import { useLanguage } from '../context/LanguageContext';
@@ -117,10 +124,19 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   const cancelProduction = useGameStore((s) => s.cancelProduction);
   const startQueuedConstruction = useGameStore((s) => s.startQueuedConstruction);
   const startQueuedProduction = useGameStore((s) => s.startQueuedProduction);
-  const diamonds = useGameStore((s) => s.playerMeta?.diamonds ?? 0);
+  const isProduction = queueType === 'production';
+  const playerMeta = useGameStore((s) => s.playerMeta);
+  const diamonds = getPlayerDiamonds(playerMeta);
+  const purchaseQueueSlot = useGameStore((s) => s.purchaseQueueSlot);
+  const queueLimit = isProduction
+    ? getProductionQueueLimit(playerMeta)
+    : getConstructionQueueLimit(playerMeta);
+  const canBuySlot = canPurchaseQueueSlot(playerMeta, isProduction ? 'production' : 'construction');
   const hasActive = queue.some((q) => !q.queued);
 
-  const isProduction = queueType === 'production';
+  const handleAddSlot = () => {
+    purchaseQueueSlot(isProduction ? 'production' : 'construction');
+  };
 
   const activeProduction = useMemo(() => {
     if (!isProduction || !queue.length) return null;
@@ -182,7 +198,30 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
     return (
       <TerminalLogPanel title={title} tag={dockTag} className="terminal-log-panel--queue">
         <section className="active-queue-panel active-queue-panel--empty active-queue-panel--placeholder">
-          <h3 className="active-queue-title">{title}</h3>
+          <div className="active-queue-title-row">
+            <h3 className="active-queue-title">{title}</h3>
+            {canBuySlot && (
+              <button
+                type="button"
+                className="queue-slot-add-btn"
+                onClick={handleAddSlot}
+                disabled={diamonds < QUEUE_SLOT_DIAMOND_COST}
+                title={t('premium.queueSlotAdd', {
+                  cost: QUEUE_SLOT_DIAMOND_COST,
+                  type: isProduction ? t('premium.queueProduction') : t('premium.queueConstruction'),
+                })}
+                aria-label={t('premium.queueSlotAdd', {
+                  cost: QUEUE_SLOT_DIAMOND_COST,
+                  type: isProduction ? t('premium.queueProduction') : t('premium.queueConstruction'),
+                })}
+              >
+                +
+              </button>
+            )}
+          </div>
+          <p className="active-queue-cap font-hud-data">
+            {t('components.activeQueue.cap', { count: queue.length, limit: queueLimit })}
+          </p>
           <CyberTerminalPlaceholder variant="standby" />
         </section>
       </TerminalLogPanel>
@@ -196,14 +235,37 @@ export default function ActiveQueue({ title, queueType, emptyText }) {
   return (
     <TerminalLogPanel title={dockTitle} tag={dockTag} className="terminal-log-panel--queue">
       <section className="active-queue-panel">
-        <h3 className="active-queue-title">
-          {activeProduction
-            ? t('components.activeQueue.productionTitle', {
-              unit: activeProduction.label,
-              count: activeProduction.count,
-            })
-            : title}
-        </h3>
+        <div className="active-queue-title-row">
+          <h3 className="active-queue-title">
+            {activeProduction
+              ? t('components.activeQueue.productionTitle', {
+                unit: activeProduction.label,
+                count: activeProduction.count,
+              })
+              : title}
+          </h3>
+          {canBuySlot && (
+            <button
+              type="button"
+              className="queue-slot-add-btn"
+              onClick={handleAddSlot}
+              disabled={diamonds < QUEUE_SLOT_DIAMOND_COST}
+              title={t('premium.queueSlotAdd', {
+                cost: QUEUE_SLOT_DIAMOND_COST,
+                type: isProduction ? t('premium.queueProduction') : t('premium.queueConstruction'),
+              })}
+              aria-label={t('premium.queueSlotAdd', {
+                cost: QUEUE_SLOT_DIAMOND_COST,
+                type: isProduction ? t('premium.queueProduction') : t('premium.queueConstruction'),
+              })}
+            >
+              +
+            </button>
+          )}
+        </div>
+        <p className="active-queue-cap font-hud-data">
+          {t('components.activeQueue.cap', { count: queue.length, limit: queueLimit })}
+        </p>
         <ul className={`active-queue-list${isProduction ? ' active-queue-list--production' : ''}`}>
           {items.map((item) => (
             <QueueRow

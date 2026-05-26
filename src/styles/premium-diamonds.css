@@ -1,4 +1,4 @@
-/* Premium elmas + inşaat hızlandırma */
+/* Premium elmas + inşaat hızlandırma + mağaza */
 
 .diamond-indicator {
   display: inline-flex;
@@ -21,6 +21,319 @@
   font-size: 0.68rem;
   color: #c9a84c;
   letter-spacing: 0.03em;
+}
+
+/* ── HUD sağ üst premium elmas butonu ── */
+.resource-bar-diamond--premium-btn {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer !important;
+  border: 1px solid rgba(56, 189, 248, 0.55) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(14, 116, 144, 0.35) 0%,
+    rgba(30, 58, 138, 0.55) 45%,
+    rgba(12, 74, 110, 0.4) 100%
+  ) !important;
+  box-shadow:
+    0 0 12px rgba(56, 189, 248, 0.35),
+    0 0 24px rgba(99, 102, 241, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  animation: diamond-btn-glow 2.8s ease-in-out infinite;
+}
+
+.resource-bar-diamond--premium-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  border-color: rgba(125, 211, 252, 0.85) !important;
+  box-shadow:
+    0 0 18px rgba(56, 189, 248, 0.55),
+    0 0 32px rgba(129, 140, 248, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.resource-bar-diamond--premium-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.resource-bar-diamond__shine {
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 60%
+  );
+  animation: diamond-btn-shine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.resource-bar-diamond--premium-btn .resource-bar-diamond__icon {
+  filter: drop-shadow(0 0 6px rgba(125, 211, 252, 0.8));
+}
+
+.resource-bar-diamond--premium-btn .resource-bar-diamond__label {
+  display: block !important;
+  font-size: 0.48rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(186, 230, 253, 0.9) !important;
+  line-height: 1.1 !important;
+}
+
+.resource-bar-diamond--premium-btn .resource-bar-diamond__value {
+  color: #e0f2fe !important;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.65);
+}
+
+.resource-bar-diamond--premium-btn.resource-bar-diamond--dock {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.06rem !important;
+  min-width: 3.1rem !important;
+  min-height: 2.35rem !important;
+  padding: 0.28rem 0.4rem !important;
+}
+
+@keyframes diamond-btn-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 10px rgba(56, 189, 248, 0.3),
+      0 0 20px rgba(99, 102, 241, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 16px rgba(56, 189, 248, 0.5),
+      0 0 28px rgba(129, 140, 248, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+}
+
+@keyframes diamond-btn-shine {
+  0%, 72%, 100% {
+    transform: translateX(-120%) rotate(12deg);
+    opacity: 0;
+  }
+  78% {
+    opacity: 1;
+  }
+  88% {
+    transform: translateX(120%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+/* Elmas mağaza modalı */
+.diamond-shop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.diamond-shop-modal {
+  width: min(100%, 26rem);
+  max-height: min(88vh, 32rem);
+  overflow: auto;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.15);
+}
+
+.diamond-shop-modal__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 0.65rem;
+}
+
+.diamond-shop-modal__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.62rem;
+  color: rgba(125, 211, 252, 0.85);
+  letter-spacing: 0.08em;
+}
+
+.diamond-shop-modal__head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.diamond-shop-modal__balance {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: #c9a84c;
+}
+
+.diamond-shop-modal__hint,
+.diamond-shop-modal__foot p {
+  margin: 0 0 0.75rem;
+  font-size: 0.68rem;
+  color: rgba(226, 232, 240, 0.75);
+  line-height: 1.45;
+}
+
+.diamond-shop-packages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.diamond-shop-pack {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(74, 124, 89, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.diamond-shop-pack--featured {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: linear-gradient(90deg, rgba(14, 116, 144, 0.2), rgba(0, 0, 0, 0.35));
+}
+
+.diamond-shop-pack__gem {
+  font-size: 1.1rem;
+}
+
+.diamond-shop-pack__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.diamond-shop-pack__name {
+  display: block;
+  font-size: 0.72rem;
+}
+
+.diamond-shop-pack__amount {
+  font-size: 0.78rem;
+  color: #7dd3fc;
+}
+
+/* Kuyruk + slot butonu */
+.home-cmd-widget--has-add {
+  position: relative;
+  padding-right: 2.1rem;
+}
+
+.home-cmd-widget__add,
+.queue-slot-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(14, 116, 144, 0.45), rgba(30, 58, 138, 0.55));
+  color: #e0f2fe;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.home-cmd-widget__add {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+}
+
+.home-cmd-widget__add:hover:not(:disabled),
+.queue-slot-add-btn:hover:not(:disabled) {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+}
+
+.home-cmd-widget__add:disabled,
+.queue-slot-add-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.active-queue-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.active-queue-cap {
+  margin: 0 0 0.5rem;
+  font-size: 0.62rem;
+  color: rgba(125, 211, 252, 0.75);
+  letter-spacing: 0.06em;
+}
+
+/* Sol menü — Ordu Terminali grubu */
+.nav-group {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.nav-group__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.82);
+  border-top: 1px solid rgba(74, 124, 89, 0.22);
+}
+
+.nav-group__icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.nav-group__hint {
+  display: none !important;
+}
+
+.nav-group__hint--legacy {
+  margin-left: auto;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.65);
+  white-space: nowrap;
+}
+
+.nav-group__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.15rem;
+}
+
+.nav-group__item .nav-link {
+  padding-left: 1.35rem;
+  font-size: 0.88em;
+}
+
+.nav-group__item .nav-label {
+  font-weight: 500;
 }
 
 .building-upgrade-timer-row {

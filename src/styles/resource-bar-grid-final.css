@@ -10,8 +10,8 @@
   height: auto !important;
   min-height: 6.25rem !important;
   max-height: none !important;
-  overflow: visible !important;
-  contain: none !important;
+  overflow: hidden !important;
+  contain: layout style !important;
 }
 
 .resource-bar--stacked .resource-bar-inner--tiered {
@@ -105,14 +105,33 @@
 
 .resource-bar--stacked .city-switcher-wrap {
   flex: 1 1 auto;
-  min-width: 8rem;
-  max-width: min(14rem, 100%);
+  min-width: 10rem;
+  max-width: min(24rem, 48vw);
 }
 
 .resource-bar--stacked .city-switcher .custom-dropdown__trigger {
-  font-size: 0.82rem !important;
-  padding: 0.35rem 0.55rem !important;
+  font-size: 0.78rem !important;
+  padding: 0.35rem 0.5rem !important;
   min-height: 2rem !important;
+}
+
+.resource-bar--stacked .city-switcher .custom-dropdown__value {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.02em !important;
+}
+
+@media (max-width: 900px) {
+  .resource-bar--stacked .city-switcher-wrap {
+    max-width: min(18rem, 52vw);
+  }
+
+  .resource-bar--stacked .city-switcher .custom-dropdown__value {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
 }
 
 .resource-bar--stacked .city-cycle-btn {

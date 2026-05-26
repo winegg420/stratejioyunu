@@ -11,13 +11,17 @@ const INTEL_SIDEBAR_KEY = 'map-intel-sidebar-expanded';
 
 function readIntelSidebarExpanded() {
   try {
-    return localStorage.getItem(INTEL_SIDEBAR_KEY) !== '0';
+    const stored = localStorage.getItem(INTEL_SIDEBAR_KEY);
+    if (stored === '1') return true;
+    if (stored === '0') return false;
+    return !window.matchMedia('(max-width: 900px)').matches;
   } catch {
     return true;
   }
 }
 
-export default function MapIntelSidebar() {
+export default function MapIntelSidebar({ layout = 'overlay' }) {
+  const isRail = layout === 'rail';
   const { t } = useLanguage();
   const newsLog = useGameStore((s) => s.newsLog);
   const expeditions = useGameStore((s) => s.expeditions);
@@ -28,7 +32,9 @@ export default function MapIntelSidebar() {
   const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
   const playerName = getCurrentPlayerName();
 
-  const [expanded, setExpanded] = useState(readIntelSidebarExpanded);
+  const [expanded, setExpanded] = useState(
+    () => (isRail ? true : readIntelSidebarExpanded()),
+  );
   const [rankRows, setRankRows] = useState([]);
   const [rankSource, setRankSource] = useState('loading');
   const [reportsSyncing, setReportsSyncing] = useState(false);
@@ -105,9 +111,14 @@ export default function MapIntelSidebar() {
     [newsLog, expeditions, reports, feedLabels, now, mapRouteSyncRev],
   );
 
-  const toggle = useCallback(() => setExpanded((v) => !v), []);
+  const toggle = useCallback((e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    setExpanded((v) => !v);
+    window.dispatchEvent(new CustomEvent('map-layout-changed'));
+  }, []);
 
-  if (!expanded) {
+  if (!isRail && !expanded) {
     return (
       <button
         type="button"
@@ -115,28 +126,38 @@ export default function MapIntelSidebar() {
         onClick={toggle}
         aria-expanded={false}
         aria-label={t('map.intelSidebar.open')}
-        title={t('map.intelSidebar.open')}
+        title={t('map.intelSidebar.openHint')}
       >
         <span className="map-intel-sidebar__reopen-icon" aria-hidden="true">📡</span>
-        <span className="map-intel-sidebar__reopen-label">İSTİHBARAT</span>
+        <span className="map-intel-sidebar__reopen-label">{t('map.intelSidebar.tab')}</span>
+        <span className="map-intel-sidebar__reopen-hint" aria-hidden="true">‹</span>
       </button>
     );
   }
 
   return (
-    <aside className="map-intel-sidebar map-intel-sidebar--expanded" aria-label={t('map.intelSidebar.aria')}>
+    <aside
+      className={[
+        'map-intel-sidebar',
+        'map-intel-sidebar--expanded',
+        isRail && 'map-intel-sidebar--rail',
+      ].filter(Boolean).join(' ')}
+      aria-label={t('map.intelSidebar.aria')}
+    >
       <header className="map-intel-sidebar__head">
         <span className="map-intel-sidebar__bolt" aria-hidden="true">◆</span>
         <span className="map-intel-sidebar__head-title">{t('map.intelSidebar.title')}</span>
-        <button
-          type="button"
-          className="map-intel-sidebar__close"
-          onClick={toggle}
-          aria-label={t('map.intelSidebar.close')}
-          title={t('map.intelSidebar.close')}
-        >
-          ×
-        </button>
+        {!isRail && (
+          <button
+            type="button"
+            className="map-intel-sidebar__close"
+            onClick={toggle}
+            aria-label={t('map.intelSidebar.close')}
+            title={t('map.intelSidebar.close')}
+          >
+            ×
+          </button>
+        )}
       </header>
 
       <section className="map-intel-sidebar__section">

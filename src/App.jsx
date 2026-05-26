@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { releaseMapSessionLocks } from './map/mapRouteCleanup';
 import ErrorBoundary from './components/ErrorBoundary';
 import PageSafe from './components/PageSafe';
 import { AuthProvider } from './context/AuthContext';
@@ -29,6 +31,10 @@ import Messages from './pages/Messages';
 import BlackMarket from './pages/BlackMarket';
 
 export default function App() {
+  useEffect(() => {
+    releaseMapSessionLocks();
+  }, []);
+
   return (
     <ErrorBoundary>
       <LanguageProvider>

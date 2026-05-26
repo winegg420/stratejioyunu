@@ -34,11 +34,22 @@ export default function PageSessionGate({ children, loadingMessageKey = 'auth.sy
     return <AuthLoadingScreen messageKey="auth.checking" timedOut={timedOut} />;
   }
 
-  if (waitingGame) {
+  if (waitingGame && !timedOut) {
     return (
       <div className="page page--console page-session-gate" aria-live="polite">
-        <AuthLoadingScreen messageKey={loadingMessageKey} timedOut={timedOut} />
+        <AuthLoadingScreen messageKey={loadingMessageKey} timedOut={false} />
       </div>
+    );
+  }
+
+  if (waitingGame && timedOut) {
+    return (
+      <>
+        <div className="page-session-gate__timeout-banner" role="status" aria-live="polite">
+          <AuthLoadingScreen messageKey={loadingMessageKey} timedOut />
+        </div>
+        {children}
+      </>
     );
   }
 

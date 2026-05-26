@@ -190,6 +190,16 @@
   white-space: nowrap;
 }
 
+.nav-badge--coastal-req {
+  color: rgba(251, 191, 36, 0.95) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+.nav-badge--coastal-ok {
+  color: rgba(52, 211, 153, 0.9) !important;
+  border-color: rgba(52, 211, 153, 0.3) !important;
+}
+
 .hud-shell .nav-link.active,
 .app-shell.hud-shell .nav-link.active {
   border-left-color: #4a7c59 !important;

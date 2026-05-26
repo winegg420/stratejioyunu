@@ -48,6 +48,8 @@
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
+  overflow-x: clip;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   padding-bottom: calc(
@@ -60,6 +62,22 @@
   min-height: 0;
   overflow: hidden;
   display: flex;
+}
+
+/* Harita — sol navigasyonu gizle; taktik alan tam genişlik */
+@media (min-width: 901px) {
+  .app-shell.hud-shell.route-map .sidebar-desktop {
+    display: none !important;
+  }
+
+  .app-shell.hud-shell.route-map .main-shell {
+    width: 100%;
+  }
+
+  .app-shell.hud-shell.route-map .content-area {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .app-shell.route-map .content-area {
@@ -79,8 +97,16 @@
   overflow: hidden;
 }
 
+html.route-map-page,
+html.route-map-page body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 .app-shell.route-map .map-page-wrapper--tactical {
   flex: 1 1 auto;
+  max-width: 100%;
+  overflow-x: clip;
   min-height: 0;
   height: auto !important;
   max-height: 100%;
@@ -93,16 +119,29 @@
   min-height: 0;
 }
 
-.app-shell.route-map .map-container--tactical {
+.app-shell.route-map .map-theater-body {
   flex: 1 1 auto;
-  min-height: 220px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.app-shell.route-map .turkey-map,
-.app-shell.route-map .leaflet-container {
+.app-shell.route-map .map-container--tactical {
+  position: relative !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-shell.route-map .map-container--tactical > .leaflet-container,
+.app-shell.route-map .map-container--tactical > .turkey-map {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  min-height: 220px !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
 }
 
 @media (max-width: 900px) {

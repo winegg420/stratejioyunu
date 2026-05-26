@@ -5,22 +5,30 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { BOT_MARKER_ORANGE, EMPIRE_CITY_GLOW } from './cityMarkerUtils';
 import { getMapCityDisplayColor } from './mapUtils';
 import { normalizeMapCity } from './botCityUtils';
-import { filterMapPointsInViewport, maxDotsForZoom } from './mapViewportCull';
+import { filterMapPointsInViewport, maxDotsForZoom, dotPixelSizeForZoom } from './mapViewportCull';
+import { isMicroCountry } from './mapMicroCountries';
+import { hashOwnerColor, isForeignPlayerCity } from './mapUtils';
 
-const DOT_SIZE = 10;
-
-function createDotIcon({ color, variant }) {
+function createDotIcon({ color, variant, size }) {
   const cls = [
     'map-city-dot',
     variant === 'own' && 'map-city-dot--own',
     variant === 'bot' && 'map-city-dot--bot',
+    variant === 'foreign' && 'map-city-dot--foreign',
+    variant === 'micro' && 'map-city-dot--micro',
   ].filter(Boolean).join(' ');
+
+  const ring = variant === 'own'
+    ? 'box-shadow:0 0 0 2px rgba(34,255,136,0.85), 0 0 8px rgba(34,255,136,0.55);'
+    : variant === 'foreign'
+      ? 'box-shadow:0 0 0 2px rgba(255,255,255,0.45);'
+      : '';
 
   return L.divIcon({
     className: cls,
-    html: `<span class="map-city-dot__core" style="background:${color}"></span>`,
-    iconSize: [DOT_SIZE, DOT_SIZE],
-    iconAnchor: [DOT_SIZE / 2, DOT_SIZE / 2],
+    html: `<span class="map-city-dot__core" style="background:${color};width:${size}px;height:${size}px;${ring}"></span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 
@@ -73,11 +81,16 @@ export default function CityDotLayer({
     <>
       {cities.map((city) => {
         if (city.lat == null || city.lng == null) return null;
-        let variant = 'default';
+        const micro = isMicroCountry(city.name);
+        const size = dotPixelSizeForZoom(zoom, micro);
+        let variant = micro ? 'micro' : 'default';
         let color = getMapCityDisplayColor(city, { ideologyView, playerName, playerIdeology });
         if (city.isOwn || city.status === 'own') {
           variant = 'own';
           color = EMPIRE_CITY_GLOW;
+        } else if (isForeignPlayerCity(city, playerName)) {
+          variant = 'foreign';
+          color = hashOwnerColor(city.owner);
         } else if (!ideologyView) {
           if (city.status === 'bot') {
             variant = 'bot';
@@ -90,7 +103,7 @@ export default function CityDotLayer({
           <Marker
             key={`dot-${renderKey}-${city.name}`}
             position={[city.lat, city.lng]}
-            icon={createDotIcon({ color, variant })}
+            icon={createDotIcon({ color, variant, size })}
             interactive={false}
             zIndexOffset={500}
           />

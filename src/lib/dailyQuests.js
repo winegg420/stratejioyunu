@@ -208,7 +208,7 @@ export function generateDailyQuests(ideology, now = Date.now()) {
   return {
     dayKey: day,
     ideology: id,
-    quests: templates.map((t) => ({
+    quests: (Array.isArray(templates) ? templates : []).map((t) => ({
       id: `${day}_${t.id}`,
       templateId: t.id,
       title: t.title,

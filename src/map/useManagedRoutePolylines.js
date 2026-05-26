@@ -10,7 +10,7 @@ import {
 function routePathOptions(route) {
   return {
     color: route.color,
-    weight: 4.5,
+    weight: route.weight ?? 4.5,
     opacity: 1,
     dashArray: route.dashArray,
     dashOffset: '0',
@@ -77,7 +77,9 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
           layer.bringToFront();
         }
         layersRef.current.set(route.id, layer);
-        dotsRef.current.set(route.id, createRouteNeonDots(map, route));
+        const dots = createRouteNeonDots(map, route);
+        dots.forEach((m) => { if (m?.bringToFront) m.bringToFront(); });
+        dotsRef.current.set(route.id, dots);
       } else {
         layer.setLatLngs(latlngs);
         layer.setStyle(routePathOptions(route));
@@ -91,6 +93,7 @@ export function useManagedRoutePolylines(map, routes, mapCities, routeSyncRev = 
         let dots = dotsRef.current.get(route.id);
         if (!dots?.length) {
           dots = createRouteNeonDots(map, route);
+          dots.forEach((m) => { if (m?.bringToFront) m.bringToFront(); });
           dotsRef.current.set(route.id, dots);
         } else {
           for (const marker of dots) {

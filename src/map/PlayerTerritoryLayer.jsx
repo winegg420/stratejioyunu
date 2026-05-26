@@ -3,6 +3,7 @@ import { GeoJSON, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { getFeatureCentroid } from './geoUtils';
 import { normalizeProvinceCode } from './mapOwnership';
+import { getCountryDisplayLabel } from '../lib/countryDisplayNames';
 
 function territoryLabelIcon(regionName, ownerName) {
   return L.divIcon({
@@ -52,7 +53,7 @@ export default function PlayerTerritoryLayer({ provinces, playerProvinces, playe
       />
       {ownFeatures.map((feature) => {
         const center = getFeatureCentroid(feature);
-        const regionName = feature.properties?.shapeName ?? 'Bölge';
+        const regionName = getCountryDisplayLabel(feature.properties?.shapeName ?? 'Bölge');
         return (
           <Marker
             key={`territory-label-${feature.properties?.shapeISO}`}

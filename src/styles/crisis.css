@@ -72,6 +72,14 @@
   gap: 0.5rem;
 }
 
+.founder-crisis-page {
+  padding-bottom: 2rem;
+}
+
+.founder-crisis-page .panel {
+  margin-bottom: 1rem;
+}
+
 .founder-admin-hint {
   margin-bottom: 1rem;
 }

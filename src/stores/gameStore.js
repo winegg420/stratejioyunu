@@ -1,7 +1,11 @@
 ﻿import { useMemo } from 'react';
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { createFoundCityState, createInitialGameState } from '../data/gameInit';
+import {
+  createEmergencyGameState,
+  createFoundCityState,
+  createInitialGameState,
+} from '../data/gameInit';
 import { ensureCityResources, getResourceDisplay } from '../data/resourceCatalog';
 import { buildMarketTradeCost } from '../lib/marketExchange';
 import { tickOpenMarket } from '../lib/openMarket';
@@ -140,6 +144,7 @@ import {
   getMainHqCity,
   isRaidOnlyMapTarget,
   isConquerableMapTarget,
+  refreshWorldBotPopulations,
   seedWorldMapFromProvinces,
 } from '../lib/worldCitySystem';
 import { slugCityId } from '../lib/cityIdUtils';
@@ -165,6 +170,7 @@ import { syncMapCitiesForPlayer } from '../map/mapOwnership';
 import { applyExpeditionLoot, refundCostWithDepotCap } from '../lib/lootUtils';
 import { buildLossRows } from '../lib/reportLosses';
 import { findSpyReportForCity, getEnemyTroopsFromReport } from '../lib/spyIntel';
+import { resolveMapCityByName } from '../lib/mapCityResolve';
 import {
   buildCombatReport,
   calcRaidLoot,
@@ -183,7 +189,13 @@ import {
   resolveSpyMission,
 } from '../utils/spyEngine';
 import { getTroopsAwayFromCity } from '../lib/troopStock';
-import { canAffordCost, deductCost, parseUnitCost } from '../utils/resourceCosts';
+import {
+  canAffordCost,
+  deductCost,
+  formatAffordFailureMessage,
+  getAffordFailure,
+  parseUnitCost,
+} from '../utils/resourceCosts';
 import { useNotificationStore } from './notificationStore';
 import { clampTaxRate, DEFAULT_TAX_RATE, enrichCityModel } from '../lib/cityModel';
 import { syncResearchesToCatalog } from '../data/researchCatalog';
@@ -213,6 +225,7 @@ import {
 } from '../lib/adminModeControl';
 import { countIntelNavOperations, filterFieldExpeditions } from '../lib/activeOperationsCount';
 import { filterActiveExpeditions } from '../lib/gameUtils';
+import { resetMapDistanceCache } from '../lib/expeditionTravel';
 import {
   getNextAutoTutorialQuest,
   isQuestComplete,
@@ -342,18 +355,19 @@ import {
   triggerRandomCbrnEvent as rollGlobalCbrnOutbreak,
   formatNewsTickerTime,
 } from '../utils/cbrnEngine';
-import { isGameAdmin } from '../lib/adminAccess';
+import { canRunAdminOverrides } from '../lib/adminAccess';
 
 function canUseAdminOverride(state, playerKey) {
-  return isGameAdmin({
-    playerName: playerKey,
-    profileIsAdmin: state.isAdminUser,
-  });
+  return canRunAdminOverrides(state, playerKey);
 }
 import {
   applyConstructionTimeReduction,
   calcConstructionSpeedupDiamondCost,
+  canPurchaseQueueSlot,
+  getConstructionQueueLimit,
   getPlayerDiamonds,
+  getProductionQueueLimit,
+  QUEUE_SLOT_DIAMOND_COST,
 } from '../lib/premiumDiamonds';
 import {
   computeCityHappiness,
@@ -372,6 +386,7 @@ import {
   refreshPastExpeditionsFromServer,
   saveGameStateNow,
   scheduleSaveGameState,
+  stashActiveExpeditionsForRecovery,
   syncExpeditionsFromServer,
 } from '../lib/supabaseSync';
 import { recoverReportsFromHistory } from '../lib/reportRecovery';
@@ -383,7 +398,28 @@ export const STORE_EMPTY_OBJECT = Object.freeze({});
 
 function cloudSync(get, options = {}) {
   const state = get();
-  if (!state._supabaseHydrated) return;
+  const userId = getLastSyncUserId();
+  const needsExpeditionPersist = Boolean(
+    options.expedition
+    || options.syncAllExpeditions
+    || options.expeditionCompletions?.length
+    || options.expeditionIdsToComplete?.length,
+  );
+
+  if (!state._supabaseHydrated) {
+    if (userId && needsExpeditionPersist && state.expeditions?.length) {
+      stashActiveExpeditionsForRecovery(userId, state.expeditions);
+    }
+    return;
+  }
+
+  if (options.immediate) {
+    saveGameStateNow(state, options).catch((err) => {
+      console.warn('[gameStore] immediate save', err);
+    });
+    return;
+  }
+
   scheduleSaveGameState(state, options);
 }
 
@@ -840,8 +876,17 @@ function tickAllCities(state, now) {
   return { cities, completed };
 }
 
+function resolveInitialGameState() {
+  try {
+    return createInitialGameState(loadPlayerMeta());
+  } catch (err) {
+    console.error('[gameStore] createInitialGameState failed — emergency boot', err);
+    return createEmergencyGameState(loadPlayerMeta());
+  }
+}
+
 export const useGameStore = create((set, get) => ({
-  ...createInitialGameState(loadPlayerMeta()),
+  ...resolveInitialGameState(),
 
   contentInfoPayload: null,
 
@@ -1085,11 +1130,14 @@ export const useGameStore = create((set, get) => ({
       provinces,
       gameConfig: state.gameConfig,
     });
-    const mapCities = syncMapCitiesForPlayer(
-      seeded,
-      state.playerCities,
-      playerName,
-      state.playerIdeology,
+    const mapCities = refreshWorldBotPopulations(
+      syncMapCitiesForPlayer(
+        seeded,
+        state.playerCities,
+        playerName,
+        state.playerIdeology,
+      ),
+      state.gameConfig,
     );
     const botsChanged = seeded !== state.mapCities;
     const ideologyChanged = mapCities.some((c, i) => {
@@ -1145,13 +1193,15 @@ export const useGameStore = create((set, get) => ({
     const state = get();
     const catalogPatch = renormalizeCatalogState(state);
     const playerName = getCurrentPlayerName();
-    const mapCities = syncMapCitiesForPlayer(
+    let mapCities = syncMapCitiesForPlayer(
       state.mapCities,
       state.playerCities,
       playerName,
       state.playerIdeology,
     );
+    mapCities = refreshWorldBotPopulations(mapCities, state.gameConfig);
     syncRegistryFromMap(mapCities);
+    resetMapDistanceCache();
     set({ ...catalogPatch, mapCities });
     if (isDevAdminLocalEnabled()) {
       get().applyAdminTestBoost();
@@ -1300,9 +1350,30 @@ export const useGameStore = create((set, get) => ({
     return true;
   },
 
+  refreshActiveCityEconomy: () => {
+    const state = get();
+    const cityId = state.activeCityId;
+    if (!cityId || !state.cities[cityId]) return;
+    set({
+      cities: {
+        ...state.cities,
+        [cityId]: refreshCityMorale(state, cityId),
+      },
+      now: Date.now(),
+    });
+  },
+
   setActiveCity: (cityId) => {
     if (!get().cities[cityId]) return;
-    set({ activeCityId: cityId, now: Date.now() });
+    const state = get();
+    set({
+      activeCityId: cityId,
+      now: Date.now(),
+      cities: {
+        ...state.cities,
+        [cityId]: refreshCityMorale(state, cityId),
+      },
+    });
     cloudSync(get, { cityId, activeCityId: true });
   },
 
@@ -3077,7 +3148,7 @@ export const useGameStore = create((set, get) => ({
     const city = state.cities[cityId];
 
     if (isKbrn) {
-      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const mapCity = resolveMapCityByName(state.mapCities, exp.target);
       const originCity = state.cities[cityId];
       const agentCount = exp.troopPayload?.kbrn?.agents ?? 2;
       const targetPc = state.playerCities.find((c) => c.name === exp.target);
@@ -3157,7 +3228,7 @@ export const useGameStore = create((set, get) => ({
     }
 
     if (isCyber) {
-      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const mapCity = resolveMapCityByName(state.mapCities, exp.target);
       const originCity = state.cities[cityId];
       const abilityId = exp.troopPayload?.cyberVirus?.abilityId;
       const agentCount = exp.troopPayload?.cyberVirus?.agents ?? 1;
@@ -3233,7 +3304,7 @@ export const useGameStore = create((set, get) => ({
     }
 
     if (isSpy) {
-      const mapCity = state.mapCities.find((c) => c.name === exp.target);
+      const mapCity = resolveMapCityByName(state.mapCities, exp.target);
       const originCity = state.cities[cityId];
       const spyResult = resolveSpyMission({
         expedition: exp,
@@ -3287,7 +3358,7 @@ export const useGameStore = create((set, get) => ({
       return;
     }
 
-    const mapCity = state.mapCities.find((c) => c.name === exp.target);
+    const mapCity = resolveMapCityByName(state.mapCities, exp.target) ?? { name: exp.target };
     const spyReport = findSpyReportForCity(state.reports, exp.target);
     const defenderCounts = resolveDefenderArmy(mapCity, {
       spyEnemyTroops: getEnemyTroopsFromReport(spyReport),
@@ -3417,6 +3488,7 @@ export const useGameStore = create((set, get) => ({
         reports: true,
       },
     });
+    get().reconcileReportsFromHistory();
 
     useNotificationStore.getState().addToast(
       combat.attackerWon
@@ -3436,6 +3508,7 @@ export const useGameStore = create((set, get) => ({
         },
       }],
     });
+    get().refreshReportsFromServer?.().catch(() => {});
   },
 
   _applyColonyConquest: ({ expedition: exp, mapCity, combat, mapPlotMatch }) => {
@@ -3926,7 +3999,13 @@ export const useGameStore = create((set, get) => ({
     const spec = resolveNextConstructionSpec(building);
     if (!spec?.cost) return false;
 
-    if (city.constructionQueue.length >= CONSTRUCTION_QUEUE_LIMIT) return false;
+    if (city.constructionQueue.length >= getConstructionQueueLimit(state.playerMeta)) {
+      useNotificationStore.getState().addToast(
+        'İnşaat kuyruğu dolu — Ana Merkez kartındaki + ile ek slot açın',
+        'warn',
+      );
+      return false;
+    }
     if (!canAffordCost(spec.cost, 1, city.resources)) return false;
     const tutorialState = {
       activeCityId: cityId,
@@ -4004,6 +4083,13 @@ export const useGameStore = create((set, get) => ({
     const costStr = unitMeta.cost;
 
     if (!canAffordCost(costStr, count, city.resources)) return false;
+    if (city.productionQueue.length >= getProductionQueueLimit(state.playerMeta)) {
+      useNotificationStore.getState().addToast(
+        'Üretim kuyruğu dolu — kuyruk kartındaki + ile ek slot açın',
+        'warn',
+      );
+      return false;
+    }
 
     const popCost = getUnitPopulationCost(unitId, count);
     if (!canAffordPopulation(city, popCost)) return false;
@@ -4139,6 +4225,7 @@ export const useGameStore = create((set, get) => ({
       : { ok: false };
     if (
       mode === 'attack'
+      && attackIntent === 'conquest'
       && !devBypass
       && conquestMeta.ok === false
       && conquestMeta.reason
@@ -4616,6 +4703,36 @@ export const useGameStore = create((set, get) => ({
 
   clearMapExpeditionLaunchRequest: () => set({ mapExpeditionLaunchRequest: null }),
 
+  purchaseQueueSlot: (slotType) => {
+    const type = slotType === 'production' ? 'production' : 'construction';
+    const state = get();
+    const meta = { ...(state.playerMeta ?? loadPlayerMeta()) };
+    if (!canPurchaseQueueSlot(meta, type)) {
+      const balance = getPlayerDiamonds(meta);
+      useNotificationStore.getState().addToast(
+        balance < QUEUE_SLOT_DIAMOND_COST
+          ? `Yetersiz elmas — gerekli: ${QUEUE_SLOT_DIAMOND_COST} 💎`
+          : 'Maksimum kuyruk kapasitesine ulaşıldı',
+        'warn',
+      );
+      return false;
+    }
+    const key = type === 'production' ? 'extraProductionSlots' : 'extraConstructionSlots';
+    const nextMeta = {
+      ...meta,
+      diamonds: getPlayerDiamonds(meta) - QUEUE_SLOT_DIAMOND_COST,
+      [key]: (meta[key] ?? 0) + 1,
+    };
+    savePlayerMeta(nextMeta);
+    set({ playerMeta: nextMeta });
+    const label = type === 'production' ? 'Üretim' : 'İnşaat';
+    useNotificationStore.getState().addToast(
+      `${label} kuyruğu +1 slot açıldı · ${QUEUE_SLOT_DIAMOND_COST} 💎`,
+      'success',
+    );
+    return true;
+  },
+
   speedUpConstruction: (queueId) => {
     const cityId = get().activeCityId;
     const city = get().cities[cityId];
@@ -4972,12 +5089,19 @@ export const useGameStore = create((set, get) => ({
     }
 
     const def = DEFENSE_BY_ID[systemId];
-    if (!def || !count || count <= 0) return false;
+    if (!def || !count || count <= 0) {
+      useNotificationStore.getState().addToast('Geçerli bir adet girin', 'warn');
+      return false;
+    }
 
     const normalized = normalizeCityDefense(city);
     const defenseQueue = normalized.defenseQueue;
     const hasActive = defenseQueue.some((q) => !q.queued);
-    if (!canAffordCost(def.unitCost, count, city.resources)) return false;
+    const afford = getAffordFailure(def.unitCost, count, city.resources);
+    if (!afford.ok) {
+      useNotificationStore.getState().addToast(formatAffordFailureMessage(afford), 'warn');
+      return false;
+    }
 
     const duration = getDefenseUnitDurationSeconds(def, count);
     const queued = addToQueue || hasActive;
@@ -5029,7 +5153,11 @@ export const useGameStore = create((set, get) => ({
     const defenseQueue = normalized.defenseQueue;
     const hasActive = defenseQueue.some((q) => !q.queued);
     const costStr = scaleDefenseUpgradeCost(def.upgradeCost, slot.level ?? 0);
-    if (!canAffordCost(costStr, 1, city.resources)) return false;
+    const afford = getAffordFailure(costStr, 1, city.resources);
+    if (!afford.ok) {
+      useNotificationStore.getState().addToast(formatAffordFailureMessage(afford), 'warn');
+      return false;
+    }
 
     const duration = getDefenseUpgradeDurationSeconds(def, slot.level ?? 0);
     const queued = addToQueue || hasActive;
@@ -5200,9 +5328,17 @@ export function useActiveExpeditions() {
 }
 
 export function useConstructionQueueFull() {
-  return useGameStore(
-    (s) => (s.cities[s.activeCityId]?.constructionQueue?.length ?? 0) >= CONSTRUCTION_QUEUE_LIMIT,
-  );
+  return useGameStore((s) => {
+    const len = s.cities[s.activeCityId]?.constructionQueue?.length ?? 0;
+    return len >= getConstructionQueueLimit(s.playerMeta);
+  });
+}
+
+export function useProductionQueueFull() {
+  return useGameStore((s) => {
+    const len = s.cities[s.activeCityId]?.productionQueue?.length ?? 0;
+    return len >= getProductionQueueLimit(s.playerMeta);
+  });
 }
 
 export function useTroopsAwayMap(cityId) {

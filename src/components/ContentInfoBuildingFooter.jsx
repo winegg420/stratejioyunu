@@ -8,7 +8,7 @@ import {
   areTutorialPrerequisitesMet,
 } from '../lib/milAiTutorialQuests';
 import { flushGameSave } from '../lib/gameActionSync';
-import { CONSTRUCTION_QUEUE_LIMIT } from '../lib/gameConstants';
+import { useConstructionQueueFull } from '../stores/gameStore';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function ContentInfoBuildingFooter({ buildingId, onClose }) {
@@ -20,9 +20,7 @@ export default function ContentInfoBuildingFooter({ buildingId, onClose }) {
   const cities = useGameStore((s) => s.cities);
   const queue = useGameStore((s) => s.cities[s.activeCityId]?.constructionQueue ?? STORE_EMPTY_ARRAY);
   const enqueueConstruction = useGameStore((s) => s.enqueueConstruction);
-  const constructionQueueFull = useGameStore(
-    (s) => (s.cities[s.activeCityId]?.constructionQueue?.length ?? 0) >= CONSTRUCTION_QUEUE_LIMIT,
-  );
+  const constructionQueueFull = useConstructionQueueFull();
 
   const building = city?.buildings?.find((b) => b.id === buildingId);
   if (!building) return null;

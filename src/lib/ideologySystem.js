@@ -172,13 +172,14 @@ export function isNaturalAlly(playerIdeology, targetIdeology) {
   return normalizeIdeology(playerIdeology) === normalizeIdeology(targetIdeology);
 }
 
-export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = false } = {}) {
+export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = false, worldMap = false } = {}) {
   const p = getIdeologyProfile(ideology);
   const color = p?.color ?? '#64748b';
   const glow = p?.colorGlow ?? 'rgba(100, 116, 139, 0.4)';
+  const fillBoost = worldMap ? 0.14 : 0;
   return {
     fillColor: color,
-    fillOpacity: isOwn ? 0.38 : isAlly ? 0.32 : 0.26,
+    fillOpacity: (isOwn ? 0.38 : isAlly ? 0.32 : 0.26) + fillBoost,
     color,
     weight: isOwn || isAlly ? 3.4 : 2.8,
     opacity: 0.95,

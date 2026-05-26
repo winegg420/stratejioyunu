@@ -4,8 +4,16 @@ import { MAP_GEO } from './mapGeoConfig';
 export default function MapHudControls({ onWorldView }) {
   const map = useMap();
 
-  const zoomIn = () => map.zoomIn();
-  const zoomOut = () => map.zoomOut();
+  const zoomIn = () => {
+    map.zoomIn(1, { animate: true });
+  };
+
+  const zoomOut = () => {
+    const next = map.getZoom() - 1;
+    if (next >= MAP_GEO.minZoom) {
+      map.setZoom(next, { animate: true });
+    }
+  };
 
   const flyWorld = () => {
     if (onWorldView) {

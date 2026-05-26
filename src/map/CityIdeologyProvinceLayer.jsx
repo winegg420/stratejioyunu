@@ -3,7 +3,8 @@ import { GeoJSON } from 'react-leaflet';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { ideologyForMapSeed } from '../lib/mapIdeologyDistribution';
 import { getIdeologyTerritoryStyle, getIdeologyProfile, isNaturalAlly } from '../lib/ideologySystem';
-import { getOwnProvinceStyle } from './mapUtils';
+import { IS_WORLD_MAP } from './mapInteractionPolicy';
+import { getForeignPlayerProvinceStyle, getOwnProvinceStyle, isForeignPlayerCity } from './mapUtils';
 import { resolveOwnerIdeology } from './mapOwnership';
 import { normalizeMapCity } from './botCityUtils';
 import { findProvinceFeature, resolveCityProvinceName } from './cityProvinceMatch';
@@ -63,6 +64,8 @@ export default function CityIdeologyProvinceLayer({
           _ideology: ideology,
           _isOwn: isOwn,
           _isAlly: isAlly,
+          _owner: matched?.owner ?? null,
+          _status: matched?.status ?? null,
         },
       };
     });
@@ -79,13 +82,18 @@ export default function CityIdeologyProvinceLayer({
       style={(feature) => {
         const isOwn = feature.properties?._isOwn;
         if (isOwn) return getOwnProvinceStyle();
+        const owner = feature.properties?._owner;
+        const status = feature.properties?._status;
+        if (isForeignPlayerCity({ status, owner }, playerName)) {
+          return getForeignPlayerProvinceStyle(owner);
+        }
         const ideology = feature.properties?._ideology;
         const isAlly = feature.properties?._isAlly;
-        return getIdeologyTerritoryStyle(ideology, { isOwn, isAlly });
+        return getIdeologyTerritoryStyle(ideology, { isOwn, isAlly, worldMap: IS_WORLD_MAP });
       }}
       smoothFactor={1.5}
       interactive={false}
-      className="map-ideology-province-layer"
+      className="map-ideology-province-layer map-ideology-province-layer--active"
     />
   );
 }

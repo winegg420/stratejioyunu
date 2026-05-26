@@ -3,8 +3,10 @@ import { useGameStore } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import { buildOperationalTickerMessages, dedupeTickerMessages } from '../lib/mapStatusTicker';
 import { mergeTickerWithPool } from '../lib/c4isrMessagePool';
+import { isCriticalTickerItem } from '../lib/tickerAlertLevel';
 import CyberTerminalPlaceholder from './CyberTerminalPlaceholder';
 import { useLanguage } from '../context/LanguageContext';
+import { useUnderAttack } from '../stores/gameStore';
 
 const TYPE_LABEL_KEYS = {
   info: 'terminal.tags.system',
@@ -13,13 +15,6 @@ const TYPE_LABEL_KEYS = {
   intel: 'terminal.tags.intel',
   danger: 'terminal.tags.danger',
 };
-
-function isKbrnAlarmItem(item) {
-  const id = String(item?.id ?? '').toLowerCase();
-  const text = String(item?.text ?? '').toLowerCase();
-  return id.includes('kbrn') || id.includes('global-alarm') || id.includes('outbreak')
-    || text.includes('kbrn') || text.includes('biyolojik') || text.includes('kimyasal');
-}
 
 function buildTickerItems(state, lang, t) {
   const fromOps = buildOperationalTickerMessages(state, lang).map((m) => ({
@@ -36,6 +31,7 @@ function buildTickerItems(state, lang, t) {
       id: row.id,
       tag: t(key),
       text: row.message,
+      critical: row.type === 'danger' || row.type === 'warn',
     });
   }
 
@@ -49,6 +45,7 @@ function buildTickerItems(state, lang, t) {
 
 export default function CommandTickerFeed() {
   const { lang, t } = useLanguage();
+  const underAttack = useUnderAttack();
   const feedItems = useNotificationStore((s) => s.feedItems);
   const newsLog = useGameStore((s) => s.newsLog);
   const activeCrisis = useGameStore((s) => s.activeCrisis);
@@ -115,15 +112,23 @@ export default function CommandTickerFeed() {
             className="command-ticker__track"
             style={{ '--command-ticker-duration': `${scrollDurationSec}s` }}
           >
-            {track.map((item, idx) => (
+            {track.map((item, idx) => {
+              const critical = item.critical || isCriticalTickerItem(item)
+                || (underAttack && String(item.id).startsWith('exp-out-'));
+              return (
               <span
                 key={`${item.id}-${idx}`}
-                className={`command-ticker__item${isKbrnAlarmItem(item) ? ' command-ticker__item--kbrn-alarm' : ''}`}
+                className={[
+                  'command-ticker__item',
+                  critical && 'command-ticker__item--critical',
+                  critical && 'command-ticker__item--kbrn-alarm',
+                ].filter(Boolean).join(' ')}
               >
                 <span className="command-ticker__tag">[{item.tag}]</span>
                 {item.text}
               </span>
-            ))}
+            );
+            })}
           </div>
         ) : (
           <CyberTerminalPlaceholder variant="scan" className="command-ticker__placeholder" />

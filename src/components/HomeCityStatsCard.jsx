@@ -3,6 +3,7 @@ import { formatHappinessLabel } from '../lib/happinessSystem';
 import { getCounterIntelProtectionPct } from '../lib/counterIntel';
 import { PROTECTION_DAYS } from '../data/placeholder';
 import { useGameStore } from '../stores/gameStore';
+import { useLanguage } from '../context/LanguageContext';
 
 function StatRow({ icon, label, value, meta, warn }) {
   return (
@@ -20,6 +21,7 @@ function StatRow({ icon, label, value, meta, warn }) {
 }
 
 export default function HomeCityStatsCard() {
+  const { countryLabel } = useLanguage();
   const activeCityId = useGameStore((s) => s.activeCityId);
   const playerCities = useGameStore((s) => s.playerCities);
   const city = useGameStore((s) => s.cities[activeCityId]);
@@ -51,10 +53,10 @@ export default function HomeCityStatsCard() {
         <span className="home-city-stats__badge">[ TAKTİKSEL ÖZET ]</span>
       </div>
       <p className="home-city-stats__intro">
-        <strong>{activeCity?.name ?? '—'}</strong>
+        <strong>{countryLabel(activeCity?.name) || '—'}</strong>
         {' · '}
         {activeCity?.type ?? 'Şehir'}
-        {activeCity?.provinceName ? ` · ${activeCity.provinceName}` : ''}
+        {activeCity?.provinceName ? ` · ${countryLabel(activeCity.provinceName)}` : ''}
       </p>
       <div className="home-city-stats__grid">
         <StatRow

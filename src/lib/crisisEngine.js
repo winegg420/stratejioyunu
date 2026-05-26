@@ -4,6 +4,9 @@
 import { genId } from './gameUtils';
 import { shouldShieldCityFromCrisis } from './progressionSystem';
 import { getRegionForCoords, CBNS_REGIONS, createNewsFeedEntry } from '../utils/cbrnEngine';
+import { IS_WORLD_MAP } from '../map/mapInteractionPolicy';
+import { WORLD_MACRO_REGIONS } from './worldMacroRegions';
+import { getUiLangForCountries } from './countryDisplayNames';
 import { getIdlePopulation } from './populationUtils';
 import { hasWorkforceShortage, isNewPlayerWorkforceProtected } from './resourceProduction';
 import { normalizeIdeology } from './ideologySystem';
@@ -157,6 +160,11 @@ export function calcEarthquakeImpact(city, severity = CRISIS_SEVERITY.LIGHT) {
 }
 
 function pickRandomRegion() {
+  if (IS_WORLD_MAP) {
+    const lang = getUiLangForCountries();
+    const r = WORLD_MACRO_REGIONS[Math.floor(Math.random() * WORLD_MACRO_REGIONS.length)];
+    return { id: r.id, name: lang === 'en' ? r.nameEn : r.nameTr };
+  }
   const idx = Math.floor(Math.random() * CBNS_REGIONS.length);
   return CBNS_REGIONS[idx];
 }

@@ -15,6 +15,10 @@ import {
   resourceLabel,
   translate,
 } from '../i18n';
+import {
+  getCountryDisplayLabel,
+  setUiLangForCountries,
+} from '../lib/countryDisplayNames';
 
 export const LanguageContext = createContext(null);
 
@@ -28,7 +32,11 @@ function readStoredLang() {
 }
 
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(readStoredLang);
+  const [lang, setLangState] = useState(() => {
+    const stored = readStoredLang();
+    setUiLangForCountries(stored);
+    return stored;
+  });
 
   const setLang = useCallback((next) => {
     const value = next === 'en' ? 'en' : 'tr';
@@ -42,6 +50,7 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.lang = lang === 'en' ? 'en' : 'tr';
+    setUiLangForCountries(lang);
   }, [lang]);
 
   const t = useCallback((key, vars) => translate(lang, key, vars), [lang]);
@@ -64,6 +73,10 @@ export function LanguageProvider({ children }) {
     (id, fallback) => localizedUnitName(lang, id, fallback),
     [lang],
   );
+  const countryLabel = useCallback(
+    (name) => getCountryDisplayLabel(name, lang),
+    [lang],
+  );
 
   const value = useMemo(() => ({
     lang,
@@ -74,8 +87,9 @@ export function LanguageProvider({ children }) {
     researchName,
     researchDesc,
     unitName,
+    countryLabel,
     isEn: lang === 'en',
-  }), [lang, setLang, t, resLabel, buildingLabel, researchName, researchDesc, unitName]);
+  }), [lang, setLang, t, resLabel, buildingLabel, researchName, researchDesc, unitName, countryLabel]);
 
   return (
     <LanguageContext.Provider value={value}>

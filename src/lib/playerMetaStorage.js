@@ -10,6 +10,8 @@ export function createDefaultPlayerMeta() {
     totalAscensions: 0,
     lastActiveAt: Date.now(),
     diamonds: 30,
+    extraConstructionSlots: 0,
+    extraProductionSlots: 0,
   };
 }
 

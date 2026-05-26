@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import { MAP_GEO } from './mapGeoConfig';
+import { IS_WORLD_MAP } from './mapInteractionPolicy';
 
-/** Harita açılışında aktif üsse odaklan — geri yükleme / hedef uçuş varken devre dışı. */
+/** Harita açılışında aktif üsse odaklan — dünya modunda genel bakış korunur. */
 export default function ActiveCityMapFocus({
   lat,
   lng,
@@ -12,15 +13,25 @@ export default function ActiveCityMapFocus({
   const map = useMap();
   const lastCityRef = useRef(null);
   const didFocusRef = useRef(false);
+  const skipWorldBootRef = useRef(IS_WORLD_MAP);
 
   useEffect(() => {
     if (disabled) return;
     if (lat == null || lng == null) return;
+
+    if (skipWorldBootRef.current) {
+      skipWorldBootRef.current = false;
+      lastCityRef.current = activeCityId;
+      return;
+    }
+
     if (didFocusRef.current && lastCityRef.current === activeCityId) return;
     didFocusRef.current = true;
     lastCityRef.current = activeCityId;
 
-    const minZoom = MAP_GEO.mode === 'world' ? MAP_GEO.zoom : 6;
+    const minZoom = MAP_GEO.mode === 'world'
+      ? (MAP_GEO.countryFocusZoom ?? 5)
+      : 6;
     const zoom = Math.max(map.getZoom(), minZoom);
     map.flyTo([lat, lng], zoom, { animate: true, duration: 0.9, easeLinearity: 0.25 });
   }, [map, activeCityId, lat, lng, disabled]);

@@ -39,6 +39,7 @@ export default function Layout() {
 
   const syncTimersOnWake = useGameStore((s) => s.syncTimersOnWake);
   const initWorldSystems = useGameStore((s) => s.initWorldSystems);
+  const refreshActiveCityEconomy = useGameStore((s) => s.refreshActiveCityEconomy);
   const touchPlayerActivity = useGameStore((s) => s.touchPlayerActivity);
   const { session, authMode, authReady } = useAuth();
   const hydrateAttemptRef = useRef(null);
@@ -52,6 +53,16 @@ export default function Layout() {
   useEffect(() => {
     initWorldSystems();
   }, [initWorldSystems]);
+
+  useEffect(() => {
+    refreshActiveCityEconomy();
+    return undefined;
+  }, [pathname, refreshActiveCityEconomy]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('route-map-page', isMapPage);
+    return () => document.documentElement.classList.remove('route-map-page');
+  }, [isMapPage]);
 
   useEffect(() => {
     if (!authReady || authMode !== 'supabase' || !session?.user?.id) return undefined;

@@ -2,13 +2,13 @@ import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 
 /** Leaflet — konteyner boyutu değişince karo döşemelerini yeniden hesapla */
-export default function MapResizeEffect() {
+export default function MapResizeEffect({ layoutRev = 'normal' }) {
   const map = useMap();
 
   useEffect(() => {
     const run = () => {
       try {
-        map.invalidateSize({ animate: false });
+        map.invalidateSize({ animate: false, pan: false });
       } catch {
         /* unmount */
       }
@@ -16,8 +16,7 @@ export default function MapResizeEffect() {
 
     run();
     const raf = requestAnimationFrame(run);
-    const t1 = window.setTimeout(run, 150);
-    const t2 = window.setTimeout(run, 500);
+    const timers = [80, 200, 450, 900].map((ms) => window.setTimeout(run, ms));
 
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
@@ -34,17 +33,17 @@ export default function MapResizeEffect() {
       ? new ResizeObserver(run)
       : null;
     ro?.observe(el);
+    if (el?.parentElement) ro?.observe(el.parentElement);
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      timers.forEach((id) => window.clearTimeout(id));
       window.removeEventListener('resize', run);
       window.removeEventListener('map-layout-changed', run);
       document.removeEventListener('visibilitychange', onVisible);
       ro?.disconnect();
     };
-  }, [map]);
+  }, [map, layoutRev]);
 
   return null;
 }

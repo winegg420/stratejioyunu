@@ -81,13 +81,29 @@
 .expedition-intent-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  pointer-events: none;
+}
+
+.expedition-intent-btn--raid.expedition-intent-btn--active {
+  border-color: #d97706;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  background: rgba(120, 53, 15, 0.35);
+}
+
+.expedition-intent-btn--blocked:not(.expedition-intent-btn--active) {
+  opacity: 0.72;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.expedition-intent-btn--conquest.expedition-intent-btn--active {
+  border-color: #dc2626;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.35);
 }
 
 .expedition-intent-btn--active {
-  border-color: var(--neon-green, #4a7c59);
-  box-shadow: 0 0 12px rgba(74, 124, 89, 0.3);
-  color: var(--neon-green, #4a7c59);
+  border-width: 2px;
 }
 
 .expedition-intent-btn__label {

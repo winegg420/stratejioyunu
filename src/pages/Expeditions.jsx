@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LocalizedPageHeader from '../components/LocalizedPageHeader';
 import EmptyState from '../components/EmptyState';
@@ -8,6 +8,7 @@ import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import OperationsMetropolisAlert from '../components/OperationsMetropolisAlert';
 import CustomDropdown from '../components/CustomDropdown';
 import { flushGameSave } from '../lib/gameActionSync';
+import { syncExpeditionsFromServer } from '../lib/supabaseSync';
 import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import { ALLIANCE_OP_STATUS } from '../lib/allianceOperation';
@@ -34,11 +35,32 @@ export default function Expeditions() {
   const addToast = useNotificationStore((s) => s.addToast);
   const navigate = useNavigate();
 
+  const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
+
+  const syncFieldOps = useCallback(() => {
+    if (useGameStore.getState().gameHydrating) return;
+    refreshPastExpeditionsFromServer().catch(() => {});
+    syncExpeditionsFromServer(
+      () => useGameStore.getState(),
+      (patch) => useGameStore.setState(patch),
+      (id) => useGameStore.getState()._completeExpedition(id),
+    ).catch(() => {});
+    useGameStore.getState().refreshReportsFromServer?.().catch(() => {});
+  }, [refreshPastExpeditionsFromServer]);
+
   useEffect(() => {
     if (gameHydrating) return undefined;
-    refreshPastExpeditionsFromServer().catch(() => {});
-    return undefined;
-  }, [gameHydrating, refreshPastExpeditionsFromServer]);
+    syncFieldOps();
+    const intervalId = window.setInterval(syncFieldOps, 20_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncFieldOps();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [gameHydrating, syncFieldOps, mapRouteSyncRev]);
 
   const opTargets = useMemo(
     () => mapCities.filter((c) => c.status !== 'own' && c.status !== 'empty').map((c) => c.name),

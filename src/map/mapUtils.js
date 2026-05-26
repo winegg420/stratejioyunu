@@ -16,12 +16,49 @@ export const WORLD_ROLE_COLORS = {
   [WORLD_ROLES.BOT_CAPITAL]: '#f59e0b',
   [WORLD_ROLES.OPEN_INLAND]: '#4ade80',
   [WORLD_ROLES.WORLD_EMPTY]: '#64748b',
+  [WORLD_ROLES.MEGA_CITY]: '#a78bfa',
+  [WORLD_ROLES.PLAYER_SLOT]: '#38bdf8',
 };
+
+/** Diğer oyuncu ülkeleri — isimden sabit renk (yeşil/bot sarısından ayrılır) */
+export function hashOwnerColor(owner) {
+  const key = String(owner ?? '').trim();
+  if (!key) return CITY_STATUS_COLORS.enemy;
+  let h = 0;
+  for (let i = 0; i < key.length; i += 1) {
+    h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  const hue = 205 + (h % 95);
+  return `hsl(${hue}, 68%, 52%)`;
+}
+
+export function isForeignPlayerCity(city, playerName) {
+  if (!city) return false;
+  if (city.isOwn || city.status === 'own') return false;
+  const owner = String(city.owner ?? '').trim();
+  if (!owner || city.status !== 'enemy') return false;
+  const self = String(playerName ?? '').trim();
+  return !self || owner !== self;
+}
+
+export function getForeignPlayerProvinceStyle(owner) {
+  const fill = hashOwnerColor(owner);
+  return {
+    fillColor: fill,
+    fillOpacity: 0.22,
+    color: fill,
+    weight: 2.2,
+    lineJoin: 'round',
+    lineCap: 'round',
+    opacity: 0.9,
+  };
+}
 
 export function getMapCityDisplayColor(city, options = {}) {
   if (!city) return CITY_STATUS_COLORS.empty;
   const { ideologyView = false, playerName, playerIdeology } = options;
   if (city.status === 'own' || city.isOwn) return CITY_STATUS_COLORS.own;
+  if (isForeignPlayerCity(city, playerName)) return hashOwnerColor(city.owner);
   if (ideologyView && playerName) {
     const ideology = resolveCityIdeology(city, playerName, playerIdeology);
     const profile = getIdeologyProfile(ideology);

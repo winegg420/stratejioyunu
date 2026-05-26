@@ -33,6 +33,23 @@ import {
 import { isSupabaseConfigured, supabase } from './supabase';
 import { getAuthUser } from './auth';
 import { resolvePlayerDisplayName } from './profileApi';
+import { resolveHydratedAdminFlags } from './adminAccess';
+import { WORLD_PLAYER_STARTERS } from '../data/worldCitiesCatalog';
+
+function resolveHydratedCityCoords(row, mapCityList) {
+  const lat = Number(row.lat);
+  const lng = Number(row.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    return { lat, lng };
+  }
+  const mapHit = mapCityList?.find((c) => c?.name === row.city_name);
+  if (Number.isFinite(Number(mapHit?.lat)) && Number.isFinite(Number(mapHit?.lng))) {
+    return { lat: Number(mapHit.lat), lng: Number(mapHit.lng) };
+  }
+  const starter = WORLD_PLAYER_STARTERS.find((s) => s.name === row.city_name);
+  if (starter) return { lat: starter.lat, lng: starter.lng };
+  return { lat: row.lat ?? null, lng: row.lng ?? null };
+}
 
 /** Kayıt sonrası eski `metal` satırlarını temizler (enum hâlâ metal içeriyorsa). */
 async function purgeLegacyMetalResourceRows(profileId, cityIds) {
@@ -847,10 +864,11 @@ export async function loadGameState(userId, { playerName } = {}) {
     playerName,
   });
   const playerMeta = profile.player_meta ?? {};
-  const isAdminUser = Boolean(
-    playerMeta.isAdmin === true
-    || playerMeta.role === 'admin',
-  );
+  const { isAdminUser, authEmail } = resolveHydratedAdminFlags({
+    profile,
+    authUser,
+    displayName,
+  });
   const playerIdeology = normalizeIdeology(profile.ideology)
     ?? loadPlayerIdeology(displayName);
   const protectionEndsAt = profile.protection_ends_at
@@ -898,14 +916,15 @@ export async function loadGameState(userId, { playerName } = {}) {
       lastTickAt,
     });
 
+    const coords = resolveHydratedCityCoords(row, mapCities);
     playerCities.push({
       id: row.id,
       name: row.city_name,
       province: row.province_code ?? '',
       provinceName: row.province_name ?? row.city_name,
-      type: row.city_type ?? 'Şehir',
-      lat: row.lat,
-      lng: row.lng,
+      type: row.city_type ?? 'Ülke',
+      lat: coords.lat,
+      lng: coords.lng,
     });
   }
 
@@ -956,6 +975,7 @@ export async function loadGameState(userId, { playerName } = {}) {
     profileDisplayName: displayName,
     profilePlayerName: profile.player_name,
     isAdminUser,
+    authEmail,
     activeCityId,
     playerIdeology,
     protectionEndsAt,
@@ -1312,9 +1332,16 @@ export async function syncExpeditionsFromServer(getState, setState, completeExpe
   }
 
   const overdueIds = new Set((overdueRows ?? []).map((r) => r.id));
-  const toComplete = state.expeditions.filter(
-    (e) => overdueIds.has(e.id) || (e.endsAt != null && e.endsAt <= Date.now()),
-  );
+  const nowMs = Date.now();
+  const EXPEDITION_SYNC_GRACE_MS = 12_000;
+  const toComplete = state.expeditions.filter((e) => {
+    if (overdueIds.has(e.id)) return true;
+    if (e.endsAt == null || e.endsAt > nowMs) return false;
+    if (e.startedAt != null && nowMs - e.startedAt < EXPEDITION_SYNC_GRACE_MS && !overdueIds.has(e.id)) {
+      return false;
+    }
+    return true;
+  });
 
   const completedIds = [];
   for (const exp of toComplete) {

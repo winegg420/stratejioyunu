@@ -1,6 +1,14 @@
+import { WORLD_ROLES } from '../data/worldCitiesCatalog';
 import { getPlayerProvinceNames } from './botProvinceAssignment';
 import { findProvinceFeature, resolveCityProvinceName } from '../map/cityProvinceMatch';
-import { getOwnProvinceStyle, getProvinceStyle } from '../map/mapUtils';
+import {
+  getForeignPlayerProvinceStyle,
+  getOwnProvinceStyle,
+  getProvinceStyle,
+  isForeignPlayerCity,
+  WORLD_ROLE_COLORS,
+} from '../map/mapUtils';
+import { getCurrentPlayerName } from './playerIdentity';
 
 /** Oyuncu kontrolündeki il adları (shapeName) */
 export function buildOwnProvinceNameSet(mapCities, playerCities, provinces = null) {
@@ -27,14 +35,68 @@ export function buildOwnProvinceNameSet(mapCities, playerCities, provinces = nul
   return names;
 }
 
-/** İl poligonu temel stili — önce kendi (yeşil), sonra bot (kırmızı) */
-export function resolveProvinceLayerStyle(provinceName, ownNames, botNames) {
+/** Ülke adı → poligon stili (oyuncu / bot rolü) */
+export function buildProvinceStyleContext(mapCities, playerCities, playerName = getCurrentPlayerName()) {
+  const foreignByProvince = new Map();
+  const botRoleByProvince = new Map();
+
+  for (const city of mapCities ?? []) {
+    const provinceName = resolveCityProvinceName(city, playerCities);
+    if (!provinceName) continue;
+
+    if (isForeignPlayerCity(city, playerName)) {
+      foreignByProvince.set(provinceName, getForeignPlayerProvinceStyle(city.owner));
+      continue;
+    }
+
+    if (city.status === 'bot') {
+      botRoleByProvince.set(
+        provinceName,
+        city.worldRole ?? WORLD_ROLES.BOT_CAPITAL,
+      );
+    }
+  }
+
+  return { foreignByProvince, botRoleByProvince };
+}
+
+export function getBotProvinceStyleByRole(worldRole = WORLD_ROLES.BOT_CAPITAL) {
+  const hex = WORLD_ROLE_COLORS[worldRole] ?? '#ef4444';
+  return {
+    fillColor: hex,
+    fillOpacity: 0.14,
+    color: hex,
+    weight: 1.45,
+    lineJoin: 'round',
+    lineCap: 'round',
+    opacity: 0.9,
+  };
+}
+
+/** İl poligonu temel stili — kendi (yeşil) → yabancı oyuncu → bot rolü */
+export function resolveProvinceLayerStyle(
+  provinceName,
+  ownNames,
+  botNames,
+  styleContext = null,
+) {
   if (provinceName && ownNames?.has(provinceName)) return getOwnProvinceStyle();
-  if (provinceName && botNames?.has(provinceName)) return getBotProvinceStyle();
+
+  const ctx = styleContext ?? { foreignByProvince: new Map(), botRoleByProvince: new Map() };
+
+  if (provinceName && ctx.foreignByProvince?.has(provinceName)) {
+    return ctx.foreignByProvince.get(provinceName);
+  }
+
+  if (provinceName && botNames?.has(provinceName)) {
+    const role = ctx.botRoleByProvince?.get(provinceName) ?? WORLD_ROLES.BOT_CAPITAL;
+    return getBotProvinceStyleByRole(role);
+  }
+
   return getProvinceStyle();
 }
 
-/** Bot kontrolündeki il poligon adları (shapeName) — pulse katmanı */
+/** Bot kontrolündeki il poligon adları (shapeName) */
 export function buildBotProvinceNameSet(mapCities, playerCities, provinces = null) {
   const set = new Set();
 
@@ -65,20 +127,12 @@ export function buildBotProvinceNameSet(mapCities, playerCities, provinces = nul
   return set;
 }
 
-/** Bot kontrolündeki iller — sabit kırmızı sınır (animasyon yok) */
+/** @deprecated — getBotProvinceStyleByRole kullanın */
 export function getBotProvinceStyle() {
-  return {
-    fillColor: '#1a0808',
-    fillOpacity: 0.12,
-    color: 'rgba(239, 68, 68, 0.88)',
-    weight: 1.5,
-    lineJoin: 'round',
-    lineCap: 'round',
-    opacity: 0.88,
-  };
+  return getBotProvinceStyleByRole(WORLD_ROLES.BOT_CAPITAL);
 }
 
-/** @deprecated Nabız kaldırıldı — sabit kırmızı döner */
+/** @deprecated */
 export function getBotProvincePulseStyle(_phase = 0) {
   return getBotProvinceStyle();
 }

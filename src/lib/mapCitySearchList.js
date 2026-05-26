@@ -1,11 +1,12 @@
 import { computeFeatureCentroid } from './botProvinceAssignment';
 import { enrichMapCityWithProvince } from '../map/cityProvinceMatch';
 import { normalizeMapCity } from '../map/botCityUtils';
+import { getMapCityDisplayName } from '../map/mapCityDisplayName';
 
 /**
  * Harita arama / şehir seçici — tüm iller (GeoJSON) + mevcut mapCities birleşimi.
  */
-export function buildMapCitySearchList(mapCities = [], provinces = null, playerCities = []) {
+export function buildMapCitySearchList(mapCities = [], provinces = null, playerCities = [], lang = 'tr') {
   const byName = new Map();
 
   for (const raw of mapCities) {
@@ -39,7 +40,8 @@ export function buildMapCitySearchList(mapCities = [], provinces = null, playerC
     }
   }
 
+  const locale = lang === 'en' ? 'en' : 'tr';
   return [...byName.values()].sort((a, b) =>
-    String(a.name).localeCompare(String(b.name), 'tr'),
+    getMapCityDisplayName(a.name, lang).localeCompare(getMapCityDisplayName(b.name, lang), locale),
   );
 }

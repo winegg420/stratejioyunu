@@ -1,0 +1,127 @@
+/* Harita sayfası — Leaflet tam alan, dünya modu arka plan */
+
+.route-map .turkey-map.leaflet-container,
+.app-shell.route-map .turkey-map.leaflet-container {
+  min-height: 0 !important;
+}
+
+.app-shell.route-map .map-page-wrapper--fill,
+.app-shell.route-map .map-error-boundary__host.map-page-wrapper--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+.app-shell.route-map .map-page--command-theater {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Harita gövdesi — flex zinciri (sınıfsız sarmalayıcı yüksekliği kırmasın) */
+.app-shell.route-map .map-theater-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell.route-map .map-theater-body > .map-container--tactical {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.app-shell.route-map .map-container--tactical {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.app-shell.route-map .map-container--tactical > .turkey-map,
+.app-shell.route-map .map-container--tactical .leaflet-container.turkey-map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* Dünya modu — parlak mavi halka yerine koyu okyanus */
+.map-container--tactical .turkey-map--world.leaflet-container,
+.map-container--tactical .leaflet-container.turkey-map--world {
+  background:
+    radial-gradient(ellipse 90% 75% at 50% 48%, #1a2838 0%, #101820 55%, #0a1218 100%) !important;
+}
+
+.map-container--tactical .leaflet-container:not(.turkey-map--world) {
+  background:
+    radial-gradient(
+      ellipse 88% 82% at 50% 46%,
+      #1a2430 0%,
+      #0f161c 55%,
+      #0a1218 100%
+    ) !important;
+}
+
+@media (min-width: 901px) {
+  .app-shell.route-map .map-page-wrapper--fill {
+    height: auto !important;
+    max-height: 100%;
+  }
+
+  .app-shell.route-map .map-container--tactical {
+    min-height: 320px;
+  }
+}
+
+/* Tam ekran — Leaflet konteyneri viewport’u doldurur (kare gri boşluk önlenir) */
+html.map-fs-active .map-page-compact-header {
+  display: none !important;
+}
+
+html.map-fs-active .map-page--command-theater .map-container-wrap--cyber,
+html.map-fs-active .map-page--command-theater .map-container--tactical,
+.map-page--command-theater:fullscreen .map-container-wrap--cyber,
+.map-page--command-theater:fullscreen .map-container--tactical,
+.map-page--command-theater:-webkit-full-screen .map-container-wrap--cyber,
+.map-page--command-theater:-webkit-full-screen .map-container--tactical,
+.map-command-theater--pseudo-fs .map-container-wrap--cyber,
+.map-command-theater--pseudo-fs .map-container--tactical {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html.map-fs-active .map-page--command-theater .map-container--tactical > .turkey-map,
+html.map-fs-active .map-page--command-theater .map-container--tactical .leaflet-container,
+.map-page--command-theater:fullscreen .map-container--tactical > .turkey-map,
+.map-page--command-theater:fullscreen .map-container--tactical .leaflet-container,
+.map-page--command-theater:-webkit-full-screen .map-container--tactical > .turkey-map,
+.map-page--command-theater:-webkit-full-screen .map-container--tactical .leaflet-container,
+.map-command-theater--pseudo-fs .map-container--tactical > .turkey-map,
+.map-command-theater--pseudo-fs .map-container--tactical .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+html.map-fs-active .map-page--command-theater .turkey-map--cyber,
+.map-page--command-theater:fullscreen .turkey-map--cyber,
+.map-command-theater--pseudo-fs .turkey-map--cyber {
+  min-height: 0 !important;
+}

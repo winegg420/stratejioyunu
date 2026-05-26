@@ -1,8 +1,9 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { MapContainer, TileLayer } from 'react-leaflet';
 
 import { MAP_GEO } from './mapGeoConfig';
+import { IS_WORLD_MAP } from './mapInteractionPolicy';
 
 import { TURKEY_MAX_BOUNDS } from './turkeyBounds';
 
@@ -23,6 +24,7 @@ import MapAnimatedLayers from './MapAnimatedLayers';
 import CityTargetReticleLayer from './CityTargetReticleLayer';
 
 import CityMapLabelsLayer from './CityMapLabelsLayer';
+import WorldCountryLabelsLayer from './WorldCountryLabelsLayer';
 
 import CityDotLayer from './CityDotLayer';
 
@@ -55,6 +57,11 @@ import MapRestoreViewport from './MapRestoreViewport';
 import MapHexClickPulse from './MapHexClickPulse';
 
 import MapResizeEffect from './MapResizeEffect';
+import MapInitialLayout from './MapInitialLayout';
+import MapContainerSizer from './MapContainerSizer';
+import MapWorldFit from './MapWorldFit';
+import MapViewportMinZoom from './MapViewportMinZoom';
+import MapBootOverlay from './MapBootOverlay';
 
 import MapCityClickRouter from './MapCityClickRouter';
 
@@ -97,6 +104,10 @@ function TurkeyLeafletMap({
   onFlySettled,
 
   onWorldView,
+
+  onFocusBase,
+
+  loadingMessage = 'Harita yükleniyor…',
 
   activeHighlightCity,
 
@@ -148,13 +159,20 @@ function TurkeyLeafletMap({
 
 }) {
 
+  const [tilesReady, setTilesReady] = useState(false);
+  const surfaceReady = tilesReady && Boolean(provinces?.features?.length);
+
   const showHud = !isMobile || !hudCollapsed;
 
-  const showCityLabels = mapZoom >= MAP_ZOOM_LABEL_MIN;
+  const showCityLabels = IS_WORLD_MAP
+    ? mapZoom >= MAP_ZOOM_MARKER_MIN
+    : mapZoom >= MAP_ZOOM_LABEL_MIN;
 
   const showDetailedMarkers = mapZoom >= MAP_ZOOM_MARKER_MIN;
 
-
+  const showCityDots = ideologyView
+    ? mapZoom >= 4
+    : mapZoom >= (IS_WORLD_MAP ? MAP_ZOOM_LABEL_MIN : 2);
 
   const ideologyLayer = useMemo(() => {
 
@@ -192,27 +210,45 @@ function TurkeyLeafletMap({
 
       minZoom={MAP_GEO.minZoom}
 
-      maxBounds={TURKEY_MAX_BOUNDS}
+      maxZoom={MAP_GEO.maxZoom}
 
-      maxBoundsViscosity={0.05}
+      maxBounds={IS_WORLD_MAP ? undefined : TURKEY_MAX_BOUNDS}
 
-      className="turkey-map turkey-map--cyber"
+      maxBoundsViscosity={IS_WORLD_MAP ? 0 : 0.05}
+
+      style={{ width: '100%', height: '100%', minHeight: 0 }}
+
+      className={`turkey-map turkey-map--cyber${IS_WORLD_MAP ? ' turkey-map--world' : ''}`}
 
       scrollWheelZoom
 
       touchZoom
 
-      dragging={false}
+      dragging={IS_WORLD_MAP}
 
       doubleClickZoom={false}
 
       zoomControl={false}
 
+      worldCopyJump={IS_WORLD_MAP}
+
     >
 
       <MapMaxBounds />
 
-      <MapResizeEffect />
+      <MapContainerSizer />
+
+      <MapViewportMinZoom isFullscreen={isFullscreen} />
+
+      <MapInitialLayout isFullscreen={isFullscreen} />
+
+      <MapWorldFit
+        enabled={!restoreViewport && !flyTarget}
+        isFullscreen={isFullscreen}
+        layoutRev={isFullscreen ? 'fs' : 'normal'}
+      />
+
+      <MapResizeEffect layoutRev={isFullscreen ? 'fs' : 'normal'} />
 
       <MapHexClickPulse onMapClick={onMapClickPulse} />
 
@@ -236,23 +272,32 @@ function TurkeyLeafletMap({
 
       <MapMouseCoordinateHud visible={showLocHud && !isFullscreen} />
 
-      <TileLayer attribution={CARTO_ATTRIBUTION} url={CARTO_DARK_MATTER_URL} />
-
-      <ProvinceRadarLayer
-
-        provinces={provinces}
-
-        botProvinceNames={botProvinceNames}
-
-        ownProvinceNames={ownProvinceNames}
-
-        onEachFeature={onEachProvince}
-
-        layerRef={provinceLayerRef}
-
+      <TileLayer
+        attribution={CARTO_ATTRIBUTION}
+        url={CARTO_DARK_MATTER_URL}
+        noWrap={IS_WORLD_MAP}
+        eventHandlers={{
+          load: () => setTilesReady(true),
+          loading: () => setTilesReady(false),
+        }}
       />
 
-      {ideologyLayer}
+      <MapBootOverlay visible={!surfaceReady} message={loadingMessage} />
+
+      {surfaceReady && (
+        <ProvinceRadarLayer
+          provinces={provinces}
+          botProvinceNames={botProvinceNames}
+          ownProvinceNames={ownProvinceNames}
+          mapCities={mapCities}
+          playerCities={playerCities}
+          onEachFeature={onEachProvince}
+          layerRef={provinceLayerRef}
+          ideologyView={ideologyView}
+        />
+      )}
+
+      {surfaceReady && ideologyLayer}
 
       <ProvinceHighlightSync
 
@@ -294,7 +339,7 @@ function TurkeyLeafletMap({
 
         ideologyView={ideologyView}
 
-        visible={!showCityLabels}
+        visible={!showCityLabels && showCityDots}
 
         zoom={mapZoom}
 
@@ -362,6 +407,12 @@ function TurkeyLeafletMap({
 
       )}
 
+      <WorldCountryLabelsLayer
+        provinces={provinces}
+        zoom={mapZoom}
+        viewportBounds={viewportBounds}
+      />
+
       <CityMapLabelsLayer
 
         mapCities={mapCities}
@@ -412,7 +463,12 @@ function TurkeyLeafletMap({
 
       )}
 
-      <MapFocusCrosshair lat={activeLat} lng={activeLng} />
+      <MapFocusCrosshair
+        activeCityId={activeCityId}
+        playerCities={playerCities}
+        mapCities={mapCities}
+        onFocusBase={onFocusBase}
+      />
 
     </MapContainer>
 

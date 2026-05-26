@@ -165,14 +165,56 @@
 }
 
 .command-ticker__item {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: rgba(226, 232, 240, 0.92);
+}
+
+.command-ticker__item--critical,
+.command-ticker__item--kbrn-alarm {
+  color: #ff6b6b !important;
+  text-shadow: 0 0 10px rgba(255, 60, 60, 0.45);
+}
+
+.command-ticker__item--critical .command-ticker__tag,
+.command-ticker__item--kbrn-alarm .command-ticker__tag {
+  color: #ff8787 !important;
+}
+
+.command-ticker--critical .command-ticker__label {
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);
 }
 
 .command-ticker__tag {
   margin-right: 0.45rem;
   color: rgba(74, 124, 89, 0.85);
   font-weight: 700;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 768px) {
+  .command-ticker {
+    min-height: 2.15rem;
+  }
+
+  .command-ticker__label {
+    font-size: 0.68rem;
+    padding: 0 0.5rem;
+  }
+
+  .command-ticker__item {
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .command-ticker__tag {
+    font-size: 0.74rem;
+  }
+
+  .command-ticker__track {
+    padding: 0.5rem 0.85rem;
+    gap: 2rem;
+  }
 }
 
 @keyframes command-ticker-roll {

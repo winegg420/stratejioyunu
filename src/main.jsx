@@ -41,6 +41,7 @@ import './styles/map-war-ui.css';
 import './styles/map-error-boundary.css';
 import './styles/c4isr-global-standard.css';
 import './styles/layout-system.css';
+import './styles/map-layout-fix.css';
 import './styles/visual-comfort.css';
 import './styles/theme-global.css';
 import './styles/theme-overrides-final.css';
@@ -53,9 +54,11 @@ import './styles/resource-bar-five-grid.css';
 import './styles/global-ui-ux-revision.css';
 import App from './App.jsx';
 import { purgeStaleDevTestFlags } from './lib/devTestMode';
+import { releaseMapSessionLocks } from './map/mapRouteCleanup';
 import { useGameStore } from './stores/gameStore';
 import { saveCachedReports } from './lib/reportsCache';
 purgeStaleDevTestFlags();
+releaseMapSessionLocks();
 
 useGameStore.subscribe((state, prev) => {
   if (state.reports !== prev.reports) {
@@ -64,13 +67,27 @@ useGameStore.subscribe((state, prev) => {
 });
 
 const rootEl = document.getElementById('root');
+let appMounted = false;
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function showBootError(message) {
   if (!rootEl) return;
+  if (appMounted) {
+    console.error('[boot] runtime error (app stays mounted):', message);
+    return;
+  }
+  document.getElementById('app-boot-fallback')?.remove();
   rootEl.innerHTML = `
     <div class="app-error-fallback" role="alert">
       <h1>Oyun yüklenemedi</h1>
-      <p>${message}</p>
+      <p>${escapeHtml(message)}</p>
       <button type="button" class="btn btn-primary" onclick="location.reload()">Sayfayı Yenile</button>
       <p class="hint"><a href="/giris">Giriş sayfasına git</a></p>
     </div>
@@ -79,11 +96,14 @@ function showBootError(message) {
 
 window.addEventListener('error', (ev) => {
   console.error(ev.error ?? ev.message);
-  showBootError(ev.error?.message ?? ev.message ?? 'Bilinmeyen hata');
+  if (!appMounted) {
+    showBootError(ev.error?.message ?? ev.message ?? 'Bilinmeyen hata');
+  }
 });
 
 window.addEventListener('unhandledrejection', (ev) => {
   console.error(ev.reason);
+  if (appMounted) return;
   const msg = ev.reason?.message ?? String(ev.reason ?? 'Promise hatası');
   showBootError(msg);
 });
@@ -92,4 +112,13 @@ if (!rootEl) {
   throw new Error('#root bulunamadı');
 }
 
-createRoot(rootEl).render(<App />);
+try {
+  createRoot(rootEl).render(<App />);
+  appMounted = true;
+  requestAnimationFrame(() => {
+    document.getElementById('app-boot-fallback')?.remove();
+  });
+} catch (err) {
+  console.error('[boot] render failed', err);
+  showBootError(err?.message ?? String(err));
+}

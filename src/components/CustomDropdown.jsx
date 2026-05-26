@@ -69,6 +69,7 @@ export default function CustomDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
+        title={displayLabel}
         onClick={() => !disabled && setOpen((v) => !v)}
       >
         <span className={`custom-dropdown__value${!selected && !value ? ' custom-dropdown__value--placeholder' : ''}`}>

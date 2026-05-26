@@ -39,7 +39,9 @@ export function resolveOwnerIdeology(city, playerName, playerIdeology) {
 }
 
 export function syncMapCitiesForPlayer(mapCities, playerCities, playerName, playerIdeology = null) {
-  const ownNames = new Set(playerCities.map((c) => c.name));
+  const ownNames = new Set(
+    (Array.isArray(playerCities) ? playerCities : []).map((c) => c.name),
+  );
   const ideology = normalizeIdeology(playerIdeology);
   return normalizeMapCities(mapCities).map((c) => {
     if (ownNames.has(c.name)) {

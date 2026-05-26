@@ -41,7 +41,8 @@ export default function Buildings() {
   const hqLevel = getHqLevel(city);
   const progression = getProgressionState(city);
   const coastal = isCoastalPlayerCity(activePlayerCity);
-  const queueSummary = getConstructionQueueSummary(city);
+  const playerMeta = useGameStore((s) => s.playerMeta);
+  const queueSummary = getConstructionQueueSummary(city, playerMeta);
 
   useEffect(() => {
     if (!hash) return undefined;

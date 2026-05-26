@@ -3,6 +3,8 @@
  * .env: VITE_FOUNDER_PLAYER_NAME, VITE_FOUNDER_EMAIL, VITE_ADMIN_PLAYER_NAMES
  */
 import { resolveProfileIsAdmin } from './profileApi';
+import { isDevAdminLocalEnabled } from './devTestMode';
+import { isAdminPanelUnlocked } from './adminUnlock';
 
 export const DEV_ADMIN_STORAGE_KEY = 'strateji_dev_admin';
 
@@ -63,4 +65,45 @@ export function isFounderPlayer(playerName, email = null, options = {}) {
     profileIsAdmin: options.profileIsAdmin ?? false,
     profile: options.profile ?? null,
   });
+}
+
+/** Supabase hydrate — profil meta + auth + env allowlist birleşik bayrak */
+export function resolveHydratedAdminFlags({ profile, authUser, displayName } = {}) {
+  const profileIsAdmin = resolveProfileIsAdmin(profile, authUser);
+  const email = authUser?.email ?? null;
+  const isAdminUser = isGameAdmin({
+    playerName: displayName,
+    email,
+    session: authUser ? { user: authUser } : null,
+    profile,
+    profileIsAdmin,
+  });
+  return { isAdminUser, authEmail: email };
+}
+
+/** /kurucu-kriz — kurucu veya Admin Log üzerinden açılmış test modu */
+export function canOpenFounderCrisisPanel({
+  playerName = null,
+  email = null,
+  session = null,
+  profileIsAdmin = false,
+  profile = null,
+  devTestModeActive = false,
+} = {}) {
+  if (isGameAdmin({ playerName, email, session, profileIsAdmin, profile })) return true;
+  if (!isDevAdminLocalEnabled()) return false;
+  return Boolean(devTestModeActive) || isAdminPanelUnlocked();
+}
+
+/** Store müdahaleleri — kurucu veya aktif admin test modu */
+export function canRunAdminOverrides(state, playerKey = null) {
+  if (!state) return false;
+  if (isGameAdmin({
+    playerName: playerKey ?? state.profileDisplayName ?? state.profilePlayerName,
+    email: state.authEmail ?? null,
+    profileIsAdmin: state.isAdminUser,
+  })) {
+    return true;
+  }
+  return Boolean(state.devTestModeActive && isDevAdminLocalEnabled());
 }

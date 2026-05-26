@@ -194,14 +194,19 @@ export default function AdminLog() {
                   </p>
                   <div className="admin-log-dev-actions__row">
                     {adminActive ? (
-                      <button
-                        type="button"
-                        className="btn btn-hud-secondary btn-sm"
-                        onClick={handleDisableAdmin}
-                        disabled={toggleBusy}
-                      >
-                        {toggleBusy ? 'Geri yükleniyor…' : 'Admin modunu durdur'}
-                      </button>
+                      <>
+                        <Link to="/kurucu-kriz" className="btn btn-hud-secondary btn-sm">
+                          Kurucu Komuta Merkezi →
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-hud-secondary btn-sm"
+                          onClick={handleDisableAdmin}
+                          disabled={toggleBusy}
+                        >
+                          {toggleBusy ? 'Geri yükleniyor…' : 'Admin modunu durdur'}
+                        </button>
+                      </>
                     ) : (
                       <button
                         type="button"

@@ -9,7 +9,13 @@ import {
 import { formatReadableDuration, parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { toRawInputNumber } from '../lib/formatNumber';
 import { flushGameSave } from '../lib/gameActionSync';
-import { canAffordCost, calcMaxAffordable } from '../utils/resourceCosts';
+import {
+  canAffordCost,
+  calcMaxAffordable,
+  formatAffordFailureMessage,
+  getAffordFailure,
+} from '../utils/resourceCosts';
+import { useNotificationStore } from '../stores/notificationStore';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 import { useLanguage } from '../context/LanguageContext';
 import CyberDataInput from './CyberDataInput';
@@ -24,6 +30,7 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
   const defenseQueue = useGameStore((s) => s.cities[s.activeCityId]?.defenseQueue ?? STORE_EMPTY_ARRAY);
   const enqueueDefenseProduction = useGameStore((s) => s.enqueueDefenseProduction);
   const enqueueDefenseUpgrade = useGameStore((s) => s.enqueueDefenseUpgrade);
+  const addToast = useNotificationStore((s) => s.addToast);
 
   const [qtyInput, setQtyInput] = useState('1');
   const [processingAction, setProcessingAction] = useState(null);
@@ -60,8 +67,26 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
     setQtyInput(toRawInputNumber(n));
   };
 
+  const toastAffordFailure = (costStr, amount) => {
+    const failure = getAffordFailure(costStr, amount, resources);
+    if (!failure.ok) {
+      addToast(formatAffordFailureMessage(failure, t), 'warn');
+    }
+  };
+
   const runProduce = async (addToQueue) => {
-    if (!canAffordUnits || isBusy) return;
+    if (isBusy) {
+      addToast(t('pages.defense.queueBusy'), 'warn');
+      return;
+    }
+    if (!validQty) {
+      addToast(t('pages.defense.invalidQty'), 'warn');
+      return;
+    }
+    if (!canAffordUnits) {
+      toastAffordFailure(def.unitCost, qty);
+      return;
+    }
     const actionKey = addToQueue ? 'queue' : 'produce';
     setProcessingAction(actionKey);
     try {
@@ -76,7 +101,15 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
   };
 
   const runUpgrade = async (addToQueue) => {
-    if (!canAffordUpgrade || isBusy) return;
+    if (isBusy) {
+      addToast(t('pages.defense.queueBusy'), 'warn');
+      return;
+    }
+    if (atMaxLevel) return;
+    if (!canAffordUpgrade) {
+      toastAffordFailure(upgradeCost, 1);
+      return;
+    }
     const actionKey = addToQueue ? 'upgradeQueue' : 'upgrade';
     setProcessingAction(actionKey);
     try {
@@ -130,7 +163,12 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
         <div className="defense-card__tier">
           <p className="content-card__meta">
             <span className="defense-card__section-label">{t('pages.defense.produceSection')}</span>
-            <CostParts costStr={def.unitCost} className="unit-card__cost-parts" />
+            <CostParts
+              costStr={def.unitCost}
+              className="unit-card__cost-parts"
+              resources={resources}
+              qty={validQty ? qty : 1}
+            />
             {unitTimeLabel ? (
               <span className="unit-card__time">
                 {' · '}
@@ -149,18 +187,18 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
             />
             <ProcessingActionButton
               type="button"
-              className="btn btn-unit-produce"
+              className={['btn btn-unit-produce', !canAffordUnits && !isBusy && 'btn--insufficient'].filter(Boolean).join(' ')}
               processing={processingAction === 'produce'}
-              disabled={!canAffordUnits || isBusy}
+              disabled={isBusy}
               onClick={() => runProduce(false)}
             >
               {t('pages.defense.produce')}
             </ProcessingActionButton>
             <ProcessingActionButton
               type="button"
-              className="btn btn-secondary"
+              className={['btn btn-secondary', !canAffordUnits && !isBusy && 'btn--insufficient'].filter(Boolean).join(' ')}
               processing={processingAction === 'queue'}
-              disabled={!canAffordUnits || isBusy}
+              disabled={isBusy}
               onClick={() => runProduce(true)}
             >
               {t('pages.defense.queueAdd')}
@@ -173,7 +211,12 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
             <span className="defense-card__section-label">{t('pages.defense.upgradeSection')}</span>
             {!atMaxLevel ? (
               <>
-                <CostParts costStr={upgradeCost} className="unit-card__cost-parts" />
+                <CostParts
+                  costStr={upgradeCost}
+                  className="unit-card__cost-parts"
+                  resources={resources}
+                  qty={1}
+                />
                 {upgradeTimeLabel ? <span className="unit-card__time"> · {upgradeTimeLabel}</span> : null}
               </>
             ) : (
@@ -184,21 +227,21 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
             <div className="card-actions">
               <ProcessingActionButton
                 type="button"
-                className="btn btn-primary"
+                className={['btn btn-primary', !canAffordUpgrade && !isBusy && 'btn--insufficient'].filter(Boolean).join(' ')}
                 processing={processingAction === 'upgrade'}
-                disabled={!canAffordUpgrade || isBusy}
+                disabled={isBusy}
                 onClick={() => runUpgrade(false)}
               >
                 {t('pages.defense.upgrade')}
               </ProcessingActionButton>
               <ProcessingActionButton
                 type="button"
-                className="btn btn-secondary"
+                className={['btn btn-secondary', !canAffordUpgrade && !isBusy && 'btn--insufficient'].filter(Boolean).join(' ')}
                 processing={processingAction === 'upgradeQueue'}
-                disabled={!canAffordUpgrade || isBusy}
+                disabled={isBusy}
                 onClick={() => runUpgrade(true)}
               >
-                {t('pages.defense.queueUpgrade')}
+                {t('pages.defense.queueAdd')}
               </ProcessingActionButton>
             </div>
           )}

@@ -23,15 +23,16 @@ export function formatMapStatusBadge(city) {
 
 export function formatResourceValue(resource, city) {
   if (resource?.displayValue) return resource.displayValue;
-  if (city?.status === 'bot' || city?.status === 'empty') {
-    return RESOURCE_UNKNOWN_LABEL;
-  }
   if (typeof resource?.current === 'number') {
     const cur = Math.floor(resource.current).toLocaleString('tr-TR');
     const max = resource.max != null
       ? ` / ${Math.floor(resource.max).toLocaleString('tr-TR')}`
       : '';
-    return `${cur}${max}`;
+    const suffix = resource.estimate ? ' (tahmini)' : '';
+    return `${cur}${max}${suffix}`;
+  }
+  if (city?.status === 'bot' || city?.status === 'empty') {
+    return RESOURCE_UNKNOWN_LABEL;
   }
   return RESOURCE_UNKNOWN_LABEL;
 }

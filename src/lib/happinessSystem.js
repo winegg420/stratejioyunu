@@ -1,4 +1,5 @@
 import { translate } from '../i18n';
+import { asArray } from './asArray';
 import { clampHappiness, DEFAULT_HAPPINESS, DEFAULT_TAX_RATE } from './cityModel';
 import { formatRate } from './gameUtils';
 import { BUILDING_RESOURCE_MAP } from './gameUtils';
@@ -8,7 +9,9 @@ import {
   pruneCrisisEffects,
 } from './crisisEngine';
 
-const PRODUCTION_RESOURCE_IDS = new Set(Object.values(BUILDING_RESOURCE_MAP));
+const PRODUCTION_RESOURCE_IDS = new Set(
+  Object.values(BUILDING_RESOURCE_MAP ?? {}).filter(Boolean),
+);
 
 function parseHourlyRate(rateStr) {
   const match = rateStr?.match(/\+(\d+)/);
@@ -189,7 +192,7 @@ export function applyHappinessToResourceRates(resources, happiness, cyberEffects
   const kbrnDebuff = getActiveKbrnProductionDebuff(kbrnEffects);
   const totalMult = happyMult * (1 - cyberDebuff) * (1 - kbrnDebuff);
 
-  return (resources ?? []).map((r) => {
+  return asArray(resources).map((r) => {
     if (!PRODUCTION_RESOURCE_IDS.has(r.id)) {
       return { ...r, happinessMultiplier: 1, happinessPenalty: false };
     }

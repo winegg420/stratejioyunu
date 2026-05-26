@@ -3,20 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './map-tactical.css';
+import '../styles/map-layout-fix.css';
 import CityDetailPanel from './CityDetailPanel';
 import MapMiniMap from './MapMiniMap';
 import { MAP_GEO } from './mapGeoConfig';
 import { getProvinceStyle } from './mapUtils';
 import TacticalSearchConsole from './TacticalSearchConsole';
+import { countryNameMatchesQuery } from '../lib/countryDisplayNames';
+import { resolveMapCityByName } from '../lib/mapCityResolve';
 import MapTacticalCommandBar from './MapTacticalCommandBar';
+import { resolveIdeologyToggleLabel } from './mapUiLabels';
 import MapIntelSidebar from './MapIntelSidebar';
+import MapStatusLegend from './MapStatusLegend';
 import MapStatusBand from './MapStatusBand';
 import TurkeyLeafletMap from './TurkeyLeafletMap';
 import { normalizeMapCities } from './botCityUtils';
 import { safeFilterMapCities, safeMapCities, safeRunMapOp } from '../lib/mapSafeUtils';
+import { resolvePlayerCountryFocus } from '../lib/mapPlayerFocus';
 import { useMountedRef } from '../hooks/useMountedRef';
 import { enrichMapCityWithProvince } from './cityProvinceMatch';
-import { buildBotProvinceNameSet, buildOwnProvinceNameSet } from '../lib/botProvincePulse';
+import { resolveIntelTargetName } from '../lib/intelTargetResolve';
+import {
+  buildBotProvinceNameSet,
+  buildOwnProvinceNameSet,
+  buildProvinceStyleContext,
+} from '../lib/botProvincePulse';
 import { useMapFullscreen } from '../hooks/useMapFullscreen';
 import { useProvinceMapHandlers } from './useProvinceMapHandlers';
 import { useGameStore, useUnderAttack } from '../stores/gameStore';
@@ -34,9 +45,12 @@ import {
 import MapCoordTooltip from '../components/MapCoordTooltip';
 import HudBackButton from '../components/HudBackButton';
 import CustomDropdown from '../components/CustomDropdown';
+import { useLanguage } from '../context/LanguageContext';
+import { getMapCityDisplayName } from './mapCityDisplayName';
 
 export default function TurkeyMap() {
   const navigate = useNavigate();
+  const { lang, t } = useLanguage();
   const { theaterRef, isFullscreen, exitFullscreen, toggleFullscreen } = useMapFullscreen();
 
   const mapCitiesRaw = useGameStore((s) => s.mapCities);
@@ -64,6 +78,8 @@ export default function TurkeyMap() {
   const isMobile = useIsMobile();
 
   const [mapReady, setMapReady] = useState(false);
+  const [mapHostSized, setMapHostSized] = useState(false);
+  const mapHostRef = useRef(null);
   const [mapLocked, setMapLocked] = useState(true);
   const [provinces, setProvinces] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
@@ -76,8 +92,20 @@ export default function TurkeyMap() {
   const [restoreViewport, setRestoreViewport] = useState(null);
   const fsViewportSnapshotRef = useRef(null);
   const [hoverCoord, setHoverCoord] = useState(null);
-  const [hudCollapsed, setHudCollapsed] = useState(false);
-  const [miniMapCollapsed, setMiniMapCollapsed] = useState(false);
+  const [hudCollapsed, setHudCollapsed] = useState(() => {
+    try {
+      return window.matchMedia('(max-width: 900px)').matches;
+    } catch {
+      return false;
+    }
+  });
+  const [miniMapCollapsed, setMiniMapCollapsed] = useState(() => {
+    try {
+      return window.matchMedia('(max-width: 900px)').matches;
+    } catch {
+      return false;
+    }
+  });
   const [scanPulse, setScanPulse] = useState(false);
   const [ideologyView, setIdeologyView] = useState(false);
   const [activeHighlightCity, setActiveHighlightCity] = useState(null);
@@ -87,6 +115,7 @@ export default function TurkeyMap() {
   const [consoleForceExpanded, setConsoleForceExpanded] = useState(false);
 
   const [theaterPortalEl, setTheaterPortalEl] = useState(null);
+  const [modalPortalEl, setModalPortalEl] = useState(null);
   const provinceLayerRef = useRef(null);
   const activeProvinceLayerRef = useRef(null);
   const botPulsePhaseRef = useRef(0);
@@ -108,6 +137,7 @@ export default function TurkeyMap() {
   }, []);
   const botProvinceNamesRef = useRef(new Set());
   const ownProvinceNamesRef = useRef(new Set());
+  const provinceStyleContextRef = useRef(buildProvinceStyleContext([], []));
 
   /** Ana haritada sürükle-pan her zaman (mobilde sayfa kilidi yalnızca dış kaydırmayı etkiler) */
   const mapPanEnabled = true;
@@ -126,14 +156,23 @@ export default function TurkeyMap() {
   );
   botProvinceNamesRef.current = botProvinceNames;
   ownProvinceNamesRef.current = ownProvinceNames;
+  provinceStyleContextRef.current = buildProvinceStyleContext(mapCities, playerCities);
 
   const activePlayerCity = useMemo(
     () => playerCities.find((c) => c.id === activeCityId) ?? playerCities[0],
     [playerCities, activeCityId],
   );
 
-  const activeLat = activePlayerCity?.lat;
-  const activeLng = activePlayerCity?.lng;
+  const countryFocus = useMemo(
+    () => resolvePlayerCountryFocus({
+      activeCityId,
+      playerCities,
+      mapCities,
+    }),
+    [activeCityId, playerCities, mapCities],
+  );
+  const activeLat = countryFocus?.lat ?? activePlayerCity?.lat;
+  const activeLng = countryFocus?.lng ?? activePlayerCity?.lng;
 
   const activeMapCity = useMemo(() => {
     if (!activePlayerCity) return null;
@@ -151,7 +190,7 @@ export default function TurkeyMap() {
   const filteredCities = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return mapCities;
-    return safeFilterMapCities(mapCities, (c) => String(c.name).toLowerCase().includes(q));
+    return safeFilterMapCities(mapCities, (c) => countryNameMatchesQuery(c.name, q));
   }, [mapCities, search]);
 
   const hasMapFilter = useMemo(
@@ -168,8 +207,8 @@ export default function TurkeyMap() {
   const mapZoom = viewport?.zoom ?? 6;
 
   const searchCityList = useMemo(
-    () => buildMapCitySearchList(mapCities, provinces, playerCities),
-    [mapCities, provinces, playerCities],
+    () => buildMapCitySearchList(mapCities, provinces, playerCities, lang),
+    [mapCities, provinces, playerCities, lang],
   );
 
   const mapLiveStats = useMemo(() => safeRunMapOp(() => ({
@@ -311,8 +350,14 @@ export default function TurkeyMap() {
     const enriched = enrichMapCityWithProvince(city, playerCities);
     if (mapTargetPickRequest) {
       const own = new Set(playerCities.map((c) => c.name));
-      if (own.has(enriched.name)) return;
-      fulfillMapTargetPick(enriched.name);
+      if (enriched.status === 'own' || own.has(enriched.name)) {
+        openMapCityPanel(enriched, { skipFly });
+        return;
+      }
+      const pickTargets = mapCities.filter(
+        (c) => !own.has(c.name) && (c.status === 'enemy' || c.status === 'bot' || c.owner),
+      );
+      fulfillMapTargetPick(resolveIntelTargetName(enriched.name, pickTargets));
       navigate(mapTargetPickRequest.returnPath ?? '/istihbarat');
       return;
     }
@@ -328,6 +373,7 @@ export default function TurkeyMap() {
     mapTargetPickRequest,
     expeditionLaunchMode,
     playerCities,
+    mapCities,
     fulfillMapTargetPick,
     navigate,
     openMapCityPanel,
@@ -386,6 +432,7 @@ export default function TurkeyMap() {
     activeProvinceLayerRef,
     botProvinceNamesRef,
     ownProvinceNamesRef,
+    provinceStyleContextRef,
   });
 
   const hoverRafRef = useRef(0);
@@ -437,7 +484,8 @@ export default function TurkeyMap() {
       }
     }
     const pool = searchCityList.length ? searchCityList : mapCities;
-    const city = pool.find((c) => c.name.toLowerCase().includes(q));
+    const city = resolveMapCityByName(pool, q)
+      ?? pool.find((c) => countryNameMatchesQuery(c.name, q));
     if (city) {
       setCityPick(city.name);
       flyToCityAndOpenPanel(city);
@@ -451,14 +499,30 @@ export default function TurkeyMap() {
     pendingPanelCityRef.current = null;
     mapViewRestoredRef.current = true;
     setFitBounds(null);
-    setFlyTarget({
-      lat: MAP_GEO.center[0],
-      lng: MAP_GEO.center[1],
-      zoom: MAP_GEO.worldOverviewZoom,
-      at: Date.now(),
-    });
+    setFlyTarget(null);
+    window.dispatchEvent(new Event('map-world-fit'));
     persistViewportOnly();
   }, [persistViewportOnly]);
+
+  /** ÜSSE ODAKLAN — ana ülkeye (Main HQ), son görüntülenen bölgeye değil */
+  const handleFocusBase = useCallback(() => {
+    const target = resolvePlayerCountryFocus({ playerCities, mapCities, preferMainHq: true });
+    if (!target) return;
+
+    mapViewRestoredRef.current = true;
+    setFitBounds(null);
+    setFlyTarget({
+      lat: target.lat,
+      lng: target.lng,
+      zoom: target.zoom ?? MAP_GEO.countryFocusZoom ?? 5,
+      at: Date.now(),
+    });
+
+    const hqMapCity = resolveMapCityByName(mapCities, target.name);
+    if (hqMapCity) {
+      setLastViewedLocation(buildLastViewedFromCity(hqMapCity, viewport, { panelOpen: false }));
+    }
+  }, [playerCities, mapCities, viewport, setLastViewedLocation]);
 
   const clearMapFilters = useCallback(() => {
     setSearch('');
@@ -490,7 +554,13 @@ export default function TurkeyMap() {
   }, [persistViewportOnly]);
 
   const handleToggleIdeology = useCallback(() => {
-    setIdeologyView((v) => !v);
+    setIdeologyView((v) => {
+      const next = !v;
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('map-layout-changed'));
+      }, 0);
+      return next;
+    });
   }, []);
 
   const handleConsoleCitySelect = useCallback((city) => {
@@ -501,6 +571,29 @@ export default function TurkeyMap() {
     setMapReady(true);
     return () => setMapReady(false);
   }, []);
+
+  useEffect(() => {
+    const el = mapHostRef.current;
+    if (!el) return undefined;
+
+    const check = () => {
+      const ok = el.clientWidth >= 64 && el.clientHeight >= 64;
+      setMapHostSized(ok);
+      if (ok) window.dispatchEvent(new Event('map-layout-changed'));
+    };
+
+    check();
+    const raf = requestAnimationFrame(check);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', check);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+      window.removeEventListener('resize', check);
+    };
+  }, [mapReady]);
 
   useEffect(() => {
     if (!mapExpeditionLaunchRequest || !mapReady) return undefined;
@@ -599,24 +692,29 @@ export default function TurkeyMap() {
     if (!isFullscreen) return undefined;
     const run = () => window.dispatchEvent(new Event('map-layout-changed'));
     run();
-    const t = window.setTimeout(run, 120);
-    return () => window.clearTimeout(t);
+    const timers = [60, 150, 320, 600, 1200].map((ms) => window.setTimeout(run, ms));
+    return () => timers.forEach((id) => window.clearTimeout(id));
   }, [isFullscreen]);
 
   useEffect(() => {
     if (isFullscreen) return undefined;
 
     const snap = fsViewportSnapshotRef.current;
+    fsViewportSnapshotRef.current = null;
+
+    const content = document.querySelector('.app-shell.route-map .content-area');
+    if (content) content.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
     if (!snap?.center) return undefined;
 
-    fsViewportSnapshotRef.current = null;
     const timer = window.setTimeout(() => {
       setRestoreViewport({
         center: snap.center,
         zoom: snap.zoom,
         at: Date.now(),
       });
-    }, 80);
+    }, 120);
     return () => window.clearTimeout(timer);
   }, [isFullscreen]);
 
@@ -645,6 +743,7 @@ export default function TurkeyMap() {
   );
 
   const fsPortalRoot = isFullscreen ? theaterPortalEl : null;
+  const cityPanelPortal = fsPortalRoot ?? modalPortalEl;
 
   return (
     <div ref={theaterRef} className={pageClassName}>
@@ -656,21 +755,26 @@ export default function TurkeyMap() {
 
       {isFullscreen && (
         <div className="map-fs-chrome" data-map-no-pan>
+          <HudBackButton
+            fallback="/"
+            label="Ana Merkez"
+            className="btn btn-secondary btn-sm hud-back-btn map-fs-back-btn"
+          />
           <button
             type="button"
             className={`btn btn-secondary btn-sm map-fs-ideology-btn map-ideology-toggle${ideologyView ? ' active' : ''}`}
             onClick={handleToggleIdeology}
             aria-pressed={ideologyView}
           >
-            [ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]
+            {resolveIdeologyToggleLabel(t)}
           </button>
           <button
             type="button"
             className="map-fs-exit-btn"
             onClick={exitFullscreen}
-            aria-label="Tam ekrandan çık"
+            aria-label={t('map.fullscreen.exitAria') || 'Tam ekrandan çık'}
           >
-            [ TAM EKRANDAN ÇIK ]
+            {t('map.fullscreen.exit') || '[ TAM EKRANDAN ÇIK ]'}
           </button>
         </div>
       )}
@@ -700,7 +804,7 @@ export default function TurkeyMap() {
                 { value: '', label: 'Şehir ara...', disabled: true },
                 ...mapCities.map((c) => ({
                   value: c.name,
-                  label: `${c.name} — ${c.status === 'bot' ? 'BOT' : (c.owner || 'Boş')}`,
+                  label: `${getMapCityDisplayName(c.name, lang)} — ${c.status === 'bot' ? 'BOT' : (c.owner || 'Boş')}`,
                 })),
               ]}
             />
@@ -764,14 +868,23 @@ export default function TurkeyMap() {
         </div>
       )}
 
-      <div className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical">
-        {!mapReady && (
+      <div className="map-theater-body">
+      <div
+        ref={setModalPortalEl}
+        className="map-command-portal-host"
+        aria-hidden={!selectedCity}
+      />
+      <div
+        ref={mapHostRef}
+        className="map-container map-container-wrap map-container-wrap--cyber map-container--tactical"
+      >
+        {(!mapReady || !mapHostSized) && (
           <div className="map-loading-placeholder" aria-live="polite">
-            Harita yükleniyor…
+            {t('map.loading')}
           </div>
         )}
 
-        {mapReady && (
+        {mapReady && mapHostSized && (
           <TurkeyLeafletMap
             provinces={provinces}
             botProvinceNames={botProvinceNames}
@@ -801,6 +914,8 @@ export default function TurkeyMap() {
             onFlyComplete={handleMapFlyComplete}
             onFlySettled={handleFlySettled}
             onWorldView={handleWorldView}
+            onFocusBase={handleFocusBase}
+            loadingMessage={t('map.loading')}
             suppressActiveCityFocus={Boolean(lastViewedLocation || flyTarget || mapFocusRequest)}
             viewportBounds={viewport?.bounds ?? null}
             isMobile={isMobile}
@@ -836,26 +951,32 @@ export default function TurkeyMap() {
           <div className="map-radar-scan-layer__beam" />
         </div>
 
-        <TacticalSearchConsole
-          searchCities={searchCityList}
-          mapCities={mapCities}
-          cityPick={cityPick}
-          setCityPick={setCityPick}
-          onCitySelect={handleConsoleCitySelect}
-          onFlyToCity={(city) => flyToCityAndOpenPanel(city)}
-          search={search}
-          setSearch={setSearch}
-          searchCoord={searchCoord}
-          setSearchCoord={setSearchCoord}
-          handleSearch={handleSearch}
-          scanPulse={scanPulse}
-          onResetFilter={clearMapFilters}
-          hasActiveFilter={hasMapFilter}
-          liveStats={mapLiveStats}
-          forceExpanded={consoleForceExpanded}
-        />
+        <div className="map-hud-layer" data-map-no-pan>
+          <TacticalSearchConsole
+            searchCities={searchCityList}
+            mapCities={mapCities}
+            cityPick={cityPick}
+            setCityPick={setCityPick}
+            onCitySelect={handleConsoleCitySelect}
+            onFlyToCity={(city) => flyToCityAndOpenPanel(city)}
+            search={search}
+            setSearch={setSearch}
+            searchCoord={searchCoord}
+            setSearchCoord={setSearchCoord}
+            handleSearch={handleSearch}
+            scanPulse={scanPulse}
+            onResetFilter={clearMapFilters}
+            hasActiveFilter={hasMapFilter}
+            liveStats={mapLiveStats}
+            forceExpanded={consoleForceExpanded}
+            ideologyView={ideologyView}
+            onToggleIdeology={handleToggleIdeology}
+          />
 
-        <MapIntelSidebar />
+          <MapIntelSidebar />
+
+          <MapStatusLegend className={isFullscreen ? 'map-status-legend--fs' : ''} />
+        </div>
 
         {isMobile && !isFullscreen && (
           <>
@@ -878,11 +999,12 @@ export default function TurkeyMap() {
           </>
         )}
 
-        <div className={`map-minimap-wrap${miniMapCollapsed && isMobile ? ' map-minimap-wrap--collapsed' : ''}`}>
+        <div className={`map-minimap-wrap${miniMapCollapsed && isMobile && !isFullscreen ? ' map-minimap-wrap--collapsed' : ''}`}>
           <MapMiniMap viewport={viewport} activeCity={activeMapCity} mapCities={mapCities} />
         </div>
 
         <MapStatusBand />
+      </div>
       </div>
 
       {selectedCity && (
@@ -890,7 +1012,7 @@ export default function TurkeyMap() {
           city={selectedCity}
           onClose={handleCloseCityPanel}
           initialActionMode={panelInitialActionMode}
-          portalRoot={fsPortalRoot}
+          portalRoot={cityPanelPortal}
         />
       )}
     </div>

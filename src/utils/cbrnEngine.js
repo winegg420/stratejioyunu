@@ -24,6 +24,10 @@ export const CBNS_EVENT_MIN_INTERVAL_MS = 8 * 60 * 1000;
 export const CBNS_EVENT_ROLL_INTERVAL_TICKS = 90;
 export const CBNS_EVENT_TRIGGER_CHANCE = 0.028;
 
+import { IS_WORLD_MAP } from '../map/mapInteractionPolicy';
+import { getWorldMacroRegionForCoords } from '../lib/worldMacroRegions';
+import { getUiLangForCountries } from '../lib/countryDisplayNames';
+
 export const CBNS_REGIONS = [
   { id: 'marmara', name: "Marmara Bölgesi", latMin: 40.15, latMax: 41.85, lngMin: 26.0, lngMax: 30.8 },
   { id: 'ege', name: 'Ege Bölgesi', latMin: 37.4, latMax: 40.15, lngMin: 26.0, lngMax: 29.8 },
@@ -35,6 +39,11 @@ export const CBNS_REGIONS = [
 export const CBNS_CHEM_OP_ID = 'chem_pressure';
 
 export function getRegionForCoords(lat, lng) {
+  if (IS_WORLD_MAP) {
+    const name = getWorldMacroRegionForCoords(lat, lng, getUiLangForCountries());
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'global';
+    return { id, name };
+  }
   for (const r of CBNS_REGIONS) {
     if (lat >= r.latMin && lat <= r.latMax && lng >= r.lngMin && lng <= r.lngMax) {
       return r;

@@ -1,4 +1,5 @@
 import { enrichMapCityWithProvince, resolveCityProvinceName } from '../map/cityProvinceMatch';
+import { MAP_GEO } from '../map/mapGeoConfig';
 
 /**
  * @typedef {object} LastViewedLocation
@@ -113,6 +114,6 @@ export function resolveRestoreFlyTarget(last) {
   return {
     lat,
     lng,
-    zoom: last.zoom ?? (panelOpen ? 6 : undefined),
+    zoom: last.zoom ?? (panelOpen ? MAP_GEO.countryFocusZoom : MAP_GEO.worldOverviewZoom),
   };
 }

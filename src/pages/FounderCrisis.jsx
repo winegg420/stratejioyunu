@@ -4,21 +4,26 @@ import AdminCrisisPanel from '../components/AdminCrisisPanel';
 import AdminCentralBankPanel from '../components/AdminCentralBankPanel';
 import AdminRegionalIncentivePanel from '../components/AdminRegionalIncentivePanel';
 import { useAuth } from '../context/AuthContext';
-import { isGameAdmin } from '../lib/adminAccess';
+import { canOpenFounderCrisisPanel } from '../lib/adminAccess';
+import { isDevAdminLocalEnabled } from '../lib/devTestMode';
 import { useGameStore } from '../stores/gameStore';
 import '../styles/crisis.css';
 
 export default function FounderCrisis() {
   const { playerName, session } = useAuth();
   const isAdminUser = useGameStore((s) => s.isAdminUser);
+  const devTestModeActive = useGameStore((s) => s.devTestModeActive);
 
-  if (!isGameAdmin({
+  const canAccess = canOpenFounderCrisisPanel({
     playerName,
     email: session?.user?.email,
     session,
     profileIsAdmin: isAdminUser,
-  })) {
-    return <Navigate to="/" replace />;
+    devTestModeActive: devTestModeActive || isDevAdminLocalEnabled(),
+  });
+
+  if (!canAccess) {
+    return <Navigate to="/admin-log" replace />;
   }
 
   return (

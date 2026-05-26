@@ -47,6 +47,46 @@ body {
   color: var(--text);
 }
 
+/* JS yüklenene kadar — boş siyah ekran yerine brifing */
+.app-boot-fallback {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 38%, rgba(74, 124, 89, 0.14), transparent 70%),
+    var(--bg-deep);
+  color: var(--text);
+}
+
+.app-boot-fallback__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+.app-boot-fallback__sub {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-secondary);
+}
+
+.app-boot-fallback__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 28rem;
+}
+
 input,
 textarea,
 select,
@@ -1070,12 +1110,14 @@ html.map-fs-active:not(:has(.route-map)) .bottom-nav {
 }
 
 .route-map .map-page-wrapper--tactical .map-container-wrap {
-  flex: 1;
-  min-height: 480px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 
-.route-map .map-page-wrapper--tactical .turkey-map {
-  min-height: 0;
+.route-map .map-page-wrapper--tactical .turkey-map,
+.route-map .map-page-wrapper--tactical .leaflet-container {
+  min-height: 0 !important;
 }
 
 .map-loading-placeholder {
@@ -1774,7 +1816,11 @@ body.map-scroll-locked {
   }
 
   html:not(.mobile-shell-active) .route-map:has(.map-interaction-unlocked) .content-area {
-    overflow-y: auto;
+    overflow: hidden !important;
+  }
+
+  html:not(.mobile-shell-active) .route-map .content-area {
+    overflow: hidden !important;
   }
 
   .route-map .leaflet-container,
@@ -3704,13 +3750,55 @@ body.map-scroll-locked {
   position: absolute;
   right: 12px;
   bottom: 12px;
-  z-index: 1000;
+  z-index: 20105;
   width: 160px;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid rgba(57, 255, 20, 0.45);
   box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
   background: rgba(6, 12, 10, 0.96);
+  pointer-events: auto;
+}
+
+.map-minimap--world {
+  width: min(280px, 38vw);
+  max-width: 300px;
+}
+
+.map-minimap--world .map-minimap-canvas {
+  width: 100%;
+  height: 150px;
+}
+
+.map-minimap-ocean {
+  fill: #0a1218;
+  stroke: rgba(0, 240, 255, 0.12);
+  stroke-width: 0.15;
+}
+
+.map-minimap-dot--bot {
+  fill: #fbbf24;
+}
+
+.map-command-modal__natural-ally-hint {
+  margin: 0.35rem 0 0.5rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: #a7f3d0;
+  background: rgba(16, 48, 36, 0.55);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.map-ideology-legend__explain {
+  flex: 1 1 100%;
+  margin: 0.35rem 0 0;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  color: rgba(203, 213, 225, 0.9);
 }
 
 .map-minimap-label {
@@ -3727,6 +3815,10 @@ body.map-scroll-locked {
 .map-minimap-canvas {
   width: 160px;
   height: 120px;
+}
+
+.map-minimap--world .map-minimap-canvas {
+  height: 150px;
   background: linear-gradient(180deg, #0c1410 0%, #060a08 100%);
 }
 
@@ -3858,6 +3950,8 @@ body.map-scroll-locked {
   background: rgba(74, 124, 89, 0.08);
   border: 1px solid rgba(74, 124, 89, 0.28);
   border-radius: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .map-cmd-btn--conquest {

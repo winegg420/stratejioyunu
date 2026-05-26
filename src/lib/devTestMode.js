@@ -141,6 +141,9 @@ function buildDevIdleTroops(existing = []) {
 function boostResources(resources) {
   const rows = ensureCityResources(resources);
   return rows.map((row) => {
+    if (row.id === 'energy') {
+      return { ...row, current: DEV_TEST_RESOURCE_FILL, max: null };
+    }
     const meta = RESOURCE_CATALOG[row.id];
     const starterMax = meta?.starter?.max;
     const cap = row.max == null

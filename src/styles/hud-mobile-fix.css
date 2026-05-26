@@ -77,6 +77,32 @@
     z-index: 1;
   }
 
+  html.mobile-shell-active .app-shell.mobile-app .route-content-panel {
+    flex: 1 1 auto;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html.mobile-shell-active .page-session-gate__timeout-banner {
+    flex-shrink: 0;
+    padding: 0.35rem 0.5rem 0;
+    z-index: 20;
+  }
+
+  html.mobile-shell-active .page-session-gate__timeout-banner .auth-loading-screen {
+    margin: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.92);
+    font-size: 0.78rem;
+  }
+
+  html.mobile-shell-active .page-session-gate__timeout-banner .auth-loading-screen .hint {
+    display: none;
+  }
+
   /* Alt menu artik fixed degil — viewport altinda flex */
   html.mobile-shell-active .app-shell.mobile-app .bottom-nav {
     position: relative !important;
@@ -251,7 +277,7 @@
   }
 
   html.mobile-shell-active .route-map:has(.map-interaction-unlocked) .map-page {
-    overflow-y: auto;
+    overflow: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;

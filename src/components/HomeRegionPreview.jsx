@@ -5,8 +5,11 @@ import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { normalizeProvinceCode } from '../map/mapOwnership';
 import { featureToViewBoxPolygons, getFeatureBounds } from '../map/geoUtils';
 import { fetchMapGeo } from '../map/mapGeoLoader';
+import { useLanguage } from '../context/LanguageContext';
+import { getCountryDisplayLabel } from '../lib/countryDisplayNames';
 
 export default function HomeRegionPreview() {
+  const { countryLabel } = useLanguage();
   const playerCities = useGameStore((s) => s.playerCities);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const [provinces, setProvinces] = useState(null);
@@ -67,7 +70,7 @@ export default function HomeRegionPreview() {
         </Link>
       </div>
       <p className="home-region-preview__sub">
-        {regionData?.regionName ?? activeCity?.provinceName ?? '—'} · <strong>{playerName}</strong>
+        {regionData?.regionName ?? countryLabel(activeCity?.provinceName) ?? '—'} · <strong>{playerName}</strong>
       </p>
       <div className="home-region-preview__canvas">
         {regionData ? (

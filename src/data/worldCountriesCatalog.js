@@ -160,6 +160,8 @@ export const GEO_NAME_TO_DISPLAY = {
   'Democratic Republic of the Congo': 'Kongo DR',
   'Côte d\'Ivoire': 'Fildişi Sahili',
   "Cote d'Ivoire": 'Fildişi Sahili',
+  'Ivory Coast': 'Fildişi Sahili',
+  'Northern Cyprus': 'Kuzey Kıbrıs',
   Cameroon: 'Kamerun',
   Senegal: 'Senegal',
   Mali: 'Mali',
@@ -216,6 +218,21 @@ export const ISO_TO_DISPLAY = {
   KR: 'Güney Kore',
 };
 
+/** shapeName (Türkçe) → ISO2 */
+const DISPLAY_NAME_TO_ISO = Object.entries(ISO_TO_DISPLAY).reduce((acc, [iso, name]) => {
+  if (!acc[name]) acc[name] = iso.length === 2 ? iso : iso;
+  return acc;
+}, {});
+
+export function resolveCountryIso2(countryName, shapeIso = '') {
+  const raw = String(shapeIso ?? '').trim().toUpperCase();
+  if (raw.length === 2 && ISO_TO_DISPLAY[raw]) return raw;
+  const m = raw.match(/(?:^|[-:])([A-Z]{2})$/);
+  if (m?.[1] && ISO_TO_DISPLAY[m[1]]) return m[1];
+  const name = String(countryName ?? '').trim();
+  return DISPLAY_NAME_TO_ISO[name] ?? '';
+}
+
 export function resolveCountryDisplayName(rawName, iso2 = '') {
   const trimmed = String(rawName ?? '').trim();
   if (!trimmed && !iso2) return '';
@@ -231,6 +248,44 @@ export function isMegaCity(countryName) {
 export function isPlayerRegisterableCountry(countryName) {
   const name = String(countryName ?? '').trim();
   return name.length > 0 && !MEGA_CITIES_SET.has(name);
+}
+
+/** Tersane / deniz üretimi — kıyı erişimi olmayan ülkeler (küresel harita). */
+export const LANDLOCKED_WORLD_COUNTRIES = new Set([
+  'İsviçre', 'Avusturya', 'Çekya', 'Macaristan', 'Slovakya', 'Slovenya',
+  'Moğolistan', 'Nepal', 'Bolivya', 'Paraguay', 'Afganistan', 'Ermenistan',
+  'Laos', 'Botsvana', 'Zambiya', 'Zimbabve', 'Ruanda', 'Burundi', 'Uganda',
+  'Mali', 'Nijer', 'Çad', 'Burkina Faso', 'Benin', 'Togo', 'Kazakistan',
+  'Özbekistan', 'Türkmenistan', 'Kırgızistan', 'Tacikistan',
+]);
+
+/** Bilinen kıyı ülkeleri (oyuncu başlangıç havuzu dahil — Mısır, İtalya, …). */
+export const COASTAL_WORLD_COUNTRIES = new Set([
+  'Mısır', 'Polonya', 'İtalya', 'Brezilya', 'Hindistan', 'Kanada', 'Avustralya',
+  'Endonezya', 'Güney Kore', 'Norveç', 'Finlandiya', 'Romanya', 'Türkiye',
+  'Yunanistan', 'ABD', 'Rusya', 'Çin', 'Almanya', 'Fransa', 'İspanya',
+  'İngiltere', 'Japonya', 'Hollanda', 'İsrail', 'Tayvan', 'Singapur',
+  'Ukrayna', 'Vietnam', 'Küba', 'Kolombiya', 'Meksika', 'Jamaika', 'İsveç',
+  'Portekiz', 'Yeni Zelanda', 'Güney Afrika', 'Nijerya', 'Arjantin', 'Şili',
+  'Peru', 'Venezuela', 'Suudi Arabistan', 'İran', 'Irak', 'Pakistan',
+  'Bangladeş', 'Tayland', 'Malezya', 'Filipinler', 'BAE', 'Katar', 'Kuveyt',
+  'Bahreyn', 'Umman', 'Yemen', 'Fas', 'Cezayir', 'Tunus', 'Libya', 'Kenya',
+  'Tanzanya', 'Angola', 'Mozambik', 'Sudan', 'Güney Sudan', 'Gana', 'Senegal',
+  'Kamerun', 'Kongo DR', 'Fildişi Sahili', 'Etiyopya', 'Somali', 'Ekvador',
+  'Uruguay', 'Panama', 'Kosta Rika', 'Dominik Cumhuriyeti', 'Haiti',
+  'Guatemala', 'Honduras', 'Nikaragua', 'İrlanda', 'İzlanda', 'Danimarka',
+  'Belçika', 'Hırvatistan', 'Bulgaristan', 'Gürcistan', 'Azerbaycan',
+  'Lübnan', 'Ürdün', 'Sri Lanka', 'Myanmar', 'Kamboçya', 'Papua Yeni Gine',
+  'Madagaskar', 'Namibya', 'Gabon', 'Kıbrıs', 'Malta', 'Grönland',
+]);
+
+/** Ülkenin tersane / deniz birimi üretebilmesi için kıyı erişimi. */
+export function isWorldCountryCoastal(countryName) {
+  const display = resolveCountryDisplayName(countryName) || String(countryName ?? '').trim();
+  if (!display) return false;
+  if (LANDLOCKED_WORLD_COUNTRIES.has(display)) return false;
+  if (COASTAL_WORLD_COUNTRIES.has(display)) return true;
+  return isPlayerRegisterableCountry(display);
 }
 
 /** Küçük / önemsiz adalar — GeoJSON üretiminde hariç tutulabilir */

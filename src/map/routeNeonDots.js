@@ -20,12 +20,12 @@ export function createRouteNeonDots(map, route) {
     const phase = i / DOT_COUNT;
     const [lat, lng] = pointAlongRoute(route.positions, phase);
     const marker = L.circleMarker([lat, lng], {
-      radius: 4,
+      radius: 7,
       fillColor: route.color,
       fillOpacity: 0.95,
       color: '#ffffff',
-      weight: 1,
-      opacity: 0.85,
+      weight: 2,
+      opacity: 0.92,
       className: `tactical-route-neon-dot tactical-route-neon-dot--${i}`,
       interactive: false,
     });

@@ -7,6 +7,13 @@ import {
 
 const FS_ROOT_CLASS = MAP_FS_ROOT_CLASS;
 
+function pulseMapLayout() {
+  window.dispatchEvent(new Event('map-layout-changed'));
+  [0, 60, 150, 320, 600].forEach((ms) => {
+    window.setTimeout(() => window.dispatchEvent(new Event('map-layout-changed')), ms);
+  });
+}
+
 function isFullscreenElement(el) {
   return document.fullscreenElement === el
     || document.webkitFullscreenElement === el;
@@ -19,13 +26,16 @@ export function useMapFullscreen() {
   const syncState = useCallback(() => {
     const el = theaterRef.current;
     const active = Boolean(el && isFullscreenElement(el));
+    const wasActive = document.documentElement.classList.contains(FS_ROOT_CLASS);
     setIsFullscreen(active);
     document.documentElement.classList.toggle(FS_ROOT_CLASS, active);
-    if (active) {
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('map-layout-changed'));
-      });
+    if (wasActive && !active) {
+      document.body.classList.remove('map-scroll-locked');
+      const content = document.querySelector('.app-shell.route-map .content-area');
+      if (content) content.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
+    requestAnimationFrame(pulseMapLayout);
   }, []);
 
   useEffect(() => {
@@ -48,6 +58,7 @@ export function useMapFullscreen() {
       el.classList.add(MAP_PSEUDO_FS_CLASS);
       setIsFullscreen(true);
       document.documentElement.classList.add(FS_ROOT_CLASS);
+      pulseMapLayout();
     }
   }, []);
 
@@ -57,6 +68,11 @@ export function useMapFullscreen() {
       el.classList.remove(MAP_PSEUDO_FS_CLASS);
       setIsFullscreen(false);
       document.documentElement.classList.remove(FS_ROOT_CLASS);
+      document.body.classList.remove('map-scroll-locked');
+      const content = document.querySelector('.app-shell.route-map .content-area');
+      if (content) content.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      pulseMapLayout();
       return;
     }
     try {

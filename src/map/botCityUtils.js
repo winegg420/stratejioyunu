@@ -1,6 +1,8 @@
 /**
- * Bot üsleri — haritada gerçek şehir adı; bot kimliği ayrı tutulur.
+ * Bot üsleri — haritada gerçek ülke/şehir adı; bot kimliği ayrı tutulur.
  */
+import { resolveCountryDisplayName, resolveCountryIso2 } from '../data/worldCountriesCatalog';
+
 const BOT_PRESETS = [
   {
     match: (c) => c.botId === 'Bot_USS_03' || c.name === 'Bot_USS_03' || c.owner === 'Bot_USS_03',
@@ -22,9 +24,30 @@ function hashBotId(id = '') {
 export function resolveBotDisplayName(city) {
   const preset = BOT_PRESETS.find((p) => p.match(city));
   if (preset?.name) return preset.name;
-  const botId = city.owner || city.name || '';
-  if (/^Bot_/i.test(city.name) && city.name !== botId) return city.name;
-  return hashBotId(botId);
+
+  const provinceName = String(city?.provinceName ?? '').trim();
+  if (provinceName && !/^Bot_/i.test(provinceName)) {
+    const fromProvince = resolveCountryDisplayName(provinceName, city?.province ?? '');
+    if (fromProvince && !/^Bot_/i.test(fromProvince)) return fromProvince;
+    return provinceName;
+  }
+
+  const displayName = String(city?.name ?? '').trim();
+  if (displayName && !/^Bot_/i.test(displayName)) {
+    return resolveCountryDisplayName(displayName, city?.province ?? '') || displayName;
+  }
+
+  const botId = city?.botId || city?.owner || '';
+  if (botId) {
+    const isoGuess = String(botId).replace(/^Bot_/i, '').replace(/_/g, '');
+    const iso = resolveCountryIso2('', isoGuess);
+    if (iso) {
+      const fromBot = resolveCountryDisplayName('', iso);
+      if (fromBot && !/^Bot_/i.test(fromBot)) return fromBot;
+    }
+  }
+
+  return hashBotId(botId || displayName);
 }
 
 /** Harita ve store için bot şehir normalizasyonu */
@@ -42,8 +65,9 @@ export function normalizeMapCity(city) {
   };
 }
 
-export function normalizeMapCities(cities = []) {
-  return cities.map(normalizeMapCity);
+export function normalizeMapCities(cities) {
+  const list = Array.isArray(cities) ? cities : [];
+  return list.map(normalizeMapCity);
 }
 
 export function isBotMapCity(city) {

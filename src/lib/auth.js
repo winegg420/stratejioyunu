@@ -31,26 +31,32 @@ export function getDisplayName(user) {
   if (!user) return 'Oyuncu';
 
   const username = user.user_metadata?.username?.trim();
-  if (username && username !== 'Oyuncu') return username;
+  if (username && username.toLowerCase() !== 'oyuncu') return username;
 
   const metaName = user.user_metadata?.display_name?.trim()
     || user.user_metadata?.player_name?.trim();
-  if (metaName && metaName !== 'Oyuncu') return metaName;
+  if (metaName && metaName.toLowerCase() !== 'oyuncu') return metaName;
 
   const email = user.email?.trim();
   if (email?.includes('@')) {
     const [local, domain] = email.split('@');
     const emailLocal = local?.trim();
-    if (emailLocal && emailLocal !== 'oyuncu') {
+    if (emailLocal) {
       if (domain === AUTH_EMAIL_DOMAIN) {
-        return emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
-      }
-      const isSynthetic = emailLocal.endsWith('.stratejioyunu.local');
-      if (!isSynthetic) {
-        return emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
+        const formatted = emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
+        if (formatted.toLowerCase() !== 'oyuncu') return formatted;
+      } else {
+        const isSynthetic = emailLocal.endsWith('.stratejioyunu.local');
+        if (!isSynthetic) {
+          const formatted = emailLocal.replace(/[._-]+/g, ' ').trim() || emailLocal;
+          if (formatted.toLowerCase() !== 'oyuncu') return formatted;
+        }
       }
     }
   }
+
+  const idHint = user.id?.replace(/-/g, '').slice(0, 8);
+  if (idHint) return `Komutan_${idHint}`;
 
   return 'Oyuncu';
 }

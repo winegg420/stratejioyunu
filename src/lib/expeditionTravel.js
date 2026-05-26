@@ -25,9 +25,33 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 }
 
 let cachedMaxDistKm = null;
+let cachedMapFingerprint = '';
+
+export function resetMapDistanceCache() {
+  cachedMaxDistKm = null;
+  cachedMapFingerprint = '';
+}
+
+function mapDistanceFingerprint(mapCities) {
+  const list = mapCities ?? [];
+  if (!list.length) return 'empty';
+  let minLat = 90;
+  let maxLat = -90;
+  let minLng = 180;
+  let maxLng = -180;
+  for (const c of list) {
+    if (c.lat == null || c.lng == null) continue;
+    minLat = Math.min(minLat, c.lat);
+    maxLat = Math.max(maxLat, c.lat);
+    minLng = Math.min(minLng, c.lng);
+    maxLng = Math.max(maxLng, c.lng);
+  }
+  return `${list.length}:${minLat.toFixed(1)},${maxLat.toFixed(1)},${minLng.toFixed(1)},${maxLng.toFixed(1)}`;
+}
 
 export function getMapMaxDistanceKm(mapCities) {
-  if (cachedMaxDistKm != null && mapCities?.length) {
+  const fingerprint = mapDistanceFingerprint(mapCities);
+  if (cachedMaxDistKm != null && fingerprint === cachedMapFingerprint) {
     return cachedMaxDistKm;
   }
   const points = mapCities?.length
@@ -44,6 +68,7 @@ export function getMapMaxDistanceKm(mapCities) {
     }
   }
   cachedMaxDistKm = max;
+  cachedMapFingerprint = fingerprint;
   return max;
 }
 

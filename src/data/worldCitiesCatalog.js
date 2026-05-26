@@ -9,7 +9,7 @@ export const WORLD_ROLES = {
   BOT_CAPITAL: 'bot_capital',
   /** Mega Şehir — fethedilebilir, kayıt kapalı */
   MEGA_CITY: 'mega_city',
-  /** Oyuncu kayıt slotu — zayıf bot, fethedilemez */
+  /** Oyuncu kayıt slotu — zayıf bot, fethedilebilir */
   PLAYER_SLOT: 'player_slot',
   OPEN_INLAND: 'open_inland',
   WORLD_EMPTY: 'world_empty',

@@ -7,6 +7,7 @@ import { filterActiveExpeditions } from './gameUtils';
 import { getBuildingById, getHqLevel } from './buildingUtils';
 import { getAiCenterLevel, isAiCenterOperational } from './aiCenterEngine';
 import { milAiCommandLine } from './milAiDynamicAdvice';
+import { buildMilAiBotWeakAdvice } from './milAiBotTarget';
 
 export const MIL_AI_ADVICE_REFRESH_MS = 5 * 60 * 1000;
 
@@ -171,7 +172,7 @@ export function pickMilAiLiveAdvice(state, remote, lang = 'tr') {
     candidates.push(translate(lang, 'milAi.advice.live.unreadReports', { count: snap.unreadReports }));
   }
   if (snap.aiLevel >= 5) {
-    candidates.push(translate(lang, 'milAi.advice.lv5.botWeak'));
+    candidates.push(buildMilAiBotWeakAdvice(state, lang));
   }
 
   if (!candidates.length) {

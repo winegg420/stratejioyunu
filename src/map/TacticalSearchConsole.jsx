@@ -3,15 +3,22 @@ import { CITY_STATUS_COLORS } from './mapUtils';
 import { getCityOwnerLabel } from './mapOwnership';
 import { BOT_MANAGEMENT_LABEL, OWNER_UNCLAIMED_LABEL } from './mapDisplayLabels';
 import { getMapCityDisplayName } from './mapCityDisplayName';
+import { countryNameMatchesQuery } from '../lib/countryDisplayNames';
+import { resolveIdeologyToggleLabel } from './mapUiLabels';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { useLanguage } from '../context/LanguageContext';
+import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 
 const EXPANDED_KEY = 'tactical-console-expanded';
 
 function readExpanded() {
   try {
-    return localStorage.getItem(EXPANDED_KEY) === '1';
+    const stored = localStorage.getItem(EXPANDED_KEY);
+    if (stored === '1') return true;
+    if (stored === '0') return false;
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -32,11 +39,25 @@ export default function TacticalSearchConsole({
   hasActiveFilter = false,
   liveStats = null,
   forceExpanded = false,
+  ideologyView = false,
+  onToggleIdeology,
 }) {
+  const { t } = useLanguage();
+  const ideologyToggleLabel = resolveIdeologyToggleLabel(t);
   const [expanded, setExpanded] = useState(readExpanded);
   const [cityListFilter, setCityListFilter] = useState('');
   const playerName = getCurrentPlayerName();
+  const playerCities = useGameStore((s) => s.playerCities ?? STORE_EMPTY_ARRAY);
   const cityOptions = searchCities.length > 0 ? searchCities : mapCities;
+
+  const empireCountryNames = useMemo(() => {
+    const names = new Set();
+    for (const pc of playerCities) {
+      if (pc?.name) names.add(pc.name);
+      if (pc?.provinceName) names.add(pc.provinceName);
+    }
+    return names;
+  }, [playerCities]);
 
   useEffect(() => {
     localStorage.setItem(EXPANDED_KEY, expanded ? '1' : '0');
@@ -46,7 +67,9 @@ export default function TacticalSearchConsole({
     if (forceExpanded) setExpanded(true);
   }, [forceExpanded]);
 
-  const open = useCallback(() => {
+  const open = useCallback((e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     setExpanded(true);
     window.dispatchEvent(new CustomEvent('map-layout-changed'));
   }, []);
@@ -69,11 +92,8 @@ export default function TacticalSearchConsole({
   const filteredCityList = useMemo(() => {
     const q = cityListFilter.trim().toLowerCase();
     if (!q) return cityOptions;
-    return cityOptions.filter((c) => {
-      const name = getMapCityDisplayName(c.name).toLowerCase();
-      return name.includes(q);
-    });
-  }, [cityOptions, cityListFilter, playerName]);
+    return cityOptions.filter((c) => countryNameMatchesQuery(c.name, q));
+  }, [cityOptions, cityListFilter]);
 
   const handlePickCity = useCallback((city) => {
     setCityPick(city.name);
@@ -83,11 +103,13 @@ export default function TacticalSearchConsole({
   const flyToCityFromSearch = useCallback(() => {
     const q = cityListFilter.trim().toLowerCase();
     if (!q) return;
-    const exact = cityOptions.find(
-      (c) => getMapCityDisplayName(c.name).toLowerCase() === q,
-    );
+    const exact = cityOptions.find((c) => {
+      const raw = String(c.name).toLowerCase();
+      const display = getMapCityDisplayName(c.name).toLowerCase();
+      return raw === q || display === q;
+    });
     const partial = filteredCityList[0]
-      ?? cityOptions.find((c) => getMapCityDisplayName(c.name).toLowerCase().includes(q));
+      ?? cityOptions.find((c) => countryNameMatchesQuery(c.name, q));
     const target = exact ?? partial;
     if (!target) return;
     setCityPick(target.name);
@@ -116,28 +138,56 @@ export default function TacticalSearchConsole({
         role="search"
         aria-label="Oyuncu ve şehir arama paneli"
       >
-        <button
-          type="button"
-          className="tactical-console__tab"
-          onClick={open}
-          aria-expanded={false}
-          title="Arama panelini aç"
-        >
-          <span className="tactical-console__tab-icon" aria-hidden="true">
-            ⌕
-          </span>
-          <span className="tactical-console__tab-label">SEARCH</span>
-        </button>
+        <div className="tactical-console__tab-stack">
+          <button
+            type="button"
+            className="tactical-console__tab"
+            onClick={open}
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-expanded={false}
+            title={t('map.search.openPanel')}
+          >
+            <span className="tactical-console__tab-icon" aria-hidden="true">
+              ⌕
+            </span>
+            <span className="tactical-console__tab-label">{t('map.search.tab')}</span>
+            <span className="tactical-console__tab-hint" aria-hidden="true">
+              ›
+            </span>
+          </button>
+          {onToggleIdeology && (
+            <button
+              type="button"
+              className={`tactical-console__tab tactical-console__tab--ideology${ideologyView ? ' active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleIdeology();
+              }}
+              aria-pressed={ideologyView}
+              title={t('map.ideology.toggleHint')}
+            >
+              <span className="tactical-console__tab-icon" aria-hidden="true">◈</span>
+              <span className="tactical-console__tab-label">{ideologyToggleLabel}</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="tactical-console tactical-console--slideout tactical-console--expanded map-toolbar map-toolbar--cyber map-toolbar--console"
-      role="search"
-      aria-label="Oyuncu ve şehir arama paneli"
-    >
+    <>
+      <button
+        type="button"
+        className="tactical-console__mobile-scrim"
+        onClick={close}
+        aria-label="Arama panelini kapat"
+      />
+      <div
+        className="tactical-console tactical-console--slideout tactical-console--expanded map-toolbar map-toolbar--cyber map-toolbar--console"
+        role="search"
+        aria-label="Oyuncu ve şehir arama paneli"
+      >
       <div className="tactical-console__header map-console-header">
         <span className="map-console-header__bolt" aria-hidden="true">
           ◆
@@ -190,6 +240,9 @@ export default function TacticalSearchConsole({
             ) : (
               filteredCityList.map((c) => {
                 const isActive = cityPick === c.name;
+                const isEmpire = c.status === 'own'
+                  || empireCountryNames.has(c.name)
+                  || empireCountryNames.has(c.provinceName);
                 return (
                   <li key={c.name} role="presentation">
                     <button
@@ -199,10 +252,14 @@ export default function TacticalSearchConsole({
                       className={[
                         'map-city-list__item',
                         isActive && 'map-city-list__item--active',
+                        isEmpire && 'map-city-list__item--empire',
                       ].filter(Boolean).join(' ')}
                       onClick={() => handlePickCity(c)}
                     >
-                      {formatCityOption(c)}
+                      {isEmpire && (
+                        <span className="map-city-list__empire-badge" aria-hidden="true">★</span>
+                      )}
+                      <span className="map-city-list__item-label">{formatCityOption(c)}</span>
                     </button>
                   </li>
                 );
@@ -268,5 +325,6 @@ export default function TacticalSearchConsole({
         )}
       </div>
     </div>
+    </>
   );
 }
