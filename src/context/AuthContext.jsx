@@ -30,8 +30,10 @@ const PLAYER_KEY = 'strateji_player_name';
 const AuthContext = createContext(null);
 
 function readDemoPlayerName() {
-  if (typeof window === 'undefined') return 'Komutan_Alpha';
-  return localStorage.getItem(PLAYER_KEY) || 'Komutan_Alpha';
+  if (typeof window === 'undefined') return 'Oyuncu';
+  const stored = localStorage.getItem(PLAYER_KEY)?.trim();
+  if (stored && stored.toLowerCase() !== 'komutan_alpha') return stored;
+  return 'Oyuncu';
 }
 
 function isDemoAuthed() {
@@ -58,7 +60,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [isDemo, setIsDemo] = useState(() => isDemoAuthed());
   const [playerName, setPlayerName] = useState(() =>
-    isDemoAuthed() ? readDemoPlayerName() : 'Komutan_Alpha',
+    isDemoAuthed() ? readDemoPlayerName() : '',
   );
   const hydratedUserRef = useRef(null);
 
@@ -283,7 +285,7 @@ export function AuthProvider({ children }) {
     });
     setSession(null);
     setIsDemo(false);
-    setPlayerName('Komutan_Alpha');
+    setPlayerName('');
     await signOutSupabase();
   }, []);
 

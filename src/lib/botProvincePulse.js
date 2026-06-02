@@ -6,6 +6,7 @@ import {
   getOwnProvinceStyle,
   getProvinceStyle,
   isForeignPlayerCity,
+  MAP_BORDER_WORLD,
   WORLD_ROLE_COLORS,
 } from '../map/mapUtils';
 import { getCurrentPlayerName } from './playerIdentity';
@@ -65,8 +66,8 @@ export function getBotProvinceStyleByRole(worldRole = WORLD_ROLES.BOT_CAPITAL) {
   return {
     fillColor: hex,
     fillOpacity: 0.14,
-    color: hex,
-    weight: 1.45,
+    color: MAP_BORDER_WORLD.color,
+    weight: MAP_BORDER_WORLD.weight,
     lineJoin: 'round',
     lineCap: 'round',
     opacity: 0.9,

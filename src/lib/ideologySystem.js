@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Jeopolitik İdeoloji — 4 blok; hiçbir işlem kilitlenmez, uzmanlık çarpanları uygulanır.
  */
 
@@ -172,16 +172,35 @@ export function isNaturalAlly(playerIdeology, targetIdeology) {
   return normalizeIdeology(playerIdeology) === normalizeIdeology(targetIdeology);
 }
 
+/** Dünya haritası ülke çizgisi — mapUtils ile aynı değerler (döngüsel import yok) */
+const IDEOLOGY_WORLD_MAP_BORDER = { color: '#e74c3c', weight: 1.5 };
+
+/** Oyuncu ülkesi — ideoloji dolgusu + yeşil kontur (#00ff88, 3px) */
+export function getOwnIdeologyProvinceStyle(ideology, { worldMap = false } = {}) {
+  const base = getIdeologyTerritoryStyle(ideology, { isOwn: true, worldMap });
+  return {
+    ...base,
+    color: '#00ff88',
+    weight: 3,
+    fillOpacity: Math.min(0.52, (base.fillOpacity ?? 0.35) + 0.06),
+    opacity: 0.98,
+    className: 'territory-ideology territory-ideology--own-hq',
+  };
+}
+
 export function getIdeologyTerritoryStyle(ideology, { isOwn = false, isAlly = false, worldMap = false } = {}) {
   const p = getIdeologyProfile(ideology);
   const color = p?.color ?? '#64748b';
   const glow = p?.colorGlow ?? 'rgba(100, 116, 139, 0.4)';
   const fillBoost = worldMap ? 0.14 : 0;
+  const stroke = worldMap
+    ? IDEOLOGY_WORLD_MAP_BORDER
+    : { color, weight: isOwn || isAlly ? 3.4 : 2.8 };
   return {
     fillColor: color,
     fillOpacity: (isOwn ? 0.38 : isAlly ? 0.32 : 0.26) + fillBoost,
-    color,
-    weight: isOwn || isAlly ? 3.4 : 2.8,
+    color: stroke.color,
+    weight: stroke.weight,
     opacity: 0.95,
     className: isAlly ? 'territory-ideology territory-ideology--ally' : 'territory-ideology',
     dashArray: undefined,

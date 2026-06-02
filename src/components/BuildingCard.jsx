@@ -1,6 +1,4 @@
-﻿import { useEffect, useState } from 'react';
-import { useActionLock } from '../hooks/useActionLock';
-import { getBuildingVisual } from '../data/buildingVisualCatalog';
+﻿import { useActionLock } from '../hooks/useActionLock';
 import { formatReadableDuration, parseTimeToSeconds, remainingFromEndsAt } from '../lib/gameUtils';
 import { applyConstructionDurationSeconds } from '../lib/aiCenterEngine';
 import { canAffordCost } from '../utils/resourceCosts';
@@ -29,11 +27,6 @@ import { useLanguage } from '../context/LanguageContext';
 export default function BuildingCard({ building, progressionLock = null, coastalLocked = false }) {
   const { t, buildingLabel, lang } = useLanguage();
   const buildingName = buildingLabel(building.id, building.name);
-  const buildingVisual = getBuildingVisual(building.id);
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => {
-    setImageFailed(false);
-  }, [building.id, buildingVisual.image]);
   const now = useGameStore((s) => s.now);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const city = useGameStore((s) => s.cities[activeCityId]);
@@ -168,30 +161,14 @@ export default function BuildingCard({ building, progressionLock = null, coastal
         </p>
       )}
       <button type="button" className="content-card__intel-hit" onClick={openInfo} aria-label={t('components.buildingCard.encyclopediaAria', { name: buildingName })}>
-        {!imageFailed && buildingVisual?.image ? (
+        <div className="card-visual card-visual--building card-visual--placeholder">
           <div
-            className={`card-visual card-visual--building building-img-wrap building-img-wrap--cell-grid building-img-wrap--${building.id}`}
+            className={`building-card__placeholder building-card__placeholder--${building.id}`}
+            aria-hidden="true"
           >
-            <img
-              src={buildingVisual.image}
-              alt=""
-              className="building-card__img"
-              loading="lazy"
-              decoding="async"
-              onError={() => setImageFailed(true)}
-            />
+            <span className="building-card__placeholder-name">{buildingName}</span>
           </div>
-        ) : (
-          <div className="card-visual card-visual--building card-visual--placeholder">
-            <div
-              className={`building-card__placeholder building-card__placeholder--${building.id}`}
-              aria-hidden="true"
-            >
-              <span className="building-card__placeholder-icon">{building.image}</span>
-              <span className="building-card__placeholder-name">{buildingName}</span>
-            </div>
-          </div>
-        )}
+        </div>
         <div className="content-card__head">
           <h3>{building.name}</h3>
           <span className="building-level-badge">

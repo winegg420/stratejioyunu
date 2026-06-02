@@ -37,6 +37,8 @@ const HOME_PROGRESSION_FALLBACK = Object.freeze({
 import { formatCrisisLabel } from '../lib/crisisEngine';
 import { adminLogToNewsItem } from '../lib/adminOverrideEngine';
 import { resolveHomeFeedSectorType } from '../lib/playerCityDisplay';
+import HomeRegionPreview from '../components/HomeRegionPreview';
+import EmpireSlotBanner from '../components/EmpireSlotBanner';
 
 function QueueItem({ name, detail, endsAt, queued, now, queuedLabel }) {
   const remaining = queued ? 0 : remainingFromEndsAt(endsAt, now);
@@ -227,13 +229,16 @@ export default function Home() {
 
       <div className="home-command-layout">
         <header className="home-command-head">
-          <LocalizedPageHeader
-            className="home-command-page-header"
-            pageKey="home"
-            hideStatus
-            feedLine={sectorFeedLine}
-            feedPending={!sectorReady}
-          />
+          <div className="home-command-head__primary">
+            <LocalizedPageHeader
+              className="home-command-page-header"
+              pageKey="home"
+              hideStatus
+              feedLine={sectorFeedLine}
+              feedPending={!sectorReady}
+            />
+            <HomeRegionPreview />
+          </div>
           <div className="home-command-advisors">
             <MilAiAdvisor />
             <AiRadarPanel />
@@ -241,6 +246,8 @@ export default function Home() {
         </header>
 
         <CrisisResponsePanel />
+
+        <EmpireSlotBanner className="home-empire-slot-banner" />
 
         <div className="home-cmd-widgets" role="list" aria-label={t('pages.home.widgets.ariaSummary')}>
           <CommandWidget

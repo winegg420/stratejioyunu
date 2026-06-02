@@ -3,7 +3,7 @@ import { fetchLoyaltyLeaderboard } from '../lib/leaderboardApi';
 import { buildMapIntelFeed, buildSpyProbeFeedItems } from '../lib/mapIntelFeed';
 import { fetchSpyProbeReportsFromServer, getLastSyncUserId } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
-import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { usePlayerDisplayName } from '../lib/playerIdentityHooks';
 import { useLanguage } from '../context/LanguageContext';
 import MapIntelFeedItem from './MapIntelFeedItem';
 
@@ -30,7 +30,7 @@ export default function MapIntelSidebar({ layout = 'overlay' }) {
   const refreshReportsFromServer = useGameStore((s) => s.refreshReportsFromServer);
   const now = useGameStore((s) => s.now);
   const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
-  const playerName = getCurrentPlayerName();
+  const playerName = usePlayerDisplayName();
 
   const [expanded, setExpanded] = useState(
     () => (isRail ? true : readIntelSidebarExpanded()),
@@ -111,26 +111,55 @@ export default function MapIntelSidebar({ layout = 'overlay' }) {
     [newsLog, expeditions, reports, feedLabels, now, mapRouteSyncRev],
   );
 
+  const openPanel = useCallback((e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    setExpanded(true);
+    try {
+      localStorage.setItem(INTEL_SIDEBAR_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    refreshReportsFromServer().catch(() => {});
+    window.dispatchEvent(new CustomEvent('map-layout-changed'));
+  }, [refreshReportsFromServer]);
+
   const toggle = useCallback((e) => {
     e?.preventDefault?.();
     e?.stopPropagation?.();
-    setExpanded((v) => !v);
-    window.dispatchEvent(new CustomEvent('map-layout-changed'));
-  }, []);
+    setExpanded((v) => {
+      const next = !v;
+      if (next) refreshReportsFromServer().catch(() => {});
+      try {
+        localStorage.setItem(INTEL_SIDEBAR_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      window.dispatchEvent(new CustomEvent('map-layout-changed'));
+      return next;
+    });
+  }, [refreshReportsFromServer]);
+
+  useEffect(() => {
+    const onOpen = () => openPanel();
+    window.addEventListener('map-intel-sidebar-open', onOpen);
+    return () => window.removeEventListener('map-intel-sidebar-open', onOpen);
+  }, [openPanel]);
 
   if (!isRail && !expanded) {
     return (
       <button
         type="button"
         className="map-intel-sidebar__reopen"
-        onClick={toggle}
+        onClick={openPanel}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        data-map-no-pan
         aria-expanded={false}
         aria-label={t('map.intelSidebar.open')}
         title={t('map.intelSidebar.openHint')}
       >
-        <span className="map-intel-sidebar__reopen-icon" aria-hidden="true">📡</span>
-        <span className="map-intel-sidebar__reopen-label">{t('map.intelSidebar.tab')}</span>
-        <span className="map-intel-sidebar__reopen-hint" aria-hidden="true">‹</span>
+        <span className="map-intel-sidebar__reopen-label">{t('map.intelSidebar.tabCompact')}</span>
       </button>
     );
   }

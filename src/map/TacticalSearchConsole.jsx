@@ -5,7 +5,7 @@ import { BOT_MANAGEMENT_LABEL, OWNER_UNCLAIMED_LABEL } from './mapDisplayLabels'
 import { getMapCityDisplayName } from './mapCityDisplayName';
 import { countryNameMatchesQuery } from '../lib/countryDisplayNames';
 import { resolveIdeologyToggleLabel } from './mapUiLabels';
-import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { usePlayerDisplayName } from '../lib/playerIdentityHooks';
 import { useLanguage } from '../context/LanguageContext';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
 
@@ -16,7 +16,9 @@ function readExpanded() {
     const stored = localStorage.getItem(EXPANDED_KEY);
     if (stored === '1') return true;
     if (stored === '0') return false;
-    return true;
+    const desktop =
+      typeof window !== 'undefined' && window.matchMedia('(min-width: 901px)').matches;
+    return desktop ? false : true;
   } catch {
     return true;
   }
@@ -46,7 +48,7 @@ export default function TacticalSearchConsole({
   const ideologyToggleLabel = resolveIdeologyToggleLabel(t);
   const [expanded, setExpanded] = useState(readExpanded);
   const [cityListFilter, setCityListFilter] = useState('');
-  const playerName = getCurrentPlayerName();
+  const playerName = usePlayerDisplayName();
   const playerCities = useGameStore((s) => s.playerCities ?? STORE_EMPTY_ARRAY);
   const cityOptions = searchCities.length > 0 ? searchCities : mapCities;
 

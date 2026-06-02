@@ -36,47 +36,74 @@ function colorForExpedition(exp) {
   return MODE_COLORS.attack;
 }
 
-/** Aktif seferler — rota üzerinde ilerleyen birim göstergesi */
+/** Aktif seferler — rota üzerinde ilerleyen birim + hedef ülke nabız */
 export default function ExpeditionProgressMarkers({
   expeditions,
   mapCities,
   playerCities,
   now,
 }) {
-  const markers = useMemo(() => {
-    return (expeditions ?? [])
-      .map((exp) => {
-        const originPc = playerCities.find((p) => p.id === exp.originCityId);
-        const isReturn = exp.direction === 'returning' || exp.recalled;
-        const home = resolveCoords(originPc?.name, mapCities, playerCities, exp.originCityId)
-          ?? (originPc?.lat != null && originPc?.lng != null ? [originPc.lat, originPc.lng] : null);
-        const enemyName = isReturn ? (exp.originalTarget ?? exp.target) : exp.target;
-        if (!shouldDrawExpeditionRoute(exp, mapCities, enemyName)) return null;
+  const { markers, destinations } = useMemo(() => {
+    const progressMarkers = [];
+    const destByKey = new Map();
 
-        const enemy = resolveCoords(enemyName, mapCities, playerCities, exp.originCityId)
-          ?? (exp.targetLat != null && exp.targetLng != null ? [exp.targetLat, exp.targetLng] : null);
-        if (!home || !enemy) return null;
+    for (const exp of expeditions ?? []) {
+      const originPc = playerCities.find((p) => p.id === exp.originCityId);
+      const isReturn = exp.direction === 'returning' || exp.recalled;
+      const home = resolveCoords(originPc?.name, mapCities, playerCities, exp.originCityId)
+        ?? (originPc?.lat != null && originPc?.lng != null ? [originPc.lat, originPc.lng] : null);
+      const enemyName = isReturn ? (exp.originalTarget ?? exp.target) : exp.target;
+      if (!shouldDrawExpeditionRoute(exp, mapCities, enemyName)) continue;
 
-        const from = isReturn ? enemy : home;
-        const to = isReturn ? home : enemy;
-        const progress = exp.endsAt
-          ? progressFromTiming(exp.startedAt, exp.endsAt, now)
-          : 0;
-        const t = isReturn ? 1 - progress : progress;
-        const pos = lerpCoord(from, to, Math.min(1, Math.max(0, t)));
+      const enemy = resolveCoords(enemyName, mapCities, playerCities, exp.originCityId)
+        ?? (exp.targetLat != null && exp.targetLng != null ? [exp.targetLat, exp.targetLng] : null);
+      if (!home || !enemy) continue;
 
-        return {
-          id: exp.id,
-          pos,
-          color: colorForExpedition(exp),
-          isReturn,
-        };
-      })
-      .filter(Boolean);
+      const color = colorForExpedition(exp);
+
+      if (!isReturn) {
+        destByKey.set(enemyName, { name: enemyName, pos: enemy, color });
+      }
+
+      const from = isReturn ? enemy : home;
+      const to = isReturn ? home : enemy;
+      const progress = exp.endsAt
+        ? progressFromTiming(exp.startedAt, exp.endsAt, now)
+        : 0;
+      const t = isReturn ? 1 - progress : progress;
+      const pos = lerpCoord(from, to, Math.min(1, Math.max(0, t)));
+
+      progressMarkers.push({
+        id: exp.id,
+        pos,
+        color,
+        isReturn,
+      });
+    }
+
+    return {
+      markers: progressMarkers,
+      destinations: [...destByKey.values()],
+    };
   }, [expeditions, mapCities, playerCities, now]);
 
   return (
     <>
+      {destinations.map((d) => (
+        <CircleMarker
+          key={`exp-dest-${d.name}`}
+          center={d.pos}
+          radius={16}
+          pathOptions={{
+            color: d.color,
+            fillColor: d.color,
+            fillOpacity: 0.2,
+            weight: 2,
+            className: 'expedition-destination-pulse',
+          }}
+          interactive={false}
+        />
+      ))}
       {markers.map((m) => (
         <CircleMarker
           key={m.id}

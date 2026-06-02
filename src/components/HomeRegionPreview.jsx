@@ -1,47 +1,76 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGameStore } from '../stores/gameStore';
-import { getCurrentPlayerName } from '../lib/playerIdentity';
+import { resolvePlayerDisplayName } from '../lib/profileApi';
+import { useAuth } from '../context/AuthContext';
 import { normalizeProvinceCode } from '../map/mapOwnership';
 import { featureToViewBoxPolygons, getFeatureBounds } from '../map/geoUtils';
 import { fetchMapGeo } from '../map/mapGeoLoader';
 import { useLanguage } from '../context/LanguageContext';
 import { getCountryDisplayLabel } from '../lib/countryDisplayNames';
+import { useGameDataReady } from '../hooks/useGameDataReady';
 
 export default function HomeRegionPreview() {
-  const { countryLabel } = useLanguage();
+  const { t, countryLabel } = useLanguage();
+  const gameReady = useGameDataReady();
+  const { playerName: authPlayerName, session } = useAuth();
+  const profileDisplayName = useGameStore((s) => s.profileDisplayName);
+  const profilePlayerName = useGameStore((s) => s.profilePlayerName);
   const playerCities = useGameStore((s) => s.playerCities);
   const activeCityId = useGameStore((s) => s.activeCityId);
   const [provinces, setProvinces] = useState(null);
+  const [geoError, setGeoError] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(true);
 
   const activeCity = playerCities.find((c) => c.id === activeCityId) ?? playerCities[0];
-  const playerName = getCurrentPlayerName();
+  const playerName = resolvePlayerDisplayName({
+    user: session?.user,
+    profileDisplayName,
+    profilePlayerName,
+    playerName: authPlayerName,
+  });
   const provinceCode = activeCity?.province;
 
   useEffect(() => {
+    let cancelled = false;
+    setGeoLoading(true);
+    setGeoError(false);
     fetchMapGeo()
-      .then(setProvinces)
-      .catch(() => setProvinces(null));
+      .then((data) => {
+        if (!cancelled) {
+          setProvinces(data);
+          setGeoLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProvinces(null);
+          setGeoError(true);
+          setGeoLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const regionData = useMemo(() => {
-    if (!provinces?.features?.length || !provinceCode) return null;
+    if (!provinces?.features?.length || !provinceCode || !activeCity) return null;
     const code = normalizeProvinceCode(provinceCode);
     const feature = provinces.features.find(
       (f) => normalizeProvinceCode(f.properties?.shapeISO) === code
-        || f.properties?.shapeName === activeCity?.provinceName,
+        || f.properties?.shapeName === activeCity?.provinceName
+        || f.properties?.shapeName === activeCity?.name,
     );
     if (!feature) return null;
 
     const bounds = getFeatureBounds(feature);
     const polygons = featureToViewBoxPolygons(feature, bounds);
-    const regionName = feature.properties?.shapeName ?? activeCity?.provinceName ?? 'Bölge';
+    const regionName = feature.properties?.shapeName ?? activeCity?.provinceName ?? activeCity?.name ?? 'Bölge';
 
     return { polygons, regionName, bounds };
-  }, [provinces, provinceCode, activeCity?.provinceName]);
+  }, [provinces, provinceCode, activeCity]);
 
   const ownCityDots = useMemo(() => {
-    if (!regionData) return [];
+    if (!regionData || !activeCity) return [];
     const { bounds } = regionData;
     const { minLat, maxLat, minLng, maxLng } = bounds;
     const latSpan = maxLat - minLat || 1;
@@ -49,31 +78,58 @@ export default function HomeRegionPreview() {
     const pad = 0.08;
 
     return playerCities
-      .filter((c) => normalizeProvinceCode(c.province) === normalizeProvinceCode(provinceCode))
+      .filter((c) => {
+        if (c.lat == null || c.lng == null) return false;
+        return normalizeProvinceCode(c.province) === normalizeProvinceCode(provinceCode)
+          || c.name === activeCity.name
+          || c.provinceName === activeCity.provinceName;
+      })
       .map((c) => ({
         id: c.id,
-        name: c.name,
+        name: countryLabel(c.name),
         x: ((c.lng - minLng) / lngSpan) * (1 - 2 * pad) * 100 + pad * 100,
         y: ((maxLat - c.lat) / latSpan) * (1 - 2 * pad) * 100 + pad * 100,
       }));
-  }, [playerCities, provinceCode, regionData]);
+  }, [playerCities, provinceCode, regionData, activeCity, countryLabel]);
+
+  const displayCountry = activeCity?.name
+    ? countryLabel(activeCity.name)
+    : null;
+  const displayRegion = regionData?.regionName
+    ? countryLabel(regionData.regionName)
+    : (activeCity?.provinceName ? countryLabel(activeCity.provinceName) : null);
+
+  let placeholderMessage = t('pages.home.regionPreview.waitingCity');
+  if (gameReady && !activeCity) {
+    placeholderMessage = t('pages.home.regionPreview.noActiveCity');
+  } else if (geoError) {
+    placeholderMessage = t('pages.home.regionPreview.geoError');
+  } else if (geoLoading) {
+    placeholderMessage = t('pages.home.regionPreview.loading');
+  } else if (gameReady && activeCity && !regionData) {
+    placeholderMessage = t('pages.home.regionPreview.noMapData');
+  }
+
+  const showMap = Boolean(regionData?.polygons?.length);
 
   return (
-    <section className="panel home-region-preview">
+    <section className="panel home-region-preview glass-panel" aria-label={t('pages.home.regionPreview.aria')}>
       <div className="home-region-preview__head">
         <h3 className="panel-title">
           <span className="panel-title__icon">🗺️</span>
-          Bölge Haritası
+          {t('pages.home.regionPreview.title')}
         </h3>
         <Link to="/harita" className="btn btn-hud-secondary btn-sm">
-          Tam Harita →
+          {t('pages.home.regionPreview.openMap')}
         </Link>
       </div>
       <p className="home-region-preview__sub">
-        {regionData?.regionName ?? countryLabel(activeCity?.provinceName) ?? '—'} · <strong>{playerName}</strong>
+        {displayRegion ?? displayCountry ?? '—'}
+        {' · '}
+        <strong>{playerName}</strong>
       </p>
       <div className="home-region-preview__canvas">
-        {regionData ? (
+        {showMap ? (
           <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" className="home-region-preview__svg">
             {regionData.polygons.map((points, i) => (
               <polygon
@@ -95,8 +151,17 @@ export default function HomeRegionPreview() {
             </text>
           </svg>
         ) : (
-          <div className="home-region-preview__fallback" aria-hidden="true">
-            <span>Bölge yükleniyor…</span>
+          <div className="home-region-preview__fallback" role="status">
+            <span className="home-region-preview__fallback-icon" aria-hidden="true">◇</span>
+            <p className="home-region-preview__fallback-title">
+              {displayCountry ?? t('pages.home.regionPreview.placeholderTitle')}
+            </p>
+            <p className="home-region-preview__fallback-msg">{placeholderMessage}</p>
+            {displayCountry && (
+              <Link to="/harita" className="btn btn-hud-secondary btn-sm home-region-preview__fallback-cta">
+                {t('pages.home.regionPreview.openMap')}
+              </Link>
+            )}
           </div>
         )}
       </div>

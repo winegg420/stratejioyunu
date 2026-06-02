@@ -367,6 +367,14 @@ a {
   color: var(--text-muted);
 }
 
+.sidebar-season {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(74, 124, 89, 0.95);
+  margin-top: 0.1rem;
+}
+
 .nav-list {
   list-style: none;
   margin: 0;
@@ -3474,7 +3482,8 @@ body.map-scroll-locked {
 
 .leaflet-div-icon.map-city-marker,
 .leaflet-div-icon.map-marker-icon,
-.leaflet-div-icon.map-city-centroid-label {
+.leaflet-div-icon.map-city-centroid-label,
+.leaflet-div-icon.map-country-centroid-label {
   background: transparent !important;
   border: none !important;
 }
@@ -3942,6 +3951,9 @@ body.map-scroll-locked {
 }
 
 .map-command-modal__empire-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin: 0 0 0.65rem;
   padding: 0.5rem 0.65rem;
   font-size: 0.78rem;
@@ -3952,6 +3964,37 @@ body.map-scroll-locked {
   border-radius: 4px;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.map-command-modal__empire-hint-line {
+  display: block;
+}
+
+.map-command-modal__empire-hint-line--meta {
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: rgba(167, 243, 208, 0.88);
+}
+
+.map-command-modal__own-banner {
+  margin: 0.5rem 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.12), rgba(74, 222, 128, 0.08));
+}
+
+.map-command-modal__own-banner-text {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fef9c3;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+}
+
+.map-cmd-btn--base-manage {
+  width: 100%;
+  justify-content: center;
 }
 
 .map-cmd-btn--conquest {

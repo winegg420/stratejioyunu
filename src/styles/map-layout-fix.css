@@ -6,13 +6,28 @@
 }
 
 .app-shell.route-map .map-page-wrapper--fill,
-.app-shell.route-map .map-error-boundary__host.map-page-wrapper--fill {
+.app-shell.route-map .map-error-boundary__host.map-page-wrapper--fill,
+.app-shell.route-map .map-page-wrapper--tactical {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 100%;
+  height: calc(
+    100dvh
+    - var(--resource-bar-h, 88px)
+    - var(--terminal-dock-ticker-h, 2.35rem)
+    - var(--terminal-dock-logs-h, 0px)
+    - env(safe-area-inset-bottom, 0px)
+  ) !important;
+  max-height: calc(
+    100dvh
+    - var(--resource-bar-h, 88px)
+    - var(--terminal-dock-ticker-h, 2.35rem)
+    - var(--terminal-dock-logs-h, 0px)
+    - env(safe-area-inset-bottom, 0px)
+  ) !important;
 }
 
 .app-shell.route-map .map-page--command-theater {
@@ -25,6 +40,7 @@
 
 /* Harita gövdesi — flex zinciri (sınıfsız sarmalayıcı yüksekliği kırmasın) */
 .app-shell.route-map .map-theater-body {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
@@ -41,6 +57,7 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   width: 100%;
 }
 
@@ -71,14 +88,38 @@
 }
 
 @media (min-width: 901px) {
-  .app-shell.route-map .map-page-wrapper--fill {
-    height: auto !important;
-    max-height: 100%;
-  }
-
   .app-shell.route-map .map-container--tactical {
-    min-height: 320px;
+    min-height: 0;
   }
+}
+
+@media (max-width: 900px) {
+  html.mobile-shell-active.app-shell.route-map .map-page-wrapper--fill,
+  html.mobile-shell-active.app-shell.route-map .map-page-wrapper--tactical {
+    height: calc(
+      100dvh
+      - var(--resource-bar-h, 88px)
+      - var(--bottom-nav-h, 64px)
+      - var(--terminal-dock-ticker-h, 2.35rem)
+      - var(--terminal-dock-logs-h, 0px)
+      - env(safe-area-inset-bottom, 0px)
+    ) !important;
+    max-height: calc(
+      100dvh
+      - var(--resource-bar-h, 88px)
+      - var(--bottom-nav-h, 64px)
+      - var(--terminal-dock-ticker-h, 2.35rem)
+      - var(--terminal-dock-logs-h, 0px)
+      - env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+}
+
+.app-shell.route-map .map-page.map-interaction-unlocked,
+.app-shell.route-map .map-page.map-interaction-locked {
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto;
 }
 
 /* Tam ekran — Leaflet konteyneri viewport’u doldurur (kare gri boşluk önlenir) */

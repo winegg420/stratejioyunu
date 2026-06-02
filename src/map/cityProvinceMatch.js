@@ -51,10 +51,14 @@ export function findProvinceFeature(provinces, city, playerCities = []) {
 function isPlayerOwnMapTarget(mapCity, playerCities = []) {
   if (!mapCity) return false;
   if (mapCity.status === 'own' || mapCity.isOwn) return true;
+
   const norm = (s) => String(s ?? '').trim().toLocaleLowerCase('tr');
-  const names = new Set(
-    [mapCity.name, mapCity.provinceName].filter(Boolean).map(norm),
-  );
+
+  if (mapCity.status === 'bot' || mapCity.status === 'enemy') {
+    return playerCities.some((pc) => pc.name && norm(pc.name) === norm(mapCity.name));
+  }
+
+  const names = new Set([mapCity.name, mapCity.provinceName].filter(Boolean).map(norm));
   return playerCities.some((pc) => {
     if (pc.name && names.has(norm(pc.name))) return true;
     if (pc.provinceName && names.has(norm(pc.provinceName))) return true;

@@ -75,7 +75,10 @@ function ProvinceRadarLayer({
     <GeoJSON
       ref={bindLayerGroup}
       data={provinces}
-      className="map-province-layer"
+      className={[
+        'map-province-layer',
+        ideologyView && 'map-province-layer--under-ideology',
+      ].filter(Boolean).join(' ')}
       style={stableStyle}
       smoothFactor={1.5}
       onEachFeature={attachFeature}

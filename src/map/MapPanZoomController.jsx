@@ -35,7 +35,9 @@ export default function MapPanZoomController({ enabled = true }) {
     if (!container) return undefined;
 
     const captureWheel = (e) => {
-      e.stopPropagation();
+      e.preventDefault();
+      // `stopPropagation()` Leaflet'in wheel/zoom event akışını engelleyebiliyor.
+      // Sayfa kaymasını zaten `preventDefault()` durduruyor; burada yalnızca o kalsın.
     };
     container.addEventListener('wheel', captureWheel, { capture: true, passive: false });
 

@@ -1,6 +1,10 @@
 import { resolveCityProvinceName } from './cityProvinceMatch';
 import { getFeatureBounds } from './geoUtils';
 
+function normTr(s) {
+  return String(s ?? '').trim().toLocaleLowerCase('tr');
+}
+
 function pointInRing(point, ring) {
   if (!ring?.length) return false;
   const [x, y] = point;
@@ -68,19 +72,42 @@ export function findCityForProvinceFeature(feature, mapCities, playerCities) {
   const provinceName = feature?.properties?.shapeName;
   if (!provinceName || !Array.isArray(mapCities)) return null;
 
-  const norm = (s) => String(s ?? '').trim().toLocaleLowerCase('tr');
-  const target = norm(provinceName);
+  const target = normTr(provinceName);
 
-  return mapCities.find((c) => {
+  const matches = mapCities.filter((c) => {
     const pn = resolveCityProvinceName(c, playerCities);
-    return norm(pn) === target || norm(c.name) === target || norm(c.provinceName) === target;
-  }) ?? mapCities.find((c) => c.name === provinceName) ?? null;
+    return normTr(pn) === target || normTr(c.name) === target || normTr(c.provinceName) === target;
+  });
+  if (!matches.length) {
+    return mapCities.find((c) => c.name === provinceName) ?? null;
+  }
+  const own = matches.find((c) => c.status === 'own');
+  if (own) return own;
+  const playerCity = matches.find((c) => playerCities?.some((p) => p.name === c.name));
+  return playerCity ?? matches[0];
 }
 
-export function buildMapTargetFromProvince(feature, latlng, mapCities, playerCities) {
+export function buildMapTargetFromProvince(feature, latlng, mapCities, playerCities, ownProvinceNames = null) {
   const provinceName = feature?.properties?.shapeName ?? 'Bölge';
   const city = findCityForProvinceFeature(feature, mapCities, playerCities);
   if (city) return city;
+
+  if (ownProvinceNames?.has?.(provinceName)) {
+    const pc = (playerCities ?? []).find((p) => {
+      const pn = resolveCityProvinceName(p, playerCities);
+      return pn === provinceName || p.provinceName === provinceName;
+    });
+    if (pc) {
+      return {
+        name: pc.name,
+        provinceName: pc.provinceName ?? provinceName,
+        province: feature?.properties?.shapeISO ?? pc.province,
+        lat: pc.lat ?? latlng?.lat,
+        lng: pc.lng ?? latlng?.lng,
+        status: 'own',
+      };
+    }
+  }
 
   return {
     name: provinceName,

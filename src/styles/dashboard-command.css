@@ -143,6 +143,17 @@
   align-items: start;
 }
 
+.home-command-head__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.home-command-head__primary .home-region-preview {
+  margin: 0;
+}
+
 .home-command-page-header {
   margin: 0 !important;
   padding: 0 !important;
@@ -271,6 +282,10 @@
 .home-cmd-widget__counter {
   display: inline-block;
   font-variant-numeric: tabular-nums;
+}
+
+.home-empire-slot-banner {
+  margin-bottom: 0.85rem;
 }
 
 /* ── 5'li komuta widget'ları ── */

@@ -41,13 +41,21 @@ export function isForeignPlayerCity(city, playerName) {
   return !self || owner !== self;
 }
 
+/** Ülke poligonları — tek tip sınır ( dünya haritası ) */
+export const MAP_BORDER_WORLD = {
+  color: '#e74c3c',
+  weight: 1.5,
+  lineJoin: 'round',
+  lineCap: 'round',
+};
+
 export function getForeignPlayerProvinceStyle(owner) {
   const fill = hashOwnerColor(owner);
   return {
     fillColor: fill,
     fillOpacity: 0.22,
-    color: fill,
-    weight: 2.2,
+    color: MAP_BORDER_WORLD.color,
+    weight: MAP_BORDER_WORLD.weight,
     lineJoin: 'round',
     lineCap: 'round',
     opacity: 0.9,
@@ -99,20 +107,13 @@ export function getCityMarkerStyle(status) {
   };
 }
 
-export const MAP_BORDER_STYLE = {
-  color: 'rgba(0, 240, 255, 0.4)',
-  weight: 1.2,
-  lineJoin: 'round',
-  lineCap: 'round',
-};
-
-/** Oyuncunun kendi ili — her zaman neon yeşil sınır + iç dolgu */
+/** Oyuncunun kendi ili — yeşil dolgu; sınır diğer ülkelerle aynı (tutarlı çizgi) */
 export function getOwnProvinceStyle() {
   return {
     fillColor: '#22ff88',
     fillOpacity: 0.16,
-    color: '#22ff88',
-    weight: 2.4,
+    color: MAP_BORDER_WORLD.color,
+    weight: MAP_BORDER_WORLD.weight,
     lineJoin: 'round',
     lineCap: 'round',
     opacity: 0.92,
@@ -123,8 +124,8 @@ export function getProvinceStyle() {
   return {
     fillColor: '#0a0f0a',
     fillOpacity: 0.06,
-    color: 'rgba(0, 240, 255, 0.4)',
-    weight: 1.2,
+    color: MAP_BORDER_WORLD.color,
+    weight: MAP_BORDER_WORLD.weight,
     lineJoin: 'round',
     lineCap: 'round',
     opacity: 0.75,
@@ -136,16 +137,18 @@ export function getDistrictStyle() {
   return {
     fillColor: '#111a11',
     fillOpacity: 0.62,
-    ...MAP_BORDER_STYLE,
+    ...MAP_BORDER_WORLD,
   };
 }
 
 export function getHoverStyle(base) {
-  const isOwn = base?.color === '#22ff88' || base?.fillColor === '#22ff88';
+  const isOwn = base?.fillColor === '#22ff88';
+  const w = MAP_BORDER_WORLD.weight;
   return {
     ...base,
     fillOpacity: Math.min(isOwn ? 0.24 : 0.14, (base.fillOpacity || 0.06) + 0.06),
-    weight: (base.weight || 1.2) + 0.35,
-    color: isOwn ? '#4ade80' : 'rgba(0, 240, 255, 0.55)',
+    weight: w,
+    color: MAP_BORDER_WORLD.color,
+    opacity: Math.min(1, (base.opacity ?? 0.85) + 0.06),
   };
 }

@@ -57,12 +57,31 @@ const ISO_POP_BANDS = {
   IQ: [28_000_000, 38_000_000],
 };
 
-function normalizeIso(iso) {
+export function normalizeCountryIso(iso) {
   const raw = String(iso ?? '').trim().toUpperCase();
   if (!raw) return '';
   if (raw.length === 2) return raw;
   const m = raw.match(/-([A-Z]{2})$/);
   return m ? m[1] : raw.slice(0, 2);
+}
+
+/** Zoom &lt; 3 — band üst sınırı 50M+ değilse bile ~50M+ ülkeler (harita etiketi) */
+const ISO_MAP_LABEL_POP50_STATIC = new Set([
+  'TR', 'JP', 'DE', 'GB', 'FR', 'IT', 'KR', 'CO', 'ZA', 'KE', 'MM',
+  'EG', 'TH', 'IR', 'PH', 'VN', 'ET', 'CD', 'TZ', 'UG', 'SD', 'DZ', 'AF', 'IQ',
+]);
+
+/**
+ * Dünya haritası ülke adı etiketi — zoom &lt; 3 için "büyük ülke" filtresi (50M+).
+ * @param {string} provinceName GeoJSON shapeName (Türkçe ad)
+ * @param {string} [shapeIso]
+ */
+export function isLargeCountryForMapLabel(provinceName, shapeIso = '') {
+  const iso = resolveCountryIso2(provinceName, shapeIso || '') || normalizeCountryIso(shapeIso);
+  if (!iso) return false;
+  const band = ISO_POP_BANDS[iso];
+  if (band && band[1] > 50_000_000) return true;
+  return ISO_MAP_LABEL_POP50_STATIC.has(iso);
 }
 
 function bandPopulation(min, max, seed) {
@@ -82,7 +101,7 @@ export function computeWorldBotPopulation({
     return bandPopulation(72_000_000, 96_000_000, seed);
   }
 
-  const iso = resolveCountryIso2(provinceName, shapeIso) || normalizeIso(shapeIso);
+  const iso = resolveCountryIso2(provinceName, shapeIso) || normalizeCountryIso(shapeIso);
   const band = ISO_POP_BANDS[iso];
   if (band) {
     return bandPopulation(band[0], band[1], seed);

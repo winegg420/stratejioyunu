@@ -2,9 +2,13 @@ import { useMemo } from 'react';
 import { GeoJSON } from 'react-leaflet';
 import { getCurrentPlayerName } from '../lib/playerIdentity';
 import { ideologyForMapSeed } from '../lib/mapIdeologyDistribution';
-import { getIdeologyTerritoryStyle, getIdeologyProfile, isNaturalAlly } from '../lib/ideologySystem';
+import {
+  getIdeologyTerritoryStyle,
+  getOwnIdeologyProvinceStyle,
+  isNaturalAlly,
+} from '../lib/ideologySystem';
 import { IS_WORLD_MAP } from './mapInteractionPolicy';
-import { getForeignPlayerProvinceStyle, getOwnProvinceStyle, isForeignPlayerCity } from './mapUtils';
+import { getForeignPlayerProvinceStyle, isForeignPlayerCity } from './mapUtils';
 import { resolveOwnerIdeology } from './mapOwnership';
 import { normalizeMapCity } from './botCityUtils';
 import { findProvinceFeature, resolveCityProvinceName } from './cityProvinceMatch';
@@ -81,7 +85,10 @@ export default function CityIdeologyProvinceLayer({
       data={collection}
       style={(feature) => {
         const isOwn = feature.properties?._isOwn;
-        if (isOwn) return getOwnProvinceStyle();
+        if (isOwn) {
+          const ideology = feature.properties?._ideology ?? playerIdeology;
+          return getOwnIdeologyProvinceStyle(ideology, { worldMap: IS_WORLD_MAP });
+        }
         const owner = feature.properties?._owner;
         const status = feature.properties?._status;
         if (isForeignPlayerCity({ status, owner }, playerName)) {

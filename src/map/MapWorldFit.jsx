@@ -7,6 +7,7 @@ export default function MapWorldFit({
   enabled = true,
   isFullscreen = false,
   layoutRev = 'normal',
+  ideologyView = false,
 }) {
   const map = useMap();
   const fitTimerRef = useRef(null);
@@ -51,6 +52,20 @@ export default function MapWorldFit({
 
     return undefined;
   }, [enabled, scheduleFit, layoutRev]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const run = () => {
+      try {
+        map.invalidateSize({ animate: false, pan: false });
+      } catch {
+        /* unmount */
+      }
+    };
+    run();
+    const timer = window.setTimeout(run, 100);
+    return () => window.clearTimeout(timer);
+  }, [enabled, map, layoutRev, isFullscreen]);
 
   return null;
 }

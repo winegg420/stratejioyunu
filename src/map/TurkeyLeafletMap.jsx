@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { MapContainer, TileLayer } from 'react-leaflet';
 
@@ -25,13 +25,14 @@ import CityTargetReticleLayer from './CityTargetReticleLayer';
 
 import CityMapLabelsLayer from './CityMapLabelsLayer';
 import WorldCountryLabelsLayer from './WorldCountryLabelsLayer';
+import MicroCountryHitLayer from './MicroCountryHitLayer';
+import MapAttributionStyle from './MapAttributionStyle';
 
 import CityDotLayer from './CityDotLayer';
 
 import CityMarkers from './CityMarkers';
 
 import { MAP_ZOOM_LABEL_MIN, MAP_ZOOM_MARKER_MIN } from './mapZoomConfig';
-
 import ActiveCityMapFocus from './ActiveCityMapFocus';
 
 import MapHudConnector from './MapHudConnector';
@@ -51,6 +52,7 @@ import MapMouseCoordinateHud from './MapMouseCoordinateHud';
 import CityDiplomacyBadgeLayer from './CityDiplomacyBadgeLayer';
 
 import MapFitFlyLayers from './MapFitFlyLayers';
+import MapSearchFlyBridge from './MapSearchFlyBridge';
 
 import MapRestoreViewport from './MapRestoreViewport';
 
@@ -137,6 +139,10 @@ function TurkeyLeafletMap({
 
   flyTarget,
 
+  searchFlyRequest,
+
+  onSearchFlyDone,
+
   restoreViewport,
 
   suppressActiveCityFocus = false,
@@ -157,10 +163,22 @@ function TurkeyLeafletMap({
 
   showLocHud = true,
 
+  onSurfaceReady,
+
 }) {
 
   const [tilesReady, setTilesReady] = useState(false);
   const surfaceReady = tilesReady && Boolean(provinces?.features?.length);
+
+  useEffect(() => {
+    if (!onSurfaceReady) return undefined;
+    if (!surfaceReady) {
+      onSurfaceReady(false);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => onSurfaceReady(true), 160);
+    return () => window.clearTimeout(timer);
+  }, [surfaceReady, onSurfaceReady]);
 
   const showHud = !isMobile || !hudCollapsed;
 
@@ -171,8 +189,12 @@ function TurkeyLeafletMap({
   const showDetailedMarkers = mapZoom >= MAP_ZOOM_MARKER_MIN;
 
   const showCityDots = ideologyView
-    ? mapZoom >= 4
-    : mapZoom >= (IS_WORLD_MAP ? MAP_ZOOM_LABEL_MIN : 2);
+    ? IS_WORLD_MAP
+      ? mapZoom >= MAP_ZOOM_MARKER_MIN
+      : mapZoom >= 4
+    : IS_WORLD_MAP
+      ? mapZoom >= MAP_ZOOM_MARKER_MIN
+      : mapZoom >= 2;
 
   const ideologyLayer = useMemo(() => {
 
@@ -240,12 +262,13 @@ function TurkeyLeafletMap({
 
       <MapViewportMinZoom isFullscreen={isFullscreen} />
 
-      <MapInitialLayout isFullscreen={isFullscreen} />
+      <MapInitialLayout isFullscreen={isFullscreen} ideologyView={ideologyView} />
 
       <MapWorldFit
         enabled={!restoreViewport && !flyTarget}
         isFullscreen={isFullscreen}
-        layoutRev={isFullscreen ? 'fs' : 'normal'}
+        ideologyView={ideologyView}
+        layoutRev={isFullscreen ? `fs-${ideologyView ? 'ideo' : 'std'}` : `std-${ideologyView ? 'ideo' : 'map'}`}
       />
 
       <MapResizeEffect layoutRev={isFullscreen ? 'fs' : 'normal'} />
@@ -259,6 +282,8 @@ function TurkeyLeafletMap({
         mapCities={mapCities}
 
         playerCities={playerCities}
+
+        ownProvinceNames={ownProvinceNames}
 
         onSelectCity={onSelectCity}
 
@@ -318,6 +343,8 @@ function TurkeyLeafletMap({
       <MapPlayerDataLinks playerCities={playerCities} />
 
       <MapBoundsReporter onViewportChange={onViewportChange} />
+
+      <MapAttributionStyle />
 
       <MapAnimatedLayers
 
@@ -407,10 +434,22 @@ function TurkeyLeafletMap({
 
       )}
 
+      <MicroCountryHitLayer
+        provinces={provinces}
+        mapCities={mapCities}
+        playerCities={playerCities}
+        ownProvinceNames={ownProvinceNames}
+        onSelectCity={onSelectCity}
+        zoom={mapZoom}
+        viewportBounds={viewportBounds}
+        enabled={surfaceReady}
+      />
+
       <WorldCountryLabelsLayer
         provinces={provinces}
         zoom={mapZoom}
         viewportBounds={viewportBounds}
+        isFullscreen={isFullscreen}
       />
 
       <CityMapLabelsLayer
@@ -441,6 +480,8 @@ function TurkeyLeafletMap({
 
       />
 
+      <MapSearchFlyBridge flyRequest={searchFlyRequest} onDone={onSearchFlyDone} />
+
       <ActiveCityMapFocus
 
         lat={activeLat}
@@ -468,6 +509,7 @@ function TurkeyLeafletMap({
         playerCities={playerCities}
         mapCities={mapCities}
         onFocusBase={onFocusBase}
+        isFullscreen={isFullscreen}
       />
 
     </MapContainer>

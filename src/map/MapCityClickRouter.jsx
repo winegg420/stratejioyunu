@@ -11,6 +11,7 @@ export default function MapCityClickRouter({
   provinces,
   mapCities,
   playerCities,
+  ownProvinceNames,
   onSelectCity,
   onProvinceSelect,
   enabled = true,
@@ -42,7 +43,7 @@ export default function MapCityClickRouter({
       if (!feature) return;
 
       L.DomEvent.stopPropagation(e);
-      const target = buildMapTargetFromProvince(feature, e.latlng, mapCities, playerCities);
+      const target = buildMapTargetFromProvince(feature, e.latlng, mapCities, playerCities, ownProvinceNames);
       if (onProvinceSelect) {
         onProvinceSelect(target, feature);
       } else {

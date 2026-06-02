@@ -4,5 +4,5 @@ export function resolveIdeologyToggleLabel(t) {
   if (label && label !== 'map.ideology.toggle' && !label.startsWith('MAP.')) return label;
   const alt = t('map.ideology.politicalView');
   if (alt && alt !== 'map.ideology.politicalView' && !alt.startsWith('MAP.')) return alt;
-  return '[ SİYASİ İDEOLOJİ GÖRÜNÜMÜ ]';
+  return '[ İDEOLOJİ HARİTASI ]';
 }

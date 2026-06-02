@@ -156,7 +156,7 @@
 .city-switcher .custom-dropdown__trigger {
   min-height: 1.75rem;
   min-width: 6.5rem;
-  max-width: 11rem;
+  max-width: 13rem;
   font-size: 0.68rem;
 }
 
@@ -164,7 +164,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 9.5rem;
+  max-width: 11rem;
 }
 
 .city-switcher .custom-dropdown__menu {

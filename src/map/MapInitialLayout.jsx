@@ -3,7 +3,7 @@ import { useMap } from 'react-leaflet';
 import { IS_WORLD_MAP } from './mapInteractionPolicy';
 
 /** invalidateSize + tam ekran girişinde dünya sığdırma */
-export default function MapInitialLayout({ isFullscreen = false }) {
+export default function MapInitialLayout({ isFullscreen = false, ideologyView = false }) {
   const map = useMap();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function MapInitialLayout({ isFullscreen = false }) {
       window.removeEventListener('map-layout-changed', run);
       window.removeEventListener('resize', run);
     };
-  }, [map, isFullscreen]);
+  }, [map, isFullscreen, ideologyView]);
 
   useEffect(() => {
     if (!IS_WORLD_MAP) return undefined;

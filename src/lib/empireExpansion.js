@@ -92,9 +92,13 @@ export function formatEmpireSlotHint(state) {
   }
   const nextHq = getNextSlotHqLevel(maxSlots);
   if (nextHq == null) {
-    return 'Sonraki şehir slotu: Komuta Merkezi maksimum seviyede';
+    return IS_WORLD_MAP
+      ? 'Sonraki ülke slotu: Komuta Merkezi maksimum seviyede'
+      : 'Sonraki şehir slotu: Komuta Merkezi maksimum seviyede';
   }
-  return `Sonraki şehir slotu: Sv.${nextHq} gerekli`;
+  return IS_WORLD_MAP
+    ? `Sonraki ülke slotu: Sv.${nextHq} gerekli`
+    : `Sonraki şehir slotu: Sv.${nextHq} gerekli`;
 }
 
 /** @deprecated Saldırı ile fetih — isConquerableMapTarget kullanın */
@@ -193,13 +197,23 @@ export function evaluateConquestAttempt(state, targetCity) {
     if (nextHq != null) {
       return {
         ok: false,
-        reason: `Şehir slotu dolu — sonraki slot için Komuta Merkezi Sv.${nextHq} gerekli`,
+        reason: IS_WORLD_MAP
+          ? `Ülke slotu dolu — sonraki slot için Komuta Merkezi Sv.${nextHq} gerekli`
+          : `Şehir slotu dolu — sonraki slot için Komuta Merkezi Sv.${nextHq} gerekli`,
         maxSlots,
         owned,
         hq,
       };
     }
-    return { ok: false, reason: 'Maksimum şehir sayısına ulaşıldı (6)', maxSlots, owned, hq };
+    return {
+      ok: false,
+      reason: IS_WORLD_MAP
+        ? 'Maksimum ülke sayısına ulaşıldı (6)'
+        : 'Maksimum şehir sayısına ulaşıldı (6)',
+      maxSlots,
+      owned,
+      hq,
+    };
   }
 
   const targetCoords = { lat: targetCity.lat, lng: targetCity.lng };

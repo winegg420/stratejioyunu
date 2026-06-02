@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuth } from '../context/AuthContext';
-import { countHomeActiveOperations } from '../lib/activeOperationsCount';
 import { fetchHomeCommandStatsFromServer } from '../lib/homeCommandStats';
 import { getLastSyncUserId } from '../lib/supabaseSync';
-import { useGameStore } from '../stores/gameStore';
+import { useGameStore, useHomeActiveOperationsCount } from '../stores/gameStore';
 
 const POLL_MS = 12_000;
 
@@ -23,33 +22,26 @@ function sumQueuesAcrossCities(cities = {}) {
  */
 export function useHomeCommandStats() {
   const { session } = useAuth();
-  const { now, expeditions, intelOperations, reports, cities, gameHydrating, _supabaseHydrated, mapRouteSyncRev } = useGameStore(
+  const activeOpsCount = useHomeActiveOperationsCount();
+  const { reports, cities, gameHydrating, _supabaseHydrated } = useGameStore(
     useShallow((s) => ({
-      now: s.now,
-      expeditions: s.expeditions,
-      intelOperations: s.intelOperations,
       reports: s.reports,
       cities: s.cities,
       gameHydrating: s.gameHydrating,
       _supabaseHydrated: s._supabaseHydrated,
-      mapRouteSyncRev: s.mapRouteSyncRev ?? 0,
     })),
   );
 
   const localQueues = sumQueuesAcrossCities(cities);
-  const localActiveOps = useMemo(
-    () => countHomeActiveOperations({ expeditions, intelOperations, now }),
-    [expeditions, intelOperations, now, mapRouteSyncRev],
-  );
 
   const localFallback = useMemo(
     () => ({
-      activeOperations: localActiveOps,
+      activeOperations: activeOpsCount,
       constructionCount: localQueues.constructionCount,
       productionCount: localQueues.productionCount,
       unreadReports: (reports ?? []).filter((r) => r.isNew).length,
     }),
-    [localActiveOps, localQueues, reports],
+    [activeOpsCount, localQueues, reports],
   );
 
   const [remote, setRemote] = useState(null);
@@ -66,17 +58,17 @@ export function useHomeCommandStats() {
     refresh();
     const timer = setInterval(refresh, POLL_MS);
     return () => clearInterval(timer);
-  }, [refresh, gameHydrating, _supabaseHydrated, localActiveOps]);
+  }, [refresh, gameHydrating, _supabaseHydrated, activeOpsCount]);
 
   return useMemo(
     () => ({
-      activeExpeditions: localActiveOps,
-      activeOperations: localActiveOps,
+      activeExpeditions: activeOpsCount,
+      activeOperations: activeOpsCount,
       constructionCount: remote?.constructionCount ?? localFallback.constructionCount,
       productionCount: remote?.productionCount ?? localFallback.productionCount,
       unreadReports: remote?.unreadReports ?? localFallback.unreadReports,
       live: Boolean(remote),
     }),
-    [localActiveOps, localFallback, remote],
+    [activeOpsCount, localFallback, remote],
   );
 }

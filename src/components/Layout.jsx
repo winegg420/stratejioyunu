@@ -19,6 +19,8 @@ import {
   registerExpeditionPersistenceGuards,
   startSyncPolling,
   stopSyncPolling,
+  subscribeActiveExpeditions,
+  syncExpeditionsFromServer,
 } from '../lib/supabaseSync';
 import { useGameStore } from '../stores/gameStore';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -87,12 +89,24 @@ export default function Layout() {
       return undefined;
     }
 
+    const syncExpeditions = () => {
+      syncExpeditionsFromServer(
+        () => useGameStore.getState(),
+        (patch) => useGameStore.setState(patch),
+        (id) => useGameStore.getState()._completeExpedition(id),
+      ).catch((err) => console.warn('[Layout] expedition sync', err));
+    };
+
     startSyncPolling(
       () => useGameStore.getState(),
       (patch) => useGameStore.setState(patch),
       (id) => useGameStore.getState()._completeExpedition(id),
     );
-    return stopSyncPolling;
+    const unsubscribeRealtime = subscribeActiveExpeditions(syncExpeditions);
+    return () => {
+      stopSyncPolling();
+      unsubscribeRealtime();
+    };
   }, [authMode, session?.user?.id]);
 
   useEffect(() => {

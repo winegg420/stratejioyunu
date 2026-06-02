@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { getMapCityDisplayName } from './mapCityDisplayName';
-import { MAP_ZOOM_LABEL_MIN } from './mapZoomConfig';
+import { MAP_ZOOM_LABEL_MIN, MAP_ZOOM_MARKER_MIN } from './mapZoomConfig';
+import { IS_WORLD_MAP } from './mapInteractionPolicy';
 import { filterMapPointsInViewport, maxLabelsForZoom } from './mapViewportCull';
 import { normalizeMapCity } from './botCityUtils';
 
@@ -51,7 +52,8 @@ export default function CityMapLabelsLayer({
   zoom = 0,
   viewportBounds = null,
 }) {
-  const show = zoom >= MAP_ZOOM_LABEL_MIN;
+  const zoomMinLabels = IS_WORLD_MAP ? MAP_ZOOM_MARKER_MIN : MAP_ZOOM_LABEL_MIN;
+  const show = zoom >= zoomMinLabels;
   const compact = zoom < 6;
 
   const cities = useMemo(() => {

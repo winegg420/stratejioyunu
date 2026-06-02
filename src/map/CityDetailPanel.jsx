@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
@@ -247,16 +247,16 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
   const cyberCapabilities = getCyberCapabilities() ?? [];
 
   const [cargoDestId, setCargoDestId] = useState('');
+  /** Fetih / yağma ('raid' | 'conquest') — yalnızca hedef ülke değişince varsayılan yağmaya döner */
   const [attackIntent, setAttackIntent] = useState('raid');
-  const lastTroopTargetRef = useRef('');
+  const prevAttackTargetCityRef = useRef('');
 
   useEffect(() => {
-    if (actionMode !== 'troops') return;
-    const targetName = mapCity.name;
-    if (lastTroopTargetRef.current === targetName) return;
-    lastTroopTargetRef.current = targetName;
+    const name = mapCity.name;
+    if (prevAttackTargetCityRef.current === name) return;
+    prevAttackTargetCityRef.current = name;
     setAttackIntent('raid');
-  }, [mapCity.name, actionMode]);
+  }, [mapCity.name]);
 
   useEffect(() => {
     if (actionMode !== 'troops' || !devWarBypass) return;
@@ -272,7 +272,6 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
     setActionMode(initialActionMode ?? null);
     setTroopQty({});
     setSpyQty(1);
-    lastTroopTargetRef.current = '';
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
@@ -502,16 +501,8 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
         </header>
 
         {isAnyOwnCity && (
-          <div className="map-command-modal__own-hq" role="status">
-            <p className="map-command-modal__own-hq-msg">{t('map.cityPanel.ownCountry')}</p>
-            <div className="map-command-modal__own-hq-actions">
-              <Link to="/" className="btn btn-secondary btn-sm" onClick={onClose}>
-                {t('map.cityPanel.ownCountryHome')}
-              </Link>
-              <Link to="/binalar" className="btn btn-hud-primary btn-sm" onClick={onClose}>
-                {t('map.cityPanel.ownCountryManage')}
-              </Link>
-            </div>
+          <div className="map-command-modal__own-banner" role="status">
+            <span className="map-command-modal__own-banner-text">{t('map.cityPanel.ownCountryBanner')}</span>
           </div>
         )}
 
@@ -579,7 +570,7 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
           <p className="map-command-modal__warn">Radar menzili dışı — taktiksel emirler kilitli.</p>
         )}
 
-        {targetOwner && (
+        {targetOwner && !isAnyOwnCity && (
           <div className="map-command-modal__watch">
             <p className="hint">
               İstihbarat: Siz {intelAtk} · Savunma {intelDef}
@@ -642,39 +633,57 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
 
         {!isAnyOwnCity && (
           <p className="map-command-modal__empire-hint">
-            {t('map.cityPanel.empireLine', {
-              hq: empireOverview.hq,
-              owned: empireOverview.owned,
-              max: empireOverview.maxSlots,
-            })}
-            {empireOverview.mainHqName && (
-              <>
-                {' · '}
-                {t('map.cityPanel.empireMainCountry', {
-                  country: getCountryDisplayLabel(empireOverview.mainHqName),
-                })}
-              </>
-            )}
-            {' · '}{empireOverview.slotHint}
-            {conquestEval.ok && conquestEval.distanceKm > 0 && (
-              <> · Mesafe ~{Math.round(conquestEval.distanceKm)} km (sefer +{Math.round((conquestEval.travelMult - 1) * 100)}%)</>
-            )}
-            {conquestEval.ok === false && conquestEval.reason && isConquerTarget && (
-              <> · <span className="city-panel-found-warn">{conquestEval.reason}</span></>
-            )}
-            {conquestEval.raidOnly && (
-              <>
-                {' '}
-                ·
-                {' '}
-                {t('map.cityPanel.mainHqRaidOnly')}
-              </>
-            )}
+            <span className="map-command-modal__empire-hint-line">
+              {t('map.cityPanel.empireLine', {
+                hq: empireOverview.hq,
+                owned: empireOverview.owned,
+                max: empireOverview.maxSlots,
+              })}
+            </span>
+            <span className="map-command-modal__empire-hint-line map-command-modal__empire-hint-line--meta">
+              {empireOverview.mainHqName && (
+                <>
+                  {t('map.cityPanel.empireMainCountry', {
+                    country: getCountryDisplayLabel(empireOverview.mainHqName),
+                  })}
+                  <span className="map-command-modal__empire-hint-sep" aria-hidden="true"> · </span>
+                </>
+              )}
+              <span>{empireOverview.slotHint}</span>
+              {conquestEval.ok && conquestEval.distanceKm > 0 && (
+                <span className="map-command-modal__empire-hint-extra">
+                  {' '}
+                  · Mesafe ~{Math.round(conquestEval.distanceKm)} km (sefer +{Math.round((conquestEval.travelMult - 1) * 100)}%)
+                </span>
+              )}
+              {conquestEval.ok === false && conquestEval.reason && isConquerTarget && (
+                <span className="map-command-modal__empire-hint-extra">
+                  {' '}
+                  · <span className="city-panel-found-warn">{conquestEval.reason}</span>
+                </span>
+              )}
+              {conquestEval.raidOnly && (
+                <span className="map-command-modal__empire-hint-extra">
+                  {' '}
+                  · {t('map.cityPanel.mainHqRaidOnly')}
+                </span>
+              )}
+            </span>
           </p>
         )}
 
         {!actionMode && (
           <div className="map-command-modal__actions">
+            {isAnyOwnCity ? (
+              <Link
+                to="/binalar"
+                className="map-cmd-btn map-cmd-btn--base-manage btn btn-hud-primary"
+                onClick={onClose}
+              >
+                {t('map.cityPanel.baseManageCta')}
+              </Link>
+            ) : (
+              <>
             <button
               type="button"
               className={`map-cmd-btn map-cmd-btn--troops${isConquerTarget ? ' map-cmd-btn--conquest' : ''}`}
@@ -701,6 +710,8 @@ function MapCommandModal({ city, onClose, initialActionMode = null, portalRoot =
             >
               [ SİBER OPERASYON BAŞLAT ]
             </button>
+              </>
+            )}
           </div>
         )}
 

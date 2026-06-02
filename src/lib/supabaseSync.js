@@ -1376,6 +1376,51 @@ export async function syncExpeditionsFromServer(getState, setState, completeExpe
   return { completed: completedIds.length, ids: completedIds };
 }
 
+/**
+ * Gerçek zamanlı — `expeditions` tablosu (status=active satırları).
+ * (Kullanıcı dokümantasyonunda "active_expeditions" — ayrı tablo yok.)
+ */
+export function subscribeActiveExpeditions(onChange) {
+  if (!isSyncEnabled() || !supabase || typeof onChange !== 'function') {
+    return () => {};
+  }
+
+  let channel = null;
+  let cancelled = false;
+
+  const setup = async () => {
+    const profileId = await getSyncUserId();
+    if (!profileId || cancelled) return;
+
+    channel = supabase
+      .channel(`rt-expeditions-${profileId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expeditions',
+          filter: `profile_id=eq.${profileId}`,
+        },
+        () => {
+          onChange();
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[supabaseSync] expeditions realtime channel error');
+        }
+      });
+  };
+
+  setup();
+
+  return () => {
+    cancelled = true;
+    if (channel) supabase.removeChannel(channel);
+  };
+}
+
 export function startSyncPolling(getState, setState, completeExpedition) {
   stopSyncPolling();
   if (!isSyncEnabled()) return;

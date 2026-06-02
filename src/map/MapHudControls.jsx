@@ -1,5 +1,6 @@
 import { useMap } from 'react-leaflet';
 import { MAP_GEO } from './mapGeoConfig';
+import { applyWorldMapZoomPolicy } from './mapWorldFitUtils';
 
 export default function MapHudControls({ onWorldView }) {
   const map = useMap();
@@ -9,10 +10,12 @@ export default function MapHudControls({ onWorldView }) {
   };
 
   const zoomOut = () => {
-    const next = map.getZoom() - 1;
-    if (next >= MAP_GEO.minZoom) {
-      map.setZoom(next, { animate: true });
+    applyWorldMapZoomPolicy(map);
+    if (map.getZoom() <= MAP_GEO.minZoom) {
+      map.setZoom(MAP_GEO.minZoom, { animate: true });
+      return;
     }
+    map.zoomOut(1, { animate: true });
   };
 
   const flyWorld = () => {

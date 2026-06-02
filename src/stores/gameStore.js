@@ -1,5 +1,4 @@
-﻿import { useMemo } from 'react';
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import {
   createEmergencyGameState,
@@ -223,7 +222,11 @@ import {
   disableAdminModeOnState,
   enableAdminModeOnState,
 } from '../lib/adminModeControl';
-import { countIntelNavOperations, filterFieldExpeditions } from '../lib/activeOperationsCount';
+import {
+  countHomeActiveOperations,
+  countIntelNavOperations,
+  filterFieldExpeditions,
+} from '../lib/activeOperationsCount';
 import { filterActiveExpeditions } from '../lib/gameUtils';
 import { resetMapDistanceCache } from '../lib/expeditionTravel';
 import {
@@ -1139,12 +1142,16 @@ export const useGameStore = create((set, get) => ({
       ),
       state.gameConfig,
     );
-    const botsChanged = seeded !== state.mapCities;
-    const ideologyChanged = mapCities.some((c, i) => {
-      const prev = state.mapCities[i];
-      return !prev || prev.name !== c.name || prev.ownerIdeology !== c.ownerIdeology;
-    });
-    if (!botsChanged && !ideologyChanged) return false;
+    const ideologyChanged = mapCities.length !== state.mapCities.length
+      || mapCities.some((c, i) => {
+        const prev = state.mapCities[i];
+        return !prev
+          || prev.name !== c.name
+          || prev.ownerIdeology !== c.ownerIdeology
+          || prev.status !== c.status
+          || prev.owner !== c.owner;
+      });
+    if (!ideologyChanged) return false;
     syncRegistryFromMap(mapCities);
     set({ mapCities, mapRouteSyncRev: (state.mapRouteSyncRev ?? 0) + 1 });
     return true;
@@ -5129,10 +5136,6 @@ export const useGameStore = create((set, get) => ({
       defenseQueue: [...defenseQueue, item],
     });
 
-    useNotificationStore.getState().addToast(
-      queued ? `${count} ${def.name} kuyruğa eklendi` : `${count} ${def.name} üretiliyor`,
-      'success',
-    );
     cloudSync(get, { cityId });
     return true;
   },
@@ -5185,10 +5188,6 @@ export const useGameStore = create((set, get) => ({
       defenseQueue: [...defenseQueue, item],
     });
 
-    useNotificationStore.getState().addToast(
-      queued ? `${def.name} kademe kuyruğa eklendi` : `${def.name} kademe yükseltiliyor`,
-      'success',
-    );
     cloudSync(get, { cityId });
     return true;
   },
@@ -5294,10 +5293,26 @@ export function getExpeditionOriginLabel(exp, playerCities) {
   return city?.name ?? '—';
 }
 
+/** Ana Merkez — aktif sefer + istihbarat operasyonları (tick + realtime ile güncellenir) */
+export function useHomeActiveOperationsCount() {
+  return useGameStore((s) => {
+    void (s.mapRouteSyncRev ?? 0);
+    void (s.expeditions?.length ?? 0);
+    void (s.intelOperations?.length ?? 0);
+    void s.now;
+    return countHomeActiveOperations({
+      expeditions: s.expeditions,
+      intelOperations: s.intelOperations,
+      now: s.now,
+    });
+  });
+}
+
 export function useActiveExpeditionCount() {
   return useGameStore((s) => {
     void (s.mapRouteSyncRev ?? 0);
     void s.expeditions?.length;
+    void s.now;
     return filterFieldExpeditions(s.expeditions, s.now).length;
   });
 }
@@ -5316,15 +5331,12 @@ export function useActiveIntelOperationCount() {
   });
 }
 
+const selectActiveExpeditions = (s) =>
+  filterActiveExpeditions(s.expeditions ?? [], s.now);
+
 /** Aktif sefer listesi — harita/operasyonlar ile aynı store aboneliği */
 export function useActiveExpeditions() {
-  const expeditions = useGameStore((s) => s.expeditions);
-  const now = useGameStore((s) => s.now);
-  const mapRouteSyncRev = useGameStore((s) => s.mapRouteSyncRev ?? 0);
-  return useMemo(
-    () => filterActiveExpeditions(expeditions ?? [], now),
-    [expeditions, now, mapRouteSyncRev],
-  );
+  return useGameStore(useShallow(selectActiveExpeditions));
 }
 
 export function useConstructionQueueFull() {

@@ -61,7 +61,7 @@ export function formatCitySubtitle(city, lang = 'tr') {
 export function formatCityOptionLabel(city, t, lang = 'tr') {
   const base = formatCityBaseName(city, lang);
   if (isMainHqCity(city)) {
-    return t ? t('cityManagement.cityLabelMainHq', { name: base }) : `★ ${base} — Ana Merkez`;
+    return t ? t('cityManagement.cityLabelMainHqShort', { name: base }) : `★ ${base}`;
   }
   return t ? t('cityManagement.cityLabelColony', { name: base }) : `◆ ${base}`;
 }

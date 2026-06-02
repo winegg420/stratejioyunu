@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { NAV_ITEMS, SERVER_NAME } from '../data/placeholder';
+import { NAV_ITEMS } from '../data/placeholder';
+import { formatActiveServerSeasonLabel } from '../lib/serverDisplay';
+import { loadGameConfig } from '../lib/gameConfig';
 import { useLanguage } from '../context/LanguageContext';
 import { getProgressionState } from '../lib/progressionSystem';
 import { useAuth } from '../context/AuthContext';
@@ -172,18 +174,23 @@ export default function Sidebar() {
   const presidentLabel = useMemo(() => {
     const resolved = resolvePlayerDisplayName({
       user: session?.user,
-      profileDisplayName: profileDisplayName || profilePlayerName,
+      profileDisplayName,
+      profilePlayerName,
       playerName: authPlayerName,
     });
-    const identity = getCurrentPlayerName();
-    const pick = [resolved, identity, authPlayerName]
-      .map((n) => String(n ?? '').trim())
-      .find((n) => n && n !== 'Oyuncu');
-    return pick || t('common.playerFallback');
+    if (resolved && resolved !== 'Oyuncu') return resolved;
+    const stored = getCurrentPlayerName();
+    if (stored && stored !== 'Oyuncu') return stored;
+    return t('common.playerFallback');
   }, [session?.user, profileDisplayName, profilePlayerName, authPlayerName, t]);
   const activeCountryLabel = activeCity?.name
     ? countryLabel(activeCity.name)
     : '—';
+  const playerMeta = useGameStore((s) => s.playerMeta);
+  const activeServerLabel = useMemo(() => {
+    const serverId = playerMeta?.server_id ?? loadGameConfig().serverId;
+    return formatActiveServerSeasonLabel(serverId);
+  }, [playerMeta]);
 
   const navEntryProps = {
     t,
@@ -199,9 +206,10 @@ export default function Sidebar() {
     <>
       <nav className="sidebar sidebar-desktop sidebar-hud" aria-label={t('sidebar.fullMenu')}>
         <div className="sidebar-server">
-          <span className="server-label">{t('sidebar.server')}</span>
+          <span className="server-label">{t('sidebar.commander')}</span>
           <span className="server-name">{presidentLabel}</span>
           <span className="city-type">{activeCountryLabel}</span>
+          <span className="sidebar-season font-hud-data">{activeServerLabel}</span>
         </div>
         <ul className="nav-list" ref={navListRef}>
           <SidebarActiveBeam listRef={navListRef} />

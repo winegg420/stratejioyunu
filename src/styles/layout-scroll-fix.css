@@ -117,6 +117,7 @@ html.route-map-page body {
 .app-shell.route-map .map-page--tactical {
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
 }
 
 .app-shell.route-map .map-theater-body {
@@ -126,12 +127,22 @@ html.route-map-page body {
   flex-direction: column;
 }
 
-.app-shell.route-map .map-container--tactical {
+.app-shell.route-map .map-container--tactical,
+.app-shell.route-map .map-container-wrap--cyber {
   position: relative !important;
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  max-width: 100%;
   overflow: hidden;
+  overflow-x: hidden;
+}
+
+.app-shell.route-map .map-page--tactical,
+.app-shell.route-map .map-theater-body {
+  overflow: hidden;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .app-shell.route-map .map-container--tactical > .leaflet-container,

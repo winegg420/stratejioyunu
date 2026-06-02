@@ -1,5 +1,4 @@
-﻿import { useMemo, useRef, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useRef, useState } from 'react';
 import { useGameDataReady } from '../hooks/useGameDataReady';
 import { useResourceValueFlashes } from '../hooks/useResourceValueFlashes';
 import { STORE_EMPTY_ARRAY, useGameStore } from '../stores/gameStore';
@@ -13,7 +12,6 @@ import {
   getEnergyNetHourly,
 } from '../lib/hourlyProduction';
 import { formatCityOptionLabel } from '../lib/cityManagementUi';
-import { isMainHqCity } from '../lib/worldCitySystem';
 import { getEmpireMoneyTotal } from '../lib/empireTreasury';
 import BudgetSpendFloater from './BudgetSpendFloater';
 import CustomDropdown from './CustomDropdown';
@@ -113,6 +111,8 @@ function ResourceItem({
   const fillPct = hasDepot && resource.max > 0
     ? Math.round((resource.current / resource.max) * 100)
     : null;
+  const netNegative = resource.id === 'energy' && showEnergyNet && netHourly < -0.5;
+  const energyStockNegative = resource.id === 'energy' && Number(resource.current) < 0;
   const energyTrendTitle = showEnergyNet
     ? (netHourly > 0.5
       ? t('resourceBar.energyTrendUp')
@@ -120,7 +120,10 @@ function ResourceItem({
         ? t('resourceBar.energyTrendDown')
         : t('resourceBar.energyTrendFlat'))
     : '';
-  const detailTitle = `${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${fillPct != null ? ` (${fillPct}%)` : ''}${showEnergyNet ? ` · ${t('resourceBar.energyNetTitle')}: ${netHourly >= 0 ? '+' : ''}${Math.round(netHourly)} E/saat` : ''}${hourlyLabel && !showEnergyNet ? ` · ${hourlyLabel}` : ''}${energyDrainHourly > 0 ? ` · ${t('resourceBar.energyAiDrain', { drain: formatHourlyAmount(energyDrainHourly) })}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}${energyTrendTitle ? ` — ${energyTrendTitle}` : ''}`;
+  const energyDeficitHint = netNegative
+    ? ` · ${t('resourceBar.energyDefenseDrainHint')}${energyDrainHourly > 0 ? ` · ${t('resourceBar.energyAiDrain', { drain: formatHourlyAmount(energyDrainHourly) })}` : ''}`
+    : '';
+  const detailTitle = `${displayLabel}: ${resource.current.toLocaleString('tr-TR')}${hasDepot ? ` / ${resource.max.toLocaleString('tr-TR')}` : ''}${fillPct != null ? ` (${fillPct}%)` : ''}${showEnergyNet ? ` · ${t('resourceBar.energyNetTitle')}: ${netHourly >= 0 ? '+' : ''}${Math.round(netHourly)} E/saat` : ''}${hourlyLabel && !showEnergyNet ? ` · ${hourlyLabel}` : ''}${energyDrainHourly > 0 && !netNegative ? ` · ${t('resourceBar.energyAiDrain', { drain: formatHourlyAmount(energyDrainHourly) })}` : ''}${depotOverflow ? ` — ${t('resourceBar.depotFull')}` : ''}${workforceCut ? ` — ${t('workforce.penalty')}` : ''}${energyCrisis ? ` — ${t('workforce.energyCrisis')}` : ''}${energyTrendTitle ? ` — ${energyTrendTitle}` : ''}${energyDeficitHint}`;
   const sharedTreasuryTip = t('resourceBar.sharedTreasuryTitle');
   const moneyTreasuryTitle = resource.empireShared
     ? `${detailTitle} · ${sharedTreasuryTip}`
@@ -142,6 +145,8 @@ function ResourceItem({
         depotOverflow && 'depot-overflow',
         workforceCut && 'resource-item--workforce',
         energyCrisis && 'resource-item--energy-crisis',
+        energyStockNegative && 'resource-item--energy-stock-negative',
+        netNegative && 'resource-item--energy-net-negative',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -161,7 +166,7 @@ function ResourceItem({
         <span className="res-label">{displayLabel}</span>
       </div>
       <div className="res-bar-cell__value" title={resource.id === 'money' ? detailTitle : undefined}>
-        <span className={['res-value__current', valueFlash && 'res-value__current--pulse'].filter(Boolean).join(' ')}>
+        <span className={['res-value__current', valueFlash && 'res-value__current--pulse', netNegative && 'res-value__current--energy-deficit'].filter(Boolean).join(' ')}>
           {formatCompactNumber(resource.current)}
         </span>
         {hasDepot && (
@@ -224,15 +229,21 @@ function ResourceItem({
 export default function ResourceBar() {
   const [diamondShopOpen, setDiamondShopOpen] = useState(false);
   const gameReady = useGameDataReady();
-  const barRef = useResourceBarHeight([gameReady]);
   const { t, lang, resourceLabel } = useLanguage();
-  const { playerName } = useAuth();
-  const activeCityId = useGameStore((s) => s.activeCityId);
   const cities = useGameStore((s) => s.cities);
   const playerCities = useGameStore((s) => s.playerCities);
   const setActiveCity = useGameStore((s) => s.setActiveCity);
   const budgetSpendFloats = useGameStore((s) => s.budgetSpendFloats ?? STORE_EMPTY_ARRAY);
+  const gameHydrating = useGameStore((s) => s.gameHydrating);
+  const activeCityId = useGameStore((s) => s.activeCityId);
   const rawResources = useGameStore((s) => s.cities[s.activeCityId]?.resources ?? STORE_EMPTY_ARRAY);
+  const resourceCellsReady = Boolean(
+    activeCityId
+    && Array.isArray(rawResources)
+    && rawResources.length > 0
+    && !gameHydrating,
+  );
+  const barRef = useResourceBarHeight([gameReady, resourceCellsReady]);
   const resources = rawResources.map((r) => (
     r.id === 'money'
       ? { ...r, current: getEmpireMoneyTotal(cities), empireShared: true }
@@ -240,7 +251,7 @@ export default function ResourceBar() {
   ));
   const activeCity = useGameStore((s) => s.cities[s.activeCityId]);
   const flashes = useGameStore((s) => s.flashes);
-  const valueFlashes = useResourceValueFlashes(resources);
+  const valueFlashes = useResourceValueFlashes(resourceCellsReady ? resources : []);
   const workforceShortage = hasWorkforceShortage(activeCity);
   const protectionEndsAt = useGameStore((s) => s.protectionEndsAt);
   const diamonds = useGameStore((s) => s.playerMeta?.diamonds ?? 0);
@@ -257,7 +268,7 @@ export default function ResourceBar() {
   };
 
   const energyRes = resources.find((r) => r.id === 'energy');
-  const energyCrisis = energyRes != null && energyRes.current < 0;
+  const energyCrisis = resourceCellsReady && energyRes != null && energyRes.current < 0;
 
   const hasResources = visibleResources.length > 0;
   const showSyncOnly = !gameReady && !hasResources && !activeCityId;
@@ -298,7 +309,8 @@ export default function ResourceBar() {
         'resource-bar--tactical',
         'resource-bar--command',
         'resource-bar--stacked',
-        !gameReady && hasResources && 'resource-bar--soft-sync',
+        activeCityId && !resourceCellsReady && 'resource-bar--resources-skeleton',
+        !gameReady && resourceCellsReady && 'resource-bar--soft-sync',
         workforceShortage && 'resource-bar--workforce-warn',
       ]
         .filter(Boolean)
@@ -322,7 +334,8 @@ export default function ResourceBar() {
           <div className="resource-bar-top-col resource-bar-top-col--left">
             <div className="brand-block brand-desktop resource-bar-brand">
               <span className="game-title">{GAME_NAME}</span>
-              {!gameReady && hasResources && (
+              {((gameHydrating && activeCityId && !resourceCellsReady)
+                || (!gameReady && resourceCellsReady)) && (
                 <span className="resource-bar-sync-line resource-bar-sync-line--inline">{t('resourceBar.syncing')}</span>
               )}
             </div>
@@ -407,9 +420,36 @@ export default function ResourceBar() {
               ›
             </button>
           </div>
-          <div className="resource-bar-resources resource-bar-resources--strip" aria-label={t('resourceBar.resources')}>
-            <div className="resources-row resources-row--single" role="list">
-              {renderResourceItems({ items: rowResources, ...resourceRenderProps })}
+          <div
+            className="resource-bar-resources resource-bar-resources--strip"
+            aria-label={t('resourceBar.resources')}
+            aria-busy={!resourceCellsReady && Boolean(activeCityId)}
+          >
+            <div
+              className={[
+                'resources-row',
+                'resources-row--single',
+                !resourceCellsReady && activeCityId && 'resources-row--skeleton',
+              ].filter(Boolean).join(' ')}
+              role="list"
+            >
+              {resourceCellsReady ? (
+                renderResourceItems({ items: rowResources, ...resourceRenderProps })
+              ) : (
+                activeCityId
+                  ? RESOURCE_ROW_TOP.map((id) => (
+                    <div
+                      key={`res-skel-${id}`}
+                      className="resource-item resource-item--tactical resource-item--bar-cell resource-item--skeleton"
+                      aria-hidden="true"
+                    >
+                      <div className="resource-item__skeleton-block resource-item__skeleton-block--head" />
+                      <div className="resource-item__skeleton-block resource-item__skeleton-block--value" />
+                      <div className="resource-item__skeleton-block resource-item__skeleton-block--foot" />
+                    </div>
+                  ))
+                  : null
+              )}
             </div>
           </div>
         </div>

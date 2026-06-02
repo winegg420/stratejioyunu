@@ -23,7 +23,9 @@ export function resolveProfileDisplayName(profile, fallback = GENERIC_PLAYER_LAB
 /** Profil başlığı — DB + Supabase auth birleşik. */
 export function resolvePlayerDisplayName({ profile, user, profileDisplayName, playerName } = {}) {
   const authName = getDisplayName(user);
+  const metaUsername = user?.user_metadata?.username?.trim();
   const candidates = [
+    metaUsername,
     profileDisplayName,
     profile?.display_name,
     profile?.player_name,

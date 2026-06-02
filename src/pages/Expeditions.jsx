@@ -8,7 +8,7 @@ import MeydanBattlePanel from '../components/MeydanBattlePanel';
 import OperationsMetropolisAlert from '../components/OperationsMetropolisAlert';
 import CustomDropdown from '../components/CustomDropdown';
 import { flushGameSave } from '../lib/gameActionSync';
-import { syncExpeditionsFromServer } from '../lib/supabaseSync';
+import { subscribeActiveExpeditions, syncExpeditionsFromServer } from '../lib/supabaseSync';
 import { STORE_EMPTY_ARRAY, useGameStore, getExpeditionOriginLabel, useActiveExpeditions } from '../stores/gameStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import { ALLIANCE_OP_STATUS } from '../lib/allianceOperation';
@@ -56,9 +56,13 @@ export default function Expeditions() {
       if (document.visibilityState === 'visible') syncFieldOps();
     };
     document.addEventListener('visibilitychange', onVisible);
+    const unsubscribeRealtime = subscribeActiveExpeditions(() => {
+      syncFieldOps();
+    });
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', onVisible);
+      unsubscribeRealtime();
     };
   }, [gameHydrating, syncFieldOps, mapRouteSyncRev]);
 

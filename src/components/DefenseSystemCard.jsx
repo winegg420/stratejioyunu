@@ -3,6 +3,7 @@ import { DEFENSE_MAX_LEVEL } from '../data/defenseCatalog';
 import {
   getDefenseDescription,
   getDefenseDisplayName,
+  getDefenseUpgradeDurationSeconds,
   isDefenseAtMaxLevel,
   scaleDefenseUpgradeCost,
 } from '../lib/defenseSystemUtils';
@@ -93,6 +94,12 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
       const ok = enqueueDefenseProduction(def.id, qty, { addToQueue });
       if (ok) {
         setQtyInput('1');
+        addToast(
+          addToQueue
+            ? t('pages.defense.produceQueuedNamed', { name })
+            : t('pages.defense.produceStartedNamed', { name }),
+          'success',
+        );
         await flushGameSave({ cityId: activeCityId });
       }
     } finally {
@@ -113,8 +120,16 @@ export default function DefenseSystemCard({ def, inventory, queueBusy }) {
     const actionKey = addToQueue ? 'upgradeQueue' : 'upgrade';
     setProcessingAction(actionKey);
     try {
+      const durationSec = getDefenseUpgradeDurationSeconds(def, level);
+      const durationLabel = formatReadableDuration(durationSec, lang);
       const ok = enqueueDefenseUpgrade(def.id, { addToQueue });
       if (ok) {
+        addToast(
+          addToQueue
+            ? t('pages.defense.upgradeQueueAdded', { duration: durationLabel })
+            : t('pages.defense.upgradeStartedDuration', { duration: durationLabel }),
+          'success',
+        );
         await flushGameSave({ cityId: activeCityId });
       }
     } finally {

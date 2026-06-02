@@ -63,27 +63,27 @@ export function applyViewportZoomLimits(map, padding = 8) {
   return minZ;
 }
 
-/** Dünya sınırlarına sığdır — max zoom 2 (tüm dünya) */
+/** Dünya sınırlarına sığdır — başlangıç: merkez + zoom 2 */
 export function fitMapWorld(map, { padding = 20, isFullscreen = false } = {}) {
-  const bounds = getMapGameplayBounds();
-  const side = isFullscreen ? 10 : Math.max(8, Math.round(padding * 0.55));
-  const vert = isFullscreen ? 8 : Math.max(6, Math.round(padding * 0.35));
-  const overviewZoom = MAP_GEO.worldOverviewZoom ?? 2;
-
-  map.invalidateSize({ animate: false, pan: false });
-  map.fitBounds(bounds, {
-    paddingTopLeft: L.point(side, vert),
-    paddingBottomRight: L.point(side, vert),
-    maxZoom: overviewZoom,
-    animate: false,
-  });
-  applyWorldMapZoomPolicy(map);
+  void padding;
+  void isFullscreen;
+  setMapWorldOverview(map);
 }
 
-/** Merkez + zoom 2 — dünya genel bakış */
+/** Dünya genel bakış — viewport’u doldur (sabit zoom 2 yerine fitBounds) */
 export function setMapWorldOverview(map) {
-  const overviewZoom = MAP_GEO.worldOverviewZoom ?? 2;
   map.invalidateSize({ animate: false, pan: false });
-  map.setView(MAP_GEO.center, overviewZoom, { animate: false });
+  const bounds = getMapGameplayBounds();
+  const size = map.getSize();
+  const padding = size.x > 1200 ? [28, 28] : [16, 16];
+  try {
+    map.fitBounds(bounds, {
+      padding,
+      animate: false,
+      maxZoom: MAP_GEO.worldOverviewZoom ?? 3,
+    });
+  } catch {
+    map.setView(MAP_GEO.center, MAP_GEO.worldOverviewZoom ?? 2, { animate: false });
+  }
   applyWorldMapZoomPolicy(map);
 }

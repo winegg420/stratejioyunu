@@ -128,6 +128,35 @@ button {
   color: #ff3333 !important;
 }
 
+/* Enerji stoku 0 altı — kırmızı kutu (harita dahil üst bar) */
+.resource-item--energy-stock-negative {
+  background: #5a1a1a !important;
+  border-color: rgba(220, 38, 38, 0.55) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 80, 80, 0.25);
+}
+
+.resource-item--energy-stock-negative .res-value__current,
+.resource-item--energy-stock-negative .res-bar-cell__cap,
+.resource-item--energy-stock-negative .res-label {
+  color: #fecaca !important;
+}
+
+/* Net enerji açığı — stok yeşil görünse bile üst rakam uyarı */
+.resource-item--energy-net-negative .res-value__current--energy-deficit,
+.resource-bar--command .resource-item--energy-net-negative .res-value__current--energy-deficit {
+  color: #ff4444 !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.55);
+}
+
+.resource-item--energy-net-negative .res-bar-cell__cap {
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.resource-bar--command:not(.resource-bar--stacked) .resource-item--energy-net-negative .res-value__current--energy-deficit {
+  color: #ff4444 !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.55);
+}
+
 .res-stgn-badge {
   margin-left: 0.35rem;
   font-size: 0.62rem;
@@ -1630,6 +1659,46 @@ button {
 
 .home-region-preview__fallback {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 1rem 0.75rem;
+  text-align: center;
+}
+
+.home-region-preview__fallback-icon {
+  font-size: 1.35rem;
+  color: rgba(74, 124, 89, 0.45);
+  line-height: 1;
+}
+
+.home-region-preview__fallback-title {
+  margin: 0;
+  font-family: var(--cmd-font-display, 'Titillium Web', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.9);
+}
+
+.home-region-preview__fallback-msg {
+  margin: 0;
+  font-family: var(--cmd-font-mono);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  letter-spacing: 0.05em;
+  color: rgba(148, 163, 184, 0.75);
+  max-width: 22rem;
+}
+
+.home-region-preview__fallback-cta {
+  margin-top: 0.25rem;
+}
+
+.home-region-preview__fallback--legacy {
+  display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
@@ -1823,4 +1892,49 @@ button {
 .buildings-page .building-card--blocked .building-card__img {
   filter: blur(1px) saturate(0.7) brightness(0.85) !important;
   opacity: 0.92 !important;
+}
+
+/* Üst bar — kaynak hücreleri yüklenene kadar iskelet */
+.resources-row--skeleton .resource-item--skeleton {
+  pointer-events: none;
+}
+
+.resource-item__skeleton-block {
+  display: block;
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.55),
+    rgba(71, 85, 105, 0.75),
+    rgba(30, 41, 59, 0.55)
+  );
+  background-size: 220% 100%;
+  animation: resource-bar-skeleton-shimmer 1.15s ease-in-out infinite;
+}
+
+.resource-item__skeleton-block--head {
+  height: 0.62rem;
+  max-width: 4.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.resource-item__skeleton-block--value {
+  height: 0.92rem;
+  max-width: 5.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.resource-item__skeleton-block--foot {
+  height: 0.52rem;
+  max-width: 3.5rem;
+}
+
+@keyframes resource-bar-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
 }

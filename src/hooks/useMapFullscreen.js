@@ -19,9 +19,21 @@ function isFullscreenElement(el) {
     || document.webkitFullscreenElement === el;
 }
 
-export function useMapFullscreen() {
+export function useMapFullscreen({ pageScrollSnapshotRef } = {}) {
   const theaterRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const restorePageScroll = useCallback(() => {
+    const snap = pageScrollSnapshotRef?.current;
+    const content = document.querySelector('.app-shell.route-map .content-area');
+    if (snap) {
+      window.scrollTo({ top: snap.windowY ?? 0, left: 0, behavior: 'instant' });
+      if (content != null && snap.contentTop != null) content.scrollTop = snap.contentTop;
+      return;
+    }
+    if (content) content.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pageScrollSnapshotRef]);
 
   const syncState = useCallback(() => {
     const el = theaterRef.current;
@@ -31,12 +43,10 @@ export function useMapFullscreen() {
     document.documentElement.classList.toggle(FS_ROOT_CLASS, active);
     if (wasActive && !active) {
       document.body.classList.remove('map-scroll-locked');
-      const content = document.querySelector('.app-shell.route-map .content-area');
-      if (content) content.scrollTop = 0;
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      restorePageScroll();
     }
     requestAnimationFrame(pulseMapLayout);
-  }, []);
+  }, [restorePageScroll]);
 
   useEffect(() => {
     document.addEventListener('fullscreenchange', syncState);
@@ -69,9 +79,7 @@ export function useMapFullscreen() {
       setIsFullscreen(false);
       document.documentElement.classList.remove(FS_ROOT_CLASS);
       document.body.classList.remove('map-scroll-locked');
-      const content = document.querySelector('.app-shell.route-map .content-area');
-      if (content) content.scrollTop = 0;
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      restorePageScroll();
       pulseMapLayout();
       return;
     }

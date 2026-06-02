@@ -3,12 +3,14 @@ import { createPortal } from 'react-dom';
 import { useMap } from 'react-leaflet';
 import { useLanguage } from '../context/LanguageContext';
 import { resolvePlayerCountryFocus } from '../lib/mapPlayerFocus';
+import { MAP_GEO } from './mapGeoConfig';
 
 export default function MapFocusCrosshair({
   activeCityId,
   playerCities,
   mapCities,
   onFocusBase,
+  isFullscreen = false,
 }) {
   const map = useMap();
   const { t, countryLabel } = useLanguage();
@@ -20,18 +22,33 @@ export default function MapFocusCrosshair({
   }, [map]);
 
   const focusBase = () => {
-    if (onFocusBase) {
-      onFocusBase();
-      return;
-    }
     const target = resolvePlayerCountryFocus({ playerCities, mapCities, preferMainHq: true });
     if (!target) return;
-    const zoom = target.zoom ?? 5;
-    map.flyTo([target.lat, target.lng], zoom, {
-      animate: true,
-      duration: 1.2,
-      easeLinearity: 0.25,
-    });
+    const zoom = target.zoom ?? MAP_GEO.countryFocusZoom ?? 5;
+    onFocusBase?.();
+    if (isFullscreen) {
+      try {
+        map.flyTo([target.lat, target.lng], zoom, {
+          animate: true,
+          duration: 1.15,
+          easeLinearity: 0.25,
+        });
+      } catch {
+        /* unmount */
+      }
+      return;
+    }
+    if (!onFocusBase) {
+      try {
+        map.flyTo([target.lat, target.lng], zoom, {
+          animate: true,
+          duration: 1.2,
+          easeLinearity: 0.25,
+        });
+      } catch {
+        /* unmount */
+      }
+    }
   };
 
   const target = resolvePlayerCountryFocus({ playerCities, mapCities, preferMainHq: true });

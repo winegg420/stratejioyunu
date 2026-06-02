@@ -96,10 +96,10 @@
 }
 
 .expedition-intent-btn--conquest.expedition-intent-btn--active {
-  border-color: #dc2626;
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
-  background: rgba(127, 29, 29, 0.35);
+  border-color: #c9a84c;
+  box-shadow: 0 0 14px rgba(201, 168, 76, 0.45);
+  color: #f5e6c8;
+  background: rgba(90, 72, 28, 0.45);
 }
 
 .expedition-intent-btn--active {

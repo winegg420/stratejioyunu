@@ -129,6 +129,7 @@ export function useProvinceMapHandlers({
           if (map?._suppressMapClickUntil && Date.now() < map._suppressMapClickUntil) return;
           L.DomEvent.stopPropagation(e);
           e?.originalEvent?.stopPropagation?.();
+          layer.closeTooltip?.();
           const h = handlersRef.current;
           const center = layer.getBounds?.()?.getCenter?.();
           const clickLatLng = e?.latlng ?? center;
@@ -137,6 +138,7 @@ export function useProvinceMapHandlers({
             clickLatLng,
             h.mapCities,
             h.playerCities,
+            h.ownProvinceNamesRef?.current,
           );
           const enriched = enrichMapCityWithProvince(target, h.playerCities);
           h.setActiveHighlightCity?.(enriched);

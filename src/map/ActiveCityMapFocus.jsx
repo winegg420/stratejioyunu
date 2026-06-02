@@ -3,7 +3,7 @@ import { useMap } from 'react-leaflet';
 import { MAP_GEO } from './mapGeoConfig';
 import { IS_WORLD_MAP } from './mapInteractionPolicy';
 
-/** Harita açılışında aktif üsse odaklan — dünya modunda genel bakış korunur. */
+/** Harita açılışında aktif üsse odaklan — dünya modunda devre dışı (genel bakış korunur). */
 export default function ActiveCityMapFocus({
   lat,
   lng,
@@ -13,17 +13,10 @@ export default function ActiveCityMapFocus({
   const map = useMap();
   const lastCityRef = useRef(null);
   const didFocusRef = useRef(false);
-  const skipWorldBootRef = useRef(IS_WORLD_MAP);
 
   useEffect(() => {
-    if (disabled) return;
+    if (IS_WORLD_MAP || disabled) return;
     if (lat == null || lng == null) return;
-
-    if (skipWorldBootRef.current) {
-      skipWorldBootRef.current = false;
-      lastCityRef.current = activeCityId;
-      return;
-    }
 
     if (didFocusRef.current && lastCityRef.current === activeCityId) return;
     didFocusRef.current = true;
