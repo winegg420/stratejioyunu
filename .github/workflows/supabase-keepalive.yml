@@ -1,0 +1,34 @@
+name: Supabase Keep-Alive
+
+# Free plan Supabase projeleri ~7 gün istek almazsa uyutulur (INACTIVE) ve
+# DNS kaydı silinir — site girişleri bozulur. Bu cron 3 günde bir REST
+# uçbirimine istek atarak projeyi uyanık tutar.
+
+on:
+  schedule:
+    - cron: '17 6 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY secret eksik."
+            exit 1
+          fi
+          CODE=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/profiles?select=player_name&limit=1")
+          echo "HTTP $CODE"
+          cat /tmp/resp.txt
+          if [ "$CODE" -ge 500 ] || [ "$CODE" = "000" ]; then
+            echo "::error::Supabase erişilemiyor (HTTP $CODE). Proje uyumuş olabilir: https://supabase.com/dashboard"
+            exit 1
+          fi
