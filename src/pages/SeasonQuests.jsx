@@ -133,9 +133,12 @@ export default function SeasonQuests() {
     [activeCityId, cities, seasonStats, dailyQuestFlags, researches, activeCityHappiness],
   );
 
+  // refreshSeasonQuestsUi her çağrıda yeni store referansları üretir; dailyQuestCtx
+  // bunlara bağlı olduğundan bağımlılık olarak eklenmesi sonsuz döngü (React #185) yaratır.
+  // Rollover senkronu için sayfa açılışında bir kez çalışması yeterli.
   useEffect(() => {
     refreshSeasonQuestsUi();
-  }, [refreshSeasonQuestsUi, dailyQuestCtx]);
+  }, [refreshSeasonQuestsUi]);
 
   return (
     <div className="page season-quests-page page--console">
