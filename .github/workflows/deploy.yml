@@ -39,7 +39,8 @@ jobs:
         run: npm run build
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@54.1.0
+        # 54.1.0 Vercel API'sinde kaldırılan /v2/files ucunu kullanıyor ve 500 alıyordu
+        run: npm install -g vercel@^54.11.1
 
       - name: Validate Vercel token
         id: vercel-token
