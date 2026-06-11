@@ -71,6 +71,12 @@ import MapCityClickRouter from './MapCityClickRouter';
 
 const MAP_CENTER = MAP_GEO.center;
 
+/** Dünya karo sınırı — noWrap tek başına dünya dışı (x<0, y<0 vb.) karo isteklerini engellemez; CDN 400 döner. */
+const WORLD_TILE_BOUNDS = [
+  [-90, -180],
+  [90, 180],
+];
+
 const MAP_DEFAULT_ZOOM = MAP_GEO.zoom;
 
 
@@ -301,6 +307,7 @@ function TurkeyLeafletMap({
         attribution={CARTO_ATTRIBUTION}
         url={CARTO_DARK_MATTER_URL}
         noWrap={IS_WORLD_MAP}
+        bounds={IS_WORLD_MAP ? WORLD_TILE_BOUNDS : undefined}
         eventHandlers={{
           load: () => setTilesReady(true),
           loading: () => setTilesReady(false),
