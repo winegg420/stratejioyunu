@@ -1,9 +1,20 @@
+import { useEffect, useRef } from 'react';
+import { DomEvent } from 'leaflet';
 import { useMap } from 'react-leaflet';
 import { MAP_GEO } from './mapGeoConfig';
 import { applyWorldMapZoomPolicy } from './mapWorldFitUtils';
 
 export default function MapHudControls({ onWorldView }) {
   const map = useMap();
+  const panelRef = useRef(null);
+
+  // Panel harita konteynerinin içinde: tıklamalar Leaflet'e sızıp ülke seçiyordu
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    DomEvent.disableClickPropagation(el);
+    DomEvent.disableScrollPropagation(el);
+  }, []);
 
   const zoomIn = () => {
     map.zoomIn(1, { animate: true });
@@ -31,7 +42,7 @@ export default function MapHudControls({ onWorldView }) {
   };
 
   return (
-    <div className="map-hud-panel" aria-label="Harita kontrolleri">
+    <div className="map-hud-panel" aria-label="Harita kontrolleri" ref={panelRef}>
       <button type="button" className="map-hud-btn" onClick={zoomIn} aria-label="Yakınlaştır">
         +
       </button>

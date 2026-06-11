@@ -51,6 +51,15 @@ function resolveHydratedCityCoords(row, mapCityList) {
   return { lat: row.lat ?? null, lng: row.lng ?? null };
 }
 
+/** Upsert için şehir koordinatı — yeni satır INSERT'inde lat/lng NOT NULL */
+function resolveCityRowCoords(persisted, id, name) {
+  const pc = persisted.playerCities?.find((c) => c.id === id);
+  return resolveHydratedCityCoords(
+    { lat: pc?.lat, lng: pc?.lng, city_name: name },
+    persisted.mapCities ?? mapCities,
+  );
+}
+
 /** Kayıt sonrası eski `metal` satırlarını temizler (enum hâlâ metal içeriyorsa). */
 async function purgeLegacyMetalResourceRows(profileId, cityIds) {
   if (!supabase || !profileId || !cityIds?.length) return;
@@ -89,6 +98,7 @@ function resolveDefenseFromRow(row, playerMeta) {
   });
 }
 
+const LAND_UNIT_IDS = new Set(landUnits.map((u) => u.id));
 const AIR_UNIT_IDS = new Set(airUnits.map((u) => u.id));
 const SEA_UNIT_IDS = new Set(seaUnits.map((u) => u.id));
 
@@ -499,6 +509,7 @@ export async function saveGameState(state, options = {}) {
       profile_id: profileId,
       id,
       city_name: persisted.playerCities?.find((c) => c.id === id)?.name ?? id,
+      ...resolveCityRowCoords(persisted, id, persisted.playerCities?.find((c) => c.id === id)?.name ?? id),
       last_tick_at: nowIso,
       idle_spies: city.idleSpies ?? 0,
       idle_agents: city.idleAgents ?? 0,
@@ -610,6 +621,7 @@ export async function saveGameState(state, options = {}) {
     profile_id: profileId,
     id: cityId,
     city_name: persisted.playerCities?.find((c) => c.id === cityId)?.name ?? cityId,
+    ...resolveCityRowCoords(persisted, cityId, persisted.playerCities?.find((c) => c.id === cityId)?.name ?? cityId),
     last_tick_at: nowIso,
     idle_spies: city.idleSpies ?? 0,
     idle_agents: city.idleAgents ?? 0,
@@ -812,7 +824,8 @@ export async function loadGameState(userId, { playerName } = {}) {
   }
 
   if (!profile) {
-    await supabase.rpc('seed_starter_city', { p_profile_id: userId });
+    const { error: seedErr } = await supabase.rpc('seed_starter_city', { p_profile_id: userId });
+    if (seedErr) console.warn('[supabaseSync] seed_starter_city (profil)', seedErr);
     const retry = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
     profile = retry.data;
   }
@@ -828,12 +841,16 @@ export async function loadGameState(userId, { playerName } = {}) {
   }
 
   if (!cityRows?.length) {
-    await supabase.rpc('seed_starter_city', { p_profile_id: userId });
+    const { error: seedErr } = await supabase.rpc('seed_starter_city', { p_profile_id: userId });
+    if (seedErr) console.warn('[supabaseSync] seed_starter_city (sehir)', seedErr);
     const retry = await supabase.from('cities').select('*').eq('profile_id', userId);
     cityRows = retry.data ?? [];
   }
 
-  if (!cityRows.length) return null;
+  if (!cityRows.length) {
+    console.warn('[supabaseSync] baslangic sehri olusturulamadi — bulut kayit devre disi kalacak');
+    return null;
+  }
 
   const cityIds = cityRows.map((c) => c.id);
 

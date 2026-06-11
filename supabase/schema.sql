@@ -225,7 +225,8 @@ create table if not exists public.city_buildings (
   constraint city_buildings_id_check check (
     building_id in (
       'hq', 'farm', 'refinery', 'factory', 'depot', 'plant', 'tax',
-      'barracks', 'airport', 'shipyard', 'intel', 'wall', 'market', 'research', 'cyber_ops'
+      'barracks', 'airport', 'shipyard', 'intel', 'wall', 'market', 'research',
+      'cyber_ops', 'ai_center'
     )
   )
 );
@@ -245,7 +246,7 @@ create table if not exists public.player_researches (
   primary key (profile_id, research_id),
   constraint player_researches_id_check check (
     research_id in (
-      'r1', 'r2', 'r3', 'r4',
+      'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12',
       'kbrn_weapon', 'kbrn_decon', 'kbrn_detect', 'kbrn_chem'
     )
   )
@@ -567,6 +568,21 @@ begin
      and current_setting('role', true) not in ('service_role', 'supabase_admin') then
     raise exception 'seed_starter_city: yetkisiz';
   end if;
+
+  -- Self-healing: trigger kurulmadan önce yaratılmış auth kullanıcıları için profil satırını tamamla
+  insert into public.profiles (id, player_name, display_name)
+  select
+    u.id,
+    coalesce(u.raw_user_meta_data ->> 'player_name', split_part(u.email, '@', 1), 'oyuncu'),
+    coalesce(
+      u.raw_user_meta_data ->> 'display_name',
+      u.raw_user_meta_data ->> 'player_name',
+      split_part(u.email, '@', 1),
+      'Oyuncu'
+    )
+  from auth.users u
+  where u.id = p_profile_id
+  on conflict (id) do nothing;
 
   insert into public.cities (
     id, profile_id, city_name, province_code, province_name, city_type,
